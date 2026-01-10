@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-MKEV8Q96JB"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MKEV8Q96JB"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-MKEV8Q96JB');
+  </script>
 
-  gtag('config', 'G-MKEV8Q96JB');
-</script>
   <meta charset="UTF-8" />
   <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,9 +17,12 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="ai-styles.css" />
   <link rel="icon" href="favicon.ico" />
   <link rel="icon" href="https://codehs.com/uploads/ac78732bc7223be79e7a83066c1169b1"/>
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="cursor-dot"></div>
@@ -34,8 +37,8 @@
     </div>
     <nav class="nav-list">
       <div class="nav-item active" data-page="main360">Home</div>
-      <div class="ai" data-link="/ai.html">AI Chatbot</div>
-      <div class="weather" data-page="/weather.html">Weather</div>
+      <div class="nav-item" data-page="ai">AI Chatbot</div>
+      <div class="nav-item" data-page="weather">Weather</div>
       <div class="nav-item" data-page="shortener">URL Shortener</div>
       <div class="nav-item" data-page="stocks">Stocks</div>
     </nav>
@@ -100,17 +103,28 @@
       </div>
     </section>
 
+    <!-- AI Chatbot -->
+    <section class="page" id="page-ai">
+      <button class="back-btn top-right">← Back</button>
+      <br><br>
+      <h2>AI Chatbot</h2>
+      <p id="date"></p>
+      <div id="chat"></div>
+      <div id="input-area">
+        <input type="text" id="userInput" placeholder="Type a message..." />
+        <button id="sendBtn">Send</button>
+      </div>
+    </section>
+
     <!-- Weather -->
     <section class="page" id="page-weather">
       <button class="back-btn top-right">← Back</button>
       <br><br>
       <h2>🌦️ Weather</h2>
-      <br><br>
       <form id="weatherForm" class="weather-form">
         <input id="city" placeholder="Enter city..." required />
         <button type="submit">Check</button>
       </form>
-      <br>
       <div id="weatherContent" class="weather-output">Waiting for input...</div>
       <div id="map" class="weather-map"></div>
       <p class="muted">Powered by OpenStreetMap</p>
@@ -149,9 +163,9 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm" type="module"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js" type="module"></script>
 </body>
 </html>
