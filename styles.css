@@ -11,6 +11,38 @@
   --br: rgba(148, 163, 184, .4);
 }
 
+/* THEME COLORS */
+body.theme-ocean {
+  --a: #3b82f6;
+  --a2: #06b6d4;
+}
+
+body.theme-midnight {
+  --a: #0ea5e9;
+  --a2: #6366f1;
+}
+
+body.theme-sunset {
+  --a: #f97316;
+  --a2: #ef4444;
+}
+
+body.theme-mint {
+  --a: #10b981;
+  --a2: #34d399;
+}
+
+body.theme-neon {
+  --a: #a21caf;
+  --a2: #ec4899;
+}
+
+body.theme-mono {
+  --a: #6b7280;
+  --a2: #9ca3af;
+}
+
+
 * {
   margin: 0;
   padding: 0;
@@ -203,6 +235,31 @@ body.dark .settings-label {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
+}
+
+/* Swatch preview colors */
+.swatch[data-theme="ocean"] {
+  background: linear-gradient(120deg, #3b82f6, #06b6d4);
+}
+
+.swatch[data-theme="midnight"] {
+  background: linear-gradient(120deg, #0ea5e9, #6366f1);
+}
+
+.swatch[data-theme="sunset"] {
+  background: linear-gradient(120deg, #f97316, #ef4444);
+}
+
+.swatch[data-theme="mint"] {
+  background: linear-gradient(120deg, #10b981, #34d399);
+}
+
+.swatch[data-theme="neon"] {
+  background: linear-gradient(120deg, #a21caf, #ec4899);
+}
+
+.swatch[data-theme="mono"] {
+  background: linear-gradient(120deg, #6b7280, #9ca3af);
 }
 
 .swatch.active {
@@ -482,16 +539,142 @@ body.dark .chat-box {
   background: rgba(148, 163, 184, .15);
 }
 
+/* Hide all pages unless active */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
 
 
+/* ==========================================
+   AI PAGE — OG AI CARD LOOK (THEME SAFE)
+   ========================================== */
+
+#page-ai.page.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Date text */
+#page-ai #date {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Chat container */
+#page-ai #chat {
+    width: 100%;
+    max-width: 700px;
+    height: 500px;
+    background: var(--bgd);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+/* Message bubbles — OG AI style */
+#page-ai .message {
+    margin: 8px 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    white-space: pre-line;
+    line-height: 1.45;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* USER bubble — OG style but theme color */
+#page-ai .user {
+    background: var(--accent);
+    color: white;
+    text-align: right;
+    border-top-right-radius: 2px;
+}
+
+/* AI bubble — OG style but theme neutral */
+#page-ai .ai {
+    background: var(--bg);
+    border: 1px solid var(--mut);
+    text-align: left;
+    border-top-left-radius: 2px;
+}
+
+/* Input area */
+#page-ai #input-area {
+    display: flex;
+    width: 100%;
+    max-width: 700px;
+}
+
+/* Input field */
+#page-ai #input-area input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--mut);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--txt);
+}
+
+/* Send button */
+#page-ai #input-area button {
+    margin-left: 6px;
+    padding: 12px 18px;
+    border: none;
+    background: #0000ff;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#page-ai #input-area button:hover {
+    opacity: 0.9;
+}
+
+/* Markdown formatting inside AI messages */
+#page-ai .ai h3 {
+    margin: 10px 0 5px;
+    font-size: 1.1em;
+}
+
+#page-ai .ai strong {
+    font-weight: bold;
+}
+
+#page-ai .ai ul {
+    padding-left: 20px;
+}
+
+#page-ai .ai li {
+    margin-bottom: 4px;
+}
+
+/* Source card styling — OG look */
+#page-ai .source-card {
+    background: var(--bgd);
+    padding: 10px;
+    border-radius: 8px;
+    margin: 6px 0;
+    border: 1px solid var(--mut);
+}
+
+#page-ai .source-card a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+#page-ai .source-card a:hover {
+    text-decoration: underline;
+}
 
 
-
-
-
-
-
-
-
-
+/* End Of AI Code */
 
