@@ -571,7 +571,7 @@ body.dark .chat-box {
     width: 100%;
     max-width: 700px;
     height: 500px;
-    background: var(--bgd);
+    background: var(--accent);
     padding: 15px;
     border-radius: 12px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.12);
@@ -592,7 +592,7 @@ body.dark .chat-box {
 
 /* USER bubble — OG style but theme color */
 #page-ai .user {
-    background: var(--accent);
+    background: linear-gradient(110deg, var(--a), var(--a2));
     color: white;
     text-align: right;
     border-top-right-radius: 2px;
@@ -600,7 +600,7 @@ body.dark .chat-box {
 
 /* AI bubble — OG style but theme neutral */
 #page-ai .ai {
-    background: var(--bg);
+    background: linear-gradient(110deg, var(--a), var(--a2));
     border: 1px solid var(--mut);
     text-align: left;
     border-top-left-radius: 2px;
@@ -628,7 +628,7 @@ body.dark .chat-box {
     margin-left: 6px;
     padding: 12px 18px;
     border: none;
-    background: #0000ff;
+    background: linear-gradient(110deg, var(--a), var(--a2));
     color: white;
     border-radius: 8px;
     cursor: pointer;
@@ -659,7 +659,7 @@ body.dark .chat-box {
 
 /* Source card styling — OG look */
 #page-ai .source-card {
-    background: var(--bgd);
+    background: linear-gradient(110deg, var(--a), var(--a2));
     padding: 10px;
     border-radius: 8px;
     margin: 6px 0;
@@ -677,6 +677,8 @@ body.dark .chat-box {
 
 
 /* End Of AI Code */
+
+
 #translator {
   margin-top: 20px;
   padding: 16px;
@@ -725,6 +727,29 @@ body.dark #translator button {
   min-height: 40px;
   white-space: pre-wrap;
 }
+
+
+
+.temp-toggle {
+  position: relative;
+  display: inline-block;
+}
+
+.toggle-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;   /* match your toggle width */
+  height: 26px;  /* match your toggle height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  pointer-events: none;
+}
+
 #tempToggle {
   appearance: none;
   width: 50px;
@@ -821,30 +846,5 @@ body.dark #page-ai .user {
   color: var(--txt);
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
