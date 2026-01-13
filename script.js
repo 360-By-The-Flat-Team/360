@@ -436,4 +436,56 @@ function onTurnstileSuccess(token) {
   // Token is valid from the widget's perspective
   document.querySelector("#submitBtn").disabled = false;
 }
+// Supabase Chat Integration
+const supabase = supabase.createClient(
+  'https://bsyqhzwnrbwfwuequni.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzeXFoenducmJ3Znd1dWVxdW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjU5ODYsImV4cCI6MjA4Mzg0MTk4Nn0.dP7G2Yezhe9tWTv4GDyXP9s8xPlpLW3mYVm4fHqX-kc'
+);
+
+const chatWindow = document.getElementById('chat-window');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const username = "User" + Math.floor(Math.random() * 1000);
+
+function appendMessage(msg) {
+  const div = document.createElement('div');
+  div.className = 'message';
+  div.innerHTML = `<span style="color:#6aa9ff;font-weight:bold;margin-right:6px;">${msg.username}:</span>${msg.content}`;
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+async function loadMessages() {
+  const { data } = await supabase
+    .from('messages')
+    .select('*')
+    .order('inserted_at', { ascending: true });
+  data.forEach(appendMessage);
+}
+
+async function sendMessage() {
+  const content = messageInput.value.trim();
+  if (!content) return;
+  await supabase.from('messages').insert([{ content, username }]);
+  messageInput.value = '';
+}
+
+if (sendButton && messageInput && chatWindow) {
+  sendButton.onclick = sendMessage;
+  messageInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  loadMessages();
+
+  supabase
+    .channel('public:messages')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages' },
+      payload => appendMessage(payload.new)
+    )
+    .subscribe();
+}
+
 
