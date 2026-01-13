@@ -1,7 +1,6 @@
 const select = selector => document.querySelector(selector);
 const selectAll = selector => document.querySelectorAll(selector);
 const b = document.body;
-
 const supa = supabase.createClient(
     "https://dvfsdoybqyxpwtqgffub.supabase.co",
     "sb_publishable_lP5gD4yHS3jLC0VbLv7ldA_TnoMk3gG"
