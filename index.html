@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MKEV8Q96JB"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-MKEV8Q96JB');
-  </script>
   <meta charset="UTF-8" />
   <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,21 +9,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="favicon.ico" />
-  <link rel="icon" href="https://codehs.com/uploads/ac78732bc7223be79e7a83066c1169b1"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    //const p=new URLSearchParams(location.search);if(p.get("verified")!=="true"){location.href="https://verifycloudflare-17549349.codehs.me/index.html"}else{history.replaceState({},document.title,location.pathname);}
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 </head>
 <body>
-
-  <div class="cursor-dot"></div>
-  <div class="cursor-trail"></div>
-
+  <div class="cursor-dot"></div><div class="cursor-trail"></div>
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
-
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <br>
-      <div id="settingsBtn">⚙️</div>
-    </div>
+    <div class="sidebar-header"><br><div id="settingsBtn">⚙️</div></div>
     <nav class="nav-list">
       <div class="nav-item active" data-page="main360">Home</div>
       <div class="nav-item" data-page="ai">AI Chatbot</div>
@@ -40,14 +29,11 @@
       <div class="nav-item" data-page="stocks">Stocks</div>
       <div class="nav-item" data-page="translator">Translator</div>
       <div class="nav-item" data-page="chat">Chat With Others</div>
-
     </nav>
     <footer class="sidebar-footer">360 · Flat Inc. · 2026</footer>
   </aside>
-
   <div class="overlay" id="overlay"></div>
   <div class="overlay" id="settingsOverlay"></div>
-
   <section class="settings-panel" id="settingsPanel">
     <h3>Appearance</h3>
     <div class="settings-row">
@@ -66,64 +52,20 @@
       <label>Dark mode <input type="checkbox" id="darkToggle" /></label>
     </div>
   </section>
-
   <main class="main">
-    <!-- Home -->
     <section class="page active" id="page-main360">
       <div class="home-inner">
-        <div class="clock-pill">
-          <span id="clockTime">--:--</span>
-          <small id="clockDate">Loading...</small>
-        </div>
+        <div class="clock-pill"><span id="clockTime">--:--</span><small id="clockDate">Loading...</small></div>
         <div class="logo-main"><span>360</span></div>
-        <div class="weather-chip">
-          <span>Weather:</span>
-          <span id="homeWeatherText">Loading...</span>
-        </div>
-        <label class="temp-toggle">
-          <input type="checkbox" id="tempToggle">
-          <span class="toggle-text">°C  °F</span>
-        </label>
-        <div class="search-shell">
-          <div class="gcse-search"></div>
-        </div>
-        <div id="g_id_onload"
-             data-client_id="1005132717258-eekf4ab0tp00i1k8gcfqa6ettemllnj6.apps.googleusercontent.com"
-             data-callback="handleCredentialResponse"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="sign_in_with"
-             data-shape="pill"
-             data-logo_alignment="left">
-        </div>
-        
-        <audio id="clickSound" src="https://codehs.com/uploads/16faab8fd0f7195772f77bcfe0620de7" preload="auto"></audio>
-        <audio id="bgMusic" src="https://codehs.com/uploads/08453784ddd1245d2dda633d4c69fb28" loop hidden></audio>
+        <div class="weather-chip"><span>Weather:</span><span id="homeWeatherText">Loading...</span></div>
+        <label class="temp-toggle"><input type="checkbox" id="tempToggle"><span class="toggle-text">°C  °F</span></label>
+        <div class="search-shell"><div class="gcse-search"></div></div>
+        <audio id="clickSound" src="click.mp3" preload="auto"></audio>
+        <audio id="bgMusic" src="bgmusic.mp3" loop hidden></audio>
         <div id="musicToggle">🔈 Music</div>
       </div>
     </section>
-    
-    <!-- CloudFlare - Optional -->
-    <!--
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    
-    <form id="myForm">
-
-      <div class="cf-turnstile"
-           data-sitekey="0x4AAAAAACMCAxy6WQ4gA-Pd"
-           data-theme="auto"
-           data-callback="onTurnstileSuccess">
-      </div>
-    
-      <button type="submit" id="submitBtn" disabled>Submit</button>
-    </form> -->
-
-
-    <!-- Weather -->
+     <!-- Weather -->
     <section class="page" id="page-weather">
       <button class="back-btn top-right">← Back</button>
       <br><br>
@@ -137,10 +79,21 @@
       <div id="map" class="weather-map"></div>
       <p class="muted">Powered by OpenWeatherMap & OpenStreetMap</p>
     </section>
+<!-- Chat With Others -->
+<section class="page" id="page-chat">
+  <button class="back-btn top-right">← Back</button>
+  <br><br>
+  <h2>💬 360 Chat</h2>
+<div id="chat-window"></div>
+<input type="text" id="message-input" placeholder="Type your message..." />
+<button id="send-button">Send</button>
+
+</section>
 
     <!-- AI Chatbot -->
     <section class="page" id="page-ai">
       <h2>AI Chatbot</h2>
+      <br>
       <p id="date"></p>
     
       <div id="chat"></div>
@@ -218,6 +171,8 @@
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
 
   <!-- Scripts -->
+  </main>
+  <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
@@ -227,3 +182,6 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+
+   
