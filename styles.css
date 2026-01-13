@@ -550,7 +550,7 @@ body.dark .chat-box {
 
 
 /* ==========================================
-   AI PAGE — OG AI CARD LOOK (THEME SAFE)
+   AI PAGE
    ========================================== */
 
 #page-ai.page.active {
@@ -571,7 +571,7 @@ body.dark .chat-box {
     width: 100%;
     max-width: 700px;
     height: 500px;
-    background: var(--accent);
+    background: white;
     padding: 15px;
     border-radius: 12px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.12);
@@ -600,8 +600,7 @@ body.dark .chat-box {
 
 /* AI bubble — OG style but theme neutral */
 #page-ai .ai {
-    background: linear-gradient(110deg, var(--a), var(--a2));
-    border: 1px solid var(--mut);
+    background: var(--bg);
     text-align: left;
     border-top-left-radius: 2px;
 }
@@ -659,7 +658,7 @@ body.dark .chat-box {
 
 /* Source card styling — OG look */
 #page-ai .source-card {
-    background: linear-gradient(110deg, var(--a), var(--a2));
+    background: white;
     padding: 10px;
     border-radius: 8px;
     margin: 6px 0;
@@ -847,4 +846,70 @@ body.dark #page-ai .user {
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
+/* Chat UI Block */
+#chat-window {
+  background: #1a1a1d;
+  padding: 10px;
+  height: 300px;
+  overflow-y: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #333;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.message {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.message span.username {
+  color: #6aa9ff;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+#message-input {
+  width: 70%;
+  padding: 10px;
+  border-radius: 4px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+#send-button {
+  padding: 10px 16px;
+  background: #6aa9ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 5px;
+  font-size: 14px;
+}
+
+#chat-window {
+  background: #1a1a1d;
+  padding: 10px;
+  height: 300px;
+  overflow-y: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #333;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.message {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.message span {
+  color: #6aa9ff;
+  font-weight: bold;
+  margin-right: 6px;
+}
 
