@@ -10,7 +10,15 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="favicon.ico" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const p = new URLSearchParams(location.search);
+    if (p.get("verified") !== "true") {
+      location.href = "https://verifycloudflare-17549349.codehs.me/index.html";
+    } else {
+      history.replaceState({}, document.title, location.pathname);
+    }
+  </script>
 
 </head>
 <body>
@@ -54,7 +62,7 @@
       <div class="home-inner">
         <div class="clock-pill"><span id="clockTime">--:--</span><small id="clockDate">Loading...</small></div>
         <div class="logo-main"><span>360</span></div>
-        <div class="weather-chip"><span>Weather:</span><span id="homeWeatherText">Loading...</span></div>
+        <div class="weather-chip"><span>Weather:  </span><span id="homeWeatherText">Loading...</span></div>
         <label class="temp-toggle"><input type="checkbox" id="tempToggle"><span class="toggle-text">°C  °F</span></label>
         <div class="search-shell"><div class="gcse-search"></div></div>
         <audio id="clickSound" src="click.mp3" preload="auto"></audio>
@@ -76,16 +84,20 @@
       <div id="map" class="weather-map"></div>
       <p class="muted">Powered by OpenWeatherMap & OpenStreetMap</p>
     </section>
-<!-- Chat With Others -->
-<section class="page" id="page-chat">
-  <button class="back-btn top-right">← Back</button>
-  <br><br>
-  <h2>💬 360 Chat</h2>
-<div id="chat-window"></div>
-<input type="text" id="message-input" placeholder="Type your message..." />
-<button id="send-button">Send</button>
-
-</section>
+    
+    <!-- Chat System -->
+    <section class="page" id="page-chat">
+      <button class="back-btn top-right">← Back</button>
+      <br><br>
+      <h2 style="text-align:center;">360 Chat</h2>
+      <br><br>
+      <div id="chat-window"></div>
+      <br><br>
+      <div id="chat-input-row">
+        <input type="text" id="message-input" placeholder="Type your message..." />
+        <button id="send-button">Send</button>
+      </div>
+    </section>
 
     <!-- AI Chatbot -->
     <section class="page" id="page-ai">
@@ -106,7 +118,7 @@
     <section class="page" id="page-translator">
       <button class="back-btn top-right">← Back</button>
       <br><br>
-      <h2>🌍 Translator</h2>
+      <h2>Translator</h2>
 
       <div id="translator" style="margin-top:20px">
         <textarea id="translateInput" placeholder="Enter text..." rows="3" style="width:100%"></textarea>
