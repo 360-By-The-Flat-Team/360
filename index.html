@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Favicon links!-->
+    <!-- Favicon links!-->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -18,6 +18,20 @@
   <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<!--Cloudflare Script!-->
+
+<!--
+<script>
+  const p = new URLSearchParams(location.search);
+  if (p.get("verified") !== "true") {
+    location.href = "https://verifycloudflare-17549349.codehs.me/index.html";
+  } else {
+    history.replaceState({}, document.title, location.pathname);
+  }
+</script>
+
+!-->
+<!--slash out above script when testing in codehs console to avoid redirects !-->
 </head>
 <body>
     <!-- Cursor!-->
@@ -87,11 +101,11 @@
       <button id="auth-close-btn" class="close-btn">Close</button>
     </div>
   </div>
-<!--Home page blocks and cards!-->
+<!--Home page elements!-->
   <main class="main">
     <section class="page active" id="page-main360">
       <div class="home-inner">
-        <div class="clock-pill"><span id="clockTime">--:--</span><small id="clockDate">Loading...</small></div>
+        <div class="clock-pill"><span id=" clockTime">--:--</span><small id="clockDate">Loading...</small></div>
         <div class="logo-main"><span>360</span></div>
         <div class="weather-chip"><span>Weather:  </span><span id="homeWeatherText">Loading...</span></div>
         <label class="temp-toggle"><input type="checkbox" id="tempToggle"><span class="toggle-text">°C °F</span></label>
@@ -223,3 +237,6 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+
+   
