@@ -1,24 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+    <!-- Favicon links!-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+ <!-- Basic metadata stuff !-->
   <meta charset="UTF-8" />
   <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#3b82f6" />
+ <!-- Links !-->
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+<!--Cloudflare Script!-->
+<script>
+  const p = new URLSearchParams(location.search);
+  if (p.get("verified") !== "true") {
+    location.href = "https://verifycloudflare-17549349.codehs.me/index.html";
+  } else {
+    history.replaceState({}, document.title, location.pathname);
+  }
+</script>
+<!--slash out above script when testing in codehs console to avoid redirects !-->
 </head>
 <body>
+    <!-- Cursor!-->
   <div class="cursor-dot"></div><div class="cursor-trail"></div>
+  <!--All menu related settings!-->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><br><div id="settingsBtn">⚙️</div></div>
@@ -33,6 +47,7 @@
     </nav>
     <footer class="sidebar-footer">360 · Flat Inc. · 2026</footer>
   </aside>
+  <!--Settings!-->
   <div class="overlay" id="overlay"></div>
   <div class="overlay" id="settingsOverlay"></div>
   <section class="settings-panel" id="settingsPanel">
@@ -64,7 +79,7 @@
     </div>
     <br><br>
 
-
+<!--Sign in UI!-->
   <div id="auth-popup" class="auth-popup hidden">
     <div class="auth-box">
       <h2>Account Login</h2>
@@ -74,14 +89,15 @@
     
       <button id="auth-login-btn">Log In</button>
       <button id="auth-signup-btn">Sign Up</button>
+<!--Sign in with Google!-->
     <div id="g_id_signin" style="margin-top: 10px;"></div>
-
+<!-- Ending sign in UI!-->
       <p id="auth-error" class="auth-error"></p>
       
       <button id="auth-close-btn" class="close-btn">Close</button>
     </div>
   </div>
-
+<!--Home page blocks and cards!-->
   <main class="main">
     <section class="page active" id="page-main360">
       <div class="home-inner">
@@ -198,8 +214,8 @@
         <input id="ticker" placeholder="Enter ticker (e.g. AAPL)" required />
         <button type="submit">Check</button>
       </form>
+      <br><br>
       <div id="quote" class="quote"></div>
-      <p class="muted">Powered by Alpha Vantage</p>
     </section>
   </main>
 
@@ -217,6 +233,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-
-   
