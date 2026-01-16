@@ -1,49 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SCZB3M2PNX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-SCZB3M2PNX');
-</script>
-    <!-- Favicon links!-->
+  <!-- Favicon links!-->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="manifest" href="/site.webmanifest">
- <!-- Basic metadata stuff !-->
+  <!-- Basic metadata stuff! -->
   <meta charset="UTF-8" />
   <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#3b82f6" />
- <!-- Links !-->
+  <!-- Links !-->
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+<script src="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
+<!-- Viewport for Mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Description & Author -->
+<meta name="description" content="360 is a fully prepared to the brim browser with the basics to the examplary for those with more use cases than just searching. We've currently got: Weather; Maps; Translating; Sign in systems; URL Shorteners; Stocks and an A.I. Chatbot! (Please note that 360 was developed in early January 2026 and is still in development.)">
+<meta name="author" content="The Flat Team">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://360-search.com/">
+
+<!-- Open Graph (Universal) -->
+<meta property="og:url" content="https://360-search.com/">
+<meta property="og:description" content="360 is a fully prepared to the brim browser with the basics to the examplary for those with more use cases than just searching. We've currently got: Weather; Maps; Translating; Sign in systems; URL Shorteners; Stocks and an A.I. Chatbot! (Please note that 360 was developed in early January 2026 and is still in development.)">
+<meta property="og:image" content="https://360-search.com/og-image.jpg">
+<meta property="og:site_name" content="360 |A Multi-Tool Browser">
+<meta property="og:locale" content="en_US">
+
+
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<!--Cloudflare Script!-->
-
-<!--
-<script>
-  const p = new URLSearchParams(location.search);
-  if (p.get("verified") !== "true") {
-    location.href = "https://verifycloudflare-17549349.codehs.me/index.html";
-  } else {
-    history.replaceState({}, document.title, location.pathname);
-  }
-</script>
-
-!-->
-<!--slash out above script when testing in codehs console to avoid redirects !-->
+  <!--Cloudflare Script!-->
+    
+    <script>
+      const p = new URLSearchParams(location.search);
+      if (p.get("verified") !== "true") {
+        location.href = "https://verifycloudflare-17549349.codehs.me/index.html";
+      } else {
+        history.replaceState({}, document.title, location.pathname);
+      }
+    </script>
+    -->
+  <!--slash out above script when testing in codehs console to avoid redirects !-->
 </head>
 <body>
-    <!-- Cursor!-->
+  <!-- Cursor!-->
   <div class="cursor-dot"></div><div class="cursor-trail"></div>
   <!--All menu related settings!-->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
@@ -80,6 +87,10 @@
       <div class="settings-label">Mode</div>
       <label>Dark mode <input type="checkbox" id="darkToggle" /></label>
     </div>
+    <label>
+</label>
+
+
   </section>
     <!-- Sign In / Sign Out -->
     <div id="auth-buttons">
@@ -92,7 +103,7 @@
     </div>
     <br><br>
 
-<!--Sign in UI!-->
+  <!--Sign in UI!-->
   <div id="auth-popup" class="auth-popup hidden">
     <div class="auth-box">
       <h2>Account Login</h2>
@@ -102,19 +113,19 @@
     
       <button id="auth-login-btn">Log In</button>
       <button id="auth-signup-btn">Sign Up</button>
-<!--Sign in with Google!-->
-    <div id="g_id_signin" style="margin-top: 10px;"></div>
-<!-- Ending sign in UI!-->
+      <!--Sign in with Google!-->
+      <div id="g_id_signin" style="margin-top: 10px;"></div>
+      <!-- Ending sign in UI!-->
       <p id="auth-error" class="auth-error"></p>
       
       <button id="auth-close-btn" class="close-btn">Close</button>
     </div>
   </div>
-<!--Home page elements!-->
+  <!--Home page elements!-->
   <main class="main">
     <section class="page active" id="page-main360">
       <div class="home-inner">
-        <div class="clock-pill"><span id=" clockTime">--:--</span><small id="clockDate">Loading...</small></div>
+        <div class="clock-pill"><span id=" clockTime"></span><small id="clockDate">Loading...</small></div>
         <div class="logo-main"><span>360</span></div>
         <div class="weather-chip"><span>Weather:  </span><span id="homeWeatherText">Loading...</span></div>
         <label class="temp-toggle"><input type="checkbox" id="tempToggle"><span class="toggle-text">°C °F</span></label>
@@ -179,7 +190,7 @@
         <textarea id="translateInput" placeholder="Enter text..." rows="3" style="width:100%"></textarea>
 
         <div style="margin:10px 0">
-          <label>From:
+          <label>
             <select id="sourceLang">
               <option value="en">English</option>
               <option value="es">Spanish</option>
@@ -242,7 +253,6 @@
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
