@@ -307,6 +307,10 @@ body.dark .back-btn {
   background: rgba(255, 255, 255, .7);
   backdrop-filter: blur(10px);
 }
+.weather-map {
+  height: 400px;
+  margin-top: 20px;
+}
 
 body.dark .clock-pill,
 body.dark .weather-chip {
