@@ -993,6 +993,46 @@ body.dark #page-ai .user {
 #logout-btn:hover {
   background: rgba(148, 163, 184, .15);
 }
+#bg-settings {
+  padding: 1rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+  color: #eee;
+  font-family: 'Inter', sans-serif;
+}
+
+#bg-settings label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+#bg-settings input[type="file"],
+#bg-settings input[type="text"] {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+#bg-settings button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background: #00bfa6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+#bg-settings button:hover {
+  background: #009e8e;
+}
 
 
 
