@@ -733,41 +733,38 @@ chatSupabase.auth.onAuthStateChange((event, session) => {
     logoutBtn.style.display = "none";
   }
 });
-function changeBackground() {
+document.getElementById('setBgBtn').addEventListener('click', () => {
   const fileInput = document.getElementById('bgUpload');
   const urlInput = document.getElementById('bgUrl');
   const file = fileInput.files[0];
-  const url = urlInput.value;
+  const url = urlInput.value.trim();
 
   if (file) {
     const reader = new FileReader();
     reader.onload = function (e) {
-      document.body.style.backgroundImage = `url('${e.target.result}')`;
+      applyBackground(e.target.result);
     };
     reader.readAsDataURL(file);
   } else if (url) {
-    document.body.style.backgroundImage = `url('${url}')`;
+    applyBackground(url);
   } else {
-    alert('Please upload a file or enter an image URL.');
+    alert('Upload a file or paste an image URL.');
   }
+});
 
+function applyBackground(imageSrc) {
+  document.body.style.backgroundImage = `url('${imageSrc}')`;
   document.body.style.backgroundSize = 'cover';
   document.body.style.backgroundPosition = 'center';
+  document.body.style.backgroundAttachment = 'fixed';
+  localStorage.setItem('bgImage', imageSrc);
 }
-// Save
-localStorage.setItem('bgImage', document.body.style.backgroundImage);
 
-// Load on page load
-window.onload = function () {
-  const savedBg = localStorage.getItem('bgImage');
-  if (savedBg) {
-    document.body.style.backgroundImage = savedBg;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-  }
-};
-
-
+// Load saved background on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('bgImage');
+  if (saved) applyBackground(saved);
+});
 
 
 
