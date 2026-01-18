@@ -113,6 +113,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="swatch" data-theme="mono"></div>
       </div>
     </div>
+    <div id="bg-settings" class="settings-section">
+  <h3>Background Settings</h3>
+  <label for="bgUpload">Upload Image:</label>
+  <input type="file" id="bgUpload" accept="image/*">
+
+  <label for="bgUrl">Or Paste Image URL:</label>
+  <input type="text" id="bgUrl" placeholder="https://example.com/image.jpg">
+
+  <button id="setBgBtn">Set Background</button>
+</div>
+
     <div class="settings-row">
       <div class="settings-label">Mode</div>
       <label>Dark mode <input type="checkbox" id="darkToggle" /></label>
