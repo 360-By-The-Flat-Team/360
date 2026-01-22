@@ -1054,6 +1054,80 @@ body.dark #page-ai .user {
 .news-item a:hover {
   text-decoration: underline;
 }
+/* Reset default styles */
+button, input[type="checkbox"] {
+  all: unset;
+  box-sizing: border-box;
+}
+
+/* 🔘 Button Styling */
+button {
+  background-color: #1f6feb;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-family: 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+button:hover {
+  background-color: #1158c7;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* 🟩 Checkbox Styling */
+input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #1f6feb;
+  border-color: #1f6feb;
+}
+
+input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+input[type="checkbox"]:checked::after {
+  opacity: 1;
+}
+
+/* Optional: Label spacing */
+label {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 16px;
+  color: #222;
+  margin-left: 8px;
+  cursor: pointer;
+}
 
 
 
