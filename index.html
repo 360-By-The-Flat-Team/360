@@ -51,6 +51,22 @@
   <!--slash out above script when testing in codehs console to avoid redirects !-->
 </head>
 <body>
+  <script>
+  const cursor = document.getElementById('cursor');
+
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = `${e.clientX}px`;
+    cursor.style.top = `${e.clientY}px`;
+  });
+
+  document.addEventListener('mousedown', () => {
+    cursor.classList.add('clicking');
+    setTimeout(() => {
+      cursor.classList.remove('clicking');
+    }, 500); // 0.5 seconds
+  });
+</script>
+
   <!-- Cursor!-->
   <div class="cursor-dot"></div><div class="cursor-trail"></div>
   <!--All menu related settings!-->
