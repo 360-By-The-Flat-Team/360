@@ -75,6 +75,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   });
 
   document.addEventListener('mousedown', () => {
+    const clickSound = new Audio("https://codehs.com/uploads/86c606773982f9a2329309a306246b60");
+
+document.addEventListener('mousedown', () => {
+  clickSound.currentTime = 0; // reset so it can replay quickly
+  clickSound.play();
+
+  cursor.classList.add('clicking');
+  setTimeout(() => {
+    cursor.classList.remove('clicking');
+  }, 500);
+});
+
     cursor.classList.add('clicking');
     setTimeout(() => {
       cursor.classList.remove('clicking');
