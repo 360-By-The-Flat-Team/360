@@ -148,6 +148,23 @@ body.dark .sidebar {
   font-weight: 700;
 }
 
+.nav-link {
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.nav-link:hover {
+  background: rgba(148, 163, 184, .15);
+}
+
+.nav-link.active {
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  color: #050816;
+  font-weight: 700;
+}
+
 .sidebar-footer {
   margin-top: auto;
   font-size: 11px;
