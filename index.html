@@ -144,24 +144,117 @@ document.addEventListener('mousedown', () => {
     </div>
     <br><br>
 
-  <!--Sign in UI!-->
-  <div id="auth-popup" class="auth-popup hidden">
-    <div class="auth-box">
-      <h2>Account Login</h2>
-    
-      <input id="auth-email" type="email" placeholder="Email">
-      <input id="auth-password" type="password" placeholder="Password">
-    
-      <button id="auth-login-btn">Log In</button>
-      <button id="auth-signup-btn">Sign Up</button>
-      <!--Sign in with Google!-->
-      <div id="g_id_signin" style="margin-top: 10px;"></div>
-      <!-- Ending sign in UI!-->
-      <p id="auth-error" class="auth-error"></p>
-      
-      <button id="auth-close-btn" class="close-btn">Close</button>
-    </div>
+ <!-- Sign In / Sign Out -->
+<div id="auth-buttons">
+  <button id="open-login-btn">Sign In / Sign Up</button>
+  <button id="logout-btn" style="display:none;">Sign Out</button>
+</div>
+
+<!-- Sign in UI -->
+<div id="auth-popup" class="auth-popup hidden">
+  <div class="auth-box">
+    <h2>Account Login</h2>
+    <input id="auth-email" type="email" placeholder="Email">
+    <input id="auth-password" type="password" placeholder="Password">
+
+    <button id="auth-login-btn">Log In</button>
+    <button id="auth-signup-btn">Sign Up</button>
+
+    <!-- GitHub Sign In -->
+    <button id="github-login">Sign in with GitHub</button>
+    <!-- Google Sign In -->
+    <button id="google-login">Sign in with Google</button>
+
+    <p id="auth-error" class="auth-error"></p>
+    <button id="auth-close-btn" class="close-btn">Close</button>
   </div>
+</div>
+
+<style>
+  .hidden { display: none; }
+  .auth-popup {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+  }
+  .auth-box {
+    background: #fff; padding: 20px; border-radius: 8px; width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center;
+  }
+  .auth-box input { width: 100%; margin: 8px 0; padding: 8px; }
+  .auth-box button { margin: 6px 0; padding: 10px; width: 100%; }
+  .auth-error { color: red; margin-top: 10px; }
+  .close-btn { background: #ccc; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Initialize Supabase client
+  const supabase = supabase.createClient(
+    'https://wiswfpfsjiowtrdyqpxy.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM'
+  );
+
+  // UI elements
+  const openLoginBtn = document.getElementById('open-login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const authPopup = document.getElementById('auth-popup');
+  const loginBtn = document.getElementById('auth-login-btn');
+  const signupBtn = document.getElementById('auth-signup-btn');
+  const closeBtn = document.getElementById('auth-close-btn');
+  const errorMsg = document.getElementById('auth-error');
+
+  // Show/Hide popup
+  openLoginBtn.addEventListener('click', () => authPopup.classList.remove('hidden'));
+  closeBtn.addEventListener('click', () => authPopup.classList.add('hidden'));
+
+  // Email login
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) errorMsg.textContent = error.message;
+    else {
+      authPopup.classList.add('hidden');
+      logoutBtn.style.display = 'inline-block';
+      openLoginBtn.style.display = 'none';
+    }
+  });
+
+  // Email signup
+  signupBtn.addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) errorMsg.textContent = error.message;
+    else errorMsg.textContent = "Check your email to confirm your account!";
+  });
+
+  // GitHub OAuth
+  document.getElementById('github-login').addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: 'https://wiswfpfsjiowtrdyqpxy.supabase.co/auth/v1/callback' }
+    });
+    if (error) console.error('GitHub login error:', error.message);
+  });
+
+  // Google OAuth
+  document.getElementById('google-login').addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: 'https://wiswfpfsjiowtrdyqpxy.supabase.co/auth/v1/callback' }
+    });
+    if (error) console.error('Google login error:', error.message);
+  });
+
+  // Logout
+  logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    logoutBtn.style.display = 'none';
+    openLoginBtn.style.display = 'inline-block';
+  });
+</script>
+
   <!--Home page elements!-->
   <main class="main">
     <section class="page active" id="page-main360">
