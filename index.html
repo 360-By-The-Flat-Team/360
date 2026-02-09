@@ -164,9 +164,43 @@ document.addEventListener('mousedown', () => {
     <button id="auth-signup-btn">Sign Up</button>
 
     <!-- GitHub Sign In -->
-    <button id="github-login">Sign in with GitHub</button>
+  <button id="github-login" style="
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  border:1px solid #24292e;
+  border-radius:4px;
+  background:#24292e;
+  color:#fff;
+  font-size:14px;
+  font-family:Arial, sans-serif;
+  cursor:pointer;
+">
+  <img src='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' 
+       alt='GitHub logo' 
+       style="width:18px;height:18px;filter:invert(1);">
+  <span>Sign in with GitHub</span>
+</button>
+
     <!-- Google Sign In -->
-    <button id="google-login">Sign in with Google</button>
+    <button id="google-login" style="
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  border:1px solid #dadce0;
+  border-radius:4px;
+  background:#fff;
+  color:#3c4043;
+  font-size:14px;
+  font-family:Roboto, Arial, sans-serif;
+  cursor:pointer;
+">
+  <img src='https://developers.google.com/identity/images/g-logo.png' alt='Google logo' style="width:18px;height:18px;">
+  <span>Sign in with Google</span>
+</button>
+
 
     <p id="auth-error" class="auth-error"></p>
     <button id="auth-close-btn" class="close-btn">Close</button>
