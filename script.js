@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     const { error } = await supabase.auth.signUp({ email, password });
-    authError.textContent = error ? error.message : "Check your email to confirm.";
+    authError.textContent = error ? error.message : "Check your email to confirm your sign up!";
   };
 
   // Email/password login
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
         options: { redirectTo: "https://360-search.com" }
       });
       if (error) {
-        authError.textContent = "GitHub sign-in failed: " + error.message;
+        authError.textContent = "Sorry, GitHub sign-in failed: " + error.message;
       } else if (data?.url) {
         window.location.href = data.url;
       }
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
         options: { redirectTo: "https://360-search.com" }
       });
       if (error) {
-        authError.textContent = "Google sign-in failed: " + error.message;
+        authError.textContent = "Sorry, Google sign-in failed: " + error.message;
       } else if (data?.url) {
         window.location.href = data.url;
       }
@@ -219,7 +219,7 @@ if (select("#sendBtn")) {
 
       if (error) throw error;
 
-      const aiMessage = data?.reply || "No response";
+      const aiMessage = data?.reply || "Cannot reply at this time. Please try again later. If this issue persists, please contact us at help@360-search.com. We apologize for the inconvience.";
 
       chatMemory.push({ role: "user", content: userMessage });
       chatMemory.push({ role: "assistant", content: aiMessage });
