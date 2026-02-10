@@ -131,7 +131,46 @@ document.addEventListener('mousedown', () => {
     </div>
   </section>
 </label>
-  
+  <div style="background:#111; color:#fff; padding:20px; border-radius:8px; font-family:sans-serif;">
+  <h3>Change Background</h3>
+
+  <!-- Upload from file -->
+  <label style="display:block; margin-bottom:10px;">
+    Upload Image:
+    <input type="file" id="bg-upload" accept="image/*" style="margin-top:6px; padding:6px; width:100%;">
+  </label>
+
+  <!-- Or use a URL -->
+  <label style="display:block; margin-bottom:10px;">
+    Image URL:
+    <input type="text" id="bg-url" placeholder="https://example.com/image.jpg" style="margin-top:6px; padding:6px; width:100%;">
+  </label>
+  <button id="bg-url-btn" style="padding:8px 12px; background:#38bdf8; color:#000; border:none; border-radius:4px; cursor:pointer;">Set Background</button>
+</div>
+
+<script>
+  document.getElementById('bg-upload').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = event => {
+      document.body.style.backgroundImage = `url('${event.target.result}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('bg-url-btn').addEventListener('click', () => {
+    const url = document.getElementById('bg-url').value.trim();
+    if (url) {
+      document.body.style.backgroundImage = `url('${url}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+    }
+  });
+</script>
+
     <!-- Auth Buttons -->
 <div id="auth-buttons">
   <button id="open-login-btn">Sign In / Sign Up</button>
