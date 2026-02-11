@@ -252,14 +252,6 @@ document.addEventListener('mousedown', () => {
     await supabase.auth.signOut();
     location.reload();
   };
-
-  // Optional: Show/hide buttons based on session
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) {
-      logoutBtn.style.display = 'inline-block';
-      openLoginBtn.style.display = 'none';
-    }
-  });
 </script>
 
 
