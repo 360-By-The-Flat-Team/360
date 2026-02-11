@@ -1,0 +1,117 @@
+
+<!-- created by flexcached 2026-02-11 13:27:40--><html lang="en"><head><title>Play Slope Rider Game Online !</title><meta charset="utf-8" /><meta name="robots" content="noindex, nofollow, noodp, noydir" /><meta name="viewport" content="width=device-width, maximum-scale=1.0, initial-scale=1.0, user-scalable=no, minimal-ui" /><meta http-equiv="X-UA-Compatible" content="requiresActiveX=true,IE=Edge,chrome=1" /><meta http-equiv="Content-Language" content="en-US" /><style>* {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ font-family: "Helvetica Neue", "Calibri Light", Roboto, sans-serif;
+ }
+
+ html,
+ body {
+ background-color: rgba(0, 0, 0, 0.4);
+ }</style></head><body id="run_IFRAME_HTML"><style>.before-playing {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: #16181e;
+			}
+
+			.blur-background {
+				background-image: url('https://slope-rider.io/data/image/game/slope-rider.webp');
+				background-repeat: no-repeat;
+				position: absolute;
+				background-size: cover;
+				background-position: 50%;
+				filter: blur(12px);
+				opacity: .7;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				width: 100%;
+				height: 100%;
+				z-index: -1;
+			}
+
+			.preload-before-playing {
+				padding: 20px 30px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex-wrap: wrap;
+				flex-direction: column;
+				width: 100%;
+				height: 100%;
+				box-sizing: border-box;
+				max-width: 800px;
+				margin: 0 auto;
+			}
+
+			.image-thumbnail-playing img {
+				box-shadow: 0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%);
+				border: 2px solid #f78b00;
+				border-radius: 16px;
+			}
+
+			.title-game-playing span {
+				min-width: 160px;
+				border-radius: 40px;
+				text-transform: uppercase;
+				padding: 20px 40px;
+				margin-top: 20px;
+				cursor: pointer;
+				color: #000000;
+				animation: crunch 600ms infinite ease;
+				text-align: center;
+				display: block;
+				font-size: 20px;
+				font-weight: bold;
+				font-family: system-ui;
+				letter-spacing: 1px;
+				-webkit-box-shadow: 0px 2px 11px rgba(255, 184, 0, 0.28), inset 3px -3px 1px rgba(0, 0, 0, 0.5);
+				box-shadow: 0px 2px 11px rgba(255, 184, 0, 0.28), inset 3px -3px 1px rgba(0, 0, 0, 0.5);
+				background-color: #fe7430;
+			}
+
+			.title-game-playing span:hover {
+				background-color: #ffd34f;
+			}
+
+			@keyframes crunch {
+				0% {
+					transform: rotate(-2deg) scale(0.98);
+				}
+
+				50% {
+					transform: rotate(2deg) scale(1.02);
+				}
+
+				100% {
+					transform: rotate(-2deg) scale(1);
+				}
+			}</style><div class="before-playing" id="preloading-game"><div class="blur-background"></div><div class="preload-before-playing"><div class="image-thumbnail-playing" onclick="start_game_frame()"><img width="220" height="220" src="https://slope-rider.io/cache/data/image/game/slope-rider-h220x220.webp" alt="Slope Rider" title="Slope Rider" /></div><div class="title-game-playing"><span onclick="start_game_frame()">PLAY NOW</span></div></div></div><script>async function start_game_frame() {
+                //let frame_game = '<iframe id="iframehtml5" width="100%" height="100%" src="https://game.azgame.io/slope-rider/" frameborder="0" border="0" scrolling="no" class="iframe-default" allowfullscreen></iframe>';
+                let frame_game = document.createElement('iframe');
+                frame_game.setAttribute('id', 'iframehtml5');
+                frame_game.setAttribute('width', '100%');
+                frame_game.setAttribute('height', '100%');
+                frame_game.setAttribute('frameborder', '0');
+                frame_game.setAttribute('border', '0');
+                frame_game.setAttribute('scrolling', 'no');
+                frame_game.setAttribute('class', 'iframe-default');
+                frame_game.setAttribute('allowfullscreen', 'true');
+                frame_game.setAttribute('src', 'https://game.azgame.io/slope-rider/');
+                if (document.getElementById("preloading-game")) {
+                await document.getElementById("preloading-game").remove();
+            }
+ document.body.append(frame_game);
+ frame_game.focus();
+				fetch("/count.ajax?id=1");
+ // frame_game.onload = () => {
+ // window.addEventListener("keyup", frame_game.contentWindow.onGameKeyUp);
+ // window.addEventListener("keydown", frame_game.contentWindow.onGameKeyDown);
+ // };
+ }</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"b1f974ebc1614bd1bfcd271138e6308a","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body></html>
