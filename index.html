@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -104,16 +105,15 @@ document.addEventListener('mousedown', () => {
       <div class="nav-item" data-page="shortener">URL Shortener</div>
       <div class="nav-item" data-page="stocks">Stocks</div>
       <div class="nav-item" data-page="translator">Translator</div>
-      <div class="nav-item" data-page="chat">Chat With Other Users</div>
-      <div class="nav-link" onclick="window.location.href='https://games360-17775301.codehs.me'">Space Glider</div>
+      <div class="nav-item" data-page="chat">Chat With Others</div>
+      <div class="nav-link" onclick="window.location.href='https://games360-17775301.codehs.me'">Play Space Glider</div>
     </nav>
-    <footer class="sidebar-footer">360 · The 360 Team · 2026</footer>
+    <footer class="sidebar-footer">360 · Flat Inc. · 2026</footer>
   </aside>
   <!--Settings!-->
   <div class="overlay" id="overlay"></div>
   <div class="overlay" id="settingsOverlay"></div>
   <section class="settings-panel" id="settingsPanel">
-
     <h3>Appearance</h3>
     <div class="settings-row">
       <div class="settings-label">Theme</div>
@@ -130,31 +130,11 @@ document.addEventListener('mousedown', () => {
       <div class="settings-label">Mode</div>
       <label>Dark mode <input type="checkbox" id="darkToggle" /></label>
     </div>
-  <div class="settings-row">
-  <div class="settings-label">Background</div>
-  <div style="margin-top: 10px;">
-    <!-- Upload from file -->
-    <label style="display:block; margin-bottom:10px;">
-      Upload Image:
-      <input type="file" id="bg-upload" accept="image/*" style="margin-top:6px; padding:6px; width:100%;">
-    </label>
-
-    <!-- Or use a URL -->
-    <label style="display:block; margin-bottom:10px;">
-      Image URL:
-      <input type="text" id="bg-url" placeholder="https://example.com/image.jpg" style="margin-top:6px; padding:6px; width:100%;">
-    </label>
-
-    <button id="bg-url-btn" style="padding:8px 12px; background:#38bdf8; color:#000; border:none; border-radius:4px; cursor:pointer;">
-      Set Background
-    </button>
-  </div>
-</div>
+    <label>
+</label>
 
 
   </section>
-</label>
-
     <!-- Auth Buttons -->
 <div id="auth-buttons">
   <button id="open-login-btn">Sign In / Sign Up</button>
@@ -292,7 +272,7 @@ document.addEventListener('mousedown', () => {
       <div class="home-inner">
         <div class="clock-pill">
             <span id="clockTime"></span>
-            <small id="clockDate">Loading time...</small>
+            <small id="clockDate">Loading...</small>
         </div>
         <div class="logo-main"><span>360</span></div>
         <div class="weather-chip"><span>Weather:  </span><span id="homeWeatherText">Loading...</span></div>
@@ -302,7 +282,7 @@ document.addEventListener('mousedown', () => {
         <audio id="bgMusic" src="https://codehs.com/uploads/67f63271a193390889e0c8567c1ccff4" loop hidden></audio>
         <div id="musicToggle">🔈 Music</div>
         <h5></h5>
-        
+        <!--
         <div id="open360" onclick="open360Search()">Open 360</div>
         
         <script>
@@ -314,18 +294,17 @@ document.addEventListener('mousedown', () => {
                 window.open(url, windowName, features);
             }
         </script>
-        
+        -->
       </div>
     </section>
-    
-    <!-- Weather -->
+     <!-- Weather -->
     <section class="page" id="page-weather">
       <button class="back-btn top-right">← Back</button>
       <br><br>
       <h2>🌦️ Weather</h2>
       <form id="weatherForm" class="weather-form">
         <input id="city" placeholder="Enter city..." required />
-        <button type="submit">Check Weather!</button>
+        <button type="submit">Check</button>
       </form>
       <br><br>
       <div id="weatherContent" class="weather-output">Waiting for input...</div>
@@ -342,7 +321,7 @@ document.addEventListener('mousedown', () => {
       <div id="chat-window"></div>
       <br><br>
       <div id="chat-input-row">
-        <input type="text" id="message-input" placeholder="Type your message! Please adhere to basic speech rules such as respecting others and not bringing up harmful or controversial topics!" />
+        <input type="text" id="message-input" placeholder="Type your message..." />
         <button id="send-button">Send</button>
       </div>
     </section>
@@ -356,7 +335,7 @@ document.addEventListener('mousedown', () => {
       <div id="chat"></div>
     
       <div id="input-area">
-        <input type="text" id="userInput" placeholder="Type a message!" />
+        <input type="text" id="userInput" placeholder="Type a message..." />
         <button id="sendBtn">Send</button>
       </div>
     </section>
@@ -405,7 +384,7 @@ document.addEventListener('mousedown', () => {
       <br><br>
       <h2>URL Shortener</h2>
       <div class="shortener-box">
-        <input id="shortInput" placeholder="Paste a URL..." />
+        <input id="shortInput" placeholder="Paste URL..." />
         <button id="shortBtn">Shorten</button>
       </div>
       <div id="shortResult">No link yet.</div>
@@ -417,8 +396,8 @@ document.addEventListener('mousedown', () => {
       <br><br>
       <h2>📈 Stocks</h2>
       <form id="stockForm">
-        <input id="ticker" placeholder="Enter a ticker (e.g. NVDA)" required />
-        <button type="submit">Check Stock</button>
+        <input id="ticker" placeholder="Enter ticker (e.g. AAPL)" required />
+        <button type="submit">Check</button>
       </form>
       <br><br>
       <div id="quote" class="quote"></div>
