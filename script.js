@@ -6,13 +6,11 @@ const select = s => document.querySelector(s);
 const selectAll = s => document.querySelectorAll(s);
 const b = document.body;
 
-// Main Supabase client (auth + chat)
 const supabase = window.supabase.createClient(
   "https://wiswfpfsjiowtrdyqpxy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
 );
 
-// Separate Supabase client for AI Edge Function
 const aiSupabase = window.supabase.createClient(
   "https://yfnwexvsibzqyuqfkepa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
@@ -21,7 +19,6 @@ const aiSupabase = window.supabase.createClient(
 // THEME + APPEARANCE
 // =========================
 
-// Load saved theme
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme) {
   b.classList.add("theme-" + savedTheme);
@@ -29,11 +26,9 @@ if (savedTheme) {
   if (swatch) swatch.classList.add("active");
 }
 
-// Load saved accent color
 const savedAccent = localStorage.getItem("accentColor");
 if (savedAccent) b.style.setProperty("--accent", savedAccent);
 
-// Theme swatches
 selectAll(".swatch").forEach(swatch => {
   swatch.onclick = () => {
     b.classList.forEach(cls => {
@@ -52,7 +47,6 @@ selectAll(".swatch").forEach(swatch => {
   };
 });
 
-// Dark mode toggle
 const darkToggle = select("#darkToggle");
 darkToggle.checked = localStorage.getItem("darkMode") === "true";
 b.classList.toggle("dark", darkToggle.checked);
@@ -62,10 +56,40 @@ darkToggle.onchange = e => {
   localStorage.setItem("darkMode", v);
 };
 // =========================
-// AUTH SYSTEM (EMAIL + OAUTH)
+// DOMContentLoaded: Auth + Background Upload
 // =========================
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Background image upload
+  const upload = select("#bg-upload");
+  const urlBtn = select("#bg-url-btn");
+
+  if (upload) {
+    upload.addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = event => {
+        document.body.style.backgroundImage = `url('${event.target.result}')`;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (urlBtn) {
+    urlBtn.addEventListener("click", () => {
+      const url = select("#bg-url").value.trim();
+      if (url) {
+        document.body.style.backgroundImage = `url('${url}')`;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+      }
+    });
+  }
+
+  // Auth system
   const authPopup = select("#auth-popup");
   const authEmail = select("#auth-email");
   const authPassword = select("#auth-password");
@@ -76,6 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const openLoginBtn = select("#open-login-btn");
   const logoutBtn = select("#logout-btn");
   const logoutLabel = select("#logout-label");
+  const githubBtn = select("#github-login");
+  const googleBtn = select("#google-login");
 
   function openAuthPopup() {
     authPopup.classList.remove("hidden");
@@ -86,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
     authError.textContent = "";
   }
 
-  // Email/password signup
   authSignupBtn.onclick = async () => {
     const email = authEmail.value.trim();
     const password = authPassword.value.trim();
@@ -98,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
     authError.textContent = error ? error.message : "Check your email to confirm your sign up!";
   };
 
-  // Email/password login
   authLoginBtn.onclick = async () => {
     const email = authEmail.value.trim();
     const password = authPassword.value.trim();
@@ -114,8 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // OAuth: GitHub
-  const githubBtn = select("#github-login");
   if (githubBtn) {
     githubBtn.onclick = async () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -130,8 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // OAuth: Google
-  const googleBtn = select("#google-login");
   if (googleBtn) {
     googleBtn.onclick = async () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -146,17 +166,15 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // Logout
   logoutBtn.onclick = async () => {
     await supabase.auth.signOut();
     location.reload();
   };
 
-  // Auth state UI updates
   function updateAuthUI(user) {
     if (user) {
       const username = user.email.split("@")[0];
-      logoutLabel.textContent = `Sign Out — Signed in as ${username}`;
+      if (logoutLabel) logoutLabel.textContent = `Sign Out — Signed in as ${username}`;
       openLoginBtn.style.display = "none";
       logoutBtn.style.display = "block";
     } else {
@@ -165,17 +183,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Initial session check
   supabase.auth.getSession().then(({ data: { session } }) => {
     updateAuthUI(session?.user);
   });
 
-  // Listen for auth changes
   supabase.auth.onAuthStateChange((event, session) => {
     updateAuthUI(session?.user);
   });
 
-  // Popup controls
   authCloseBtn.onclick = closeAuthPopup;
   openLoginBtn.onclick = openAuthPopup;
 });
@@ -219,7 +234,7 @@ if (select("#sendBtn")) {
 
       if (error) throw error;
 
-      const aiMessage = data?.reply || "Cannot reply at this time. Please try again later. If this issue persists, please contact us at help@360-search.com. We apologize for the inconvience.";
+      const aiMessage = data?.reply || "Sorry, I couldn't generate a response.";
 
       chatMemory.push({ role: "user", content: userMessage });
       chatMemory.push({ role: "assistant", content: aiMessage });
@@ -278,7 +293,6 @@ const sendButton = select("#send-button");
 let chatLoaded = false;
 let chatSubscribed = false;
 
-// Add message to chat UI
 function addMessage(username, text) {
   const msg = document.createElement("div");
   msg.classList.add("message");
@@ -290,7 +304,6 @@ function addMessage(username, text) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// Load chat history once
 async function loadChatHistory() {
   if (chatLoaded) return;
   chatLoaded = true;
@@ -308,14 +321,13 @@ async function loadChatHistory() {
   data.forEach(msg => addMessage(msg.username, msg.text));
 }
 
-// Send a new chat message
 async function sendChatMessage() {
   const text = messageInput.value.trim();
   if (!text) return;
 
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) {
-    openAuthPopup();
+    select("#auth-popup").classList.remove("hidden");
     return;
   }
 
@@ -336,7 +348,6 @@ async function sendChatMessage() {
   messageInput.focus();
 }
 
-// Subscribe to realtime chat updates
 function subscribeToChat() {
   if (chatSubscribed) return;
   chatSubscribed = true;
@@ -354,7 +365,6 @@ function subscribeToChat() {
     .subscribe();
 }
 
-// Detect when chat page becomes active
 const chatObserver = new MutationObserver(() => {
   const chatPage = select("#page-chat");
   if (chatPage && chatPage.classList.contains("active")) {
@@ -365,7 +375,6 @@ const chatObserver = new MutationObserver(() => {
 
 chatObserver.observe(document.body, { attributes: true, subtree: true });
 
-// Chat input events
 if (sendButton && messageInput) {
   sendButton.addEventListener("click", sendChatMessage);
   messageInput.addEventListener("keydown", e => {
