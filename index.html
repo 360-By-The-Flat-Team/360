@@ -151,37 +151,6 @@ document.addEventListener('mousedown', () => {
   </div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const upload = document.getElementById('bg-upload');
-    const urlBtn = document.getElementById('bg-url-btn');
-
-    if (upload) {
-      upload.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = event => {
-          document.body.style.backgroundImage = `url('${event.target.result}')`;
-          document.body.style.backgroundSize = 'cover';
-          document.body.style.backgroundPosition = 'center';
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    if (urlBtn) {
-      urlBtn.addEventListener('click', () => {
-        const url = document.getElementById('bg-url').value.trim();
-        if (url) {
-          document.body.style.backgroundImage = `url('${url}')`;
-          document.body.style.backgroundSize = 'cover';
-          document.body.style.backgroundPosition = 'center';
-        }
-      });
-    }
-  });
-</script>
 
   </section>
 </label>
