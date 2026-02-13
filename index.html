@@ -247,11 +247,6 @@ document.addEventListener('mousedown', () => {
     if (error) console.error('Google login error:', error.message);
     else if (data?.url) window.location.href = data.url;
   };
-
-  logoutBtn.onclick = async () => {
-    await supabase.auth.signOut();
-    location.reload();
-  };
 </script>
 
 
