@@ -705,34 +705,16 @@ chatSupabase.auth.onAuthStateChange((event, session) => {
 // AUTH BUTTON SWAP LOGIC
 // =========================
 
-// Main page buttons
-const logoutBtn = document.getElementById("logout-btn");         // Sign Out button
-const logoutLabel = document.getElementById("logout-label");     // Text inside logout button
-
-// Logout action
-logoutBtn.addEventListener("click", async () => {
-  await chatSupabase.auth.signOut();
-});
-
-// Auth state listener
 chatSupabase.auth.onAuthStateChange((event, session) => {
   if (session?.user) {
-    // Extract username before "@"
-    const email = session.user.email;
-    const username = email.split("@")[0];
-
-    // Update logout button text
-    logoutLabel.textContent = `Sign Out — Signed in as ${username}`;
-
-    // Show logout button, hide login button
+    console.log("Logged in as:", session.user.email);
     openLoginBtn.style.display = "none";
-    logoutBtn.style.display = "block";
   } else {
-    // Logged out
+    console.log("Logged out");
     openLoginBtn.style.display = "block";
-    logoutBtn.style.display = "none";
   }
 });
+
 document.getElementById('setBgBtn').addEventListener('click', () => {
   const fileInput = document.getElementById('bgUpload');
   const urlInput = document.getElementById('bgUrl');
