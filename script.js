@@ -1,149 +1,69 @@
 // Utility Functions
-const select = selector => document.querySelector(selector);
-const selectAll = selector => document.querySelectorAll(selector);
-const b = document.body;
+const select = s => document.querySelector(s);
+const selectAll = s => document.querySelectorAll(s);
 
-// Initialize Supabase Client
-const supa = supabase.createClient(
-    "https://dvfsdoybqyxpwtqgffub.supabase.co", 
-    "sb_publishable_lP5gD4yHS3jLC0VbLv7ldA_TnoMk3gG"
-);
+// Supabase Auth Client (already initialized in index.html as `supabase`)
 
-// =========================
-// Handle Google Login
-// =========================
-window.handleGoogleLogin = async (response) => {
-    const { credential } = response;
-    const { email } = jwt_decode(credential);
-    
-    // Sign in with the ID token from Google
-    const { data, error } = await supa.auth.signInWithIdToken({
-      provider: 'google',
-      token: credential
-    });
+// Auth Buttons
+const openLoginBtn = select("#open-login-btn");
+const logoutBtn = select("#logout-btn");
+const authPopup = select("#auth-popup");
+const loginBtn = select("#auth-login-btn");
+const signupBtn = select("#auth-signup-btn");
+const closeBtn = select("#auth-close-btn");
+const errorMsg = select("#auth-error");
 
-    if (error) {
-        document.getElementById("auth-error").textContent = "Google sign-in failed: " + error.message;
-    } else {
-        document.getElementById("auth-popup").classList.add("hidden");
-        document.getElementById("logout-btn").style.display = "inline-block";
-        document.getElementById("open-login-btn").style.display = "none";
-    }
+// Auth UI
+openLoginBtn.onclick = () => {
+  authPopup.classList.remove("hidden");
+  errorMsg.textContent = "";
+};
+closeBtn.onclick = () => authPopup.classList.add("hidden");
+
+// Email Login
+loginBtn.onclick = async () => {
+  const email = select("#auth-email").value;
+  const password = select("#auth-password").value;
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    errorMsg.textContent = error.message;
+  } else {
+    location.reload();
+  }
 };
 
-// Google OAuth Initialize
-google.accounts.id.initialize({
-    client_id: "1005132717258-eekf4ab0tp00i1k8gcfqa6ettemllnj6.apps.googleusercontent.com",
-    callback: handleGoogleLogin
-});
-
-// Render the Google sign-in button
-google.accounts.id.renderButton(
-    document.getElementById("google-login"), // this element will hold the button
-    { theme: "outline", size: "large" }
-);
-
-// =========================
-// Handle GitHub Login
-// =========================
-document.getElementById('github-login').onclick = async () => {
-    const { data, error } = await supa.auth.signInWithOAuth({
-        provider: 'github',
-        options: { redirectTo: window.location.href }  // Optional: redirect to the current page after login
-    });
-
-    if (error) {
-        console.error('GitHub login error:', error.message);
-    } else if (data?.url) {
-        window.location.href = data.url;  // Redirect to GitHub OAuth page
-    }
+// Email Signup
+signupBtn.onclick = async () => {
+  const email = select("#auth-email").value;
+  const password = select("#auth-password").value;
+  const { error } = await supabase.auth.signUp({ email, password });
+  errorMsg.textContent = error ? error.message : "Check your email to confirm your account!";
 };
 
-// =========================
-// Auth State Listener
-// =========================
-supabase.auth.onAuthStateChange((event, session) => {
-    const loginBtn = select("#open-login-btn");
-    const logoutBtn = select("#logout-btn");
-
-    if (session?.user) {
-        console.log("Logged in as:", session.user.email);
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-    } else {
-        console.log("Logged out");
-        loginBtn.style.display = "block";
-        logoutBtn.style.display = "none";
-    }
-});
-
-// Logout Logic
+// Logout
 logoutBtn.onclick = async () => {
-    await supabase.auth.signOut();
-    location.reload(); // Reload the page after logout
+  await supabase.auth.signOut();
+  location.reload();
 };
 
-// =========================
-// LOAD SAVED THEME
-// =========================
+// Auth State
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    logoutBtn.style.display = "inline-block";
+    openLoginBtn.style.display = "none";
+    const label = select("#logout-label");
+    if (label) label.textContent = `(${session.user.email})`;
+  }
+});
+
+// Theme
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme) {
-    document.body.classList.add("theme-" + savedTheme);
-
-    // Mark correct swatch as active
-    const swatch = document.querySelector(`.swatch[data-theme="${savedTheme}"]`);
-    if (swatch) swatch.classList.add("active");
+  document.body.classList.add("theme-" + savedTheme);
+  const swatch = select(`.swatch[data-theme="${savedTheme}"]`);
+  if (swatch) swatch.classList.add("active");
 }
-
 window.addEventListener("DOMContentLoaded", () => {
-  const select = s => document.querySelector(s);
-
-  // Google Login logic
-  google.accounts.id.initialize({
-    client_id: "1005132717258-eekf4ab0tp00i1k8gcfqa6ettemllnj6.apps.googleusercontent.com",
-    callback: handleGoogleLogin
-  });
-  google.accounts.id.renderButton(
-    document.getElementById("g_id_signin"),
-    { theme: "outline", size: "large" }
-  );
-
-  // GitHub Login logic
-  document.getElementById('github-login').onclick = async () => {
-    const { data, error } = await supa.auth.signInWithOAuth({
-        provider: 'github',
-        options: { redirectTo: window.location.href }
-    });
-
-    if (error) {
-        console.error('GitHub login error:', error.message);
-    } else if (data?.url) {
-        window.location.href = data.url;
-    }
-  };
-
-  // Handle auth state change (login/logout UI update)
-  supabase.auth.onAuthStateChange((event, session) => {
-    const loginBtn = select("#open-login-btn");
-    const logoutBtn = select("#logout-btn");
-
-    if (session?.user) {
-        console.log("Logged in as:", session.user.email);
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-    } else {
-        console.log("Logged out");
-        loginBtn.style.display = "block";
-        logoutBtn.style.display = "none";
-    }
-  });
-
-  // Logout button
-  logoutBtn.onclick = async () => {
-    await supabase.auth.signOut();
-    location.reload(); // Reload after logout
-  };
-
   // Click sound
   const clickSound = select("#clickSound");
   document.addEventListener("click", e => {
@@ -156,29 +76,66 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Sidebar Toggle
+  // Sidebar toggle
   select("#sidebarToggle").onclick = () => {
     select("#sidebar").classList.toggle("open");
     select("#overlay").classList.toggle("active");
   };
 
-  // Weather Form
+  // Overlay click to close sidebar/settings
+  select("#overlay").onclick = () => {
+    select("#sidebar").classList.remove("open");
+    select("#settingsPanel")?.classList.remove("open");
+    select("#overlay").classList.remove("active");
+  };
+
+  // Navigation
+  selectAll(".nav-item").forEach(n => {
+    n.onclick = () => {
+      selectAll(".nav-item").forEach(i => i.classList.remove("active"));
+      n.classList.add("active");
+
+      selectAll(".page").forEach(p => p.classList.remove("active"));
+      select("#page-" + n.dataset.page).classList.add("active");
+
+      select("#sidebar").classList.remove("open");
+      select("#overlay").classList.remove("active");
+    };
+  });
+
+  // Back buttons
+  selectAll(".back-btn").forEach(b => {
+    b.onclick = () => {
+      selectAll(".page").forEach(p => p.classList.remove("active"));
+      select("#page-main360").classList.add("active");
+    };
+  });
+
+  // Clock
+  setInterval(() => {
+    const d = new Date();
+    select("#clockTime").textContent = d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    select("#clockDate").textContent = d.toLocaleDateString();
+  }, 1000);
+
+  // Weather form
+  const weatherForm = select("#weatherForm");
+  const weatherOutput = select("#weatherContent");
   let lastCity = null;
-  const weatherForm = document.querySelector("#weatherForm");
-  const weatherOutput = document.querySelector("#weatherContent");
 
   if (weatherForm) {
-    weatherForm.addEventListener("submit", async (e) => {
+    weatherForm.addEventListener("submit", async e => {
       e.preventDefault();
-
-      const city = document.querySelector("#city").value.trim();
+      const city = select("#city").value.trim();
       if (!city || city === lastCity) return;
-
       lastCity = city;
       weatherOutput.textContent = "Loading weather...";
 
       try {
-        const apiKey = "c235c3c0b8aa90de94301809df9a50e4"; 
+        const apiKey = "c235c3c0b8aa90de94301809df9a50e4";
         const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`);
         const data = await res.json();
 
@@ -195,198 +152,134 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // Sidebar Overlay Close Logic
-  select("#overlay").onclick = () => {
-      select("#sidebar").classList.remove("open");
-      select("#settingsPanel").classList.remove("open");
-      select("#overlay").classList.remove("active");
-  };
-
-  // Page Navigation
-  selectAll(".nav-item").forEach(n => {
-      n.onclick = () => {
-          selectAll(".nav-item").forEach(i => i.classList.remove("active"));
-          n.classList.add("active");
-
-          selectAll(".page").forEach(p => p.classList.remove("active"));
-          select("#page-" + n.dataset.page).classList.add("active");
-
-          select("#sidebar").classList.remove("open");
-          select("#overlay").classList.remove("active");
-      };
-  });
-
-  selectAll(".back-btn").forEach(b => {
-      b.onclick = () => {
-          selectAll(".page").forEach(p => p.classList.remove("active"));
-          select("#page-main360").classList.add("active");
-      };
-  });
-
-  // Clock Display
-  setInterval(() => {
-      const d = new Date();
-      select("#clockTime").textContent = d.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit"
-      });
-      select("#clockDate").textContent = d.toLocaleDateString();
-  }, 1000);
-
-  // Temperature Update
-  let tempC = null,
-      code = null;
+});
+  // Temperature toggle
+  let tempC = null, code = null;
 
   const updateWeather = () => {
-      if (tempC == null) return;
+    if (tempC == null) return;
+    const f = (tempC * 9 / 5 + 32).toFixed(1);
+    const useF = select("#tempToggle").checked;
 
-      const f = (tempC * 9 / 5 + 32).toFixed(1);
-      const useF = select("#tempToggle").checked;
+    select("#homeWeatherText").textContent =
+      `${useF ? f + "°F" : tempC + "°C"} · Code ${code}`;
 
-      select("#homeWeatherText").textContent =
-          `${useF ? f + "°F" : tempC + "°C"} · Code ${code}`;
-
-      select("#weatherContent").textContent =
-          `Current temperature: ${tempC}°C / ${f}°F\nWeather code: ${code}`;
+    select("#weatherContent").textContent =
+      `Current temperature: ${tempC}°C / ${f}°F\nWeather code: ${code}`;
   };
 
-  fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-73.9&current=temperature_2m,weathercode&timezone=auto"
-  )
-      .then(r => r.json())
-      .then(d => {
-          tempC = d.current.temperature_2m;
-          code = d.current.weathercode;
-          updateWeather();
-      })
-      .catch(() => {
-          select("#homeWeatherText").textContent = "Weather unavailable";
-          select("#weatherContent").textContent = "Could not load weather data.";
-      });
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-73.9&current=temperature_2m,weathercode&timezone=auto")
+    .then(r => r.json())
+    .then(d => {
+      tempC = d.current.temperature_2m;
+      code = d.current.weathercode;
+      updateWeather();
+    })
+    .catch(() => {
+      select("#homeWeatherText").textContent = "Weather unavailable";
+      select("#weatherContent").textContent = "Could not load weather data.";
+    });
 
   select("#tempToggle").onchange = updateWeather;
 
-  // Short URL Logic
+  // URL Shortener
   select("#shortBtn").onclick = () => {
-      const url = select("#shortInput").value.trim();
-      if (!url) return;
+    const url = select("#shortInput").value.trim();
+    if (!url) return;
 
-      fetch("https://api.tinyurl.com/create?api_token=YOUR_TOKEN", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url })
+    fetch("https://api.tinyurl.com/create?api_token=V5ZvSYBwbNLS1EpVsspGYIFuwrUjuHfYkhj0RDVXzqnatqcatFU6vNvSJ9j6", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
+    })
+      .then(r => r.json())
+      .then(d => {
+        select("#shortResult").textContent =
+          d.data?.tiny_url || d.errors?.[0]?.message || "Error";
       })
-          .then(r => r.json())
-          .then(d => {
-              select("#shortResult").textContent =
-                  d.data?.tiny_url ||
-                  d.errors?.[0]?.message ||
-                  "Error";
-          })
-          .catch(e => {
-              select("#shortResult").textContent = "Network error: " + e.message;
-          });
+      .catch(e => {
+        select("#shortResult").textContent = "Network error: " + e.message;
+      });
   };
 
-  // Stock Info Logic
-  const key = "I3B9DMLF3EUUP0MY";
-
+  // Stock Quotes
+  const stockKey = "I3B9DMLF3EUUP0MY";
   select("#stockForm").onsubmit = async e => {
-      e.preventDefault();
+    e.preventDefault();
+    const t = select("#ticker").value.trim().toUpperCase();
+    if (!t) return;
 
-      const t = select("#ticker").value.trim().toUpperCase();
-      if (!t) return;
+    select("#quote").innerHTML = '<div class="spinner"></div>';
 
-      select("#quote").innerHTML = '<div class="spinner"></div>';
+    try {
+      const q = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${stockKey}`);
+      const d = await q.json();
+      const g = d["Global Quote"];
 
-      try {
-          const q = await fetch(
-              `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${key}`
-          );
-          const d = await q.json();
-          const g = d["Global Quote"];
+      if (!g || !g["05. price"]) throw "no quote";
 
-          if (!g || !g["05. price"]) throw "no quote";
-
-          select("#quote").textContent =
-              `${t}\n💵 Price: $${g["05. price"]}\n📉 Change: ${g["10. change percent"]}`;
-      } catch (e) {
-          select("#quote").textContent = "Error: " + e;
-      }
+      select("#quote").textContent =
+        `${t}\n💵 Price: $${g["05. price"]}\n📉 Change: ${g["10. change percent"]}`;
+    } catch (e) {
+      select("#quote").textContent = "Error: " + e;
+    }
   };
 
-  // =========================
-// NEW AI CHATBOT LOGIC
-// =========================
-
-if (select("#sendBtn")) {
-
-    // Create NEW Supabase client ONLY for AI
-    const aiSupabase = window.supabase.createClient(
-        "https://yfnwexvsibzqyuqfkepa.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
+  // AI Chatbot
+  if (select("#sendBtn")) {
+    const aiSupabase = supabase.createClient(
+      "https://yfnwexvsibzqyuqfkepa.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
     );
 
-    // Date for AI memory
     const today = new Date();
     const options = { year: "numeric", month: "long", day: "numeric" };
     const currentDate = today.toLocaleDateString("en-US", options);
     select("#date").innerText = currentDate;
 
-    // Chat memory (per session)
     const chatMemory = [
-        {
-            role: "system",
-            content: `You are a helpful AI assistant. Today's date is ${currentDate}. Answer questions using this date.`
-        }
+      {
+        role: "system",
+        content: `You are a helpful AI assistant. Today's date is ${currentDate}. Answer questions using this date.`
+      }
     ];
 
     async function sendMessage() {
-        const input = select("#userInput");
-        const chat = select("#chat");
-        const userMessage = input.value.trim();
-        if (!userMessage) return;
+      const input = select("#userInput");
+      const chat = select("#chat");
+      const userMessage = input.value.trim();
+      if (!userMessage) return;
 
-        // Show user message
-        chat.innerHTML += `<div class="message user">${userMessage}</div>`;
-        input.value = "";
+      chat.innerHTML += `<div class="message user">${userMessage}</div>`;
+      input.value = "";
 
-        // Thinking placeholder
-        const thinkingId = "msg-" + Date.now();
-        chat.innerHTML += `<div class="message ai" id="${thinkingId}">Thinking...</div>`;
+      const thinkingId = "msg-" + Date.now();
+      chat.innerHTML += `<div class="message ai" id="${thinkingId}">Thinking...</div>`;
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        const { data, error } = await aiSupabase.functions.invoke("hyper-task", {
+          body: {
+            message: userMessage,
+            memory: chatMemory
+          }
+        });
+
+        if (error) throw error;
+
+        const aiMessage = data?.reply || "No response";
+        chatMemory.push({ role: "user", content: userMessage });
+        chatMemory.push({ role: "assistant", content: aiMessage });
+
+        select(`#${thinkingId}`).innerHTML = marked.parse(aiMessage);
         chat.scrollTop = chat.scrollHeight;
-
-        try {
-            // Call Supabase Edge Function
-            const { data, error } = await aiSupabase.functions.invoke("hyper-task", {
-                body: {
-                    message: userMessage,
-                    memory: chatMemory
-                }
-            });
-
-            if (error) throw error;
-
-            const aiMessage = data?.reply || "No response";
-
-            // Update memory
-            chatMemory.push({ role: "user", content: userMessage });
-            chatMemory.push({ role: "assistant", content: aiMessage });
-
-            // Render markdown
-            select(`#${thinkingId}`).innerHTML = marked.parse(aiMessage);
-            chat.scrollTop = chat.scrollHeight;
-
-        } catch (err) {
-            select(`#${thinkingId}`).innerText = "Error: " + err.message;
-        }
+      } catch (err) {
+        select(`#${thinkingId}`).innerText = "Error: " + err.message;
+      }
     }
 
-    // Event listeners
     select("#sendBtn").onclick = sendMessage;
     select("#userInput").addEventListener("keydown", e => {
-        if (e.key === "Enter") sendMessage();
+      if (e.key === "Enter") sendMessage();
     });
-}
-
+  }
