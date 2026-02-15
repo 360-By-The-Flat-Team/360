@@ -1,25 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <script>
-    (function (w, d, s, l, i) {
-      w[l] = w[l] || [];
-      w[l].push({
-        'gtm.start': new Date().getTime(),
-        event: 'gtm.js'
-      });
-      var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s),
-        dl = l != 'dataLayer' ? '&l=' + l : '';
-      j.async = true;
-      j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-      f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', 'GTM-NZHQGS65');
-  </script>
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <meta charset="UTF-8" />
   <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -27,21 +8,51 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+
+  <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+
+  <!-- Google Tag Manager -->
+  <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+    var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
+    j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+    f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-NZHQGS65');
+  </script>
 </head>
 
 <body>
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZHQGS65" height="0" width="0"
-      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZHQGS65"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- Cursor -->
-  <div class="cursor-dot"></div>
-  <div class="cursor-trail"></div>
+  <div class="cursor-dot" id="cursor-dot"></div>
+  <div class="cursor-trail" id="cursor-trail"></div>
+  <script>
+    const dot = document.getElementById('cursor-dot');
+    const trail = document.getElementById('cursor-trail');
 
-  <!-- Sidebar & Settings -->
+    document.addEventListener('mousemove', e => {
+      dot.style.left = `${e.clientX}px`;
+      dot.style.top = `${e.clientY}px`;
+      trail.style.left = `${e.clientX}px`;
+      trail.style.top = `${e.clientY}px`;
+    });
+
+    document.addEventListener('mousedown', () => {
+      dot.classList.add('clicking');
+      setTimeout(() => dot.classList.remove('clicking'), 300);
+    });
+  </script>
+  <!-- Sidebar -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><br>
@@ -63,7 +74,7 @@
   <!-- Authentication Buttons -->
   <div id="auth-buttons">
     <button id="open-login-btn">Sign In / Sign Up</button>
-    <button id="logout-btn" style="display:none;">Sign Out</button>
+    <button id="logout-btn" style="display:none;">Sign Out <span id="logout-label"></span></button>
   </div>
 
   <!-- Authentication Popup -->
@@ -90,9 +101,8 @@
     </div>
   </div>
 
-  <!-- Main Content & Scripts -->
+  <!-- Main Content -->
   <main class="main">
-    <!-- Home Section -->
     <section class="page active" id="page-main360">
       <div class="home-inner">
         <div class="clock-pill">
@@ -108,26 +118,34 @@
         <div id="musicToggle">🔈 Music</div>
       </div>
     </section>
-
-    <!-- Weather Section -->
+    <!-- Weather -->
     <section class="page" id="page-weather">
       <button class="back-btn top-right">← Back</button>
-      <br><br>
       <h2>🌦️ Weather</h2>
       <form id="weatherForm" class="weather-form">
         <input id="city" placeholder="Enter city..." required />
         <button type="submit">Check</button>
       </form>
-      <br><br>
       <div id="weatherContent" class="weather-output">Waiting for input...</div>
       <div id="map" class="weather-map"></div>
       <p class="muted">Powered by OpenWeatherMap & OpenStreetMap</p>
     </section>
 
+    <!-- Chat -->
+    <section class="page" id="page-chat">
+      <button class="back-btn top-right">← Back</button>
+      <h2 style="text-align:center;">360 Chat</h2>
+      <div id="chat-window"></div>
+      <div id="chat-input-row">
+        <input type="text" id="message-input" placeholder="Type your message..." />
+        <button id="send-button">Send</button>
+      </div>
+    </section>
+
     <!-- AI Chatbot -->
     <section class="page" id="page-ai">
+      <button class="back-btn top-right">← Back</button>
       <h2>AI Chatbot</h2>
-      <br>
       <p id="date"></p>
       <div id="chat"></div>
       <div id="input-area">
@@ -136,10 +154,9 @@
       </div>
     </section>
 
-    <!-- Translator Section -->
+    <!-- Translator -->
     <section class="page" id="page-translator">
       <button class="back-btn top-right">← Back</button>
-      <br><br>
       <h2>360 Translator</h2>
       <div id="translator" style="margin-top:20px">
         <textarea id="translateInput" placeholder="Enter text..." rows="3" style="width:100%"></textarea>
@@ -168,10 +185,9 @@
       </div>
     </section>
 
-    <!-- URL Shortener Section -->
+    <!-- URL Shortener -->
     <section class="page" id="page-shortener">
       <button class="back-btn top-right">← Back</button>
-      <br><br>
       <h2>URL Shortener</h2>
       <div class="shortener-box">
         <input id="shortInput" placeholder="Paste URL..." />
@@ -180,27 +196,94 @@
       <div id="shortResult">No link yet.</div>
     </section>
 
-    <!-- Stocks Section -->
+    <!-- Stocks -->
     <section class="page" id="page-stocks">
       <button class="back-btn top-right">← Back</button>
-      <br><br>
       <h2>📈 Stocks</h2>
       <form id="stockForm">
         <input id="ticker" placeholder="Enter ticker (e.g. AAPL)" required />
         <button type="submit">Check</button>
       </form>
-      <br><br>
       <div id="quote" class="quote"></div>
     </section>
   </main>
-
   <!-- Install Button -->
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
 
-  <!-- Additional Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Supabase Auth Logic -->
+  <script>
+    const supabase = supabase.createClient(
+      'https://wiswfpfsjiowtrdyqpxy.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM'
+    );
+
+    const openLoginBtn = document.getElementById('open-login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authPopup = document.getElementById('auth-popup');
+    const loginBtn = document.getElementById('auth-login-btn');
+    const signupBtn = document.getElementById('auth-signup-btn');
+    const closeBtn = document.getElementById('auth-close-btn');
+    const errorMsg = document.getElementById('auth-error');
+
+    openLoginBtn.onclick = () => {
+      authPopup.classList.remove('hidden');
+      errorMsg.textContent = '';
+    };
+    closeBtn.onclick = () => authPopup.classList.add('hidden');
+
+    loginBtn.onclick = async () => {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        errorMsg.textContent = error.message;
+      } else {
+        location.reload();
+      }
+    };
+
+    signupBtn.onclick = async () => {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const { error } = await supabase.auth.signUp({ email, password });
+      errorMsg.textContent = error ? error.message : "Check your email to confirm your account!";
+    };
+
+    document.getElementById('github-login').onclick = async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) console.error('GitHub login error:', error.message);
+      else if (data?.url) window.location.href = data.url;
+    };
+
+    document.getElementById('google-login').onclick = async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) console.error('Google login error:', error.message);
+      else if (data?.url) window.location.href = data.url;
+    };
+
+    logoutBtn.onclick = async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        logoutBtn.style.display = 'inline-block';
+        openLoginBtn.style.display = 'none';
+        const email = session.user.email;
+        const label = document.getElementById('logout-label');
+        if (label) label.textContent = `(${email})`;
+      }
+    });
+  </script>
+
+  <!-- Your App Logic -->
   <script src="script.js"></script>
 </body>
-
 </html>
