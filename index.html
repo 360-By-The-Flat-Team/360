@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-NZHQGS65');</script>
-  <!-- End Google Tag Manager -->
+  <script>
+    (function (w, d, s, l, i) {
+      w[l] = w[l] || [];
+      w[l].push({
+        'gtm.start': new Date().getTime(),
+        event: 'gtm.js'
+      });
+      var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s),
+        dl = l != 'dataLayer' ? '&l=' + l : '';
+      j.async = true;
+      j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+      f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-NZHQGS65');
+  </script>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -19,46 +29,24 @@
   <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <!--Cloudflare Script!-->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
 </head>
+
 <body>
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZHQGS65"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZHQGS65" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
 
-  <!-- Cursor!-->
-  <div class="cursor-dot"></div><div class="cursor-trail"></div>
-  <script>
-    const cursor = document.getElementById('cursor-dot');
-
-    document.addEventListener('mousemove', e => {
-      cursor.style.left = `${e.clientX}px`;
-      cursor.style.top = `${e.clientY}px`;
-    });
-
-    document.addEventListener('mousedown', () => {
-      const clickSound = new Audio("https://codehs.com/uploads/86c606773982f9a2329309a306246b60");
-
-      document.addEventListener('mousedown', () => {
-        clickSound.currentTime = 0;
-        clickSound.play();
-
-        cursor.classList.add('clicking');
-        setTimeout(() => {
-          cursor.classList.remove('clicking');
-        }, 500);
-      });
-
-      cursor.classList.add('clicking');
-      setTimeout(() => {
-        cursor.classList.remove('clicking');
-      }, 500);
-    });
-  </script>
+  <!-- Cursor -->
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
 
   <!-- Sidebar & Settings -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header"><br><div id="settingsBtn">⚙️</div></div>
+    <div class="sidebar-header"><br>
+      <div id="settingsBtn">⚙️</div>
+    </div>
     <nav class="nav-list">
       <div class="nav-item active" data-page="main360">Home</div>
       <div class="nav-item" data-page="ai">AI Chatbot</div>
@@ -210,11 +198,9 @@
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
 
   <!-- Additional Scripts -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-  <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
