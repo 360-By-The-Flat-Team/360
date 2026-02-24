@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
   <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-NZHQGS65');</script>
-<!-- End Google Tag Manager -->
-  <meta name="google-site-verification" content="eaEEX-NyYfG-naI2kzpj6y1A4ikw-1MxrAkP6h-C8Ao" />
+  <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NZHQGS65');
+  </script>
+  <!-- End Google Tag Manager -->
+
   <meta charset="UTF-8" />
-  <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#3b82f6" />
+  <meta name="google-site-verification" content="eaEEX-NyYfG-naI2kzpj6y1A4ikw-1MxrAkP6h-C8Ao" />
+  <title>360</title>
+
+  <!-- Icons & Manifest -->
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
@@ -29,29 +34,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </head>
 
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZHQGS65"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+  <!-- Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZHQGS65"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
   <!-- Cursor -->
   <div class="cursor-dot" id="cursor-dot"></div>
   <div class="cursor-trail" id="cursor-trail"></div>
-  <script>
-    const dot = document.getElementById('cursor-dot');
-    const trail = document.getElementById('cursor-trail');
-
-    document.addEventListener('mousemove', e => {
-      dot.style.left = `${e.clientX}px`;
-      dot.style.top = `${e.clientY}px`;
-      trail.style.left = `${e.clientX}px`;
-      trail.style.top = `${e.clientY}px`;
-    });
-
-    document.addEventListener('mousedown', () => {
-      dot.classList.add('clicking');
-      setTimeout(() => dot.classList.remove('clicking'), 300);
-    });
-  </script>
   <!-- Sidebar -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
   <aside class="sidebar" id="sidebar">
@@ -207,83 +199,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div id="quote" class="quote"></div>
     </section>
   </main>
+
   <!-- Install Button -->
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
 
-  <!-- Supabase Auth Logic -->
-  <script>
-    const supabase = supabase.createClient(
-      'https://wiswfpfsjiowtrdyqpxy.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM'
-    );
-
-    const openLoginBtn = document.getElementById('open-login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const authPopup = document.getElementById('auth-popup');
-    const loginBtn = document.getElementById('auth-login-btn');
-    const signupBtn = document.getElementById('auth-signup-btn');
-    const closeBtn = document.getElementById('auth-close-btn');
-    const errorMsg = document.getElementById('auth-error');
-
-    openLoginBtn.onclick = () => {
-      authPopup.classList.remove('hidden');
-      errorMsg.textContent = '';
-    };
-    closeBtn.onclick = () => authPopup.classList.add('hidden');
-
-    loginBtn.onclick = async () => {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        errorMsg.textContent = error.message;
-      } else {
-        location.reload();
-      }
-    };
-
-    signupBtn.onclick = async () => {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-      const { error } = await supabase.auth.signUp({ email, password });
-      errorMsg.textContent = error ? error.message : "Check your email to confirm your account!";
-    };
-
-    document.getElementById('github-login').onclick = async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: { redirectTo: window.location.origin }
-      });
-      if (error) console.error('GitHub login error:', error.message);
-      else if (data?.url) window.location.href = data.url;
-    };
-
-    document.getElementById('google-login').onclick = async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin }
-      });
-      if (error) console.error('Google login error:', error.message);
-      else if (data?.url) window.location.href = data.url;
-    };
-
-    logoutBtn.onclick = async () => {
-      await supabase.auth.signOut();
-      location.reload();
-    };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        logoutBtn.style.display = 'inline-block';
-        openLoginBtn.style.display = 'none';
-        const email = session.user.email;
-        const label = document.getElementById('logout-label');
-        if (label) label.textContent = `(${email})`;
-      }
-    });
-  </script>
-
-  <!-- Your App Logic -->
+  <!-- App Logic -->
   <script src="script.js"></script>
 </body>
 </html>
