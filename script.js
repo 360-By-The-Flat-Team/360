@@ -283,3 +283,136 @@ window.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") sendMessage();
     });
   }
+// Temperature toggle (Open-Meteo)
+let tempC = null, code = null;
+
+const updateWeather = () => {
+  if (tempC == null) return;
+  const f = (tempC * 9 / 5 + 32).toFixed(1);
+  const useF = select("#tempToggle").checked;
+
+  select("#homeWeatherText").textContent =
+    `${useF ? f + "°F" : tempC + "°C"} · Code ${code}`;
+
+  const weatherContent = select("#weatherContent");
+  if (weatherContent) {
+    weatherContent.textContent =
+      `Current temperature: ${tempC}°C / ${f}°F\nWeather code: ${code}`;
+  }
+};
+
+fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-73.9&current=temperature_2m,weathercode&timezone=auto")
+  .then(r => r.json())
+  .then(d => {
+    tempC = d.current.temperature_2m;
+    code = d.current.weathercode;
+    updateWeather();
+  })
+  .catch(() => {
+    select("#homeWeatherText").textContent = "Weather unavailable";
+    select("#weatherContent").textContent = "Could not load weather data.";
+  });
+
+select("#tempToggle")?.addEventListener("change", updateWeather);
+
+// URL Shortener
+select("#shortBtn")?.addEventListener("click", () => {
+  const url = select("#shortInput").value.trim();
+  if (!url) return;
+
+  fetch("https://api.tinyurl.com/create?api_token=V5ZvSYBwbNLS1EpVsspGYIFuwrUjuHfYkhj0RDVXzqnatqcatFU6vNvSJ9j6", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url })
+  })
+    .then(r => r.json())
+    .then(d => {
+      select("#shortResult").textContent =
+        d.data?.tiny_url || d.errors?.[0]?.message || "Error";
+    })
+    .catch(e => {
+      select("#shortResult").textContent = "Network error: " + e.message;
+    });
+});
+
+// Stock Quotes
+const stockKey = "I3B9DMLF3EUUP0MY";
+select("#stockForm")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const t = select("#ticker").value.trim().toUpperCase();
+  if (!t) return;
+
+  select("#quote").innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const q = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${stockKey}`);
+    const d = await q.json();
+    const g = d["Global Quote"];
+
+    if (!g || !g["05. price"]) throw "No quote found.";
+
+    select("#quote").textContent =
+      `${t}\n💵 Price: $${g["05. price"]}\n📉 Change: ${g["10. change percent"]}`;
+  } catch (e) {
+    select("#quote").textContent = "Error: " + e;
+  }
+});
+
+// AI Chatbot (separate Supabase client)
+const aiSupabase = supabase.createClient(
+  "https://yfnwexvsibzqyuqfkepa.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
+);
+
+if (select("#sendBtn")) {
+  const today = new Date();
+  const options = { year: "numeric", month: "long", day: "numeric" };
+  const currentDate = today.toLocaleDateString("en-US", options);
+  select("#date").innerText = currentDate;
+
+  const chatMemory = [
+    {
+      role: "system",
+      content: `You are a helpful AI assistant. Today's date is ${currentDate}. Answer questions using this date.`
+    }
+  ];
+
+  async function sendMessage() {
+    const input = select("#userInput");
+    const chat = select("#chat");
+    const userMessage = input.value.trim();
+    if (!userMessage) return;
+
+    chat.innerHTML += `<div class="message user">${userMessage}</div>`;
+    input.value = "";
+
+    const thinkingId = "msg-" + Date.now();
+    chat.innerHTML += `<div class="message ai" id="${thinkingId}">Thinking...</div>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+      const { data, error } = await aiSupabase.functions.invoke("hyper-task", {
+        body: {
+          message: userMessage,
+          memory: chatMemory
+        }
+      });
+
+      if (error) throw error;
+
+      const aiMessage = data?.reply || "No response";
+      chatMemory.push({ role: "user", content: userMessage });
+      chatMemory.push({ role: "assistant", content: aiMessage });
+
+      select(`#${thinkingId}`).innerHTML = marked.parse(aiMessage);
+      chat.scrollTop = chat.scrollHeight;
+    } catch (err) {
+      select(`#${thinkingId}`).innerText = "Error: " + err.message;
+    }
+  }
+
+  select("#sendBtn").addEventListener("click", sendMessage);
+  select("#userInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+}
