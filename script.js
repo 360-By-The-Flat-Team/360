@@ -283,23 +283,6 @@ window.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") sendMessage();
     });
   }
-// Temperature toggle (Open-Meteo)
-tempC = null
-code = null;
-
-fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-73.9&current=temperature_2m,weathercode&timezone=auto")
-  .then(r => r.json())
-  .then(d => {
-    tempC = d.current.temperature_2m;
-    code = d.current.weathercode;
-    updateWeather();
-  })
-  .catch(() => {
-    select("#homeWeatherText").textContent = "Weather unavailable";
-    select("#weatherContent").textContent = "Could not load weather data.";
-  });
-
-select("#tempToggle")?.addEventListener("change", updateWeather);
 
 // URL Shortener
 select("#shortBtn")?.addEventListener("click", () => {
