@@ -284,9 +284,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 // Temperature toggle (Open-Meteo)
-tempC = null
-code = null;
-
 const updateWeather = () => {
   if (tempC == null) return;
   const f = (tempC * 9 / 5 + 32).toFixed(1);
