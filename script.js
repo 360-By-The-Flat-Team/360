@@ -284,15 +284,8 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 // Temperature toggle (Open-Meteo)
-  select("#homeWeatherText").textContent =
-    `${useF ? f + "°F" : tempC + "°C"} · Code ${code}`;
-
-  const weatherContent = select("#weatherContent");
-  if (weatherContent) {
-    weatherContent.textContent =
-      `Current temperature: ${tempC}°C / ${f}°F\nWeather code: ${code}`;
-  }
-};
+tempC = null
+code = null;
 
 fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-73.9&current=temperature_2m,weathercode&timezone=auto")
   .then(r => r.json())
