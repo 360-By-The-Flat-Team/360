@@ -304,28 +304,6 @@ select("#shortBtn")?.addEventListener("click", () => {
     });
 });
 
-// Stock Quotes
-const stockKey = "I3B9DMLF3EUUP0MY";
-select("#stockForm")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  const t = select("#ticker").value.trim().toUpperCase();
-  if (!t) return;
-
-  select("#quote").innerHTML = '<div class="spinner"></div>';
-
-  try {
-    const q = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${stockKey}`);
-    const d = await q.json();
-    const g = d["Global Quote"];
-
-    if (!g || !g["05. price"]) throw "No quote found.";
-
-    select("#quote").textContent =
-      `${t}\n💵 Price: $${g["05. price"]}\n📉 Change: ${g["10. change percent"]}`;
-  } catch (e) {
-    select("#quote").textContent = "Error: " + e;
-  }
-});
 
 // AI Chatbot (separate Supabase client)
 const aiSupabase = supabase.createClient(
