@@ -1051,3 +1051,81 @@ label:hover ~ #cursor-dot {
   transform: translate(-50%, -50%) scale(0.6);
   transition: transform 0.5s ease;
 }
+/* === Hover Animations === */
+
+/* Navigation items */
+.nav-item,
+.nav-link {
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.nav-item:hover,
+.nav-link:hover {
+  transform: scale(1.03);
+}
+
+/* Buttons */
+button,
+.shortener-box button,
+.weather-form button,
+#stockForm button,
+.chat-input-area button,
+#page-ai #input-area button,
+#send-button,
+#open-login-btn,
+#logout-btn,
+#open360,
+#settingsBtn,
+#musicToggle {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover,
+.shortener-box button:hover,
+.weather-form button:hover,
+#stockForm button:hover,
+.chat-input-area button:hover,
+#page-ai #input-area button:hover,
+#send-button:hover,
+#open-login-btn:hover,
+#logout-btn:hover,
+#open360:hover,
+#settingsBtn:hover,
+#musicToggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Theme swatches */
+.swatch {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.swatch:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Logo hover pulse */
+.logo-main {
+  transition: transform 0.3s ease;
+}
+
+.logo-main:hover {
+  transform: scale(1.02);
+}
+
+/* Cards and panels */
+.chat-box,
+.auth-box,
+#translator,
+.source-card {
+  transition: box-shadow 0.3s ease;
+}
+
+.chat-box:hover,
+.auth-box:hover,
+#translator:hover,
+.source-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
