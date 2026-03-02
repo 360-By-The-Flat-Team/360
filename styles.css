@@ -1052,19 +1052,8 @@ label:hover ~ #cursor-dot {
   transition: transform 0.5s ease;
 }
 /* === Hover Animations === */
+/* === Lifted Right-End Button Hover === */
 
-/* Navigation items */
-.nav-item,
-.nav-link {
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.nav-item:hover,
-.nav-link:hover {
-  transform: scale(1.03);
-}
-
-/* Buttons */
 button,
 .shortener-box button,
 .weather-form button,
@@ -1078,6 +1067,7 @@ button,
 #settingsBtn,
 #musicToggle {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: right center;
 }
 
 button:hover,
@@ -1092,40 +1082,6 @@ button:hover,
 #open360:hover,
 #settingsBtn:hover,
 #musicToggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Theme swatches */
-.swatch {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.swatch:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
-}
-
-/* Logo hover pulse */
-.logo-main {
-  transition: transform 0.3s ease;
-}
-
-.logo-main:hover {
-  transform: scale(1.02);
-}
-
-/* Cards and panels */
-.chat-box,
-.auth-box,
-#translator,
-.source-card {
-  transition: box-shadow 0.3s ease;
-}
-
-.chat-box:hover,
-.auth-box:hover,
-#translator:hover,
-.source-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: perspective(600px) rotateX(3deg) rotateY(-3deg);
+  box-shadow: 4px 6px 14px rgba(0, 0, 0, 0.15);
 }
