@@ -1085,3 +1085,21 @@ button:hover,
   transform: perspective(600px) rotateX(3deg) rotateY(-3deg);
   box-shadow: 4px 6px 14px rgba(0, 0, 0, 0.15);
 }
+/* === Smooth Typing Cursor + Input Transitions === */
+
+/* Smooth blinking caret */
+input,
+textarea {
+  caret-color: var(--a); /* Use your theme accent color */
+  animation: caret-blink 1s steps(1) infinite;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+
+@keyframes caret-blink {
+  0%, 100% {
+    caret-color: transparent;
+  }
+  50% {
+    caret-color: var(--a);
+  }
+}
