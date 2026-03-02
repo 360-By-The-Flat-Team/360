@@ -167,38 +167,141 @@ document.addEventListener('mousedown', () => {
 </div>
 
 <style>
-  .hidden { display: none; }
+  .hidden {
+    display: none;
+  }
+
   .auth-popup {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 999;
   }
+
   .auth-box {
-    background: #fff; padding: 20px; border-radius: 8px; width: 300px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center;
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    font-family: system-ui, sans-serif;
   }
-  .auth-box input { width: 100%; margin: 8px 0; padding: 8px; }
-  .auth-box button { margin: 6px 0; padding: 10px; width: 100%; }
-  .auth-error { color: red; margin-top: 10px; }
-  .close-btn { background: #ccc; }
+
+  .auth-box h2 {
+    margin-bottom: 16px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .auth-box input {
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+  }
+
+  .auth-box button {
+    margin: 8px 0;
+    padding: 10px;
+    width: 100%;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .auth-box button:hover {
+    background-color: #e5e7eb;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .auth-error {
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+
+  .close-btn {
+    background: #e5e7eb;
+    color: #111827;
+  }
 
   .oauth-btn {
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; font-size: 14px; cursor: pointer;
-    border-radius: 4px; padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-top: 8px;
+    transition: background 0.2s ease;
   }
+
   .oauth-btn.github {
-    background: #24292e; color: #fff; border: 1px solid #24292e;
+    background: #24292e;
+    color: #fff;
+    border: 1px solid #1f2937;
   }
+
+  .oauth-btn.github:hover {
+    background: #1f2937;
+  }
+
   .oauth-btn.github img {
-    width: 18px; height: 18px; filter: invert(1);
+    width: 18px;
+    height: 18px;
+    filter: invert(1);
   }
+
   .oauth-btn.google {
-    background: #fff; color: #3c4043; border: 1px solid #dadce0;
+    background: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
   }
+
+  .oauth-btn.google:hover {
+    background: #f1f3f4;
+  }
+
   .oauth-btn.google img {
-    width: 18px; height: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  #auth-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin: 10px;
+  }
+
+  #auth-buttons button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    background: rgba(148, 163, 184, 0.15);
+    transition: background 0.2s ease;
+  }
+
+  #auth-buttons button:hover {
+    background: rgba(59, 130, 246, 0.15);
   }
 </style>
+
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
