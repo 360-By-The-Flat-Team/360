@@ -1103,3 +1103,16 @@ textarea {
     caret-color: var(--a);
   }
 }
+/* Smooth caret color and input transitions */
+input,
+textarea {
+  caret-color: var(--a); /* Theme accent */
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Optional: subtle focus glow */
+input:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
