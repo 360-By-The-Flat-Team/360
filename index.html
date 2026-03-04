@@ -157,6 +157,128 @@ document.addEventListener('mousedown', () => {
     </div>
     <label>
 </label>
+<div style="
+  margin-top:16px;
+  padding:12px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid var(--br);
+">
+  <div style="
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:8px;
+  ">
+    Background Image
+  </div>
+
+  <!-- File Upload -->
+  <input 
+    type="file" 
+    id="bgUpload" 
+    accept="image/*"
+    style="
+      width:100%;
+      margin-top:8px;
+      padding:8px;
+      border-radius:8px;
+      border:1px solid var(--br);
+      background:var(--bg);
+      color:var(--txt);
+    "
+  />
+
+  <!-- URL Input -->
+  <input 
+    type="text" 
+    id="bgUrlInput" 
+    placeholder="Paste image URL…"
+    style="
+      width:100%;
+      margin-top:8px;
+      padding:8px;
+      border-radius:8px;
+      border:1px solid var(--br);
+      background:var(--bg);
+      color:var(--txt);
+    "
+  />
+
+  <!-- Apply URL Button -->
+  <button 
+    id="bgUrlBtn"
+    style="
+      width:100%;
+      margin-top:10px;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      cursor:pointer;
+      background:linear-gradient(120deg, var(--a), var(--a2));
+      color:#050816;
+      font-weight:600;
+    "
+  >
+    Apply URL
+  </button>
+
+  <!-- Reset Button -->
+  <button 
+    id="bgResetBtn"
+    style="
+      width:100%;
+      margin-top:10px;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      cursor:pointer;
+      background:#e63946;
+      color:white;
+      font-weight:600;
+    "
+  >
+    Reset Background
+  </button>
+
+  <!-- INLINE JS -->
+  <script>
+    function applyBackground(url) {
+      document.body.style.backgroundImage = "url('" + url + "')";
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundPosition = "center";
+      document.body.style.backgroundAttachment = "fixed";
+      localStorage.setItem("customBG", url);
+    }
+
+    // Load saved background
+    (function() {
+      const saved = localStorage.getItem("customBG");
+      if (saved) applyBackground(saved);
+    })();
+
+    // File upload
+    document.getElementById("bgUpload")?.addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => applyBackground(reader.result);
+      reader.readAsDataURL(file);
+    });
+
+    // URL apply
+    document.getElementById("bgUrlBtn")?.addEventListener("click", () => {
+      const url = document.getElementById("bgUrlInput").value.trim();
+      if (url) applyBackground(url);
+    });
+
+    // Reset
+    document.getElementById("bgResetBtn")?.addEventListener("click", () => {
+      localStorage.removeItem("customBG");
+      document.body.style.backgroundImage = "";
+    });
+  </script>
+</div>
 
 
   </section>
