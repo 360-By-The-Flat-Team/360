@@ -263,10 +263,10 @@ select("#stockForm").onsubmit = async e => {
 };
 
 // ==========================================================================
-//       AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
+//      AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
 // ==========================================================================
 
-// Make Supabase client global so fetchAiKey() and console can access it
+// Make Supabase client global so console + functions can access it
 let aiSupabase;
 
 if (select("#sendBtn")) {
@@ -373,6 +373,7 @@ if (select("#sendBtn")) {
         if (e.key === "Enter") sendMessage();
     });
 }
+
 
 const settingsBtn = select("#settingsBtn"),
       settingsPanel = select("#settingsPanel");
