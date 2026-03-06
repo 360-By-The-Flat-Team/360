@@ -7,6 +7,10 @@ const supa = supabase.createClient(
     "sb_publishable_lP5gD4yHS3jLC0VbLv7ldA_TnoMk3gG"
 );
 
+// Make aiSupabase global so the console can see it
+window.aiSupabase = null;
+
+
 // =========================
 // LOAD SAVED THEME
 // =========================
@@ -267,19 +271,19 @@ select("#stockForm").onsubmit = async e => {
 // ==========================================================================
 
 // Make Supabase client global so console + functions can access it
-let aiSupabase;
+window.aiSupabase = null;
 
 if (select("#sendBtn")) {
 
     // Supabase client for AI key + config
-    aiSupabase = window.supabase.createClient(
+    window.aiSupabase = window.supabase.createClient(
         "https://yfnwexvsibzqyuqfkepa.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
     );
 
     // Fetch AI API key from Supabase
     async function fetchAiKey() {
-        const { data, error } = await aiSupabase
+        const { data, error } = await window.aiSupabase
             .from("config")
             .select("value")
             .eq("key", "groq_api_key")
