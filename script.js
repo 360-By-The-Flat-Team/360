@@ -263,13 +263,16 @@ select("#stockForm").onsubmit = async e => {
 };
 
 // ==========================================================================
-// 360-FIED BASE44 AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
+//       AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
 // ==========================================================================
+
+// Make Supabase client global so fetchAiKey() and console can access it
+let aiSupabase;
 
 if (select("#sendBtn")) {
 
     // Supabase client for AI key + config
-    const aiSupabase = window.supabase.createClient(
+    aiSupabase = window.supabase.createClient(
         "https://yfnwexvsibzqyuqfkepa.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
     );
@@ -299,7 +302,7 @@ if (select("#sendBtn")) {
     });
     select("#date").innerText = currentDate;
 
-    // Chat memory (360 style)
+    // Chat memory
     const chatMemory = [
         {
             role: "system",
@@ -326,7 +329,7 @@ if (select("#sendBtn")) {
             // Get AI key
             const apiKey = await fetchAiKey();
             if (!apiKey) {
-                select(`#${thinkingId}`).innerText = "Error: Missing AI API key.";
+                select(`#${thinkingId}`).innerText = "Error: Missing AI API key. Please contact us or try again later.";
                 return;
             }
 
@@ -355,7 +358,7 @@ if (select("#sendBtn")) {
             chatMemory.push({ role: "user", content: userMessage });
             chatMemory.push({ role: "assistant", content: aiMessage });
 
-            // Render markdown (360 style)
+            // Render markdown
             select(`#${thinkingId}`).innerHTML = marked.parse(aiMessage);
             chat.scrollTop = chat.scrollHeight;
 
