@@ -262,29 +262,48 @@ select("#stockForm").onsubmit = async e => {
     }
 };
 
-// =========================
-// NEW AI CHATBOT LOGIC
-// =========================
+// ==========================================================================
+// 360-FIED BASE44 AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
+// ==========================================================================
 
 if (select("#sendBtn")) {
 
-    // Create NEW Supabase client ONLY for AI
+    // Supabase client for AI key + config
     const aiSupabase = window.supabase.createClient(
         "https://yfnwexvsibzqyuqfkepa.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
     );
 
-    // Date for AI memory
+    // Fetch AI API key from Supabase
+    async function fetchAiKey() {
+        const { data, error } = await aiSupabase
+            .from("config")
+            .select("value")
+            .eq("key", "groq_api_key")
+            .single();
+
+        if (error) {
+            console.error("AI key fetch failed:", error);
+            return null;
+        }
+
+        return data?.value || null;
+    }
+
+    // Date for memory
     const today = new Date();
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    const currentDate = today.toLocaleDateString("en-US", options);
+    const currentDate = today.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
     select("#date").innerText = currentDate;
 
-    // Chat memory (per session)
+    // Chat memory (360 style)
     const chatMemory = [
         {
             role: "system",
-            content: `You are a helpful AI assistant. Today's date is ${currentDate}. Answer questions using this date.`
+            content: `You are a helpful AI assistant. Today's date is ${currentDate}.`
         }
     ];
 
@@ -304,23 +323,39 @@ if (select("#sendBtn")) {
         chat.scrollTop = chat.scrollHeight;
 
         try {
-            // Call Supabase Edge Function
-            const { data, error } = await aiSupabase.functions.invoke("hyper-task", {
-                body: {
-                    message: userMessage,
-                    memory: chatMemory
-                }
+            // Get AI key
+            const apiKey = await fetchAiKey();
+            if (!apiKey) {
+                select(`#${thinkingId}`).innerText = "Error: Missing AI API key.";
+                return;
+            }
+
+            // Call Groq API directly
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "llama3-70b-8192",
+                    messages: [
+                        ...chatMemory,
+                        { role: "user", content: userMessage }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 1024
+                })
             });
 
-            if (error) throw error;
-
-            const aiMessage = data?.reply || "No response";
+            const json = await response.json();
+            const aiMessage = json?.choices?.[0]?.message?.content || "No response";
 
             // Update memory
             chatMemory.push({ role: "user", content: userMessage });
             chatMemory.push({ role: "assistant", content: aiMessage });
 
-            // Render markdown
+            // Render markdown (360 style)
             select(`#${thinkingId}`).innerHTML = marked.parse(aiMessage);
             chat.scrollTop = chat.scrollHeight;
 
