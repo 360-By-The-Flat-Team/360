@@ -270,8 +270,11 @@ select("#stockForm").onsubmit = async e => {
 //      AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
 // ==========================================================================
 
-// Make Supabase client global so console + functions can access it
-window.aiSupabase = null;
+  // Make Supabase client global so console + functions can access it
+window.aiSupabase = window.supabase.createClient(
+    "https://yfnwexvsibzqyuqfkepa.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
+);
 
 if (select("#sendBtn")) {
 
@@ -280,6 +283,8 @@ if (select("#sendBtn")) {
         "https://yfnwexvsibzqyuqfkepa.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM"
     );
+
+  
 
     // Fetch AI API key from Supabase
     async function fetchAiKey() {
