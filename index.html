@@ -555,67 +555,100 @@ document.addEventListener("click", function (e) {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const supabase = supabase.createClient(
-    'https://wiswfpfsjiowtrdyqpxy.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM'
+    "https://wiswfpfsjiowtrdyqpxy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
   );
 
-  const openLoginBtn = document.getElementById('open-login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const authPopup = document.getElementById('auth-popup');
-  const loginBtn = document.getElementById('auth-login-btn');
-  const signupBtn = document.getElementById('auth-signup-btn');
-  const closeBtn = document.getElementById('auth-close-btn');
-  const errorMsg = document.getElementById('auth-error');
+  // UI elements
+  const openLoginBtn = document.getElementById("open-login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  const authPopup = document.getElementById("auth-popup");
+  const loginBtn = document.getElementById("auth-login-btn");
+  const signupBtn = document.getElementById("auth-signup-btn");
+  const closeBtn = document.getElementById("auth-close-btn");
+  const errorMsg = document.getElementById("auth-error");
 
-  openLoginBtn.onclick = () => authPopup.classList.remove('hidden');
-  closeBtn.onclick = () => authPopup.classList.add('hidden');
+  // Open / close popup
+  openLoginBtn.onclick = () => authPopup.classList.remove("hidden");
+  closeBtn.onclick = () => authPopup.classList.add("hidden");
 
+  // Email login
   loginBtn.onclick = async () => {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+
     if (error) errorMsg.textContent = error.message;
     else location.reload();
   };
 
+  // Email signup
   signupBtn.onclick = async () => {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+
     const { error } = await supabase.auth.signUp({ email, password });
-    errorMsg.textContent = error ? error.message : "Check your email to confirm your account!";
+
+    errorMsg.textContent = error
+      ? error.message
+      : "Check your email to confirm your account!";
   };
 
-  document.getElementById('github-login').onclick = async () => {
+  // ⭐ FIXED GITHUB LOGIN
+  document.getElementById("github-login").onclick = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: { redirectTo: 'https://360-search.com' }
+      provider: "github",
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true
+      }
     });
-    if (error) console.error('GitHub login error:', error.message);
-    else if (data?.url) window.location.href = data.url;
+
+    if (error) {
+      console.error("GitHub login error:", error.message);
+      return;
+    }
+
+    if (data?.url) window.open(data.url, "_blank");
   };
 
-  document.getElementById('google-login').onclick = async () => {
+  // ⭐ FIXED GOOGLE LOGIN
+  document.getElementById("google-login").onclick = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: 'https://360-search.com' }
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true
+      }
     });
-    if (error) console.error('Google login error:', error.message);
-    else if (data?.url) window.location.href = data.url;
+
+    if (error) {
+      console.error("Google login error:", error.message);
+      return;
+    }
+
+    if (data?.url) window.open(data.url, "_blank");
   };
 
+  // Logout
   logoutBtn.onclick = async () => {
     await supabase.auth.signOut();
     location.reload();
   };
 
-  // Optional: Show/hide buttons based on session
+  // Show correct buttons on load
   supabase.auth.getSession().then(({ data: { session } }) => {
     if (session) {
-      logoutBtn.style.display = 'inline-block';
-      openLoginBtn.style.display = 'none';
+      logoutBtn.style.display = "inline-block";
+      openLoginBtn.style.display = "none";
+    } else {
+      logoutBtn.style.display = "none";
+      openLoginBtn.style.display = "inline-block";
     }
   });
 </script>
+
 
 
   <!--Home page elements!-->
