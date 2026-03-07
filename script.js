@@ -1,604 +1,452 @@
-// =========================
-// GLOBAL HELPERS
-// =========================
-const select = selector => document.querySelector(selector);
-const selectAll = selector => document.querySelectorAll(selector);
-const b = document.body;
-
-// Main Supabase client (your original project)
-const supa = supabase.createClient(
-    "https://dvfsdoybqyxpwtqgffub.supabase.co",
-    "sb_publishable_lP5gD4yHS3jLC0VbLv7ldA_TnoMk3gG"
+/* ============================================================
+   SUPABASE CLIENT
+============================================================ */
+const supabase = supabase.createClient(
+  "https://wiswfpfsjiowtrdyqpxy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
 );
 
-// AI Supabase client (FIXED — correct project + correct anon key)
-window.aiSupabase = window.supabase.createClient(
-    "https://wiswfpfsjiowtrdyqpxy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
-);
+/* ============================================================
+   AUTH UI ELEMENTS
+============================================================ */
+const openLoginBtn = document.getElementById("open-login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const authPopup = document.getElementById("auth-popup");
+const loginBtn = document.getElementById("auth-login-btn");
+const signupBtn = document.getElementById("auth-signup-btn");
+const closeBtn = document.getElementById("auth-close-btn");
+const errorMsg = document.getElementById("auth-error");
 
-// =========================
-// LOAD SAVED THEME
-// =========================
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme) {
-    document.body.classList.add("theme-" + savedTheme);
+/* ============================================================
+   POPUP OPEN/CLOSE
+============================================================ */
+openLoginBtn.onclick = () => authPopup.classList.remove("hidden");
+closeBtn.onclick = () => authPopup.classList.add("hidden");
 
-    const swatch = document.querySelector(`.swatch[data-theme="${savedTheme}"]`);
-    if (swatch) swatch.classList.add("active");
-}
-window.handleCredentialResponse = async r => {
-    try {
-        const u = jwt_decode(r.credential);
-        const c = select(".home-inner");
+/* ============================================================
+   EMAIL LOGIN
+============================================================ */
+loginBtn.onclick = async () => {
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
 
-        const box = document.createElement("div");
-        box.style = "display:flex;flex-direction:column;align-items:center;margin-top:20px";
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        const img = Object.assign(document.createElement("img"), {
-            src: u.picture,
-            style: "width:80px;height:80px;border-radius:50%"
-        });
-
-        const name = Object.assign(document.createElement("span"), {
-            textContent: u.name,
-            style: "margin-top:10px;font-weight:bold"
-        });
-
-        box.append(img, name);
-        c.append(box);
-
-        await supa.from("users").upsert([
-            {
-                id: u.sub,
-                name: u.name,
-                avatar_url: u.picture,
-                created_at: new Date().toISOString()
-            }
-        ]);
-    } catch (e) {
-        console.error(e);
-    }
+  if (error) {
+    errorMsg.textContent = error.message;
+  } else {
+    location.reload();
+  }
 };
 
-window.addEventListener("DOMContentLoaded", () => {
-    const select = s => document.querySelector(s);
+/* ============================================================
+   EMAIL SIGNUP
+============================================================ */
+signupBtn.onclick = async () => {
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
 
-    window.handleGoogleLogin = async (response) => {
-        const { credential } = response;
-        const { email } = jwt_decode(credential);
+  const { error } = await supabase.auth.signUp({ email, password });
 
-        const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: 'google',
-            token: credential
-        });
+  errorMsg.textContent = error
+    ? error.message
+    : "Check your email to confirm your account!";
+};
 
-        if (error) {
-            document.getElementById("auth-error").textContent =
-                "Google sign-in failed: " + error.message;
-        } else {
-            document.getElementById("auth-popup").classList.add("hidden");
-            document.getElementById("logout-btn").style.display = "inline-block";
-            document.getElementById("open-login-btn").style.display = "none";
-        }
-    };
-
-    google.accounts.id.initialize({
-        client_id: "1005132717258-eekf4ab0tp00i1k8gcfqa6ettemllnj6.apps.googleusercontent.com",
-        callback: handleGoogleLogin
-    });
-
-    google.accounts.id.renderButton(
-        document.getElementById("g_id_signin"),
-        { theme: "outline", size: "large" }
-    );
-
-    const clickSound = select("#clickSound");
-    document.addEventListener("click", e => {
-        if (!clickSound) return;
-
-        const t = e.target.tagName.toLowerCase();
-        const clickable = ["button", "a", "input", "label", "div"];
-
-        if (clickable.includes(t) || e.target.onclick || e.target.classList.contains("nav-item")) {
-            clickSound.currentTime = 0;
-            clickSound.play().catch(() => {});
-        }
-    });
-
-    select("#sidebarToggle").onclick = () => {
-        select("#sidebar").classList.toggle("open");
-        select("#overlay").classList.toggle("active");
-    };
-
-    let lastCity = null;
-
-    const weatherForm = document.querySelector("#weatherForm");
-    const weatherOutput = document.querySelector("#weatherContent");
-
-    if (weatherForm) {
-        weatherForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const city = document.querySelector("#city").value.trim();
-            if (!city || city === lastCity) return;
-
-            lastCity = city;
-            weatherOutput.textContent = "Loading weather...";
-
-            try {
-                const apiKey = "c235c3c0b8aa90de94301809df9a50e4";
-                const res = await fetch(
-                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
-                );
-
-                const data = await res.json();
-
-                if (data.cod !== 200) {
-                    weatherOutput.textContent = `Error: ${data.message}`;
-                    return;
-                }
-
-                const temp = data.main.temp;
-                const desc = data.weather[0].description;
-
-                weatherOutput.textContent = `Weather in ${city}: ${temp}°C, ${desc}`;
-            } catch (err) {
-                weatherOutput.textContent = "Failed to fetch weather.";
-            }
-        });
+/* ============================================================
+   FIXED GITHUB LOGIN (opens new tab)
+============================================================ */
+document.getElementById("github-login").onclick = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      redirectTo: window.location.origin,
+      skipBrowserRedirect: true
     }
+  });
+
+  if (error) {
+    console.error("GitHub login error:", error.message);
+    return;
+  }
+
+  if (data?.url) window.open(data.url, "_blank");
+};
+
+/* ============================================================
+   FIXED GOOGLE LOGIN (opens new tab)
+============================================================ */
+document.getElementById("google-login").onclick = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+      skipBrowserRedirect: true
+    }
+  });
+
+  if (error) {
+    console.error("Google login error:", error.message);
+    return;
+  }
+
+  if (data?.url) window.open(data.url, "_blank");
+};
+
+/* ============================================================
+   LOGOUT
+============================================================ */
+logoutBtn.onclick = async () => {
+  await supabase.auth.signOut();
+  location.reload();
+};
+
+/* ============================================================
+   SHOW/HIDE BUTTONS BASED ON SESSION
+============================================================ */
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    logoutBtn.style.display = "inline-block";
+    openLoginBtn.style.display = "none";
+  } else {
+    logoutBtn.style.display = "none";
+    openLoginBtn.style.display = "inline-block";
+  }
 });
-// ==========================================================================
-//      AI SYSTEM | TRUSTTT, SUPER COOL CAUSE IT'S POWERED BY GROQ
-// ==========================================================================
+/* ============================================================
+   CHAT SYSTEM — REALTIME + SEND + ROLE BADGES
+============================================================ */
 
-if (select("#sendBtn")) {
-
-    // Fetch AI API key from Supabase (from api.config)
-    async function fetchAiKey() {
-        const { data, error } = await window.aiSupabase
-            .from("config")
-            .select("value")
-            .eq("key", "groq_api_key")
-            .single();
-
-        if (error) {
-            console.error("AI key fetch failed:", error);
-            return null;
-        }
-
-        return data?.value || null;
-    }
-
-    // Date for memory
-    const today = new Date();
-    const currentDate = today.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
-    select("#date").innerText = currentDate;
-
-    // Chat memory
-    const chatMemory = [
-        {
-            role: "system",
-            content: `You are a helpful AI assistant. Today's date is ${currentDate}.`
-        }
-    ];
-
-    async function sendMessage() {
-        const input = select("#userInput");
-        const chat = select("#chat");
-        const userMessage = input.value.trim();
-        if (!userMessage) return;
-
-        // Show user message
-        chat.innerHTML += `<div class="message user">${userMessage}</div>`;
-        input.value = "";
-
-        // Thinking placeholder
-        const thinkingId = "msg-" + Date.now();
-        chat.innerHTML += `<div class="message ai" id="${thinkingId}">Thinking...</div>`;
-        chat.scrollTop = chat.scrollHeight;
-
-        try {
-            // Get AI key
-            const apiKey = await fetchAiKey();
-            if (!apiKey) {
-                select(`#${thinkingId}`).innerText =
-                    "Error: Missing AI API key. Please contact us or try again later.";
-                return;
-            }
-
-            // Call Groq API directly
-            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "llama3-70b-8192",
-                    messages: [
-                        ...chatMemory,
-                        { role: "user", content: userMessage }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 1024
-                })
-            });
-
-            const json = await response.json();
-            const aiMessage = json?.choices?.[0]?.message?.content || "No response";
-
-            // Update memory
-            chatMemory.push({ role: "user", content: userMessage });
-            chatMemory.push({ role: "assistant", content: aiMessage });
-
-            // Render markdown
-            select(`#${thinkingId}`).innerHTML = marked.parse(aiMessage);
-            chat.scrollTop = chat.scrollHeight;
-
-        } catch (err) {
-            select(`#${thinkingId}`).innerText = "Error: " + err.message;
-        }
-    }
-
-    // Event listeners
-    select("#sendBtn").onclick = sendMessage;
-    select("#userInput").addEventListener("keydown", e => {
-        if (e.key === "Enter") sendMessage();
-    });
-}
-// =========================
-// SUPABASE REALTIME CHAT
-// =========================
-
-const chatSupabase = supabase.createClient(
-    "https://wiswfpfsjiowtrdyqpxy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
-);
-
+/* DOM elements */
 const chatWindow = document.getElementById("chat-window");
 const messageInput = document.getElementById("message-input");
-const sendButton = document.getElementById("send-button");
+const sendBtn = document.getElementById("send-btn");
 
-let chatLoaded = false;
-let chatSubscribed = false;
+/* ============================================================
+   FETCH USER PROFILE (role, username, avatar)
+============================================================ */
+async function getUserProfile(userId) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username, avatar_url, role")
+    .eq("id", userId)
+    .single();
 
-// Add message to UI
-function addMessage(username, text) {
-    const msg = document.createElement("div");
-    msg.classList.add("message");
+  if (error) {
+    console.warn("Profile fetch error:", error.message);
+    return { username: "Unknown", avatar_url: null, role: "user" };
+  }
 
-    msg.innerHTML = `
-        <span class="username">${username}:</span>
-        <span class="text">${text}</span>
-    `;
-
-    chatWindow.appendChild(msg);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+  return data;
 }
 
-// Load chat history once
-async function loadChatHistory() {
-    if (chatLoaded) return;
-    chatLoaded = true;
-
-    const { data, error } = await chatSupabase
-        .from("messages")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-    if (error) {
-        console.error("Load error:", error);
-        return;
-    }
-
-    data.forEach(msg => addMessage(msg.username, msg.text));
-}
-
-// Send a message
+/* ============================================================
+   SEND CHAT MESSAGE (dynamic role fetch)
+============================================================ */
 async function sendChatMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
+  const text = messageInput.value.trim();
+  if (!text) return;
 
-    // Check if user is logged in
-    const { data: userData } = await chatSupabase.auth.getUser();
-    if (!userData?.user) {
-        openAuthPopup();
-        return;
-    }
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
 
-    const user = userData.user;
-
-    const { error } = await chatSupabase.from("messages").insert({
-        user_id: user.id,
-        username: user.email,
-        text: text
-    });
-
-    if (error) {
-        console.error("Send error:", error);
-        return;
-    }
-
-    messageInput.value = "";
-    messageInput.focus();
-}
-
-// Subscribe to realtime updates once
-function subscribeToChat() {
-    if (chatSubscribed) return;
-    chatSubscribed = true;
-
-    chatSupabase
-        .channel("public:messages")
-        .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table: "messages" },
-            payload => {
-                const msg = payload.new;
-                addMessage(msg.username, msg.text);
-            }
-        )
-        .subscribe();
-}
-
-// Detect when Chat page becomes active
-const chatObserver = new MutationObserver(() => {
-    const chatPage = document.getElementById("page-chat");
-
-    if (chatPage.classList.contains("active")) {
-        loadChatHistory();
-        subscribeToChat();
-    }
-});
-
-chatObserver.observe(document.body, { attributes: true, subtree: true });
-
-// Button + Enter key
-sendButton.addEventListener("click", sendChatMessage);
-messageInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") sendChatMessage();
-});
-
-// =========================
-// SUPABASE AUTH POPUP
-// =========================
-
-const authPopup = document.getElementById("auth-popup");
-const authEmail = document.getElementById("auth-email");
-const authPassword = document.getElementById("auth-password");
-const authLoginBtn = document.getElementById("auth-login-btn");
-const authSignupBtn = document.getElementById("auth-signup-btn");
-const authCloseBtn = document.getElementById("auth-close-btn");
-const authError = document.getElementById("auth-error");
-const openLoginBtn = document.getElementById("open-login-btn");
-
-// Popup Controls
-function openAuthPopup() {
+  if (!user) {
     authPopup.classList.remove("hidden");
+    return;
+  }
+
+  // Fetch role dynamically from profiles
+  const profile = await getUserProfile(user.id);
+  const role = profile.role || "user";
+
+  const { error } = await supabase.from("messages").insert({
+    user_id: user.id,
+    username: profile.username || user.email,
+    text: text,
+    role: role
+  });
+
+  if (error) {
+    console.error("Message send error:", error.message);
+    return;
+  }
+
+  messageInput.value = "";
 }
 
-function closeAuthPopup() {
-    authPopup.classList.add("hidden");
-    authError.textContent = "";
-}
+/* Send on button click */
+sendBtn.onclick = sendChatMessage;
 
-// Signup
-authSignupBtn.addEventListener("click", async () => {
-    const email = authEmail.value.trim();
-    const password = authPassword.value.trim();
-
-    if (!email || !password) {
-        authError.textContent = "Email and password required.";
-        return;
-    }
-
-    const { error } = await chatSupabase.auth.signUp({ email, password });
-
-    if (error) {
-        authError.textContent = error.message;
-    } else {
-        authError.textContent = "✅ Success!!";
-    }
+/* Send on Enter key */
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendChatMessage();
 });
 
-// Login
-authLoginBtn.addEventListener("click", async () => {
-    const email = authEmail.value.trim();
-    const password = authPassword.value.trim();
+/* ============================================================
+   RENDER MESSAGE WITH ROLE BADGE
+============================================================ */
+function renderMessage(msg) {
+  const div = document.createElement("div");
+  div.classList.add("chat-message");
 
-    if (!email || !password) {
-        authError.textContent = "Email and password required.";
-        return;
+  const roleBadge = msg.role
+    ? `<span class="role-badge role-${msg.role}">${msg.role}</span>`
+    : "";
+
+  div.innerHTML = `
+    <div class="chat-line">
+      <strong>${msg.username}</strong> ${roleBadge}
+      <p>${msg.text}</p>
+    </div>
+  `;
+
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+/* ============================================================
+   LOAD CHAT HISTORY
+============================================================ */
+async function loadChatHistory() {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Chat history error:", error.message);
+    return;
+  }
+
+  chatWindow.innerHTML = "";
+
+  data.forEach((msg) => renderMessage(msg));
+}
+
+/* ============================================================
+   REALTIME CHAT LISTENER
+============================================================ */
+supabase
+  .channel("realtime-messages")
+  .on(
+    "postgres_changes",
+    { event: "INSERT", schema: "public", table: "messages" },
+    (payload) => {
+      renderMessage(payload.new);
     }
+  )
+  .subscribe();
 
-    const { error } = await chatSupabase.auth.signInWithPassword({
-        email,
-        password
+/* Load chat on page load */
+loadChatHistory();
+
+/* ============================================================
+   ROLE BADGE STYLES (inject into page)
+============================================================ */
+const style = document.createElement("style");
+style.textContent = `
+  .role-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+
+  .role-admin { background: #dc2626; color: white; }
+  .role-mod { background: #7c3aed; color: white; }
+  .role-user { background: #6b7280; color: white; }
+`;
+document.head.appendChild(style);
+/* ============================================================
+   AI SYSTEM — GROQ API STREAMING
+============================================================ */
+
+const aiInput = document.getElementById("ai-input");
+const aiSendBtn = document.getElementById("ai-send-btn");
+const aiOutput = document.getElementById("ai-output");
+
+/* ============================================================
+   STREAM AI RESPONSE FROM GROQ
+============================================================ */
+async function sendAIRequest() {
+  const prompt = aiInput.value.trim();
+  if (!prompt) return;
+
+  aiOutput.innerHTML = `<p><em>Thinking...</em></p>`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer YOUR_GROQ_API_KEY"
+      },
+      body: JSON.stringify({
+        model: "llama3-8b-8192",
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: prompt }
+        ],
+        stream: true
+      })
     });
 
-    if (error) {
-        authError.textContent = error.message;
-    } else {
-        closeAuthPopup();
-    }
-});
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
 
-// Close Button
-authCloseBtn.addEventListener("click", closeAuthPopup);
+    aiOutput.innerHTML = ""; // clear
 
-// Open Login Button
-openLoginBtn.addEventListener("click", openAuthPopup);
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-// Auth State Listener
-chatSupabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user) {
-        console.log("Logged in as:", session.user.email);
-        openLoginBtn.style.display = "none";
-    } else {
-        console.log("Logged out");
-        openLoginBtn.style.display = "block";
-    }
-});
+      buffer += decoder.decode(value, { stream: true });
 
-// Duplicate listener (kept exactly as you had it)
-chatSupabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user) {
-        console.log("Logged in as:", session.user.email);
-        openLoginBtn.style.display = "none";
-    } else {
-        console.log("Logged out");
-        openLoginBtn.style.display = "block";
-    }
-});
-// =========================
-// BACKGROUND IMAGE SYSTEM
-// =========================
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
 
-document.getElementById('setBgBtn').addEventListener('click', () => {
-    const fileInput = document.getElementById('bgUpload');
-    const urlInput = document.getElementById('bgUrl');
-    const file = fileInput.files[0];
-    const url = urlInput.value.trim();
-
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            applyBackground(e.target.result);
-        };
-        reader.readAsDataURL(file);
-    } else if (url) {
-        applyBackground(url);
-    } else {
-        alert('Upload a file or paste an image URL.');
-    }
-});
-
-function applyBackground(imageSrc) {
-    document.body.style.backgroundImage = `url('${imageSrc}')`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundAttachment = 'fixed';
-    localStorage.setItem('bgImage', imageSrc);
-}
-
-// Load saved background on page load
-window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('bgImage');
-    if (saved) applyBackground(saved);
-});
-
-
-// =========================
-// CURSOR EFFECT
-// =========================
-
-const dot = select(".cursor-dot"),
-      trail = select(".cursor-trail");
-
-let x = 0, y = 0;
-
-document.addEventListener("mousemove", e => {
-    x = e.clientX;
-    y = e.clientY;
-
-    dot.style.left = `${x}px`;
-    dot.style.top = `${y}px`;
-});
-
-(function animate() {
-    trail.style.left = `${x}px`;
-    trail.style.top = `${y}px`;
-    requestAnimationFrame(animate);
-})();
-
-
-// =========================
-// MUSIC TOGGLE
-// =========================
-
-const music = select("#bgMusic"),
-      toggle = select("#musicToggle");
-
-if (music && toggle) {
-    toggle.onclick = async () => {
-        if (music.paused) {
-            try {
-                await music.play();
-                toggle.textContent = "🔈 Music - Playing";
-            } catch (e) {
-                console.error("Music play error:", e);
-            }
-        } else {
-            music.pause();
-            toggle.textContent = "🔇 Music - Paused";
-        }
-    };
-}
-
-
-// =========================
-// TRANSLATOR MINI‑APP
-// =========================
-
-const translateBtn = select("#translateBtn");
-
-if (translateBtn) {
-    translateBtn.onclick = async () => {
-        const text = select("#translateInput").value.trim();
-        const from = select("#sourceLang").value;
-        const to = select("#targetLang").value;
-        const output = select("#translateResult");
-
-        if (!text) {
-            output.textContent = "Please enter text.";
-            return;
-        }
-
-        output.textContent = "Translating...";
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const json = line.replace("data:", "").trim();
+        if (json === "[DONE]") continue;
 
         try {
-            const res = await fetch(
-                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
-            );
-
-            const data = await res.json();
-            output.textContent = data.responseData.translatedText;
-        } catch (e) {
-            output.textContent = "Translation failed.";
+          const parsed = JSON.parse(json);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            aiOutput.innerHTML += delta;
+          }
+        } catch (err) {
+          console.warn("Stream parse error:", err);
         }
-    };
+      }
+    }
+  } catch (err) {
+    aiOutput.innerHTML = `<p style="color:red;">AI Error: ${err.message}</p>`;
+  }
 }
 
+/* Send AI request on button click */
+aiSendBtn.onclick = sendAIRequest;
 
-// =========================
-// THEME COLOR SYSTEM FIX
-// =========================
+/* Send AI request on Enter key */
+aiInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendAIRequest();
+});
+/* ============================================================
+   UI EXTRAS — THEMES, BACKGROUNDS, CURSOR EFFECTS, MUSIC
+============================================================ */
 
-selectAll(".swatch").forEach(swatch => {
-    swatch.onclick = () => {
-        const theme = swatch.dataset.theme;
+/* ------------------------------
+   THEME TOGGLE (LIGHT / DARK)
+------------------------------ */
+const themeToggle = document.getElementById("theme-toggle");
 
-        // Remove old theme classes
-        document.body.classList.forEach(cls => {
-            if (cls.startsWith("theme-")) {
-                document.body.classList.remove(cls);
-            }
-        });
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-theme");
 
-        // Apply new theme
-        document.body.classList.add("theme-" + theme);
+    const mode = document.body.classList.contains("dark-theme")
+      ? "dark"
+      : "light";
 
-        // Save theme
-        localStorage.setItem("theme", theme);
+    localStorage.setItem("theme", mode);
+  });
 
-        // Mark active swatch
-        selectAll(".swatch").forEach(s => s.classList.remove("active"));
-        swatch.classList.add("active");
-    };
+  // Load saved theme
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark-theme");
+  }
+}
+
+/* ------------------------------
+   BACKGROUND SWITCHER
+------------------------------ */
+const bgButtons = document.querySelectorAll("[data-bg]");
+
+bgButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const bg = btn.getAttribute("data-bg");
+    document.body.style.backgroundImage = `url('${bg}')`;
+    localStorage.setItem("background", bg);
+  });
+});
+
+// Load saved background
+const savedBg = localStorage.getItem("background");
+if (savedBg) {
+  document.body.style.backgroundImage = `url('${savedBg}')`;
+}
+
+/* ------------------------------
+   CURSOR EFFECT (RIPPLE)
+------------------------------ */
+document.addEventListener("click", (e) => {
+  const ripple = document.createElement("span");
+  ripple.classList.add("cursor-ripple");
+  ripple.style.left = e.pageX + "px";
+  ripple.style.top = e.pageY + "px";
+  document.body.appendChild(ripple);
+
+  setTimeout(() => ripple.remove(), 600);
+});
+
+// Inject ripple style
+const rippleStyle = document.createElement("style");
+rippleStyle.textContent = `
+  .cursor-ripple {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: rgba(59, 130, 246, 0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: ripple-pop 0.6s ease-out forwards;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  @keyframes ripple-pop {
+    to {
+      transform: translate(-50%, -50%) scale(4);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(rippleStyle);
+
+/* ------------------------------
+   MUSIC TOGGLE
+------------------------------ */
+const music = new Audio("music.mp3");
+music.loop = true;
+
+const musicBtn = document.getElementById("music-toggle");
+
+if (musicBtn) {
+  musicBtn.addEventListener("click", () => {
+    if (music.paused) {
+      music.play();
+      musicBtn.textContent = "🔊 Music On";
+    } else {
+      music.pause();
+      musicBtn.textContent = "🔈 Music Off";
+    }
+  });
+}
+
+/* ------------------------------
+   SMOOTH SCROLL TO SECTIONS
+------------------------------ */
+document.querySelectorAll("[data-scroll]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = btn.getAttribute("data-scroll");
+    const el = document.getElementById(target);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  });
 });
