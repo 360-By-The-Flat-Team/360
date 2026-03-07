@@ -183,19 +183,20 @@ messageInput.addEventListener("keydown", (e) => {
 });
 
 /* ============================================================
-   RENDER MESSAGE WITH ROLE BADGE
+   RENDER MESSAGE WITH AVATAR + TAG
 ============================================================ */
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.classList.add("chat-message");
 
-  const roleBadge = msg.role
-    ? `<span class="role-badge role-${msg.role}">${msg.role}</span>`
-    : "";
+  const usernameDisplay = msg.tag
+    ? `${msg.username} <span class="user-tag">[${msg.tag}]</span>`
+    : msg.username;
 
   div.innerHTML = `
+    ${renderAvatar(msg.avatar_url, msg.username)}
     <div class="chat-line">
-      <strong>${msg.username}</strong> ${roleBadge}
+      <strong>${usernameDisplay}</strong>
       <p>${msg.text}</p>
     </div>
   `;
@@ -203,6 +204,17 @@ function renderMessage(msg) {
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
+
+// Tag styling
+const tagStyle = document.createElement("style");
+tagStyle.textContent = `
+  .user-tag {
+    color: #facc15;
+    font-weight: bold;
+    margin-left: 4px;
+  }
+`;
+document.head.appendChild(tagStyle);
 
 /* ============================================================
    LOAD CHAT HISTORY
@@ -450,3 +462,178 @@ document.querySelectorAll("[data-scroll]").forEach((btn) => {
     if (el) el.scrollIntoView({ behavior: "smooth" });
   });
 });
+/* ============================================================
+   AVATAR UTILITIES
+============================================================ */
+
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.split(" ");
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function renderAvatar(url, username) {
+  if (url) {
+    return `<img class="chat-avatar" src="${url}" alt="${username}">`;
+  }
+  return `<div class="chat-avatar initials">${getInitials(username)}</div>`;
+}
+
+// Inject avatar styles
+const avatarStyle = document.createElement("style");
+avatarStyle.textContent = `
+  .chat-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 8px;
+  }
+  .chat-avatar.initials {
+    background: #4b5563;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+  .chat-message {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .chat-line {
+    background: rgba(255,255,255,0.1);
+    padding: 6px 10px;
+    border-radius: 8px;
+    max-width: 80%;
+  }
+`;
+document.head.appendChild(avatarStyle);
+/* ============================================================
+   TYPING INDICATORS
+============================================================ */
+
+const typingIndicator = document.getElementById("typing-indicator") || (() => {
+  const el = document.createElement("div");
+  el.id = "typing-indicator";
+  el.style.margin = "6px";
+  el.style.opacity = "0.8";
+  chatWindow.parentNode.insertBefore(el, chatWindow.nextSibling);
+  return el;
+})();
+
+let typingTimeouts = {};
+
+function showTyping(username) {
+  typingIndicator.innerHTML = `${username} is typing…`;
+
+  if (typingTimeouts[username]) clearTimeout(typingTimeouts[username]);
+
+  typingTimeouts[username] = setTimeout(() => {
+    typingIndicator.innerHTML = "";
+  }, 2000);
+}
+
+// Send typing event
+messageInput.addEventListener("input", async () => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+  if (!user) return;
+
+  const profile = await getUserProfile(user.id);
+
+  supabase.channel("typing").send({
+    type: "broadcast",
+    event: "typing",
+    payload: { username: profile.username }
+  });
+});
+
+// Listen for typing events
+supabase
+  .channel("typing")
+  .on("broadcast", { event: "typing" }, (payload) => {
+    showTyping(payload.payload.username);
+  })
+  .subscribe();
+/* ============================================================
+   SLASH COMMAND ENGINE
+============================================================ */
+
+async function runCommand(text) {
+  const parts = text.trim().split(" ");
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+  if (!user) return;
+
+  const profile = await getUserProfile(user.id);
+
+  if (profile.role !== "admin") {
+    aiOutput.innerHTML = "❌ Only admins can use commands.";
+    return;
+  }
+
+  // /promote <username>
+  if (cmd === "/promote") {
+    const target = args[0];
+    await supabase.from("profiles").update({ role: "mod" }).eq("username", target);
+    aiOutput.innerHTML = `✅ Promoted ${target} to mod.`;
+    return;
+  }
+
+  // /demote <username>
+  if (cmd === "/demote") {
+    const target = args[0];
+    await supabase.from("profiles").update({ role: "user" }).eq("username", target);
+    aiOutput.innerHTML = `✅ Demoted ${target} to user.`;
+    return;
+  }
+
+  // /tag <username> <tag>
+  if (cmd === "/tag") {
+    const target = args[0];
+    const tag = args.slice(1).join(" ");
+    await supabase.from("profiles").update({ tag }).eq("username", target);
+    aiOutput.innerHTML = `🏷️ Set tag for ${target}: ${tag}`;
+    return;
+  }
+
+  aiOutput.innerHTML = "❓ Unknown command.";
+}
+async function sendChatMessage() {
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  // Slash command?
+  if (text.startsWith("/")) {
+    await runCommand(text);
+    messageInput.value = "";
+    return;
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+
+  if (!user) {
+    authPopup.classList.remove("hidden");
+    return;
+  }
+
+  const profile = await getUserProfile(user.id);
+
+  await supabase.from("messages").insert({
+    user_id: user.id,
+    username: profile.username,
+    avatar_url: profile.avatar_url,
+    tag: profile.tag,
+    text: text,
+    role: profile.role
+  });
+
+  messageInput.value = "";
+}
