@@ -1,3 +1,3 @@
 # 360
-A Browser based on GSC.
+A multi-tool browser.
 Our Reddit: https://www.reddit.com/r/360Search/
