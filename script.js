@@ -1,5 +1,12 @@
 /* ============================================================
-   SUPABASE CLIENT
+   CORE UTILITIES
+============================================================ */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const body = document.body;
+
+/* ============================================================
+   SUPABASE CLIENT (ONE CLIENT ONLY)
 ============================================================ */
 const supabase = supabase.createClient(
   "https://wiswfpfsjiowtrdyqpxy.supabase.co",
@@ -7,196 +14,214 @@ const supabase = supabase.createClient(
 );
 
 /* ============================================================
-   AUTH UI ELEMENTS
+   AUTH POPUP UI
 ============================================================ */
-const openLoginBtn = document.getElementById("open-login-btn");
-const logoutBtn = document.getElementById("logout-btn");
-const authPopup = document.getElementById("auth-popup");
-const loginBtn = document.getElementById("auth-login-btn");
-const signupBtn = document.getElementById("auth-signup-btn");
-const closeBtn = document.getElementById("auth-close-btn");
-const errorMsg = document.getElementById("auth-error");
+const authPopup = $("#auth-popup");
+const authEmail = $("#auth-email");
+const authPassword = $("#auth-password");
+const authLoginBtn = $("#auth-login-btn");
+const authSignupBtn = $("#auth-signup-btn");
+const authCloseBtn = $("#auth-close-btn");
+const authError = $("#auth-error");
+const openLoginBtn = $("#open-login-btn");
+const logoutBtn = $("#logout-btn");
 
-/* ============================================================
-   POPUP OPEN/CLOSE
-============================================================ */
-openLoginBtn.onclick = () => authPopup.classList.remove("hidden");
-closeBtn.onclick = () => authPopup.classList.add("hidden");
+/* -------------------------
+   Popup Controls
+------------------------- */
+function openAuth() { authPopup.classList.remove("hidden"); }
+function closeAuth() { authPopup.classList.add("hidden"); authError.textContent = ""; }
 
-/* ============================================================
-   EMAIL LOGIN
-============================================================ */
-loginBtn.onclick = async () => {
-  const email = document.getElementById("auth-email").value;
-  const password = document.getElementById("auth-password").value;
+openLoginBtn.onclick = openAuth;
+authCloseBtn.onclick = closeAuth;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+/* -------------------------
+   Email Signup
+------------------------- */
+authSignupBtn.onclick = async () => {
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
 
-  if (error) {
-    errorMsg.textContent = error.message;
-  } else {
-    location.reload();
+  if (!email || !password) {
+    authError.textContent = "Email and password required.";
+    return;
   }
-};
-
-/* ============================================================
-   EMAIL SIGNUP
-============================================================ */
-signupBtn.onclick = async () => {
-  const email = document.getElementById("auth-email").value;
-  const password = document.getElementById("auth-password").value;
 
   const { error } = await supabase.auth.signUp({ email, password });
-
-  errorMsg.textContent = error
-    ? error.message
-    : "Check your email to confirm your account!";
+  authError.textContent = error ? error.message : "Check your email to confirm.";
 };
 
-/* ============================================================
-   FIXED GITHUB LOGIN (opens new tab)
-============================================================ */
-document.getElementById("github-login").onclick = async () => {
+/* -------------------------
+   Email Login
+------------------------- */
+authLoginBtn.onclick = async () => {
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
+
+  if (!email || !password) {
+    authError.textContent = "Email and password required.";
+    return;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) authError.textContent = error.message;
+  else closeAuth();
+};
+
+/* -------------------------
+   GitHub Login
+------------------------- */
+$("#github-login").onclick = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
-    options: {
-      redirectTo: window.location.origin,
-      skipBrowserRedirect: true
-    }
+    options: { redirectTo: window.location.origin, skipBrowserRedirect: true }
   });
 
-  if (error) {
-    console.error("GitHub login error:", error.message);
-    return;
-  }
-
+  if (error) return console.error(error.message);
   if (data?.url) window.open(data.url, "_blank");
 };
 
-/* ============================================================
-   FIXED GOOGLE LOGIN (opens new tab)
-============================================================ */
-document.getElementById("google-login").onclick = async () => {
+/* -------------------------
+   Google Login
+------------------------- */
+$("#google-login").onclick = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo: window.location.origin,
-      skipBrowserRedirect: true
-    }
+    options: { redirectTo: window.location.origin, skipBrowserRedirect: true }
   });
 
-  if (error) {
-    console.error("Google login error:", error.message);
-    return;
-  }
-
+  if (error) return console.error(error.message);
   if (data?.url) window.open(data.url, "_blank");
 };
 
-/* ============================================================
-   LOGOUT
-============================================================ */
+/* -------------------------
+   Logout
+------------------------- */
 logoutBtn.onclick = async () => {
   await supabase.auth.signOut();
   location.reload();
 };
 
 /* ============================================================
-   SHOW/HIDE BUTTONS BASED ON SESSION
-============================================================ */
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
-    logoutBtn.style.display = "inline-block";
-    openLoginBtn.style.display = "none";
-  } else {
-    logoutBtn.style.display = "none";
-    openLoginBtn.style.display = "inline-block";
-  }
-});
-/* ============================================================
-   CHAT SYSTEM — REALTIME + SEND + ROLE BADGES
+   CHAT SYSTEM — NEW LOGIC, OLD UI
 ============================================================ */
 
-/* DOM elements */
-const chatWindow = document.getElementById("chat-window");
-const messageInput = document.getElementById("message-input");
-const sendBtn = document.getElementById("send-btn");
+/* -------------------------
+   DOM Elements (Old UI IDs)
+------------------------- */
+const chatWindow = $("#chat-window");
+const messageInput = $("#message-input");
+const sendButton = $("#send-button");
 
-/* ============================================================
-   FETCH USER PROFILE (role, username, avatar)
-============================================================ */
+/* -------------------------
+   Fetch User Profile
+------------------------- */
 async function getUserProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("username, avatar_url, role")
+    .select("username, avatar_url, role, tag")
     .eq("id", userId)
     .single();
 
   if (error) {
     console.warn("Profile fetch error:", error.message);
-    return { username: "Unknown", avatar_url: null, role: "user" };
+    return {
+      username: "Unknown",
+      avatar_url: null,
+      role: "user",
+      tag: null
+    };
   }
 
   return data;
 }
 
-/* ============================================================
-   SEND CHAT MESSAGE (dynamic role fetch)
-============================================================ */
-async function sendChatMessage() {
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
-
-  if (!user) {
-    authPopup.classList.remove("hidden");
-    return;
-  }
-
-  // Fetch role dynamically from profiles
-  const profile = await getUserProfile(user.id);
-  const role = profile.role || "user";
-
-  const { error } = await supabase.from("messages").insert({
-    user_id: user.id,
-    username: profile.username || user.email,
-    text: text,
-    role: role
-  });
-
-  if (error) {
-    console.error("Message send error:", error.message);
-    return;
-  }
-
-  messageInput.value = "";
+/* -------------------------
+   Avatar Rendering
+------------------------- */
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.split(" ");
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-/* Send on button click */
-sendBtn.onclick = sendChatMessage;
+function renderAvatar(url, username) {
+  return url
+    ? `<img class="chat-avatar" src="${url}" alt="${username}">`
+    : `<div class="chat-avatar initials">${getInitials(username)}</div>`;
+}
 
-/* Send on Enter key */
-messageInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendChatMessage();
-});
+/* Inject avatar styles */
+document.head.insertAdjacentHTML(
+  "beforeend",
+  `<style>
+    .chat-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 8px;
+    }
+    .chat-avatar.initials {
+      background: #4b5563;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .chat-message {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .chat-bubble {
+      background: rgba(255,255,255,0.1);
+      padding: 6px 10px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+    .role-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .role-admin { background: #dc2626; color: white; }
+    .role-mod { background: #7c3aed; color: white; }
+    .role-user { background: #6b7280; color: white; }
+    .user-tag {
+      color: #facc15;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+  </style>`
+);
 
-/* ============================================================
-   RENDER MESSAGE WITH AVATAR + TAG
-============================================================ */
+/* -------------------------
+   Render Message (Hybrid Style)
+------------------------- */
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.classList.add("chat-message");
 
-  const usernameDisplay = msg.tag
-    ? `${msg.username} <span class="user-tag">[${msg.tag}]</span>`
-    : msg.username;
+  const roleBadge = msg.role
+    ? `<span class="role-badge role-${msg.role}">${msg.role}</span>`
+    : "";
+
+  const tagBadge = msg.tag
+    ? `<span class="user-tag">[${msg.tag}]</span>`
+    : "";
 
   div.innerHTML = `
     ${renderAvatar(msg.avatar_url, msg.username)}
-    <div class="chat-line">
-      <strong>${usernameDisplay}</strong>
+    <div class="chat-bubble">
+      <strong>${msg.username} ${tagBadge} ${roleBadge}</strong>
       <p>${msg.text}</p>
     </div>
   `;
@@ -205,20 +230,9 @@ function renderMessage(msg) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// Tag styling
-const tagStyle = document.createElement("style");
-tagStyle.textContent = `
-  .user-tag {
-    color: #facc15;
-    font-weight: bold;
-    margin-left: 4px;
-  }
-`;
-document.head.appendChild(tagStyle);
-
-/* ============================================================
-   LOAD CHAT HISTORY
-============================================================ */
+/* -------------------------
+   Load Chat History
+------------------------- */
 async function loadChatHistory() {
   const { data, error } = await supabase
     .from("messages")
@@ -231,58 +245,178 @@ async function loadChatHistory() {
   }
 
   chatWindow.innerHTML = "";
-
-  data.forEach((msg) => renderMessage(msg));
+  data.forEach(renderMessage);
 }
 
-/* ============================================================
-   REALTIME CHAT LISTENER
-============================================================ */
+/* -------------------------
+   Realtime Listener
+------------------------- */
 supabase
   .channel("realtime-messages")
   .on(
     "postgres_changes",
     { event: "INSERT", schema: "public", table: "messages" },
-    (payload) => {
-      renderMessage(payload.new);
-    }
+    payload => renderMessage(payload.new)
   )
   .subscribe();
 
-/* Load chat on page load */
-loadChatHistory();
+/* -------------------------
+   Slash Commands
+------------------------- */
+async function runCommand(text) {
+  const parts = text.trim().split(" ");
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
 
-/* ============================================================
-   ROLE BADGE STYLES (inject into page)
-============================================================ */
-const style = document.createElement("style");
-style.textContent = `
-  .role-badge {
-    display: inline-block;
-    margin-left: 6px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    text-transform: uppercase;
-    font-weight: bold;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+  if (!user) return;
+
+  const profile = await getUserProfile(user.id);
+
+  if (profile.role !== "admin") {
+    alert("Only admins can use commands.");
+    return;
   }
 
-  .role-admin { background: #dc2626; color: white; }
-  .role-mod { background: #7c3aed; color: white; }
-  .role-user { background: #6b7280; color: white; }
-`;
-document.head.appendChild(style);
+  if (cmd === "/promote") {
+    await supabase.from("profiles").update({ role: "mod" }).eq("username", args[0]);
+    alert(`Promoted ${args[0]} to mod.`);
+    return;
+  }
+
+  if (cmd === "/demote") {
+    await supabase.from("profiles").update({ role: "user" }).eq("username", args[0]);
+    alert(`Demoted ${args[0]} to user.`);
+    return;
+  }
+
+  if (cmd === "/tag") {
+    const target = args[0];
+    const tag = args.slice(1).join(" ");
+    await supabase.from("profiles").update({ tag }).eq("username", target);
+    alert(`Set tag for ${target}: ${tag}`);
+    return;
+  }
+
+  alert("Unknown command.");
+}
+
+/* -------------------------
+   Send Chat Message
+------------------------- */
+async function sendChatMessage() {
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  // Slash command?
+  if (text.startsWith("/")) {
+    await runCommand(text);
+    messageInput.value = "";
+    return;
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+
+  if (!user) {
+    openAuth();
+    return;
+  }
+
+  const profile = await getUserProfile(user.id);
+
+  await supabase.from("messages").insert({
+    user_id: user.id,
+    username: profile.username,
+    avatar_url: profile.avatar_url,
+    tag: profile.tag,
+    text: text,
+    role: profile.role
+  });
+
+  messageInput.value = "";
+}
+
+/* -------------------------
+   Typing Indicators
+------------------------- */
+const typingIndicator =
+  $("#typing-indicator") ||
+  (() => {
+    const el = document.createElement("div");
+    el.id = "typing-indicator";
+    el.style.margin = "6px";
+    chatWindow.parentNode.insertBefore(el, chatWindow.nextSibling);
+    return el;
+  })();
+
+let typingTimeouts = {};
+
+function showTyping(username) {
+  typingIndicator.innerHTML = `${username} is typing…`;
+
+  if (typingTimeouts[username]) clearTimeout(typingTimeouts[username]);
+
+  typingTimeouts[username] = setTimeout(() => {
+    typingIndicator.innerHTML = "";
+  }, 2000);
+}
+
+messageInput.addEventListener("input", async () => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+  if (!user) return;
+
+  const profile = await getUserProfile(user.id);
+
+  supabase.channel("typing").send({
+    type: "broadcast",
+    event: "typing",
+    payload: { username: profile.username }
+  });
+});
+
+supabase
+  .channel("typing")
+  .on("broadcast", { event: "typing" }, payload => {
+    showTyping(payload.payload.username);
+  })
+  .subscribe();
+
+/* -------------------------
+   Button + Enter Key
+------------------------- */
+sendButton.onclick = sendChatMessage;
+messageInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") sendChatMessage();
+});
+
+/* -------------------------
+   Load Chat on Page Activation
+------------------------- */
+const chatObserver = new MutationObserver(() => {
+  const chatPage = $("#page-chat");
+  if (chatPage.classList.contains("active")) {
+    loadChatHistory();
+  }
+});
+
+chatObserver.observe(document.body, { attributes: true, subtree: true });
 /* ============================================================
-   AI SYSTEM — GROQ API STREAMING
+   AI SYSTEM — GROQ STREAMING (NEW LOGIC, OLD UI)
 ============================================================ */
 
-const aiInput = document.getElementById("ai-input");
-const aiSendBtn = document.getElementById("ai-send-btn");
-const aiOutput = document.getElementById("ai-output");
+/* -------------------------
+   DOM Elements
+------------------------- */
+const aiInput = $("#ai-input");
+const aiSendBtn = $("#ai-send-btn");
+const aiOutput = $("#ai-output");
 
-/* ============================================================
-   STREAM AI RESPONSE FROM GROQ
-============================================================ */
+/* -------------------------
+   Stream AI Response
+------------------------- */
 async function sendAIRequest() {
   const prompt = aiInput.value.trim();
   if (!prompt) return;
@@ -310,7 +444,7 @@ async function sendAIRequest() {
     const decoder = new TextDecoder();
     let buffer = "";
 
-    aiOutput.innerHTML = ""; // clear
+    aiOutput.innerHTML = ""; // clear output
 
     while (true) {
       const { value, done } = await reader.read();
@@ -323,15 +457,14 @@ async function sendAIRequest() {
 
       for (const line of lines) {
         if (!line.startsWith("data:")) continue;
+
         const json = line.replace("data:", "").trim();
         if (json === "[DONE]") continue;
 
         try {
           const parsed = JSON.parse(json);
           const delta = parsed.choices?.[0]?.delta?.content;
-          if (delta) {
-            aiOutput.innerHTML += delta;
-          }
+          if (delta) aiOutput.innerHTML += delta;
         } catch (err) {
           console.warn("Stream parse error:", err);
         }
@@ -342,298 +475,350 @@ async function sendAIRequest() {
   }
 }
 
-/* Send AI request on button click */
+/* -------------------------
+   Event Listeners
+------------------------- */
 aiSendBtn.onclick = sendAIRequest;
 
-/* Send AI request on Enter key */
-aiInput.addEventListener("keydown", (e) => {
+aiInput.addEventListener("keydown", e => {
   if (e.key === "Enter") sendAIRequest();
 });
 /* ============================================================
-   UI EXTRAS — THEMES, BACKGROUNDS, CURSOR EFFECTS, MUSIC
+   SIDEBAR + PAGE NAVIGATION
 ============================================================ */
+const sidebar = $("#sidebar");
+const sidebarToggle = $("#sidebarToggle");
+const overlay = $("#overlay");
+const settingsPanel = $("#settingsPanel");
 
-/* ------------------------------
-   THEME TOGGLE (LIGHT / DARK)
------------------------------- */
-const themeToggle = document.getElementById("theme-toggle");
+sidebarToggle.onclick = () => {
+  sidebar.classList.toggle("open");
+  overlay.classList.toggle("active");
+};
 
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark-theme");
+overlay.onclick = () => {
+  sidebar.classList.remove("open");
+  settingsPanel.classList.remove("open");
+  overlay.classList.remove("active");
+};
 
-    const mode = document.body.classList.contains("dark-theme")
-      ? "dark"
-      : "light";
-
-    localStorage.setItem("theme", mode);
-  });
-
-  // Load saved theme
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark") {
-    document.body.classList.add("dark-theme");
+document.addEventListener("click", e => {
+  if (!sidebar.contains(e.target) && e.target !== sidebarToggle && !settingsPanel.contains(e.target)) {
+    sidebar.classList.remove("open");
   }
-}
-
-/* ------------------------------
-   BACKGROUND SWITCHER
------------------------------- */
-const bgButtons = document.querySelectorAll("[data-bg]");
-
-bgButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const bg = btn.getAttribute("data-bg");
-    document.body.style.backgroundImage = `url('${bg}')`;
-    localStorage.setItem("background", bg);
-  });
 });
 
-// Load saved background
-const savedBg = localStorage.getItem("background");
-if (savedBg) {
-  document.body.style.backgroundImage = `url('${savedBg}')`;
-}
+/* Page switching */
+$$(".nav-item").forEach(item => {
+  item.onclick = () => {
+    $$(".nav-item").forEach(i => i.classList.remove("active"));
+    item.classList.add("active");
 
-/* ------------------------------
-   CURSOR EFFECT (RIPPLE)
------------------------------- */
-document.addEventListener("click", (e) => {
-  const ripple = document.createElement("span");
-  ripple.classList.add("cursor-ripple");
-  ripple.style.left = e.pageX + "px";
-  ripple.style.top = e.pageY + "px";
-  document.body.appendChild(ripple);
+    $$(".page").forEach(p => p.classList.remove("active"));
+    $("#page-" + item.dataset.page).classList.add("active");
 
-  setTimeout(() => ripple.remove(), 600);
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+  };
 });
 
-// Inject ripple style
-const rippleStyle = document.createElement("style");
-rippleStyle.textContent = `
-  .cursor-ripple {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: rgba(59, 130, 246, 0.4);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    animation: ripple-pop 0.6s ease-out forwards;
-    pointer-events: none;
-    z-index: 9999;
-  }
+/* Back buttons */
+$$(".back-btn").forEach(btn => {
+  btn.onclick = () => {
+    $$(".page").forEach(p => p.classList.remove("active"));
+    $("#page-main360").classList.add("active");
+  };
+});
 
-  @keyframes ripple-pop {
-    to {
-      transform: translate(-50%, -50%) scale(4);
-      opacity: 0;
-    }
-  }
-`;
-document.head.appendChild(rippleStyle);
+/* ============================================================
+   CLOCK
+============================================================ */
+setInterval(() => {
+  const d = new Date();
+  $("#clockTime").textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  $("#clockDate").textContent = d.toLocaleDateString();
+}, 1000);
 
-/* ------------------------------
-   MUSIC TOGGLE
------------------------------- */
-const music = new Audio("music.mp3");
-music.loop = true;
+/* ============================================================
+   WEATHER — OPENWEATHER (City Search)
+============================================================ */
+let lastCity = null;
 
-const musicBtn = document.getElementById("music-toggle");
+const weatherForm = $("#weatherForm");
+const weatherOutput = $("#weatherContent");
 
-if (musicBtn) {
-  musicBtn.addEventListener("click", () => {
-    if (music.paused) {
-      music.play();
-      musicBtn.textContent = "🔊 Music On";
-    } else {
-      music.pause();
-      musicBtn.textContent = "🔈 Music Off";
+if (weatherForm) {
+  weatherForm.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const city = $("#city").value.trim();
+    if (!city || city === lastCity) return;
+
+    lastCity = city;
+    weatherOutput.textContent = "Loading weather...";
+
+    try {
+      const apiKey = "c235c3c0b8aa90de94301809df9a50e4";
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
+      );
+      const data = await res.json();
+
+      if (data.cod !== 200) {
+        weatherOutput.textContent = `Error: ${data.message}`;
+        return;
+      }
+
+      const temp = data.main.temp;
+      const desc = data.weather[0].description;
+      weatherOutput.textContent = `Weather in ${city}: ${temp}°C, ${desc}`;
+    } catch {
+      weatherOutput.textContent = "Failed to fetch weather.";
     }
   });
 }
 
-/* ------------------------------
-   SMOOTH SCROLL TO SECTIONS
------------------------------- */
-document.querySelectorAll("[data-scroll]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const target = btn.getAttribute("data-scroll");
-    const el = document.getElementById(target);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+/* ============================================================
+   WEATHER — OPEN-METEO (Home Weather)
+============================================================ */
+let tempC = null;
+let code = null;
+
+function updateWeather() {
+  if (tempC == null) return;
+
+  const f = (tempC * 9 / 5 + 32).toFixed(1);
+  const useF = $("#tempToggle").checked;
+
+  $("#homeWeatherText").textContent = `${useF ? f + "°F" : tempC + "°C"} · Code ${code}`;
+  $("#weatherContent").textContent = `Current temperature: ${tempC}°C / ${f}°F\nWeather code: ${code}`;
+}
+
+fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-73.9&current=temperature_2m,weathercode&timezone=auto")
+  .then(r => r.json())
+  .then(d => {
+    tempC = d.current.temperature_2m;
+    code = d.current.weathercode;
+    updateWeather();
+  })
+  .catch(() => {
+    $("#homeWeatherText").textContent = "Weather unavailable";
+    $("#weatherContent").textContent = "Could not load weather data.";
   });
+
+$("#tempToggle").onchange = updateWeather;
+
+/* ============================================================
+   STOCKS — ALPHAVANTAGE
+============================================================ */
+const alphaKey = "I3B9DMLF3EUUP0MY";
+
+$("#stockForm").onsubmit = async e => {
+  e.preventDefault();
+
+  const t = $("#ticker").value.trim().toUpperCase();
+  if (!t) return;
+
+  $("#quote").innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const q = await fetch(
+      `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${alphaKey}`
+    );
+    const d = await q.json();
+    const g = d["Global Quote"];
+
+    if (!g || !g["05. price"]) throw "No quote";
+
+    $("#quote").textContent =
+      `${t}\n💵 Price: $${g["05. price"]}\n📉 Change: ${g["10. change percent"]}`;
+  } catch (e) {
+    $("#quote").textContent = "Error: " + e;
+  }
+};
+
+/* ============================================================
+   TRANSLATOR — MYMEMORY API
+============================================================ */
+const translateBtn = $("#translateBtn");
+
+if (translateBtn) {
+  translateBtn.onclick = async () => {
+    const text = $("#translateInput").value.trim();
+    const from = $("#sourceLang").value;
+    const to = $("#targetLang").value;
+    const output = $("#translateResult");
+
+    if (!text) {
+      output.textContent = "Please enter text.";
+      return;
+    }
+
+    output.textContent = "Translating...";
+
+    try {
+      const res = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+      );
+      const data = await res.json();
+      output.textContent = data.responseData.translatedText;
+    } catch {
+      output.textContent = "Translation failed.";
+    }
+  };
+}
+
+/* ============================================================
+   BACKGROUND UPLOADER
+============================================================ */
+$("#setBgBtn").onclick = () => {
+  const file = $("#bgUpload").files[0];
+  const url = $("#bgUrl").value.trim();
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => applyBackground(e.target.result);
+    reader.readAsDataURL(file);
+  } else if (url) {
+    applyBackground(url);
+  } else {
+    alert("Upload a file or paste an image URL.");
+  }
+};
+
+function applyBackground(src) {
+  body.style.backgroundImage = `url('${src}')`;
+  body.style.backgroundSize = "cover";
+  body.style.backgroundPosition = "center";
+  body.style.backgroundAttachment = "fixed";
+  localStorage.setItem("bgImage", src);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("bgImage");
+  if (saved) applyBackground(saved);
 });
-/* ============================================================
-   AVATAR UTILITIES
-============================================================ */
 
-function getInitials(name) {
-  if (!name) return "?";
-  const parts = name.split(" ");
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+/* ============================================================
+   THEME SYSTEM
+============================================================ */
+$$(".swatch").forEach(swatch => {
+  swatch.onclick = () => {
+    const theme = swatch.dataset.theme;
+
+    body.classList.forEach(cls => {
+      if (cls.startsWith("theme-")) body.classList.remove(cls);
+    });
+
+    body.classList.add("theme-" + theme);
+    localStorage.setItem("theme", theme);
+
+    $$(".swatch").forEach(s => s.classList.remove("active"));
+    swatch.classList.add("active");
+  };
+});
+
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  body.classList.add("theme-" + savedTheme);
+  const swatch = document.querySelector(`.swatch[data-theme="${savedTheme}"]`);
+  if (swatch) swatch.classList.add("active");
 }
 
-function renderAvatar(url, username) {
-  if (url) {
-    return `<img class="chat-avatar" src="${url}" alt="${username}">`;
-  }
-  return `<div class="chat-avatar initials">${getInitials(username)}</div>`;
-}
-
-// Inject avatar styles
-const avatarStyle = document.createElement("style");
-avatarStyle.textContent = `
-  .chat-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 8px;
-  }
-  .chat-avatar.initials {
-    background: #4b5563;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-  }
-  .chat-message {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 10px;
-  }
-  .chat-line {
-    background: rgba(255,255,255,0.1);
-    padding: 6px 10px;
-    border-radius: 8px;
-    max-width: 80%;
-  }
-`;
-document.head.appendChild(avatarStyle);
 /* ============================================================
-   TYPING INDICATORS
+   SETTINGS PANEL
 ============================================================ */
+$("#settingsBtn").onclick = () => {
+  settingsPanel.classList.toggle("open");
+  overlay.classList.add("active");
+};
 
-const typingIndicator = document.getElementById("typing-indicator") || (() => {
-  const el = document.createElement("div");
-  el.id = "typing-indicator";
-  el.style.margin = "6px";
-  el.style.opacity = "0.8";
-  chatWindow.parentNode.insertBefore(el, chatWindow.nextSibling);
-  return el;
+document.addEventListener("click", e => {
+  if (!settingsPanel.contains(e.target) && !$("#settingsBtn").contains(e.target)) {
+    settingsPanel.classList.remove("open");
+    overlay.classList.remove("active");
+  }
+});
+
+/* Dark mode toggle */
+const darkToggle = $("#darkToggle");
+darkToggle.checked = localStorage.getItem("darkMode") === "true";
+body.classList.toggle("dark", darkToggle.checked);
+
+darkToggle.onchange = e => {
+  const v = e.target.checked;
+  body.classList.toggle("dark", v);
+  localStorage.setItem("darkMode", v);
+};
+
+/* Accent color */
+const savedAccent = localStorage.getItem("accentColor");
+if (savedAccent) body.style.setProperty("--accent", savedAccent);
+
+$$(".swatch").forEach(s => {
+  s.onclick = () => {
+    $$(".swatch").forEach(x => x.classList.remove("active"));
+    s.classList.add("active");
+
+    const c = getComputedStyle(s).backgroundColor;
+    body.style.setProperty("--accent", c);
+    localStorage.setItem("accentColor", c);
+  };
+});
+
+/* ============================================================
+   PWA INSTALL
+============================================================ */
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  $("#installBtn").style.display = "block";
+});
+
+$("#installBtn").onclick = () => deferredPrompt?.prompt();
+
+/* ============================================================
+   CURSOR EFFECTS
+============================================================ */
+const dot = $(".cursor-dot");
+const trail = $(".cursor-trail");
+
+let cx = 0, cy = 0;
+
+document.addEventListener("mousemove", e => {
+  cx = e.clientX;
+  cy = e.clientY;
+
+  dot.style.left = `${cx}px`;
+  dot.style.top = `${cy}px`;
+});
+
+(function animate() {
+  trail.style.left = `${cx}px`;
+  trail.style.top = `${cy}px`;
+  requestAnimationFrame(animate);
 })();
 
-let typingTimeouts = {};
-
-function showTyping(username) {
-  typingIndicator.innerHTML = `${username} is typing…`;
-
-  if (typingTimeouts[username]) clearTimeout(typingTimeouts[username]);
-
-  typingTimeouts[username] = setTimeout(() => {
-    typingIndicator.innerHTML = "";
-  }, 2000);
-}
-
-// Send typing event
-messageInput.addEventListener("input", async () => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
-  if (!user) return;
-
-  const profile = await getUserProfile(user.id);
-
-  supabase.channel("typing").send({
-    type: "broadcast",
-    event: "typing",
-    payload: { username: profile.username }
-  });
-});
-
-// Listen for typing events
-supabase
-  .channel("typing")
-  .on("broadcast", { event: "typing" }, (payload) => {
-    showTyping(payload.payload.username);
-  })
-  .subscribe();
 /* ============================================================
-   SLASH COMMAND ENGINE
+   MUSIC PLAYER
 ============================================================ */
+const music = $("#bgMusic");
+const musicToggle = $("#musicToggle");
 
-async function runCommand(text) {
-  const parts = text.trim().split(" ");
-  const cmd = parts[0].toLowerCase();
-  const args = parts.slice(1);
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
-  if (!user) return;
-
-  const profile = await getUserProfile(user.id);
-
-  if (profile.role !== "admin") {
-    aiOutput.innerHTML = "❌ Only admins can use commands.";
-    return;
-  }
-
-  // /promote <username>
-  if (cmd === "/promote") {
-    const target = args[0];
-    await supabase.from("profiles").update({ role: "mod" }).eq("username", target);
-    aiOutput.innerHTML = `✅ Promoted ${target} to mod.`;
-    return;
-  }
-
-  // /demote <username>
-  if (cmd === "/demote") {
-    const target = args[0];
-    await supabase.from("profiles").update({ role: "user" }).eq("username", target);
-    aiOutput.innerHTML = `✅ Demoted ${target} to user.`;
-    return;
-  }
-
-  // /tag <username> <tag>
-  if (cmd === "/tag") {
-    const target = args[0];
-    const tag = args.slice(1).join(" ");
-    await supabase.from("profiles").update({ tag }).eq("username", target);
-    aiOutput.innerHTML = `🏷️ Set tag for ${target}: ${tag}`;
-    return;
-  }
-
-  aiOutput.innerHTML = "❓ Unknown command.";
-}
-async function sendChatMessage() {
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  // Slash command?
-  if (text.startsWith("/")) {
-    await runCommand(text);
-    messageInput.value = "";
-    return;
-  }
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
-
-  if (!user) {
-    authPopup.classList.remove("hidden");
-    return;
-  }
-
-  const profile = await getUserProfile(user.id);
-
-  await supabase.from("messages").insert({
-    user_id: user.id,
-    username: profile.username,
-    avatar_url: profile.avatar_url,
-    tag: profile.tag,
-    text: text,
-    role: profile.role
-  });
-
-  messageInput.value = "";
+if (music && musicToggle) {
+  musicToggle.onclick = async () => {
+    if (music.paused) {
+      try {
+        await music.play();
+        musicToggle.textContent = "🔈 Music - Playing";
+      } catch (e) {
+        console.error("Music play error:", e);
+      }
+    } else {
+      music.pause();
+      musicToggle.textContent = "🔇 Music - Paused";
+    }
+  };
 }
