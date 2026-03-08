@@ -822,3 +822,110 @@ if (music && musicToggle) {
     }
   };
 }
+/* ============================================================
+   FINAL INITIALIZATION + SAFETY CHECKS
+============================================================ */
+
+/* -------------------------
+   Ensure Required Elements Exist
+------------------------- */
+function assertElement(id) {
+  if (!$(id)) console.warn(`⚠ Missing element: ${id}`);
+}
+[
+  "#chat-window",
+  "#message-input",
+  "#send-button",
+  "#ai-input",
+  "#ai-send-btn",
+  "#ai-output",
+  "#sidebar",
+  "#sidebarToggle",
+  "#overlay",
+  "#settingsPanel"
+].forEach(assertElement);
+
+/* -------------------------
+   Load Saved Background
+------------------------- */
+(function loadSavedBackground() {
+  const saved = localStorage.getItem("bgImage");
+  if (saved) applyBackground(saved);
+})();
+
+/* -------------------------
+   Load Saved Theme
+------------------------- */
+(function loadSavedTheme() {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme) {
+    body.classList.add("theme-" + savedTheme);
+    const swatch = document.querySelector(`.swatch[data-theme="${savedTheme}"]`);
+    if (swatch) swatch.classList.add("active");
+  }
+})();
+
+/* -------------------------
+   Load Saved Dark Mode
+------------------------- */
+(function loadDarkMode() {
+  const saved = localStorage.getItem("darkMode") === "true";
+  body.classList.toggle("dark", saved);
+  const toggle = $("#darkToggle");
+  if (toggle) toggle.checked = saved;
+})();
+
+/* -------------------------
+   Load Saved Accent Color
+------------------------- */
+(function loadAccent() {
+  const savedAccent = localStorage.getItem("accentColor");
+  if (savedAccent) body.style.setProperty("--accent", savedAccent);
+})();
+
+/* -------------------------
+   Auto‑Load Chat When Page Opens
+------------------------- */
+(function initChatOnLoad() {
+  const chatPage = $("#page-chat");
+  if (chatPage && chatPage.classList.contains("active")) {
+    loadChatHistory();
+  }
+})();
+
+/* -------------------------
+   Auto‑Scroll Chat on Resize
+------------------------- */
+window.addEventListener("resize", () => {
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+});
+
+/* -------------------------
+   Prevent Empty Form Submits
+------------------------- */
+document.addEventListener("submit", e => {
+  if (e.target.matches("form") && e.target.querySelector("input")) {
+    const empty = [...e.target.querySelectorAll("input")].some(i => !i.value.trim());
+    if (empty) e.preventDefault();
+  }
+});
+
+/* -------------------------
+   Global Click Sound
+------------------------- */
+const clickSound = $("#clickSound");
+if (clickSound) {
+  document.addEventListener("click", e => {
+    const t = e.target.tagName.toLowerCase();
+    const clickable = ["button", "a", "input", "label", "div"];
+    if (clickable.includes(t) || e.target.onclick || e.target.classList.contains("nav-item")) {
+      clickSound.currentTime = 0;
+      clickSound.play().catch(() => {});
+    }
+  });
+}
+
+/* -------------------------
+   Final Ready Log
+------------------------- */
+console.log("%c360 Dashboard V2.0 Loaded Successfully", "color:#4ade80;font-weight:bold;font-size:14px;");
