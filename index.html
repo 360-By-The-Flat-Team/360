@@ -1,162 +1,541 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SCZB3M2PNX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <!-- 
+    360 — INDEX.HTML 
+    This file has been fully rewritten to match script.js V1.7.
+    - Duplicate scripts removed
+    - OAuth buttons fixed
+    - AI Chat updated to new IDs
+    - Settings panel updated with Privacy/TOS
+    - Overlays fixed
+    - Ripple cleaned
+    - Parity issues fixed
+  -->
 
-  gtag('config', 'G-SCZB3M2PNX');
-</script>
-  <!-- End GTAG Manager !-->
-  <!-- Favicon links!-->
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <!-- Basic metadata stuff! -->
   <meta charset="UTF-8" />
-  <title>360</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#3b82f6" />
-  <!-- Links !-->
-  <link rel="manifest" href="manifest.json" />
+  <title>360</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
-    <script src="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
-    <!-- Viewport for Mobile -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Description & Author -->
-    <meta name="description" content="360 is a fully prepared to the brim browser with the basics to the examplary for those with more use cases than just searching. We've currently got: Weather; Maps; Translating; Sign in systems; URL Shorteners; Stocks and an A.I. Chatbot! (Please note that 360 was developed in early January 2026 and is still in development.)">
-    <meta name="author" content="The Flat Team">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://360-search.com/">
-    
-    <!-- Open Graph (Universal) -->
-    <meta property="og:url" content="https://360-search.com/">
-    <meta property="og:description" content="360
-    is a fully prepared to the brim browser with the basics to the examplary for those with more use cases than just searching. We've currently got: Weather; Maps; Translating; Sign in systems; URL Shorteners; Stocks and an A.I. Chatbot! (Please note that 360 was developed in early January 2026 and is still in development.)">
-    <meta property="og:image" content="https://360-search.com/og-image.jpg">
-    <meta property="og:site_name" content="360 | A Multi-Tool Browser">
-    <meta property="og:locale" content="en_US">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/favicon-32x32.png">
 
-
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="https://codehs.com/uploads/ebf6f06e11ecebae1f0c6f34c0060288" />
+
+  <!-- Leaflet (Weather Map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Chart.js (Stocks) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <!--Cloudflare Script!-->
-    <!--
-    <script>
-      const p = new URLSearchParams(location.search);
-      if (p.get("verified") !== "true") {
-        location.href = "https://verifycloudflare-17549349.codehs.me/index.html";
-      } else {
-        history.replaceState({}, document.title, location.pathname);
-      }
-    </script>
-    -->
-  <!--slash out above script when testing in codehs console to avoid redirects !-->
+
+  <!-- Supabase (Single Import Only — FIXED) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Google CSE -->
+  <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
+
+  <!-- Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 </head>
 <body>
- 
 
-  <!-- Cursor!-->
-  <div class="cursor-dot"></div><div class="cursor-trail"></div>
-  
-  
-  <script>
-  const cursor = document.getElementById('cursor-dot');
+  <!-- Custom Cursor -->
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
 
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = `${e.clientX}px`;
-    cursor.style.top = `${e.clientY}px`;
-  });
+  <!-- Sidebar Toggle -->
+  <button id="sidebarToggle" class="sidebar-toggle" data-ripple>☰ Menu</button>
 
-  document.addEventListener('mousedown', () => {
-    const clickSound = new Audio("https://codehs.com/uploads/86c606773982f9a2329309a306246b60");
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div id="settingsBtn" data-ripple>⚙️</div>
+    </div>
 
-document.addEventListener('mousedown', () => {
-  clickSound.currentTime = 0; // reset so it can replay quickly
-  clickSound.play();
+    <nav class="nav-list">
+      <div class="nav-item active" data-page="main360" data-ripple>Home</div>
+      <div class="nav-item" data-page="ai" data-ripple>AI Chatbot</div>
+      <div class="nav-item" data-page="weather" data-ripple>Weather</div>
+      <div class="nav-item" data-page="shortener" data-ripple>URL Shortener</div>
+      <div class="nav-item" data-page="stocks" data-ripple>Stocks</div>
+      <div class="nav-item" data-page="translator" data-ripple>Translator</div>
+      <div class="nav-item" data-page="chat" data-ripple>Chat With Others</div>
 
-  cursor.classList.add('clicking');
-  setTimeout(() => {
-    cursor.classList.remove('clicking');
-  }, 500);
+      <div class="nav-link" onclick="window.location.href='https://games360-17775301.codehs.me'" data-ripple>
+        Play Space Glider
+      </div>
+    </nav>
+
+    <footer class="sidebar-footer">360 · Flat Inc. · 2026</footer>
+  </aside>
+
+  <!-- OVERLAYS -->
+  <div id="overlay" class="overlay"></div>
+  <div id="settingsOverlay" class="overlay"></div>
+
+  <!-- SETTINGS PANEL -->
+  <section id="settingsPanel" class="settings-panel">
+
+    <h3>Appearance</h3>
+
+    <!-- Theme Swatches -->
+    <div class="settings-row">
+      <div class="settings-label">Theme</div>
+      <div class="theme-swatches">
+        <div class="swatch" data-theme="ocean"></div>
+        <div class="swatch" data-theme="midnight"></div>
+        <div class="swatch" data-theme="sunset"></div>
+        <div class="swatch" data-theme="mint"></div>
+        <div class="swatch" data-theme="neon"></div>
+        <div class="swatch" data-theme="mono"></div>
+      </div>
+    </div>
+
+    <!-- Dark Mode Toggle -->
+    <div class="settings-row">
+      <div class="settings-label">Mode</div>
+      <label class="dark-toggle-label">
+        <span>Dark mode</span>
+        <input type="checkbox" id="darkToggle">
+      </label>
+    </div>
+
+    <!-- Background Image Controls -->
+    <div class="settings-box">
+      <div class="settings-title">Background Image</div>
+
+      <input type="file" id="bgUpload" accept="image/*" class="settings-input">
+      <input type="text" id="bgUrlInput" placeholder="Paste image URL…" class="settings-input">
+
+      <button id="bgUrlBtn" class="settings-btn">Apply</button>
+      <button id="bgResetBtn" class="settings-btn danger">Reset Background</button>
+    </div>
+
+    <!-- LEGAL LINKS (Your Choice: Style B) -->
+    <h3 style="margin-top:25px;">Legal</h3>
+
+    <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
+    <a href="tos.html" class="legal-link">📜 Terms of Service</a>
+
+  </section>
+<!-- ========================= -->
+<!-- MAIN CONTENT AREA         -->
+<!-- ========================= -->
+<main class="main">
+
+  <!-- ========================= -->
+  <!-- HOME PAGE                 -->
+  <!-- ========================= -->
+  <section class="page active" id="page-main360">
+    <div class="home-inner">
+
+      <!-- Clock -->
+      <div class="clock-pill">
+        <span id="clockTime"></span>
+        <small id="clockDate">Loading...</small>
+      </div>
+
+      <!-- Logo -->
+      <div class="logo-main"><span>360</span></div>
+
+      <!-- Weather Preview -->
+      <div class="weather-chip">
+        <span>Weather:</span>
+        <span id="homeWeatherText">Loading...</span>
+      </div>
+
+      <!-- Temperature Toggle -->
+      <label class="temp-toggle">
+        <input type="checkbox" id="tempToggle">
+        <span class="toggle-text">°C °F</span>
+      </label>
+
+      <!-- Google Search -->
+      <div class="search-shell">
+        <div class="gcse-search"></div>
+      </div>
+
+      <!-- Sounds -->
+      <audio id="clickSound" src="https://codehs.com/uploads/16faab8fd0f7195772f77bcfe0620de7" preload="auto"></audio>
+      <audio id="bgMusic" src="https://codehs.com/uploads/67f63271a193390889e0c8567c1ccff4" loop hidden></audio>
+
+      <!-- Music Toggle -->
+      <div id="musicToggle">🔈 Music</div>
+
+    </div>
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- WEATHER PAGE              -->
+  <!-- ========================= -->
+  <section class="page" id="page-weather">
+    <button class="back-btn top-right">← Back</button>
+    <br><br>
+
+    <h2>🌦️ Weather</h2>
+
+    <form id="weatherForm" class="weather-form">
+      <input id="city" placeholder="Enter city..." required />
+      <button type="submit">Check</button>
+    </form>
+
+    <br><br>
+
+    <div id="weatherContent" class="weather-output">Waiting for input...</div>
+
+    <!-- Weather Map -->
+    <div id="map" class="weather-map"></div>
+
+    <p class="muted">Powered by OpenWeatherMap & OpenStreetMap</p>
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- PUBLIC CHAT PAGE          -->
+  <!-- ========================= -->
+  <section class="page" id="page-chat">
+    <button class="back-btn top-right">← Back</button>
+    <br><br>
+
+    <h2 style="text-align:center;">360 Chat</h2>
+    <br><br>
+
+    <div id="chat-window"></div>
+
+    <div id="chat-input-row">
+      <input type="text" id="message-input" placeholder="Type your message..." />
+      <button id="send-button">Send</button>
+    </div>
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- AI CHATBOT (NEW UI)       -->
+  <!-- ========================= -->
+  <section class="page" id="page-ai">
+
+    <h2>🤖 360 AI Chatbot</h2>
+    <p id="date"></p>
+
+    <!-- AI Chat Output -->
+    <div id="ai-output" class="ai-chat-window">
+      <!-- Messages will be appended here by script.js -->
+    </div>
+
+    <!-- AI Input Row -->
+    <div id="ai-input-area">
+      <input type="text" id="ai-input" placeholder="Type a message..." />
+      <button id="ai-send-btn">Send</button>
+    </div>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- TRANSLATOR PAGE           -->
+  <!-- ========================= -->
+  <section class="page" id="page-translator">
+    <button class="back-btn top-right">← Back</button>
+    <br><br>
+
+    <h2>360 Translator</h2>
+
+    <div id="translator" style="margin-top:20px">
+
+      <textarea id="translateInput" placeholder="Enter text..." rows="3" style="width:100%"></textarea>
+
+      <div style="margin:10px 0">
+        <label>
+          <select id="sourceLang">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="zh">Mandarin</option>
+            <option value="ar">Arabic</option>
+          </select>
+        </label>
+
+        <label style="margin-left:10px">To:
+          <select id="targetLang">
+            <option value="es">Spanish</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="zh">Mandarin</option>
+            <option value="ar">Arabic</option>
+          </select>
+        </label>
+
+        <button id="translateBtn" style="margin-left:10px">Translate</button>
+      </div>
+
+      <div id="translateResult"
+        style="white-space:pre-wrap;background:#f0f0f0;padding:10px;border-radius:5px;min-height:40px"></div>
+
+    </div>
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- URL SHORTENER PAGE        -->
+  <!-- ========================= -->
+  <section class="page" id="page-shortener">
+    <button class="back-btn top-right">← Back</button>
+    <br><br>
+
+    <h2>URL Shortener</h2>
+
+    <div class="shortener-box">
+      <input id="shortInput" placeholder="Paste URL..." />
+      <button id="shortBtn">Shorten</button>
+    </div>
+
+    <div id="shortResult">No link yet.</div>
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- STOCKS PAGE               -->
+  <!-- ========================= -->
+  <section class="page" id="page-stocks">
+    <button class="back-btn top-right">← Back</button>
+    <br><br>
+
+    <h2>📈 Stocks</h2>
+
+    <form id="stockForm">
+      <input id="ticker" placeholder="Enter ticker (e.g. AAPL)" required />
+      <button type="submit">Check</button>
+    </form>
+
+    <br><br>
+
+    <div id="quote" class="quote"></div>
+  </section>
+
+</main>
+<!-- ========================= -->
+<!-- INSTALL BANNER (PWA)      -->
+<!-- ========================= -->
+<button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
+
+<!-- ========================= -->
+<!-- AUTH POPUP (LOGIN/SIGNUP) -->
+<!-- ========================= -->
+<div id="auth-popup" class="auth-popup hidden">
+  <div class="auth-box">
+
+    <h2>Account Login</h2>
+
+    <input id="auth-email" type="email" placeholder="Email">
+    <input id="auth-password" type="password" placeholder="Password">
+
+    <button id="auth-login-btn">Log In</button>
+    <button id="auth-signup-btn">Sign Up</button>
+
+    <!-- OAuth Buttons -->
+    <button id="github-login" class="oauth-btn github">
+      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png">
+      <span>Sign in with GitHub</span>
+    </button>
+
+    <button id="google-login" class="oauth-btn google">
+      <img src="https://developers.google.com/identity/images/g-logo.png">
+      <span>Sign in with Google</span>
+    </button>
+
+    <p id="auth-error" class="auth-error"></p>
+
+    <button id="auth-close-btn" class="close-btn">Close</button>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- MAIN SCRIPT IMPORT        -->
+<!-- ========================= -->
+<script src="script.js"></script>
+
+<!-- ========================= -->
+<!-- CUSTOM SCRIPTS            -->
+<!-- ========================= -->
+<script>
+/* ============================================================
+   CUSTOM CURSOR
+   ============================================================ */
+const cursorDot = document.querySelector(".cursor-dot");
+const cursorTrail = document.querySelector(".cursor-trail");
+
+document.addEventListener("mousemove", e => {
+  cursorDot.style.left = e.clientX + "px";
+  cursorDot.style.top = e.clientY + "px";
+
+  cursorTrail.style.left = e.clientX + "px";
+  cursorTrail.style.top = e.clientY + "px";
 });
 
-    cursor.classList.add('clicking');
-    setTimeout(() => {
-      cursor.classList.remove('clicking');
-    }, 500); // 0.5 seconds
+/* ============================================================
+   SIDEBAR TOGGLE
+   ============================================================ */
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebarToggle");
+const overlay = document.getElementById("overlay");
+
+sidebarToggle.addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+  overlay.classList.toggle("show");
+});
+
+overlay.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  overlay.classList.remove("show");
+});
+
+/* ============================================================
+   SETTINGS PANEL
+   ============================================================ */
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+const settingsOverlay = document.getElementById("settingsOverlay");
+
+settingsBtn.addEventListener("click", () => {
+  settingsPanel.classList.add("open");
+  settingsOverlay.classList.add("show");
+});
+
+settingsOverlay.addEventListener("click", () => {
+  settingsPanel.classList.remove("open");
+  settingsOverlay.classList.remove("show");
+});
+
+/* ============================================================
+   BACKGROUND IMAGE HANDLING
+   ============================================================ */
+function applyBackground(url) {
+  document.body.style.backgroundImage = `url('${url}')`;
+  document.body.style.backgroundSize = "cover";
+  document.body.style.backgroundPosition = "center";
+  document.body.style.backgroundAttachment = "fixed";
+  localStorage.setItem("customBG", url);
+}
+
+// Load saved background
+const savedBG = localStorage.getItem("customBG");
+if (savedBG) applyBackground(savedBG);
+
+// File upload
+document.getElementById("bgUpload").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => applyBackground(reader.result);
+  reader.readAsDataURL(file);
+});
+
+// URL apply
+document.getElementById("bgUrlBtn").addEventListener("click", () => {
+  const url = document.getElementById("bgUrlInput").value.trim();
+  if (url) applyBackground(url);
+});
+
+// Reset
+document.getElementById("bgResetBtn").addEventListener("click", () => {
+  localStorage.removeItem("customBG");
+  document.body.style.backgroundImage = "";
+});
+
+/* ============================================================
+   AUTH SYSTEM (SUPABASE)
+   ============================================================ */
+const supabaseClient = supabase.createClient(
+  "https://wiswfpfsjiowtrdyqpxy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
+);
+
+// UI elements
+const openLoginBtn = document.getElementById("open-login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const authPopup = document.getElementById("auth-popup");
+const loginBtn = document.getElementById("auth-login-btn");
+const signupBtn = document.getElementById("auth-signup-btn");
+const closeBtn = document.getElementById("auth-close-btn");
+const errorMsg = document.getElementById("auth-error");
+
+// Open popup
+openLoginBtn.onclick = () => authPopup.classList.remove("hidden");
+
+// Close popup
+closeBtn.onclick = () => authPopup.classList.add("hidden");
+
+// Email login
+loginBtn.onclick = async () => {
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if (error) errorMsg.textContent = error.message;
+  else location.reload();
+};
+
+// Email signup
+signupBtn.onclick = async () => {
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
+
+  const { error } = await supabaseClient.auth.signUp({ email, password });
+
+  errorMsg.textContent = error
+    ? error.message
+    : "Check your email to confirm your account!";
+};
+
+// GitHub OAuth
+document.getElementById("github-login").onclick = async () => {
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "github",
+    options: { redirectTo: window.location.origin }
   });
-</script>
 
-<!--All menu related settings!-->
-<button class="sidebar-toggle" id="sidebarToggle" data-ripple
-  style="position:relative;overflow:hidden;">
-  ☰ Menu
-</button>
+  if (error) return console.error(error.message);
+  window.location.href = data.url;
+};
 
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-header"><br>
-    <div id="settingsBtn" data-ripple style="position:relative;overflow:hidden;">⚙️</div>
-  </div>
+// Google OAuth
+document.getElementById("google-login").onclick = async () => {
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin }
+  });
 
-  <nav class="nav-list">
+  if (error) return console.error(error.message);
+  window.location.href = data.url;
+};
 
-    <div class="nav-item active" data-page="main360" data-ripple
-      style="position:relative;overflow:hidden;">
-      Home
-    </div>
+// Logout
+logoutBtn.onclick = async () => {
+  await supabaseClient.auth.signOut();
+  location.reload();
+};
 
-    <div class="nav-item" data-page="ai" data-ripple
-      style="position:relative;overflow:hidden;">
-      AI Chatbot
-    </div>
+// Show correct buttons
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    logoutBtn.style.display = "inline-block";
+    openLoginBtn.style.display = "none";
+  } else {
+    logoutBtn.style.display = "none";
+    openLoginBtn.style.display = "inline-block";
+  }
+});
 
-    <div class="nav-item" data-page="weather" data-ripple
-      style="position:relative;overflow:hidden;">
-      Weather
-    </div>
-
-    <div class="nav-item" data-page="shortener" data-ripple
-      style="position:relative;overflow:hidden;">
-      URL Shortener
-    </div>
-
-    <div class="nav-item" data-page="stocks" data-ripple
-      style="position:relative;overflow:hidden;">
-      Stocks
-    </div>
-
-    <div class="nav-item" data-page="translator" data-ripple
-      style="position:relative;overflow:hidden;">
-      Translator
-    </div>
-
-    <div class="nav-item" data-page="chat" data-ripple
-      style="position:relative;overflow:hidden;">
-      Chat With Others
-    </div>
-
-    <div class="nav-link" data-ripple
-      onclick="window.location.href='https://games360-17775301.codehs.me'"
-      style="position:relative;overflow:hidden;">
-      Play Space Glider
-    </div>
-
-  </nav>
-
-  <footer class="sidebar-footer">360 · Flat Inc. · 2026</footer>
-</aside>
-
-<!-- INLINE RIPPLE SCRIPT -->
-<script>
-document.addEventListener("click", function (e) {
+/* ============================================================
+   RIPPLE EFFECT (CLEANED)
+   ============================================================ */
+document.addEventListener("click", e => {
   const target = e.target.closest("[data-ripple]");
   if (!target) return;
 
@@ -187,688 +566,6 @@ document.addEventListener("click", function (e) {
 
   setTimeout(() => ripple.remove(), 500);
 });
-</script>
- <!--Settings!-->
-  <div class="overlay" id="overlay"></div>
-  <div class="overlay" id="settingsOverlay"></div>
-  <section class="settings-panel" id="settingsPanel">
-    <h3>Appearance</h3>
-    <div class="settings-row">
-      <div class="settings-label">Theme</div>
-      <div class="theme-swatches">
-        <div class="swatch" data-theme="ocean"></div>
-        <div class="swatch" data-theme="midnight"></div>
-        <div class="swatch" data-theme="sunset"></div>
-        <div class="swatch" data-theme="mint"></div>
-        <div class="swatch" data-theme="neon"></div>
-        <div class="swatch" data-theme="mono"></div>
-      </div>
-    </div>
-    <div class="settings-row">
-      <div class="settings-label">Mode</div>
-<label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-  <span style="font-size: 14px;">Dark mode</span>
-  <input type="checkbox" id="darkToggle" style="appearance: none; width: 44px; height: 24px; background: #ccc; border-radius: 999px; position: relative; outline: none; cursor: pointer; transition: background 0.3s;">
-  <style>
-    #darkToggle::before {
-      content: "";
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.3s ease;
-    }
-
-    #darkToggle:checked {
-      background: var(--accent);
-    }
-
-    #darkToggle:checked::before {
-      transform: translateX(20px);
-    }
-  </style>
-</label>
-
-    </div>
-    <label>
-</label>
-<div style="
-  margin-top:16px;
-  padding:12px;
-  border-radius:10px;
-  background:rgba(255,255,255,0.08);
-  border:1px solid var(--br);
-">
-  <div style="
-    font-size:15px;
-    font-weight:600;
-    margin-bottom:8px;
-  ">
-    Background Image
-  </div>
-
-  <!-- File Upload -->
-  <input 
-    type="file" 
-    id="bgUpload" 
-    accept="image/*"
-    style="
-      width:100%;
-      margin-top:8px;
-      padding:8px;
-      border-radius:8px;
-      border:1px solid var(--br);
-      background:var(--bg);
-      color:var(--txt);
-    "
-  />
-
-  <!-- URL Input -->
-  <input 
-    type="text" 
-    id="bgUrlInput" 
-    placeholder="Paste image URL…"
-    style="
-      width:100%;
-      margin-top:8px;
-      padding:8px;
-      border-radius:8px;
-      border:1px solid var(--br);
-      background:var(--bg);
-      color:var(--txt);
-    "
-  />
-
-  <!-- Apply URL Button -->
-  <button 
-    id="bgUrlBtn"
-    style="
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      border-radius:8px;
-      border:none;
-      cursor:pointer;
-      background:linear-gradient(120deg, var(--a), var(--a2));
-      color:#050816;
-      font-weight:600;
-    "
-  >
-    Apply
-  </button>
-
-  <!-- Reset Button -->
-  <button 
-    id="bgResetBtn"
-    style="
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      border-radius:8px;
-      border:none;
-      cursor:pointer;
-      background:#e63946;
-      color:white;
-      font-weight:600;
-    "
-  >
-    Reset Background
-  </button>
-
-  <!-- INLINE JS -->
-  <script>
-    function applyBackground(url) {
-      document.body.style.backgroundImage = "url('" + url + "')";
-      document.body.style.backgroundSize = "cover";
-      document.body.style.backgroundPosition = "center";
-      document.body.style.backgroundAttachment = "fixed";
-      localStorage.setItem("customBG", url);
-    }
-
-    // Load saved background
-    (function() {
-      const saved = localStorage.getItem("customBG");
-      if (saved) applyBackground(saved);
-    })();
-
-    // File upload
-    document.getElementById("bgUpload")?.addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => applyBackground(reader.result);
-      reader.readAsDataURL(file);
-    });
-
-    // URL apply
-    document.getElementById("bgUrlBtn")?.addEventListener("click", () => {
-      const url = document.getElementById("bgUrlInput").value.trim();
-      if (url) applyBackground(url);
-    });
-
-    // Reset
-    document.getElementById("bgResetBtn")?.addEventListener("click", () => {
-      localStorage.removeItem("customBG");
-      document.body.style.backgroundImage = "";
-    });
-  </script>
-</div>
-
-
-  </section>
-    <!-- Auth Buttons -->
-<div id="auth-buttons">
-  <button id="open-login-btn">Sign In / Sign Up</button>
-  <button id="logout-btn" style="display:none;">Sign Out</button>
-</div>
-
-<!-- Auth Popup -->
-<div id="auth-popup" class="auth-popup hidden">
-  <div class="auth-box">
-    <h2>Account Login</h2>
-    <input id="auth-email" type="email" placeholder="Email">
-    <input id="auth-password" type="password" placeholder="Password">
-
-    <button id="auth-login-btn">Log In</button>
-    <button id="auth-signup-btn">Sign Up</button>
-
-    <button id="github-login" class="oauth-btn github">
-      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" />
-      <span>Sign in with GitHub</span>
-    </button>
-
-    <button id="google-login" class="oauth-btn google">
-      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" />
-      <span>Sign in with Google</span>
-    </button>
-
-    <p id="auth-error" class="auth-error"></p>
-    <button id="auth-close-btn" class="close-btn">Close</button>
-  </div>
-</div>
-
-<style>
-  .hidden {
-    display: none;
-  }
-
-  .auth-popup {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 999;
-  }
-
-  .auth-box {
-    background: #fff;
-    padding: 24px;
-    border-radius: 12px;
-    width: 320px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    font-family: system-ui, sans-serif;
-  }
-
-  .auth-box h2 {
-    margin-bottom: 16px;
-    font-size: 20px;
-    font-weight: 700;
-    color: #111827;
-  }
-
-  .auth-box input {
-    width: 100%;
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    font-size: 14px;
-  }
-
-  .auth-box button {
-    margin: 8px 0;
-    padding: 10px;
-    width: 100%;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: background 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .auth-box button:hover {
-    background-color: #e5e7eb;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  .auth-error {
-    color: #dc2626;
-    font-size: 13px;
-    margin-top: 10px;
-  }
-
-  .close-btn {
-    background: #e5e7eb;
-    color: #111827;
-  }
-
-  .oauth-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 6px;
-    padding: 10px 16px;
-    margin-top: 8px;
-    transition: background 0.2s ease;
-  }
-
-  .oauth-btn.github {
-    background: #24292e;
-    color: #fff;
-    border: 1px solid #1f2937;
-  }
-
-  .oauth-btn.github:hover {
-    background: #1f2937;
-  }
-
-  .oauth-btn.github img {
-    width: 18px;
-    height: 18px;
-    filter: invert(1);
-  }
-
-  .oauth-btn.google {
-    background: #fff;
-    color: #3c4043;
-    border: 1px solid #dadce0;
-  }
-
-  .oauth-btn.google:hover {
-    background: #f1f3f4;
-  }
-
-  .oauth-btn.google img {
-    width: 18px;
-    height: 18px;
-  }
-
-  #auth-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin: 10px;
-  }
-
-  #auth-buttons button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    background: rgba(148, 163, 184, 0.15);
-    transition: background 0.2s ease;
-  }
-
-  #auth-buttons button:hover {
-    background: rgba(59, 130, 246, 0.15);
-  }
-  /* Ripple container */
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Ripple circle */
-.ripple::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(59, 130, 246, 0.3); /* blue-ish wave */
-  transform: scale(0);
-  opacity: 1;
-  pointer-events: none;
-  animation: ripple-effect 0.6s ease-out;
-}
-
-@keyframes ripple-effect {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-</style>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const supabase = supabase.createClient(
-    "https://wiswfpfsjiowtrdyqpxy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
-  );
-
-  // UI elements
-  const openLoginBtn = document.getElementById("open-login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
-  const authPopup = document.getElementById("auth-popup");
-  const loginBtn = document.getElementById("auth-login-btn");
-  const signupBtn = document.getElementById("auth-signup-btn");
-  const closeBtn = document.getElementById("auth-close-btn");
-  const errorMsg = document.getElementById("auth-error");
-
-  // Open / close popup
-  openLoginBtn.onclick = () => authPopup.classList.remove("hidden");
-  closeBtn.onclick = () => authPopup.classList.add("hidden");
-
-  // Email login
-  loginBtn.onclick = async () => {
-    const email = document.getElementById("auth-email").value;
-    const password = document.getElementById("auth-password").value;
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) errorMsg.textContent = error.message;
-    else location.reload();
-  };
-
-  // Email signup
-  signupBtn.onclick = async () => {
-    const email = document.getElementById("auth-email").value;
-    const password = document.getElementById("auth-password").value;
-
-    const { error } = await supabase.auth.signUp({ email, password });
-
-    errorMsg.textContent = error
-      ? error.message
-      : "Check your email to confirm your account!";
-  };
-
-  // ⭐ FIXED GITHUB LOGIN
-  document.getElementById("github-login").onclick = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: window.location.origin,
-        skipBrowserRedirect: true
-      }
-    });
-
-    if (error) {
-      console.error("GitHub login error:", error.message);
-      return;
-    }
-
-    if (data?.url) window.open(data.url, "_blank");
-  };
-
-  // ⭐ FIXED GOOGLE LOGIN
-  document.getElementById("google-login").onclick = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-        skipBrowserRedirect: true
-      }
-    });
-
-    if (error) {
-      console.error("Google login error:", error.message);
-      return;
-    }
-
-    if (data?.url) window.open(data.url, "_blank");
-  };
-
-  // Logout
-  logoutBtn.onclick = async () => {
-    await supabase.auth.signOut();
-    location.reload();
-  };
-
-  // Show correct buttons on load
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) {
-      logoutBtn.style.display = "inline-block";
-      openLoginBtn.style.display = "none";
-    } else {
-      logoutBtn.style.display = "none";
-      openLoginBtn.style.display = "inline-block";
-    }
-  });
-</script>
-
-
-
-  <!--Home page elements!-->
-  <main class="main">
-    <section class="page active" id="page-main360">
-      <div class="home-inner">
-        <div class="clock-pill">
-            <span id="clockTime"></span>
-            <small id="clockDate">Loading...</small>
-        </div>
-        <div class="logo-main"><span>360</span></div>
-        <div class="weather-chip"><span>Weather:  </span><span id="homeWeatherText">Loading...</span></div>
-        <label class="temp-toggle"><input type="checkbox" id="tempToggle"><span class="toggle-text">°C °F</span></label>
-        <div class="search-shell"><div class="gcse-search"></div></div>
-        <audio id="clickSound" src="https://codehs.com/uploads/16faab8fd0f7195772f77bcfe0620de7" preload="auto"></audio>
-        <audio id="bgMusic" src="https://codehs.com/uploads/67f63271a193390889e0c8567c1ccff4" loop hidden></audio>
-        <div id="musicToggle">🔈 Music</div>
-        <h5></h5>
-        <!--
-        <div id="open360" onclick="open360Search()">Open 360</div>
-        
-        <script>
-            function open360Search() {
-                const url = 'https://360-search.com';
-                const windowName = 'SearchWindow';
-                const features = 'width=1000,height=800,popup=yes,menubar=no,toolbar=no';
-                
-                window.open(url, windowName, features);
-            }
-        </script>
-        -->
-      </div>
-    </section>
-     <!-- Weather -->
-    <section class="page" id="page-weather">
-      <button class="back-btn top-right">← Back</button>
-      <br><br>
-      <h2>🌦️ Weather</h2>
-      <form id="weatherForm" class="weather-form">
-        <input id="city" placeholder="Enter city..." required />
-        <button type="submit">Check</button>
-      </form>
-      <br><br>
-      <div id="weatherContent" class="weather-output">Waiting for input...</div>
-      <div id="map" class="weather-map"></div>
-      <p class="muted">Powered by OpenWeatherMap & OpenStreetMap</p>
-    </section>
-    
-    <!-- Chat System -->
-    <section class="page" id="page-chat">
-      <button class="back-btn top-right">← Back</button>
-      <br><br>
-      <h2 style="text-align:center;">360 Chat</h2>
-      <br><br>
-      <div id="chat-window"></div>
-      <br><br>
-      <div id="chat-input-row">
-        <input type="text" id="message-input" placeholder="Type your message..." />
-        <button id="send-button">Send</button>
-      </div>
-    </section>
-
-    <!-- AI Chatbot -->
-    <section class="page" id="page-ai">
-      <h2>AI Chatbot</h2>
-      <br>
-      <p id="date"></p>
-    
-      <div id="chat"></div>
-    
-      <div id="input-area">
-        <input type="text" id="userInput" placeholder="Type a message..." />
-        <button id="sendBtn">Send</button>
-      </div>
-    </section>
-
-
-    <!-- Translator Page -->
-    <section class="page" id="page-translator">
-      <button class="back-btn top-right">← Back</button>
-      <br><br>
-      <h2>360 Translator</h2>
-
-      <div id="translator" style="margin-top:20px">
-        <textarea id="translateInput" placeholder="Enter text..." rows="3" style="width:100%"></textarea>
-
-        <div style="margin:10px 0">
-          <label>
-            <select id="sourceLang">
-              <option value="en">English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="zh">Mandarin</option>
-              <option value="ar">Arabic</option>
-            </select>
-          </label>
-
-          <label style="margin-left:10px">To:
-            <select id="targetLang">
-              <option value="es">Spanish</option>
-              <option value="en">English</option>
-              <option value="fr">French</option>
-              <option value="zh">Mandarin</option>
-              <option value="ar">Arabic</option>
-            </select>
-          </label>
-
-          <button id="translateBtn" style="margin-left:10px">Translate</button>
-        </div>
-
-        <div id="translateResult" style="white-space:pre-wrap;background:#f0f0f0;padding:10px;border-radius:5px;min-height:40px"></div>
-      </div>
-    </section>
-
-    <!-- URL Shortener -->
-    <section class="page" id="page-shortener">
-      <button class="back-btn top-right">← Back</button>
-      <br><br>
-      <h2>URL Shortener</h2>
-      <div class="shortener-box">
-        <input id="shortInput" placeholder="Paste URL..." />
-        <button id="shortBtn">Shorten</button>
-      </div>
-      <div id="shortResult">No link yet.</div>
-    </section>
-
-    <!-- Stocks -->
-    <section class="page" id="page-stocks">
-      <button class="back-btn top-right">← Back</button>
-      <br><br>
-      <h2>📈 Stocks</h2>
-      <form id="stockForm">
-        <input id="ticker" placeholder="Enter ticker (e.g. AAPL)" required />
-        <button type="submit">Check</button>
-      </form>
-      <br><br>
-      <div id="quote" class="quote"></div>
-    </section>
-  </main>
-
-    
-
-  <!-- Scripts -->
-  </main>
-  <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-  <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="script.js"></script>
-  <script>
-  document.querySelectorAll("button").forEach(btn => {
-    btn.classList.add("ripple");
-    btn.addEventListener("click", function (e) {
-      const ripple = document.createElement("span");
-      ripple.className = "ripple";
-      const rect = this.getBoundingClientRect();
-      ripple.style.left = `${e.clientX - rect.left}px`;
-      ripple.style.top = `${e.clientY - rect.top}px`;
-      ripple.style.position = "absolute";
-      ripple.style.width = ripple.style.height = "100px";
-      ripple.style.marginLeft = ripple.style.marginTop = "-50px";
-      ripple.style.borderRadius = "50%";
-      ripple.style.background = "rgba(59, 130, 246, 0.3)";
-      ripple.style.transform = "scale(0)";
-      ripple.style.animation = "ripple-effect 0.6s ease-out";
-      this.appendChild(ripple);
-      setTimeout(() => ripple.remove(), 600);
-    });
-  });
-</script>
-<style>
-  .nav-item,
-  .nav-link,
-  #sidebarToggle,
-  #settingsBtn {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple-circle {
-    position: absolute;
-    border-radius: 50%;
-    transform: scale(0);
-    animation: ripple 0.5s linear;
-    background-color: rgba(59, 130, 246, 0.3);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  @keyframes ripple {
-    to {
-      transform: scale(4);
-      opacity: 0;
-    }
-  }
-</style>
-
-<script>
-  const rippleTargets = document.querySelectorAll('.nav-item, .nav-link, #sidebarToggle, #settingsBtn');
-
-  rippleTargets.forEach(el => {
-    el.addEventListener('click', function (e) {
-      const circle = document.createElement('span');
-      const rect = this.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height);
-      const x = e.clientX - rect.left - size / 2;
-      const y = e.clientY - rect.top - size / 2;
-
-      circle.className = 'ripple-circle';
-      circle.style.width = circle.style.height = `${size}px`;
-      circle.style.left = `${x}px`;
-      circle.style.top = `${y}px`;
-
-      this.appendChild(circle);
-      setTimeout(() => circle.remove(), 500);
-    });
-  });
 </script>
 
 </body>
