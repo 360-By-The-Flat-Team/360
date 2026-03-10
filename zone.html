@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>360 | Zone</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    h1 { margin-bottom: 0.25rem; }
+
+    /* --- TAB BAR --- */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tabBtn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: #e0e0e0;
+      transition: 0.2s;
+    }
+
+    .tabBtn.active {
+      background: #4a6cff;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .tabContent {
+      display: none;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    textarea, select, input {
+      width: 100%;
+      margin-top: 0.25rem;
+      padding: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    button.action {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background: #4a6cff;
+      color: white;
+      font-weight: 600;
+    }
+
+    .output {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Zone Essay Helper</h1>
+
+  <!-- TAB BAR -->
+  <div class="tabs">
+    <button class="tabBtn active" onclick="showTab('builder', this)">Paragraph Builder</button>
+    <button class="tabBtn" onclick="showTab('grammar', this)">Grammar Fixer</button>
+    <button class="tabBtn" onclick="showTab('mla', this)">MLA Generator</button>
+    <button class="tabBtn" onclick="showTab('evidence', this)">Evidence Helper</button>
+  </div>
+
+  <!-- TAB CONTENT: PARAGRAPH BUILDER -->
+  <div id="builder" class="tabContent" style="display:block;">
+    <label>Paragraph type</label>
+    <select id="paragraphType">
+      <option value="intro">Intro</option>
+      <option value="body1">Body 1</option>
+      <option value="body2">Body 2</option>
+      <option value="body3">Body 3</option>
+      <option value="conclusion">Conclusion</option>
+    </select>
+
+    <label>Claim</label>
+    <textarea id="claim" rows="2"></textarea>
+
+    <label>Evidence / notes</label>
+    <textarea id="evidence" rows="6"></textarea>
+
+    <button class="action" onclick="buildParagraph()">Build Paragraph</button>
+    <div class="output" id="builderOut"></div>
+  </div>
+
+  <!-- TAB CONTENT: GRAMMAR FIXER -->
+  <div id="grammar" class="tabContent">
+    <label>Paste text to clean up</label>
+    <textarea id="grammarInput" rows="6"></textarea>
+
+    <button class="action" onclick="fixGrammar()">Fix Grammar</button>
+    <div class="output" id="grammarOut"></div>
+  </div>
+
+  <!-- TAB CONTENT: MLA GENERATOR -->
+  <div id="mla" class="tabContent">
+    <label>Author</label>
+    <input id="mlaAuthor" />
+
+    <label>Title</label>
+    <input id="mlaTitle" />
+
+    <label>Website / Container</label>
+    <input id="mlaSite" />
+
+    <label>URL</label>
+    <input id="mlaURL" />
+
+    <label>Date Published (optional)</label>
+    <input id="mlaDate" placeholder="2024-05-12" />
+
+    <label>Date Accessed</label>
+    <input id="mlaAccess" placeholder="2026-03-10" />
+
+    <button class="action" onclick="generateMLA()">Generate MLA Citation</button>
+    <div class="output" id="mlaOut"></div>
+  </div>
+
+  <!-- TAB CONTENT: EVIDENCE HELPER -->
+  <div id="evidence" class="tabContent">
+    <label>Claim</label>
+    <textarea id="evClaim" rows="2"></textarea>
+
+    <label>Evidence chunks (one per line)</label>
+    <textarea id="evChunks" rows="6"></textarea>
+
+    <button class="action" onclick="alignEvidence()">Align Evidence</button>
+    <div class="output" id="evidenceOut"></div>
+  </div>
+
+  <script>
+    /* ---------------- TAB SYSTEM ---------------- */
+    function showTab(id, btn) {
+      document.querySelectorAll('.tabContent').forEach(div => div.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+
+      document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    /* ---------------- PARAGRAPH BUILDER ---------------- */
+    function buildIntro(claim, evidence) {
+      return [
+        "Hook: " + (evidence.split("\n")[0] || "[Add an engaging hook.]"),
+        "Background: [Brief context.]",
+        "Claim: " + (claim || "[State your claim.]"),
+        "Preview of reasons: [List 2–3 reasons.]"
+      ].join("\n\n");
+    }
+
+    function buildBody(claim, evidence, num) {
+      const lines = evidence.split("\n").filter(x => x.trim() !== "");
+      const ev1 = lines[0] || "[Insert key evidence.]";
+      const ev2 = lines[1] || "[Optional second evidence.]";
+
+      return [
+        `Topic sentence: [Reason ${num} supporting "${claim || "your claim"}".]`,
+        "Context: [Set up the source.]",
+        "Evidence: " + ev1,
+        "Explanation: [Explain how it proves the reason.]",
+        "Additional evidence: " + ev2,
+        "Further explanation: [Why it matters.]",
+        "Concluding sentence: [Wrap up the reason.]"
+      ].join("\n\n");
+    }
+
+    function buildConclusion(claim) {
+      return [
+        "Restated claim: [Restate in new words: " + (claim || "your claim") + "].",
+        "Summary of reasons: [List them again.]",
+        "Final insight: [Big-picture takeaway.]"
+      ].join("\n\n");
+    }
+
+    function buildParagraph() {
+      const type = document.getElementById("paragraphType").value;
+      const claim = document.getElementById("claim").value.trim();
+      const evidence = document.getElementById("evidence").value.trim();
+
+      let out = "";
+      if (type === "intro") out = buildIntro(claim, evidence);
+      if (type === "body1") out = buildBody(claim, evidence, 1);
+      if (type === "body2") out = buildBody(claim, evidence, 2);
+      if (type === "body3") out = buildBody(claim, evidence, 3);
+      if (type === "conclusion") out = buildConclusion(claim);
+
+      document.getElementById("builderOut").textContent = out;
+    }
+
+    /* ---------------- GRAMMAR FIXER ---------------- */
+    function fixGrammar() {
+      let text = document.getElementById("grammarInput").value;
+
+      // simple rule-based cleanup
+      text = text.replace(/\si\s/g, " I ");
+      text = text.replace(/ {2,}/g, " ");
+      text = text.replace(/([a-zA-Z])\n/g, "$1.\n");
+
+      document.getElementById("grammarOut").textContent =
+        text + "\n\n[Note: This is a basic fixer. Full AI grammar coming later.]";
+    }
+
+    /* ---------------- MLA GENERATOR ---------------- */
+    function generateMLA() {
+      const author = document.getElementById("mlaAuthor").value.trim();
+      const title = document.getElementById("mlaTitle").value.trim();
+      const site = document.getElementById("mlaSite").value.trim();
+      const url = document.getElementById("mlaURL").value.trim();
+      const date = document.getElementById("mlaDate").value.trim();
+      const access = document.getElementById("mlaAccess").value.trim();
+
+      const citation =
+        `${author}. “${title}.” ${site}, ${date ? date + ", " : ""}${url}. Accessed ${access}.`;
+
+      document.getElementById("mlaOut").textContent = citation;
+    }
+
+    /* ---------------- EVIDENCE ALIGNMENT ---------------- */
+    function alignEvidence() {
+      const claim = document.getElementById("evClaim").value.trim();
+      const chunks = document.getElementById("evChunks").value.split("\n").filter(x => x.trim() !== "");
+
+      let out = `Claim: ${claim}\n\nEvidence Alignment:\n\n`;
+
+      chunks.forEach((ev, i) => {
+        out += `• Evidence ${i + 1}: ${ev}\n  → Explanation: This supports the claim because [insert reasoning].\n\n`;
+      });
+
+      document.getElementById("evidenceOut").textContent = out;
+    }
+  </script>
+</body>
+</html>
