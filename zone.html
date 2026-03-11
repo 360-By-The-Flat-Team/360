@@ -14,11 +14,11 @@
 
     h1 { margin-bottom: 0.25rem; }
 
-    /* --- TAB BAR --- */
     .tabs {
       display: flex;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     .tabBtn {
@@ -74,6 +74,7 @@
       border-radius: 6px;
       background: white;
       white-space: pre-wrap;
+      min-height: 60px;
     }
   </style>
 </head>
@@ -81,7 +82,6 @@
 <body>
   <h1>Zone Essay Helper</h1>
 
-  <!-- TAB BAR -->
   <div class="tabs">
     <button class="tabBtn active" onclick="showTab('builder', this)">Paragraph Builder</button>
     <button class="tabBtn" onclick="showTab('grammar', this)">Grammar Fixer</button>
@@ -89,7 +89,7 @@
     <button class="tabBtn" onclick="showTab('evidence', this)">Evidence Helper</button>
   </div>
 
-  <!-- TAB CONTENT: PARAGRAPH BUILDER -->
+  <!-- PARAGRAPH BUILDER -->
   <div id="builder" class="tabContent" style="display:block;">
     <label>Paragraph type</label>
     <select id="paragraphType">
@@ -106,20 +106,20 @@
     <label>Evidence / notes</label>
     <textarea id="evidence" rows="6"></textarea>
 
-    <button class="action" onclick="buildParagraph()">Build Paragraph</button>
+    <button class="action" onclick="buildParagraph()">Build Paragraph (AI)</button>
     <div class="output" id="builderOut"></div>
   </div>
 
-  <!-- TAB CONTENT: GRAMMAR FIXER -->
+  <!-- GRAMMAR FIXER -->
   <div id="grammar" class="tabContent">
     <label>Paste text to clean up</label>
     <textarea id="grammarInput" rows="6"></textarea>
 
-    <button class="action" onclick="fixGrammar()">Fix Grammar</button>
+    <button class="action" onclick="fixGrammar()">Fix Grammar (AI)</button>
     <div class="output" id="grammarOut"></div>
   </div>
 
-  <!-- TAB CONTENT: MLA GENERATOR -->
+  <!-- MLA GENERATOR -->
   <div id="mla" class="tabContent">
     <label>Author</label>
     <input id="mlaAuthor" />
@@ -139,11 +139,11 @@
     <label>Date Accessed</label>
     <input id="mlaAccess" placeholder="2026-03-10" />
 
-    <button class="action" onclick="generateMLA()">Generate MLA Citation</button>
+    <button class="action" onclick="generateMLA()">Generate MLA (AI)</button>
     <div class="output" id="mlaOut"></div>
   </div>
 
-  <!-- TAB CONTENT: EVIDENCE HELPER -->
+  <!-- EVIDENCE HELPER -->
   <div id="evidence" class="tabContent">
     <label>Claim</label>
     <textarea id="evClaim" rows="2"></textarea>
@@ -151,12 +151,12 @@
     <label>Evidence chunks (one per line)</label>
     <textarea id="evChunks" rows="6"></textarea>
 
-    <button class="action" onclick="alignEvidence()">Align Evidence</button>
+    <button class="action" onclick="alignEvidence()">Align Evidence (AI)</button>
     <div class="output" id="evidenceOut"></div>
   </div>
 
   <script>
-    /* ---------------- TAB SYSTEM ---------------- */
+    /* ---------- TAB SYSTEM ---------- */
     function showTab(id, btn) {
       document.querySelectorAll('.tabContent').forEach(div => div.style.display = 'none');
       document.getElementById(id).style.display = 'block';
@@ -165,70 +165,59 @@
       btn.classList.add('active');
     }
 
-    /* ---------------- PARAGRAPH BUILDER ---------------- */
-    function buildIntro(claim, evidence) {
-      return [
-        "Hook: " + (evidence.split("\n")[0] || "[Add an engaging hook.]"),
-        "Background: [Brief context.]",
-        "Claim: " + (claim || "[State your claim.]"),
-        "Preview of reasons: [List 2–3 reasons.]"
-      ].join("\n\n");
+    /* ---------- UNIVERSAL AI CALL (Supabase → Groq) ---------- */
+    async function ai(prompt) {
+      const res = await fetch("https://bzbkvsefbhqosdcjjtbv.supabase.co/functions/v1/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+
+      const data = await res.json();
+      return data.output;
     }
 
-    function buildBody(claim, evidence, num) {
-      const lines = evidence.split("\n").filter(x => x.trim() !== "");
-      const ev1 = lines[0] || "[Insert key evidence.]";
-      const ev2 = lines[1] || "[Optional second evidence.]";
-
-      return [
-        `Topic sentence: [Reason ${num} supporting "${claim || "your claim"}".]`,
-        "Context: [Set up the source.]",
-        "Evidence: " + ev1,
-        "Explanation: [Explain how it proves the reason.]",
-        "Additional evidence: " + ev2,
-        "Further explanation: [Why it matters.]",
-        "Concluding sentence: [Wrap up the reason.]"
-      ].join("\n\n");
-    }
-
-    function buildConclusion(claim) {
-      return [
-        "Restated claim: [Restate in new words: " + (claim || "your claim") + "].",
-        "Summary of reasons: [List them again.]",
-        "Final insight: [Big-picture takeaway.]"
-      ].join("\n\n");
-    }
-
-    function buildParagraph() {
+    /* ---------- PARAGRAPH BUILDER (AI) ---------- */
+    async function buildParagraph() {
       const type = document.getElementById("paragraphType").value;
       const claim = document.getElementById("claim").value.trim();
       const evidence = document.getElementById("evidence").value.trim();
 
-      let out = "";
-      if (type === "intro") out = buildIntro(claim, evidence);
-      if (type === "body1") out = buildBody(claim, evidence, 1);
-      if (type === "body2") out = buildBody(claim, evidence, 2);
-      if (type === "body3") out = buildBody(claim, evidence, 3);
-      if (type === "conclusion") out = buildConclusion(claim);
+      const prompt = `
+Write a ${type} paragraph using this claim and evidence.
 
-      document.getElementById("builderOut").textContent = out;
+Claim:
+${claim}
+
+Evidence:
+${evidence}
+
+Follow standard ELA structure. Return only the paragraph.
+      `;
+
+      document.getElementById("builderOut").textContent = "Thinking...";
+      const result = await ai(prompt);
+      document.getElementById("builderOut").textContent = result;
     }
 
-    /* ---------------- GRAMMAR FIXER ---------------- */
-    function fixGrammar() {
-      let text = document.getElementById("grammarInput").value;
+    /* ---------- GRAMMAR FIXER (AI) ---------- */
+    async function fixGrammar() {
+      const text = document.getElementById("grammarInput").value;
 
-      // simple rule-based cleanup
-      text = text.replace(/\si\s/g, " I ");
-      text = text.replace(/ {2,}/g, " ");
-      text = text.replace(/([a-zA-Z])\n/g, "$1.\n");
+      const prompt = `
+Fix grammar, punctuation, clarity, and flow. Return only the corrected text.
 
-      document.getElementById("grammarOut").textContent =
-        text + "\n\n[Note: This is a basic fixer. Full AI grammar coming later.]";
+Text:
+${text}
+      `;
+
+      document.getElementById("grammarOut").textContent = "Thinking...";
+      const result = await ai(prompt);
+      document.getElementById("grammarOut").textContent = result;
     }
 
-    /* ---------------- MLA GENERATOR ---------------- */
-    function generateMLA() {
+    /* ---------- MLA GENERATOR (AI) ---------- */
+    async function generateMLA() {
       const author = document.getElementById("mlaAuthor").value.trim();
       const title = document.getElementById("mlaTitle").value.trim();
       const site = document.getElementById("mlaSite").value.trim();
@@ -236,24 +225,42 @@
       const date = document.getElementById("mlaDate").value.trim();
       const access = document.getElementById("mlaAccess").value.trim();
 
-      const citation =
-        `${author}. “${title}.” ${site}, ${date ? date + ", " : ""}${url}. Accessed ${access}.`;
+      const prompt = `
+Create a correct MLA 9 citation for an online source.
 
-      document.getElementById("mlaOut").textContent = citation;
+Author: ${author}
+Title: ${title}
+Website: ${site}
+URL: ${url}
+Date Published: ${date}
+Date Accessed: ${access}
+
+Return only the MLA citation.
+      `;
+
+      document.getElementById("mlaOut").textContent = "Thinking...";
+      const result = await ai(prompt);
+      document.getElementById("mlaOut").textContent = result;
     }
 
-    /* ---------------- EVIDENCE ALIGNMENT ---------------- */
-    function alignEvidence() {
+    /* ---------- EVIDENCE ALIGNMENT (AI) ---------- */
+    async function alignEvidence() {
       const claim = document.getElementById("evClaim").value.trim();
-      const chunks = document.getElementById("evChunks").value.split("\n").filter(x => x.trim() !== "");
+      const chunks = document.getElementById("evChunks").value.trim();
 
-      let out = `Claim: ${claim}\n\nEvidence Alignment:\n\n`;
+      const prompt = `
+Claim:
+${claim}
 
-      chunks.forEach((ev, i) => {
-        out += `• Evidence ${i + 1}: ${ev}\n  → Explanation: This supports the claim because [insert reasoning].\n\n`;
-      });
+Evidence:
+${chunks}
 
-      document.getElementById("evidenceOut").textContent = out;
+Explain how each evidence chunk supports the claim. Provide clear, student-friendly reasoning.
+      `;
+
+      document.getElementById("evidenceOut").textContent = "Thinking...";
+      const result = await ai(prompt);
+      document.getElementById("evidenceOut").textContent = result;
     }
   </script>
 </body>
