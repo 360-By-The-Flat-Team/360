@@ -10,7 +10,11 @@
       --accent-light: #6f86ff;
       --accent-hover: #3a58d6;
       --bg: #f7f8ff;
+      --bg-dark: #111827;
       --card: #ffffff;
+      --card-dark: #1f2933;
+      --text: #111827;
+      --text-dark: #f9fafb;
       --radius: 10px;
       --transition: 0.25s ease;
     }
@@ -21,9 +25,43 @@
       margin: 2rem auto;
       padding: 0 1rem;
       background: var(--bg);
+      color: var(--text);
+      transition: background var(--transition), color var(--transition);
     }
 
-    h1 { margin-bottom: 0.25rem; }
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h1 {
+      margin-bottom: 0.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toggleRow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .toggleBtn {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #ccc;
+      background: #f3f4ff;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    body.dark .toggleBtn {
+      background: #111827;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
 
     /* Ripple */
     .action {
@@ -41,6 +79,8 @@
       opacity: 0;
       pointer-events: none;
       transition: transform 0.5s, opacity 0.8s;
+      left: var(--ripple-x, 50%);
+      top: var(--ripple-y, 50%);
     }
     .action:active::after {
       transform: scale(20);
@@ -79,12 +119,29 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
+    body.dark .tabBtn {
+      background: #374151;
+      color: #e5e7eb;
+    }
+    body.dark .tabBtn.active {
+      background: var(--accent);
+      color: white;
+    }
+
     .tabContent {
       display: none;
       padding: 1rem;
       border: 1px solid #ddd;
       border-radius: var(--radius);
       background: var(--card);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+
+    body.dark .tabContent {
+      background: var(--card-dark);
+      border-color: #4b5563;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
     }
 
     label { display: block; margin-top: 1rem; font-weight: 600; }
@@ -95,6 +152,16 @@
       font-size: 0.95rem;
       border-radius: 6px;
       border: 1px solid #ccc;
+      background: white;
+      color: #111827;
+    }
+
+    body.dark textarea,
+    body.dark select,
+    body.dark input {
+      background: #111827;
+      color: #e5e7eb;
+      border-color: #4b5563;
     }
 
     button.action {
@@ -123,6 +190,13 @@
       background: white;
       white-space: pre-wrap;
       min-height: 60px;
+      font-size: 0.95rem;
+    }
+
+    body.dark .output {
+      background: #111827;
+      border-color: #4b5563;
+      color: #e5e7eb;
     }
 
     mark {
@@ -130,11 +204,26 @@
       padding: 2px 4px;
       border-radius: 4px;
     }
+
+    .error {
+      color: #b91c1c;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    body.dark .error {
+      color: #fecaca;
+    }
   </style>
 </head>
 
 <body>
-  <h1>Zone Essay Helper</h1>
+  <h1>
+    <span>Zone Essay Helper</span>
+    <div class="toggleRow">
+      <button class="toggleBtn" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    </div>
+  </h1>
 
   <div class="tabs">
     <button class="tabBtn active" onclick="showTab('builder', this)">Paragraph Builder</button>
@@ -163,6 +252,7 @@
 
     <button class="action" onclick="buildParagraph()">Build Paragraph (AI)</button>
     <div class="output" id="builderOut"></div>
+    <div class="error" id="builderErr"></div>
   </div>
 
   <!-- GRAMMAR FIXER -->
@@ -172,6 +262,7 @@
 
     <button class="action" onclick="fixGrammar()">Fix Grammar (AI)</button>
     <div class="output" id="grammarOut"></div>
+    <div class="error" id="grammarErr"></div>
   </div>
 
   <!-- MLA GENERATOR -->
@@ -196,6 +287,7 @@
 
     <button class="action" onclick="generateMLA()">Generate MLA (AI)</button>
     <div class="output" id="mlaOut"></div>
+    <div class="error" id="mlaErr"></div>
   </div>
 
   <!-- EVIDENCE HELPER -->
@@ -208,6 +300,7 @@
 
     <button class="action" onclick="alignEvidence()">Align Evidence (AI)</button>
     <div class="output" id="evidenceOut"></div>
+    <div class="error" id="evidenceErr"></div>
   </div>
 
   <!-- PRONOUN CHECKER -->
@@ -230,6 +323,16 @@
   </div>
 
   <script>
+    /* ---------- CONFIG (YOU PASTE YOUR KEY) ---------- */
+    const API_KEY = "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"; // <--- replace locally
+    const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const GROQ_MODEL = "llama3-70b-8192";
+
+    /* ---------- DARK MODE ---------- */
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
+
     /* ---------- TAB SYSTEM ---------- */
     function showTab(id, btn) {
       document.querySelectorAll('.tabContent').forEach(div => div.style.display = 'none');
@@ -238,6 +341,18 @@
       document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
+
+    /* ---------- RIPPLE POSITIONING ---------- */
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("action")) {
+        const btn = e.target;
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        btn.style.setProperty("--ripple-x", `${x}px`);
+        btn.style.setProperty("--ripple-y", `${y}px`);
+      }
+    });
 
     /* ---------- PRONOUN CHECKER ---------- */
     const pronounSets = {
@@ -270,24 +385,43 @@
 
     /* ---------- UNIVERSAL AI CALL ---------- */
     async function ai(prompt) {
-      const res = await fetch("https://bzbkvsefbhqosdcjjtbv.supabase.co/functions/v1/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
-      });
+      try {
+        const res = await fetch(GROQ_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+            messages: [{ role: "user", content: prompt }]
+          })
+        });
 
-      const data = await res.json();
-      return data.output;
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+
+        const data = await res.json();
+        return data.choices?.[0]?.message?.content?.trim() || "(No response)";
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
     }
 
     /* ---------- PARAGRAPH BUILDER ---------- */
     async function buildParagraph() {
+      const out = document.getElementById("builderOut");
+      const err = document.getElementById("builderErr");
+      err.textContent = "";
       const type = document.getElementById("paragraphType").value;
       const claim = document.getElementById("claim").value.trim();
       const evidence = document.getElementById("evidence").value.trim();
 
       const prompt = `
-Write a ${type} paragraph using this claim and evidence.
+You are an ELA writing assistant. Write a ${type} paragraph using this claim and evidence.
 
 Claim:
 ${claim}
@@ -295,32 +429,50 @@ ${claim}
 Evidence:
 ${evidence}
 
-Follow standard ELA structure. Return only the paragraph.
+Use clear academic language, proper structure, and stay on topic. Return only the paragraph.
       `;
 
-      document.getElementById("builderOut").textContent = "Thinking...";
-      const result = await ai(prompt);
-      document.getElementById("builderOut").textContent = result;
+      out.textContent = "Thinking...";
+      try {
+        const result = await ai(prompt);
+        out.textContent = result;
+      } catch (e) {
+        out.textContent = "";
+        err.textContent = "Error generating draft. Please try again later. If this issue persists, please contact us at help@360-search.com";
+      }
     }
 
     /* ---------- GRAMMAR FIXER ---------- */
     async function fixGrammar() {
+      const out = document.getElementById("grammarOut");
+      const err = document.getElementById("grammarErr");
+      err.textContent = "";
       const text = document.getElementById("grammarInput").value;
 
       const prompt = `
-Fix grammar, punctuation, clarity, and flow. Return only the corrected text.
+You are a grammar and clarity assistant. Fix grammar, punctuation, clarity, and flow. 
+Do not change the meaning. Return only the corrected text.
 
 Text:
 ${text}
       `;
 
-      document.getElementById("grammarOut").textContent = "Thinking...";
-      const result = await ai(prompt);
-      document.getElementById("grammarOut").textContent = result;
+      out.textContent = "Thinking...";
+      try {
+        const result = await ai(prompt);
+        out.textContent = result;
+      } catch (e) {
+        out.textContent = "";
+        err.textContent = "Error fixing grammar. Please try again later. If this issue persists, please contact us at help@360-search.com";
+      }
     }
 
     /* ---------- MLA GENERATOR ---------- */
     async function generateMLA() {
+      const out = document.getElementById("mlaOut");
+      const err = document.getElementById("mlaErr");
+      err.textContent = "";
+
       const author = document.getElementById("mlaAuthor").value.trim();
       const title = document.getElementById("mlaTitle").value.trim();
       const site = document.getElementById("mlaSite").value.trim();
@@ -329,7 +481,7 @@ ${text}
       const access = document.getElementById("mlaAccess").value.trim();
 
       const prompt = `
-Create a correct MLA 9 citation for an online source.
+You are an MLA 9 citation assistant. Create a correct MLA 9 citation for an online source.
 
 Author: ${author}
 Title: ${title}
@@ -338,32 +490,49 @@ URL: ${url}
 Date Published: ${date}
 Date Accessed: ${access}
 
-Return only the MLA citation.
+Return only the MLA citation, properly formatted.
       `;
 
-      document.getElementById("mlaOut").textContent = "Thinking...";
-      const result = await ai(prompt);
-      document.getElementById("mlaOut").textContent = result;
+      out.textContent = "Thinking...";
+      try {
+        const result = await ai(prompt);
+        out.textContent = result;
+      } catch (e) {
+        out.textContent = "";
+        err.textContent = "Error generating MLA citation. Please try again later. If this issue persists, please contact us at help@360-search.com";
+      }
     }
 
     /* ---------- EVIDENCE ALIGNMENT ---------- */
     async function alignEvidence() {
+      const out = document.getElementById("evidenceOut");
+      const err = document.getElementById("evidenceErr");
+      err.textContent = "";
+
       const claim = document.getElementById("evClaim").value.trim();
       const chunks = document.getElementById("evChunks").value.trim();
 
       const prompt = `
+You are an ELA reasoning assistant.
+
 Claim:
 ${claim}
 
-Evidence:
+Evidence (each line is a separate piece of evidence):
 ${chunks}
 
-Explain how each evidence chunk supports the claim. Provide clear, student-friendly reasoning.
+For each evidence line, explain in student-friendly language how it supports the claim. 
+Stay on topic and be clear.
       `;
 
-      document.getElementById("evidenceOut").textContent = "Thinking...";
-      const result = await ai(prompt);
-      document.getElementById("evidenceOut").textContent = result;
+      out.textContent = "Thinking...";
+      try {
+        const result = await ai(prompt);
+        out.textContent = result;
+      } catch (e) {
+        out.textContent = "";
+        err.textContent = "Error analyzing evidence. Please try again later. If this issue persists, please contact us at help@360-search.com";
+      }
     }
   </script>
 </body>
