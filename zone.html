@@ -5,15 +5,49 @@
   <title>360 | Zone</title>
 
   <style>
+    :root {
+      --accent: #4a6cff;
+      --accent-light: #6f86ff;
+      --accent-hover: #3a58d6;
+      --bg: #f7f8ff;
+      --card: #ffffff;
+      --radius: 10px;
+      --transition: 0.25s ease;
+    }
+
     body {
       font-family: system-ui, sans-serif;
       max-width: 900px;
       margin: 2rem auto;
       padding: 0 1rem;
+      background: var(--bg);
     }
 
     h1 { margin-bottom: 0.25rem; }
 
+    /* Ripple */
+    .action {
+      position: relative;
+      overflow: hidden;
+    }
+    .action::after {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 50%;
+      transform: scale(0);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.5s, opacity 0.8s;
+    }
+    .action:active::after {
+      transform: scale(20);
+      opacity: 1;
+    }
+
+    /* Tabs */
     .tabs {
       display: flex;
       gap: 10px;
@@ -29,11 +63,17 @@
       font-size: 0.95rem;
       font-weight: 600;
       background: #e0e0e0;
-      transition: 0.2s;
+      transition: var(--transition);
+    }
+
+    .tabBtn:hover {
+      background: var(--accent-light);
+      color: white;
+      transform: translateY(-3px);
     }
 
     .tabBtn.active {
-      background: #4a6cff;
+      background: var(--accent);
       color: white;
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
@@ -43,8 +83,8 @@
       display: none;
       padding: 1rem;
       border: 1px solid #ddd;
-      border-radius: 8px;
-      background: #fafafa;
+      border-radius: var(--radius);
+      background: var(--card);
     }
 
     label { display: block; margin-top: 1rem; font-weight: 600; }
@@ -53,6 +93,8 @@
       margin-top: 0.25rem;
       padding: 0.5rem;
       font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
 
     button.action {
@@ -62,9 +104,15 @@
       cursor: pointer;
       border-radius: 6px;
       border: none;
-      background: #4a6cff;
+      background: var(--accent);
       color: white;
       font-weight: 600;
+      transition: var(--transition);
+    }
+
+    button.action:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
     }
 
     .output {
@@ -75,6 +123,12 @@
       background: white;
       white-space: pre-wrap;
       min-height: 60px;
+    }
+
+    mark {
+      background: #ffe066;
+      padding: 2px 4px;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -87,6 +141,7 @@
     <button class="tabBtn" onclick="showTab('grammar', this)">Grammar Fixer</button>
     <button class="tabBtn" onclick="showTab('mla', this)">MLA Generator</button>
     <button class="tabBtn" onclick="showTab('evidence', this)">Evidence Helper</button>
+    <button class="tabBtn" onclick="showTab('pronouns', this)">Pronoun Checker</button>
   </div>
 
   <!-- PARAGRAPH BUILDER -->
@@ -155,6 +210,25 @@
     <div class="output" id="evidenceOut"></div>
   </div>
 
+  <!-- PRONOUN CHECKER -->
+  <div id="pronouns" class="tabContent">
+    <label>Paste text</label>
+    <textarea id="pronounInput" rows="6"></textarea>
+
+    <label>Select pronoun category</label>
+    <select id="pronounCategory">
+      <option value="subjective">Subjective (he, she, they)</option>
+      <option value="objective">Objective (him, her, them)</option>
+      <option value="possessive">Possessive (his, hers, theirs)</option>
+      <option value="reflexive">Reflexive (himself, herself, themselves)</option>
+    </select>
+
+    <button class="action" onclick="checkPronouns()">Check Pronouns</button>
+
+    <div class="output" id="pronounOut"></div>
+    <div class="output" id="pronounSuggestions"></div>
+  </div>
+
   <script>
     /* ---------- TAB SYSTEM ---------- */
     function showTab(id, btn) {
@@ -165,7 +239,36 @@
       btn.classList.add('active');
     }
 
-    /* ---------- UNIVERSAL AI CALL (Supabase → Groq) ---------- */
+    /* ---------- PRONOUN CHECKER ---------- */
+    const pronounSets = {
+      subjective: ["he", "she", "they", "i", "we", "you"],
+      objective: ["him", "her", "them", "me", "us", "you"],
+      possessive: ["his", "hers", "theirs", "mine", "ours", "yours"],
+      reflexive: ["himself", "herself", "themselves", "myself", "ourselves", "yourself"]
+    };
+
+    function checkPronouns() {
+      const text = document.getElementById("pronounInput").value;
+      const category = document.getElementById("pronounCategory").value;
+      const list = pronounSets[category];
+
+      let highlighted = text;
+
+      list.forEach(p => {
+        const regex = new RegExp(`\\b${p}\\b`, "gi");
+        highlighted = highlighted.replace(regex, match => `<mark>${match}</mark>`);
+      });
+
+      document.getElementById("pronounOut").innerHTML = highlighted;
+
+      const suggestions = list
+        .map(p => `• Replace "${p}" with a specific noun for clarity`)
+        .join("\n");
+
+      document.getElementById("pronounSuggestions").textContent = suggestions;
+    }
+
+    /* ---------- UNIVERSAL AI CALL ---------- */
     async function ai(prompt) {
       const res = await fetch("https://bzbkvsefbhqosdcjjtbv.supabase.co/functions/v1/ai", {
         method: "POST",
@@ -177,7 +280,7 @@
       return data.output;
     }
 
-    /* ---------- PARAGRAPH BUILDER (AI) ---------- */
+    /* ---------- PARAGRAPH BUILDER ---------- */
     async function buildParagraph() {
       const type = document.getElementById("paragraphType").value;
       const claim = document.getElementById("claim").value.trim();
@@ -200,7 +303,7 @@ Follow standard ELA structure. Return only the paragraph.
       document.getElementById("builderOut").textContent = result;
     }
 
-    /* ---------- GRAMMAR FIXER (AI) ---------- */
+    /* ---------- GRAMMAR FIXER ---------- */
     async function fixGrammar() {
       const text = document.getElementById("grammarInput").value;
 
@@ -216,7 +319,7 @@ ${text}
       document.getElementById("grammarOut").textContent = result;
     }
 
-    /* ---------- MLA GENERATOR (AI) ---------- */
+    /* ---------- MLA GENERATOR ---------- */
     async function generateMLA() {
       const author = document.getElementById("mlaAuthor").value.trim();
       const title = document.getElementById("mlaTitle").value.trim();
@@ -243,7 +346,7 @@ Return only the MLA citation.
       document.getElementById("mlaOut").textContent = result;
     }
 
-    /* ---------- EVIDENCE ALIGNMENT (AI) ---------- */
+    /* ---------- EVIDENCE ALIGNMENT ---------- */
     async function alignEvidence() {
       const claim = document.getElementById("evClaim").value.trim();
       const chunks = document.getElementById("evChunks").value.trim();
