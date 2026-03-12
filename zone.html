@@ -324,9 +324,9 @@
 
   <script>
     /* ---------- CONFIG (YOU PASTE YOUR KEY) ---------- */
-    const API_KEY = "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"; // <--- replace locally
-    const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-    const GROQ_MODEL = "llama3-70b-8192";
+    const API_KEY = "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"; // <--- replace locally
+    const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+    const OPENAI_MODEL = "gpt-4o-mini";
 
     /* ---------- DARK MODE ---------- */
     function toggleDarkMode() {
@@ -383,17 +383,17 @@
       document.getElementById("pronounSuggestions").textContent = suggestions;
     }
 
-    /* ---------- UNIVERSAL AI CALL ---------- */
+    /* ---------- UNIVERSAL AI CALL (OPENAI) ---------- */
     async function ai(prompt) {
       try {
-        const res = await fetch(GROQ_URL, {
+        const res = await fetch(OPENAI_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${API_KEY}`
           },
           body: JSON.stringify({
-            model: GROQ_MODEL,
+            model: OPENAI_MODEL,
             messages: [{ role: "user", content: prompt }]
           })
         });
