@@ -323,104 +323,97 @@
   </div>
 
   <script>
-    /* ---------- CONFIG (YOU PASTE YOUR KEY) ---------- */
-    const API_KEY = "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"; 
-    const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
-    const OPENAI_MODEL = "gpt-4o-mini";
+  /* ---------- CONFIG ---------- */
+  const FUNCTION_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/ai"; 
+  
 
-    /* ---------- DARK MODE ---------- */
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark");
+  /* ---------- DARK MODE ---------- */
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark");
+  }
+
+  /* ---------- TAB SYSTEM ---------- */
+  function showTab(id, btn) {
+    document.querySelectorAll('.tabContent').forEach(div => div.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+
+    document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  /* ---------- RIPPLE POSITIONING ---------- */
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("action")) {
+      const btn = e.target;
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      btn.style.setProperty("--ripple-x", `${x}px`);
+      btn.style.setProperty("--ripple-y", `${y}px`);
     }
+  });
 
-    /* ---------- TAB SYSTEM ---------- */
-    function showTab(id, btn) {
-      document.querySelectorAll('.tabContent').forEach(div => div.style.display = 'none');
-      document.getElementById(id).style.display = 'block';
+  /* ---------- PRONOUN CHECKER ---------- */
+  const pronounSets = {
+    subjective: ["he", "she", "they", "i", "we", "you"],
+    objective: ["him", "her", "them", "me", "us", "you"],
+    possessive: ["his", "hers", "theirs", "mine", "ours", "yours"],
+    reflexive: ["himself", "herself", "themselves", "myself", "ourselves", "yourself"]
+  };
 
-      document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
+  function checkPronouns() {
+    const text = document.getElementById("pronounInput").value;
+    const category = document.getElementById("pronounCategory").value;
+    const list = pronounSets[category];
 
-    /* ---------- RIPPLE POSITIONING ---------- */
-    document.addEventListener("click", (e) => {
-      if (e.target.classList.contains("action")) {
-        const btn = e.target;
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        btn.style.setProperty("--ripple-x", `${x}px`);
-        btn.style.setProperty("--ripple-y", `${y}px`);
-      }
+    let highlighted = text;
+
+    list.forEach(p => {
+      const regex = new RegExp(`\\b${p}\\b`, "gi");
+      highlighted = highlighted.replace(regex, match => `<mark>${match}</mark>`);
     });
 
-    /* ---------- PRONOUN CHECKER ---------- */
-    const pronounSets = {
-      subjective: ["he", "she", "they", "i", "we", "you"],
-      objective: ["him", "her", "them", "me", "us", "you"],
-      possessive: ["his", "hers", "theirs", "mine", "ours", "yours"],
-      reflexive: ["himself", "herself", "themselves", "myself", "ourselves", "yourself"]
-    };
+    document.getElementById("pronounOut").innerHTML = highlighted;
 
-    function checkPronouns() {
-      const text = document.getElementById("pronounInput").value;
-      const category = document.getElementById("pronounCategory").value;
-      const list = pronounSets[category];
+    const suggestions = list
+      .map(p => `• Replace "${p}" with a specific noun for clarity`)
+      .join("\n");
 
-      let highlighted = text;
+    document.getElementById("pronounSuggestions").textContent = suggestions;
+  }
 
-      list.forEach(p => {
-        const regex = new RegExp(`\\b${p}\\b`, "gi");
-        highlighted = highlighted.replace(regex, match => `<mark>${match}</mark>`);
+  /* ---------- UNIVERSAL AI CALL (SUPABASE → GROQ) ---------- */
+  async function ai(prompt) {
+    try {
+      const res = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
       });
 
-      document.getElementById("pronounOut").innerHTML = highlighted;
-
-      const suggestions = list
-        .map(p => `• Replace "${p}" with a specific noun for clarity`)
-        .join("\n");
-
-      document.getElementById("pronounSuggestions").textContent = suggestions;
-    }
-
-    /* ---------- UNIVERSAL AI CALL (OPENAI) ---------- */
-    async function ai(prompt) {
-      try {
-        const res = await fetch(OPENAI_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${API_KEY}`
-          },
-          body: JSON.stringify({
-            model: OPENAI_MODEL,
-            messages: [{ role: "user", content: prompt }]
-          })
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-
-        const data = await res.json();
-        return data.choices?.[0]?.message?.content?.trim() || "(No response)";
-      } catch (err) {
-        console.error(err);
-        throw err;
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errText}`);
       }
+
+      const data = await res.json();
+      return data.output || "(No response)";
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
+  }
 
-    /* ---------- PARAGRAPH BUILDER ---------- */
-    async function buildParagraph() {
-      const out = document.getElementById("builderOut");
-      const err = document.getElementById("builderErr");
-      err.textContent = "";
-      const type = document.getElementById("paragraphType").value;
-      const claim = document.getElementById("claim").value.trim();
-      const evidence = document.getElementById("evidence").value.trim();
+  /* ---------- PARAGRAPH BUILDER ---------- */
+  async function buildParagraph() {
+    const out = document.getElementById("builderOut");
+    const err = document.getElementById("builderErr");
+    err.textContent = "";
+    const type = document.getElementById("paragraphType").value;
+    const claim = document.getElementById("claim").value.trim();
+    const evidence = document.getElementById("evidence").value.trim();
 
-      const prompt = `
+    const prompt = `
 You are an ELA writing assistant. Write a ${type} paragraph using this claim and evidence.
 
 Claim:
@@ -430,58 +423,58 @@ Evidence:
 ${evidence}
 
 Use clear academic language, proper structure, and stay on topic. Return only the paragraph.
-      `;
+    `;
 
-      out.textContent = "Thinking...";
-      try {
-        const result = await ai(prompt);
-        out.textContent = result;
-      } catch (e) {
-        out.textContent = "";
-        err.textContent = "Error generating draft. Please try again later. If this issue persists, please contact us at help@360-search.com";
-      }
+    out.textContent = "Thinking...";
+    try {
+      const result = await ai(prompt);
+      out.textContent = result;
+    } catch (e) {
+      out.textContent = "";
+      err.textContent = "Error generating draft. Please try again.";
     }
+  }
 
-    /* ---------- GRAMMAR FIXER ---------- */
-    async function fixGrammar() {
-      const out = document.getElementById("grammarOut");
-      const err = document.getElementById("grammarErr");
-      err.textContent = "";
-      const text = document.getElementById("grammarInput").value;
+  /* ---------- GRAMMAR FIXER ---------- */
+  async function fixGrammar() {
+    const out = document.getElementById("grammarOut");
+    const err = document.getElementById("grammarErr");
+    err.textContent = "";
+    const text = document.getElementById("grammarInput").value;
 
-      const prompt = `
-You are a grammar and clarity assistant. Fix grammar, punctuation, clarity, and flow. 
+    const prompt = `
+Fix grammar, punctuation, clarity, and flow. 
 Do not change the meaning. Return only the corrected text.
 
 Text:
 ${text}
-      `;
+    `;
 
-      out.textContent = "Thinking...";
-      try {
-        const result = await ai(prompt);
-        out.textContent = result;
-      } catch (e) {
-        out.textContent = "";
-        err.textContent = "Error fixing grammar. Please try again later. If this issue persists, please contact us at help@360-search.com";
-      }
+    out.textContent = "Thinking...";
+    try {
+      const result = await ai(prompt);
+      out.textContent = result;
+    } catch (e) {
+      out.textContent = "";
+      err.textContent = "Error fixing grammar. Please try again.";
     }
+  }
 
-    /* ---------- MLA GENERATOR ---------- */
-    async function generateMLA() {
-      const out = document.getElementById("mlaOut");
-      const err = document.getElementById("mlaErr");
-      err.textContent = "";
+  /* ---------- MLA GENERATOR ---------- */
+  async function generateMLA() {
+    const out = document.getElementById("mlaOut");
+    const err = document.getElementById("mlaErr");
+    err.textContent = "";
 
-      const author = document.getElementById("mlaAuthor").value.trim();
-      const title = document.getElementById("mlaTitle").value.trim();
-      const site = document.getElementById("mlaSite").value.trim();
-      const url = document.getElementById("mlaURL").value.trim();
-      const date = document.getElementById("mlaDate").value.trim();
-      const access = document.getElementById("mlaAccess").value.trim();
+    const author = document.getElementById("mlaAuthor").value.trim();
+    const title = document.getElementById("mlaTitle").value.trim();
+    const site = document.getElementById("mlaSite").value.trim();
+    const url = document.getElementById("mlaURL").value.trim();
+    const date = document.getElementById("mlaDate").value.trim();
+    const access = document.getElementById("mlaAccess").value.trim();
 
-      const prompt = `
-You are an MLA 9 citation assistant. Create a correct MLA 9 citation for an online source.
+    const prompt = `
+Create a correct MLA 9 citation for an online source.
 
 Author: ${author}
 Title: ${title}
@@ -490,50 +483,47 @@ URL: ${url}
 Date Published: ${date}
 Date Accessed: ${access}
 
-Return only the MLA citation, properly formatted.
-      `;
+Return only the MLA citation.
+    `;
 
-      out.textContent = "Thinking...";
-      try {
-        const result = await ai(prompt);
-        out.textContent = result;
-      } catch (e) {
-        out.textContent = "";
-        err.textContent = "Error generating MLA citation. Please try again later. If this issue persists, please contact us at help@360-search.com";
-      }
+    out.textContent = "Thinking...";
+    try {
+      const result = await ai(prompt);
+      out.textContent = result;
+    } catch (e) {
+      out.textContent = "";
+      err.textContent = "Error generating MLA citation. Please try again.";
     }
+  }
 
-    /* ---------- EVIDENCE ALIGNMENT ---------- */
-    async function alignEvidence() {
-      const out = document.getElementById("evidenceOut");
-      const err = document.getElementById("evidenceErr");
-      err.textContent = "";
+  /* ---------- EVIDENCE ALIGNMENT ---------- */
+  async function alignEvidence() {
+    const out = document.getElementById("evidenceOut");
+    const err = document.getElementById("evidenceErr");
+    err.textContent = "";
 
-      const claim = document.getElementById("evClaim").value.trim();
-      const chunks = document.getElementById("evChunks").value.trim();
+    const claim = document.getElementById("evClaim").value.trim();
+    const chunks = document.getElementById("evChunks").value.trim();
 
-      const prompt = `
-You are an ELA reasoning assistant.
-
+    const prompt = `
 Claim:
 ${claim}
 
-Evidence (each line is a separate piece of evidence):
+Evidence:
 ${chunks}
 
-For each evidence line, explain in student-friendly language how it supports the claim. 
-Stay on topic and be clear.
-      `;
+Explain how each evidence chunk supports the claim in clear, student-friendly reasoning.
+    `;
 
-      out.textContent = "Thinking...";
-      try {
-        const result = await ai(prompt);
-        out.textContent = result;
-      } catch (e) {
-        out.textContent = "";
-        err.textContent = "Error analyzing evidence. Please try again later. If this issue persists, please contact us at help@360-search.com";
-      }
+    out.textContent = "Thinking...";
+    try {
+      const result = await ai(prompt);
+      out.textContent = result;
+    } catch (e) {
+      out.textContent = "";
+      err.textContent = "Error analyzing evidence. Please try again.";
     }
-  </script>
+  }
+</script>
 </body>
 </html>
