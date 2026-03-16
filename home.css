@@ -1,0 +1,319 @@
+/* ============================================================
+   360 — HOME.CSS
+   Home page specific styles only.
+   Universal styles live in main.css
+   ============================================================ */
+
+/* ============================================================
+   HOME LAYOUT
+   ============================================================ */
+.home-inner {
+  max-width: 720px;
+  margin: auto;
+  text-align: center;
+  padding-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ============================================================
+   CLOCK + WEATHER CHIPS
+   ============================================================ */
+.clock-pill,
+.weather-chip {
+  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .7);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--br);
+}
+
+body.dark .clock-pill,
+body.dark .weather-chip {
+  background: rgba(15, 23, 42, .92);
+}
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+.logo-main {
+  font-size: 54px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  padding: 8px 26px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .8);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 54px rgba(15, 23, 42, .22);
+}
+
+.logo-main span {
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================
+   SEARCH SHELL
+   ============================================================ */
+.search-shell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.gcse-search {
+  flex: 1 !important;
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--br) !important;
+  background: rgba(255, 255, 255, .15) !important;
+  backdrop-filter: blur(6px) !important;
+  color: var(--txt) !important;
+  font-size: 16px !important;
+  outline: none !important;
+  transition: 0.2s !important;
+}
+
+/* ============================================================
+   TOP-RIGHT AUTH BUTTONS
+   ============================================================ */
+.auth-top-right {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 10px;
+  z-index: 50;
+}
+
+.auth-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: .2s;
+  background: rgba(148, 163, 184, .15);
+  border: 1px solid var(--br);
+  font-size: 14px;
+  color: var(--txt);
+}
+
+.auth-btn:hover {
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  color: #050816;
+}
+
+body.dark .auth-btn {
+  color: var(--txtd);
+  background: rgba(255, 255, 255, .08);
+  border-color: rgba(255, 255, 255, .2);
+}
+
+body.dark .auth-btn:hover {
+  color: #050816;
+}
+
+/* ============================================================
+   TEMP UNIT SWITCHER
+   ============================================================ */
+.temp-unit-box {
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .7);
+  backdrop-filter: blur(10px);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  border: 1px solid var(--br);
+}
+
+body.dark .temp-unit-box {
+  background: rgba(15, 23, 42, .92);
+}
+
+#tempUnitBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--br);
+  background: linear-gradient(110deg, var(--a), var(--a2));
+  color: #050816;
+  cursor: pointer;
+  font-weight: 600;
+  transition: .2s;
+}
+
+#tempUnitBtn:hover {
+  opacity: 0.85;
+}
+
+/* ============================================================
+   MUSIC TOGGLE
+   ============================================================ */
+#musicToggle {
+  background: rgba(148, 163, 184, .15);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--br);
+  cursor: pointer;
+  transition: .2s;
+  color: var(--txt);
+  font-size: 14px;
+}
+
+body.dark #musicToggle {
+  color: var(--txtd);
+}
+
+#musicToggle:hover {
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  color: #050816;
+}
+
+/* ============================================================
+   OAUTH BUTTONS
+   ============================================================ */
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--br);
+  background: rgba(255,255,255,.85);
+  cursor: pointer;
+  font-size: 14px;
+  transition: .2s;
+}
+
+.oauth-btn:hover {
+  background: rgba(148, 163, 184, .2);
+}
+
+.oauth-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* ============================================================
+   LEGAL LINKS + ABOUT DROPDOWN
+   ============================================================ */
+.legal-link {
+  display: block;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--a);
+  text-decoration: none;
+}
+
+.legal-link:hover {
+  text-decoration: underline;
+}
+
+.about-dropdown {
+  background: rgba(255,255,255,.08);
+  border: 1px solid var(--br);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--txt);
+}
+
+body.dark .about-dropdown {
+  color: var(--txtd);
+}
+
+.about-dropdown summary {
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.about-dropdown p {
+  margin-top: 10px;
+}
+
+/* ============================================================
+   INSTALL BANNER
+   ============================================================ */
+.install-banner {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  color: #050816;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 80;
+}
+
+/* ============================================================
+   SETTINGS BOX
+   ============================================================ */
+.settings-box {
+  margin-top: 10px;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--br);
+  background: transparent;
+  color: var(--txt);
+  font-size: 13px;
+}
+
+body.dark .settings-input {
+  color: var(--txtd);
+}
+
+.settings-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--br);
+  background: linear-gradient(110deg, var(--a), var(--a2));
+  color: #050816;
+  cursor: pointer;
+  font-weight: 600;
+  transition: .2s;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 600px) {
+  .home-inner {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .auth-top-right {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+
+  .auth-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
