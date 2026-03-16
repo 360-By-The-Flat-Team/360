@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Translator</title>
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .translator-page { max-width: 680px; margin: 0 auto; padding: 80px 20px 40px; }
+    .translator-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .translator-box { background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--br); border-radius: 14px; padding: 20px; }
+    body.dark .translator-box { background: rgba(15,23,42,.7); }
+    textarea { width: 100%; padding: 12px; border-radius: 10px;
+      border: 1px solid var(--br); background: transparent; color: var(--txt);
+      font-size: 14px; resize: vertical; font-family: inherit; outline: none; }
+    body.dark textarea { color: var(--txtd); }
+    .lang-row { display: flex; align-items: center; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
+    .lang-row label { font-size: 13px; color: var(--mut); }
+    body.dark .lang-row label { color: var(--mutd); }
+    select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--br);
+      background: var(--bg); color: var(--txt); font-size: 13px; cursor: pointer; }
+    body.dark select { background: var(--bgd); color: var(--txtd); }
+    #translateBtn { padding: 10px 22px; border-radius: 999px; border: none;
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816; font-weight: 700; cursor: pointer; transition: .2s; }
+    #translateBtn:hover { opacity: .85; }
+    #translateResult { margin-top: 14px; padding: 14px; border-radius: 10px;
+      background: rgba(148,163,184,.1); border: 1px solid var(--br);
+      min-height: 60px; font-size: 14px; line-height: 1.7;
+      white-space: pre-wrap; color: var(--txt); }
+    body.dark #translateResult { color: var(--txtd); }
+    .back-btn { position:fixed;top:12px;left:90px;padding:6px 14px;border-radius:999px;
+      background:rgba(255,255,255,.85);border:1px solid var(--br);cursor:pointer;font-size:13px;z-index:50; }
+    body.dark .back-btn { background:rgba(15,23,42,.85);color:var(--txtd); }
+  </style>
+</head>
+<body>
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="/">Home</div>
+      <div class="nav-item" data-href="/ai/">AI</div>
+      <div class="nav-item" data-href="/weather/">Weather</div>
+      <div class="nav-item active" data-href="/translator/">Translator</div>
+      <div class="nav-item" data-href="/stocks/">Stocks</div>
+      <div class="nav-item" data-href="/url-shortener/">URL Shortener</div>
+      <div class="nav-item" data-href="/chat/">Chat</div>
+      <div class="nav-item" data-href="/games/">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0</div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+  </div>
+
+  <div class="translator-page">
+    <h2>🌍 Translator</h2>
+    <div class="translator-box">
+      <textarea id="translateInput" rows="4" placeholder="Enter text to translate..."></textarea>
+      <div class="lang-row">
+        <label>From:
+          <select id="sourceLang">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="zh">Mandarin</option>
+            <option value="ar">Arabic</option>
+            <option value="de">German</option>
+            <option value="ja">Japanese</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </label>
+        <label>To:
+          <select id="targetLang">
+            <option value="es">Spanish</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="zh">Mandarin</option>
+            <option value="ar">Arabic</option>
+            <option value="de">German</option>
+            <option value="ja">Japanese</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </label>
+        <button id="translateBtn">Translate</button>
+      </div>
+      <div id="translateResult">Translation will appear here.</div>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
+  <script src="/main.js"></script>
+  <script>
+    document.getElementById("translateBtn").onclick = async () => {
+      const text   = document.getElementById("translateInput").value.trim();
+      const from   = document.getElementById("sourceLang").value;
+      const to     = document.getElementById("targetLang").value;
+      const output = document.getElementById("translateResult");
+      if (!text) { output.textContent = "Please enter text to translate."; return; }
+      output.textContent = "Translating...";
+      try {
+        const res  = await fetch(
+          `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+        );
+        const data = await res.json();
+        output.textContent = data.responseData.translatedText || "Translation failed.";
+      } catch {
+        output.textContent = "Translation failed. Please try again.";
+      }
+    };
+  </script>
+</body>
+</html>

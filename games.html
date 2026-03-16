@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Games</title>
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .games-page { max-width: 680px; margin: 0 auto; padding: 80px 20px 40px; }
+    .games-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .game-card { background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--br); border-radius: 14px; padding: 20px;
+      cursor: pointer; transition: .2s; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+    body.dark .game-card { background: rgba(15,23,42,.7); }
+    .game-card:hover { transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      border-color: var(--a); }
+    .game-icon { font-size: 36px; }
+    .game-title { font-size: 15px; font-weight: 700; }
+    .game-desc { font-size: 12px; color: var(--mut); }
+    body.dark .game-desc { color: var(--mutd); }
+    .back-btn { position:fixed;top:12px;left:90px;padding:6px 14px;border-radius:999px;
+      background:rgba(255,255,255,.85);border:1px solid var(--br);cursor:pointer;font-size:13px;z-index:50; }
+    body.dark .back-btn { background:rgba(15,23,42,.85);color:var(--txtd); }
+  </style>
+</head>
+<body>
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="/">Home</div>
+      <div class="nav-item" data-href="/ai/">AI</div>
+      <div class="nav-item" data-href="/weather/">Weather</div>
+      <div class="nav-item" data-href="/translator/">Translator</div>
+      <div class="nav-item" data-href="/stocks/">Stocks</div>
+      <div class="nav-item" data-href="/url-shortener/">URL Shortener</div>
+      <div class="nav-item" data-href="/chat/">Chat</div>
+      <div class="nav-item active" data-href="/games/">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0</div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+  </div>
+
+  <div class="games-page">
+    <h2>🎮 Games</h2>
+    <div class="games-grid">
+      <a class="game-card" href="https://games360-17775301.codehs.me" target="_blank">
+        <div class="game-icon">🚀</div>
+        <div class="game-title">Space Glider</div>
+        <div class="game-desc">Navigate through space — dodge obstacles and survive.</div>
+      </a>
+      <a class="game-card" href="/sloperider.html" target="_blank">
+        <div class="game-icon">⛷️</div>
+        <div class="game-title">Slope Rider</div>
+        <div class="game-desc">Race down the slope and beat your high score.</div>
+      </a>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
+  <script src="/main.js"></script>
+</body>
+</html>

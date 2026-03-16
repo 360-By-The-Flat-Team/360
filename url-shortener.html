@@ -3,35 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360 — Stocks</title>
+  <title>360 — URL Shortener</title>
   <link rel="icon" type="image/png" href="/favicon-32x32.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/main.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .stocks-page { max-width: 680px; margin: 0 auto; padding: 80px 20px 40px; }
-    .stocks-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px;
+    .shortener-page { max-width: 620px; margin: 0 auto; padding: 80px 20px 40px; }
+    .shortener-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px;
       background: linear-gradient(120deg, var(--a), var(--a2));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .stock-form { display: flex; gap: 10px; margin-bottom: 20px; }
-    .stock-form input { flex: 1; padding: 12px 16px; border-radius: 999px;
+    .shortener-box { display: flex; gap: 10px; margin-bottom: 16px; }
+    .shortener-box input { flex: 1; padding: 12px 16px; border-radius: 999px;
       border: 1px solid var(--br); background: rgba(255,255,255,.15);
       backdrop-filter: blur(6px); color: var(--txt); font-size: 14px; outline: none; }
-    body.dark .stock-form input { color: var(--txtd); }
-    .stock-form button { padding: 12px 22px; border-radius: 999px; border: none;
+    body.dark .shortener-box input { color: var(--txtd); }
+    .shortener-box button { padding: 12px 22px; border-radius: 999px; border: none;
       background: linear-gradient(110deg, var(--a), var(--a2));
-      color: #050816; font-weight: 700; cursor: pointer; }
-    #quoteCard { background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
-      border: 1px solid var(--br); border-radius: 14px; padding: 20px;
-      font-size: 15px; line-height: 1.8; display: none; }
-    body.dark #quoteCard { background: rgba(15,23,42,.7); }
-    .quote-ticker { font-size: 28px; font-weight: 900;
-      background: linear-gradient(120deg, var(--a), var(--a2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .quote-price { font-size: 22px; font-weight: 700; }
-    .positive { color: #22c55e; }
-    .negative { color: #ef4444; }
+      color: #050816; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    #shortResult { padding: 16px; border-radius: 14px; font-size: 14px; line-height: 1.7;
+      background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--br); min-height: 54px; display: none; }
+    body.dark #shortResult { background: rgba(15,23,42,.7); }
+    #shortResult a { color: var(--a); word-break: break-all; }
+    .copy-btn { margin-top: 10px; padding: 8px 16px; border-radius: 8px; border: none;
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816; font-weight: 600; cursor: pointer; font-size: 13px; }
     .back-btn { position:fixed;top:12px;left:90px;padding:6px 14px;border-radius:999px;
       background:rgba(255,255,255,.85);border:1px solid var(--br);cursor:pointer;font-size:13px;z-index:50; }
     body.dark .back-btn { background:rgba(15,23,42,.85);color:var(--txtd); }
@@ -49,8 +46,8 @@
       <div class="nav-item" data-href="/ai/">AI</div>
       <div class="nav-item" data-href="/weather/">Weather</div>
       <div class="nav-item" data-href="/translator/">Translator</div>
-      <div class="nav-item active" data-href="/stocks/">Stocks</div>
-      <div class="nav-item" data-href="/url-shortener/">URL Shortener</div>
+      <div class="nav-item" data-href="/stocks/">Stocks</div>
+      <div class="nav-item active" data-href="/url-shortener/">URL Shortener</div>
       <div class="nav-item" data-href="/chat/">Chat</div>
       <div class="nav-item" data-href="/games/">Games</div>
     </nav>
@@ -75,50 +72,40 @@
     </label>
   </div>
 
-  <div class="stocks-page">
-    <h2>📈 Stocks</h2>
-    <form class="stock-form" id="stockForm">
-      <input id="ticker" placeholder="Enter ticker (e.g. AAPL)" required />
-      <button type="submit">Search</button>
-    </form>
-    <div id="quoteCard"></div>
+  <div class="shortener-page">
+    <h2>🔗 URL Shortener</h2>
+    <div class="shortener-box">
+      <input id="shortInput" placeholder="Paste a long URL..." type="url" />
+      <button id="shortBtn">Shorten</button>
+    </div>
+    <div id="shortResult"></div>
   </div>
 
   <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
   <script src="/main.js"></script>
   <script>
-    document.getElementById("stockForm").onsubmit = async e => {
-      e.preventDefault();
-      const t    = document.getElementById("ticker").value.trim().toUpperCase();
-      const card = document.getElementById("quoteCard");
-      if (!t) return;
-      card.style.display = "block";
-      card.innerHTML = "Loading...";
+    document.getElementById("shortBtn").onclick = async () => {
+      const url    = document.getElementById("shortInput").value.trim();
+      const result = document.getElementById("shortResult");
+      if (!url) { result.style.display = "block"; result.textContent = "Please enter a URL."; return; }
+      result.style.display = "block";
+      result.textContent = "Shortening...";
       try {
         const res  = await fetch(
-          `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=I3B9DMLF3EUUP0MY`
+          `https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`
         );
-        const data = await res.json();
-        const g    = data["Global Quote"];
-        if (!g || !g["05. price"]) throw new Error("No data found for " + t);
-        const price  = parseFloat(g["05. price"]).toFixed(2);
-        const change = parseFloat(g["09. change"]).toFixed(2);
-        const pct    = g["10. change percent"];
-        const isPos  = parseFloat(change) >= 0;
-        card.innerHTML = `
-          <div class="quote-ticker">${t}</div>
-          <div class="quote-price">$${price}</div>
-          <div class="${isPos ? "positive" : "negative"}">
-            ${isPos ? "▲" : "▼"} ${Math.abs(change)} (${pct})
-          </div>
-          <div style="margin-top:8px;font-size:13px;color:var(--mut);">
-            Volume: ${parseInt(g["06. volume"]).toLocaleString()}<br>
-            Previous close: $${parseFloat(g["08. previous close"]).toFixed(2)}
-          </div>`;
-      } catch (err) {
-        card.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
+        const short = await res.text();
+        result.innerHTML = `
+          Short URL: <a href="${short}" target="_blank">${short}</a>
+          <br><button class="copy-btn" onclick="navigator.clipboard.writeText('${short}');this.textContent='Copied!'">Copy</button>`;
+      } catch {
+        result.textContent = "Failed to shorten URL. Please try again.";
       }
     };
+
+    document.getElementById("shortInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") document.getElementById("shortBtn").click();
+    });
   </script>
 </body>
 </html>

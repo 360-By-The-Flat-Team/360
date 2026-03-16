@@ -1,14 +1,144 @@
-     <!-- Weather -->
-    <section class="page" id="page-weather">
-      <button class="back-btn top-right">← Back</button>
-      <br><br>
-      <h2>🌦️ Weather</h2>
-      <form id="weatherForm" class="weather-form">
-        <input id="city" placeholder="Enter a city..." required />
-        <button type="submit">Check weather!</button>
-      </form>
-      <br><br>
-      <div id="weatherContent" class="weather-output">Waiting for input...</div>
-      <div id="map" class="weather-map"></div>
-      <p class="muted">Powered by OpenWeatherMap & Leaflet OpenStreetMap</p>
-    </section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Weather</title>
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/main.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .weather-page { max-width: 680px; margin: 0 auto; padding: 80px 20px 40px; }
+    .weather-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .weather-form { display: flex; gap: 10px; margin-bottom: 20px; }
+    .weather-form input {
+      flex: 1; padding: 12px 16px; border-radius: 999px;
+      border: 1px solid var(--br); background: rgba(255,255,255,.15);
+      backdrop-filter: blur(6px); color: var(--txt); font-size: 14px; outline: none; }
+    body.dark .weather-form input { color: var(--txtd); }
+    .weather-form button {
+      padding: 12px 22px; border-radius: 999px; border: none;
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816; font-weight: 700; cursor: pointer; }
+    #weatherContent {
+      padding: 16px; border-radius: 14px; font-size: 15px; line-height: 1.7;
+      background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--br); margin-bottom: 16px; min-height: 60px; }
+    body.dark #weatherContent { background: rgba(15,23,42,.7); }
+    #map { width: 100%; height: 300px; border-radius: 14px;
+      border: 1px solid var(--br); margin-bottom: 10px; }
+    .muted { font-size: 12px; color: var(--mut); }
+    body.dark .muted { color: var(--mutd); }
+    .back-btn { position:fixed;top:12px;left:90px;padding:6px 14px;border-radius:999px;
+      background:rgba(255,255,255,.85);border:1px solid var(--br);cursor:pointer;font-size:13px;z-index:50; }
+    body.dark .back-btn { background:rgba(15,23,42,.85);color:var(--txtd); }
+  </style>
+</head>
+<body>
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="/">Home</div>
+      <div class="nav-item" data-href="/ai/">AI</div>
+      <div class="nav-item active" data-href="/weather/">Weather</div>
+      <div class="nav-item" data-href="/translator/">Translator</div>
+      <div class="nav-item" data-href="/stocks/">Stocks</div>
+      <div class="nav-item" data-href="/url-shortener/">URL Shortener</div>
+      <div class="nav-item" data-href="/chat/">Chat</div>
+      <div class="nav-item" data-href="/games/">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0</div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+  </div>
+
+  <div class="weather-page">
+    <h2>🌦️ Weather</h2>
+    <form class="weather-form" id="weatherForm">
+      <input id="city" placeholder="Enter city..." required />
+      <button type="submit">Search</button>
+    </form>
+    <div id="weatherContent">Enter a city to see the weather.</div>
+    <div id="map"></div>
+    <p class="muted">Powered by OpenWeatherMap & OpenStreetMap</p>
+  </div>
+
+  <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
+  <script src="/main.js"></script>
+  <script>
+    let map = null;
+    let marker = null;
+    let lastCity = null;
+
+    document.getElementById("weatherForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const city = document.getElementById("city").value.trim();
+      if (!city || city === lastCity) return;
+      lastCity = city;
+      const output = document.getElementById("weatherContent");
+      output.textContent = "Loading...";
+
+      try {
+        const res  = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=c235c3c0b8aa90de94301809df9a50e4&units=metric`
+        );
+        const data = await res.json();
+        if (data.cod !== 200) { output.textContent = `Error: ${data.message}`; return; }
+
+        const temp  = data.main.temp;
+        const feels = data.main.feels_like;
+        const desc  = data.weather[0].description;
+        const humid = data.main.humidity;
+        const wind  = data.wind.speed;
+        const lat   = data.coord.lat;
+        const lon   = data.coord.lon;
+
+        output.innerHTML = `
+          <strong>${data.name}, ${data.sys.country}</strong><br>
+          🌡️ ${temp}°C (feels like ${feels}°C)<br>
+          🌤️ ${desc.charAt(0).toUpperCase() + desc.slice(1)}<br>
+          💧 Humidity: ${humid}%<br>
+          💨 Wind: ${wind} m/s
+        `;
+
+        // Map
+        if (!map) {
+          map = L.map("map").setView([lat, lon], 10);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+          marker = L.marker([lat, lon]).addTo(map).bindPopup(data.name).openPopup();
+        } else {
+          map.setView([lat, lon], 10);
+          marker.setLatLng([lat, lon]).setPopupContent(data.name).openPopup();
+        }
+      } catch {
+        document.getElementById("weatherContent").textContent = "Failed to fetch weather.";
+      }
+    });
+  </script>
+</body>
+</html>
