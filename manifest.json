@@ -1,7 +1,7 @@
 {
-  "name": "360 Search",
+  "name": "360",
   "short_name": "360",
-  "description": "A next-generation search engine and digital workspace with AI, weather, translation, stocks, and more — all in one place.",
+  "description": "A next-generation search engine and digital workspace with weather, translation, stocks, AI, and more — all in one place.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
