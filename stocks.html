@@ -8,6 +8,7 @@
   <link rel="manifest" href="../manifest.json" />
   <link rel="stylesheet" href="../main.css" />
   <link rel="stylesheet" href="../responsive.css" />
+  <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -41,6 +42,8 @@
 <body>
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
   <button class="back-btn" onclick="window.location.href='../'">← Back</button>
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
   <aside class="sidebar" id="sidebar">
@@ -69,6 +72,42 @@
       <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
       <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
     </div>
+
+    <!-- Cursor Customization -->
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default">
+        <div class="cursor-preview preview-default"></div>
+        Default
+      </div>
+      <div class="cursor-option" data-cursor="dot">
+        <div class="cursor-preview preview-dot"></div>
+        Dot
+      </div>
+      <div class="cursor-option" data-cursor="ring">
+        <div class="cursor-preview preview-ring"></div>
+        Ring
+      </div>
+      <div class="cursor-option" data-cursor="crosshair">
+        <div class="cursor-preview preview-crosshair"></div>
+        Crosshair
+      </div>
+      <div class="cursor-option" data-cursor="blob">
+        <div class="cursor-preview preview-blob"></div>
+        Blob
+      </div>
+      <div class="cursor-option" data-cursor="system">
+        <div class="cursor-preview preview-system"></div>
+        System
+      </div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+
     <div class="settings-label" style="margin-top:20px;">Mode</div>
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
       <span style="font-size:14px;">Dark mode</span>

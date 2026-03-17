@@ -1,8 +1,6 @@
 /* ============================================================
-   360 — MAIN.JS
-   Universal logic for all pages.
-   Handles: Supabase, Auth, Sidebar, Settings, Theme,
-            Dark Mode, Background, Cursor, Ripple, PWA
+   360 — MAIN.JS V2.1
+   Fixes: Ripple, click-outside menus, OAuth SVG icons
    ============================================================ */
 
 const $ = s => document.querySelector(s);
@@ -18,7 +16,7 @@ const supabaseClient = supabase.createClient(
 );
 
 /* ============================================================
-   AUTH SYSTEM (REAL SUPABASE — NOT LOCALSTORAGE)
+   AUTH SYSTEM
    ============================================================ */
 const authPopup    = $("#auth-popup");
 const authEmail    = $("#auth-email");
@@ -41,7 +39,13 @@ if (signInBtn) signInBtn.onclick = openAuth;
 if (signUpBtn) signUpBtn.onclick = openAuth;
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
-/* Email Signup */
+/* Click backdrop to close auth popup */
+if (authPopup) {
+  authPopup.addEventListener("click", e => {
+    if (e.target === authPopup) closeAuth();
+  });
+}
+
 if (authSignupBtn) {
   authSignupBtn.onclick = async () => {
     const email    = authEmail?.value.trim();
@@ -52,7 +56,6 @@ if (authSignupBtn) {
   };
 }
 
-/* Email Login */
 if (authLoginBtn) {
   authLoginBtn.onclick = async () => {
     const email    = authEmail?.value.trim();
@@ -64,7 +67,6 @@ if (authLoginBtn) {
   };
 }
 
-/* GitHub OAuth — FIXED (no skipBrowserRedirect) */
 const githubBtn = $("#github-login");
 if (githubBtn) {
   githubBtn.onclick = async () => {
@@ -76,7 +78,6 @@ if (githubBtn) {
   };
 }
 
-/* Google OAuth — FIXED (no skipBrowserRedirect) */
 const googleBtn = $("#google-login");
 if (googleBtn) {
   googleBtn.onclick = async () => {
@@ -88,7 +89,6 @@ if (googleBtn) {
   };
 }
 
-/* Sign Out */
 if (signOutBtn) {
   signOutBtn.onclick = async () => {
     await supabaseClient.auth.signOut();
@@ -96,7 +96,6 @@ if (signOutBtn) {
   };
 }
 
-/* Update Auth UI based on real session */
 async function updateAuthUI() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (signInBtn)  signInBtn.style.display  = session ? "none"         : "inline-block";
@@ -106,7 +105,7 @@ async function updateAuthUI() {
 updateAuthUI();
 
 /* ============================================================
-   SIDEBAR
+   SIDEBAR — click outside to close
    ============================================================ */
 const sidebar       = $("#sidebar");
 const sidebarToggle = $("#sidebarToggle");
@@ -114,46 +113,77 @@ const overlay       = $("#overlay");
 const settingsPanel = $("#settingsPanel");
 const settingsBtn   = $("#settingsBtn");
 
+function closeSidebar() {
+  sidebar?.classList.remove("open");
+  overlay?.classList.remove("active");
+}
+
+function closeSettings() {
+  settingsPanel?.classList.remove("open");
+  overlay?.classList.remove("active");
+}
+
 if (sidebarToggle) {
-  sidebarToggle.onclick = () => {
-    sidebar?.classList.toggle("open");
-    overlay?.classList.toggle("active");
+  sidebarToggle.onclick = e => {
+    e.stopPropagation();
+    const isOpen = sidebar?.classList.contains("open");
+    closeSidebar();
+    closeSettings();
+    if (!isOpen) {
+      sidebar?.classList.add("open");
+      overlay?.classList.add("active");
+    }
+  };
+}
+
+if (settingsBtn) {
+  settingsBtn.onclick = e => {
+    e.stopPropagation();
+    const isOpen = settingsPanel?.classList.contains("open");
+    closeSidebar();
+    closeSettings();
+    if (!isOpen) {
+      settingsPanel?.classList.add("open");
+      overlay?.classList.add("active");
+    }
   };
 }
 
 if (overlay) {
   overlay.onclick = () => {
-    sidebar?.classList.remove("open");
-    settingsPanel?.classList.remove("open");
-    overlay.classList.remove("active");
+    closeSidebar();
+    closeSettings();
   };
 }
 
-/* Nav items — multi-page routing */
-$$(".nav-item").forEach(item => {
-  item.onclick = () => {
-    const href = item.dataset.href;
-    if (href) window.location.href = href;
-    sidebar?.classList.remove("open");
-    overlay?.classList.remove("active");
-  };
+/* Click anywhere outside to close */
+document.addEventListener("click", e => {
+  const inSidebar  = sidebar?.contains(e.target);
+  const inToggle   = sidebarToggle?.contains(e.target);
+  const inSettings = settingsPanel?.contains(e.target);
+  const inBtn      = settingsBtn?.contains(e.target);
+  const inAuth     = authPopup?.contains(e.target);
+
+  if (!inSidebar  && !inToggle) closeSidebar();
+  if (!inSettings && !inBtn)    closeSettings();
 });
 
-/* ============================================================
-   SETTINGS PANEL
-   ============================================================ */
-if (settingsBtn) {
-  settingsBtn.onclick = () => {
-    settingsPanel?.classList.toggle("open");
-    overlay?.classList.toggle("active");
+/* Nav items */
+$$(".nav-item").forEach(item => {
+  item.onclick = e => {
+    e.stopPropagation();
+    const href = item.dataset.href;
+    if (href) window.location.href = href;
+    closeSidebar();
   };
-}
+});
 
 /* ============================================================
    THEME SYSTEM
    ============================================================ */
 $$(".swatch").forEach(swatch => {
-  swatch.onclick = () => {
+  swatch.onclick = e => {
+    e.stopPropagation();
     const theme = swatch.dataset.theme;
     body.classList.forEach(cls => {
       if (cls.startsWith("theme-")) body.classList.remove(cls);
@@ -165,7 +195,6 @@ $$(".swatch").forEach(swatch => {
   };
 });
 
-/* Load saved theme */
 (function loadTheme() {
   const saved = localStorage.getItem("theme");
   if (!saved) return;
@@ -197,20 +226,18 @@ if (darkToggle) {
    BACKGROUND ENGINE
    ============================================================ */
 function applyBackground(url) {
-  body.style.backgroundImage    = `url('${url}')`;
-  body.style.backgroundSize     = "cover";
-  body.style.backgroundPosition = "center";
-  body.style.backgroundAttachment = "fixed";
+  body.style.backgroundImage     = `url('${url}')`;
+  body.style.backgroundSize      = "cover";
+  body.style.backgroundPosition  = "center";
+  body.style.backgroundAttachment= "fixed";
   localStorage.setItem("customBG", url);
 }
 
-/* Load saved background */
 (function loadBackground() {
   const saved = localStorage.getItem("customBG");
   if (saved) applyBackground(saved);
 })();
 
-/* File upload */
 const bgUpload = $("#bgUpload");
 if (bgUpload) {
   bgUpload.addEventListener("change", e => {
@@ -222,7 +249,6 @@ if (bgUpload) {
   });
 }
 
-/* URL apply */
 const bgUrlBtn = $("#bgUrlBtn");
 if (bgUrlBtn) {
   bgUrlBtn.onclick = () => {
@@ -231,7 +257,6 @@ if (bgUrlBtn) {
   };
 }
 
-/* Reset */
 const bgResetBtn = $("#bgResetBtn");
 if (bgResetBtn) {
   bgResetBtn.onclick = () => {
@@ -241,54 +266,58 @@ if (bgResetBtn) {
 }
 
 /* ============================================================
-   CUSTOM CURSOR
-   ============================================================ */
-const dot   = $(".cursor-dot");
-const trail = $(".cursor-trail");
-let cx = 0, cy = 0;
-
-document.addEventListener("mousemove", e => {
-  cx = e.clientX;
-  cy = e.clientY;
-  if (dot)   { dot.style.left = cx + "px";   dot.style.top = cy + "px"; }
-});
-
-(function animateTrail() {
-  if (trail) { trail.style.left = cx + "px"; trail.style.top = cy + "px"; }
-  requestAnimationFrame(animateTrail);
-})();
-
-/* ============================================================
-   RIPPLE EFFECT
+   RIPPLE EFFECT — FIXED
+   Double rAF ensures transition fires correctly.
+   Cleans up after itself via transitionend.
    ============================================================ */
 document.addEventListener("click", e => {
-  const target = e.target.closest("[data-ripple]");
+  const target = e.target.closest(
+    "[data-ripple], button, .nav-item, .swatch, .auth-btn"
+  );
   if (!target) return;
+  if (target.matches("input, textarea, select, .overlay, .auth-popup")) return;
 
   const rect   = target.getBoundingClientRect();
   const size   = Math.max(rect.width, rect.height);
   const x      = e.clientX - rect.left - size / 2;
   const y      = e.clientY - rect.top  - size / 2;
   const ripple = document.createElement("span");
+  ripple.className = "ripple-fx";
 
   Object.assign(ripple.style, {
-    position: "absolute", width: size + "px", height: size + "px",
-    left: x + "px", top: y + "px", borderRadius: "50%",
-    background: "rgba(255,255,255,0.35)", transform: "scale(0)",
-    opacity: "1", pointerEvents: "none",
-    transition: "transform 0.45s ease, opacity 0.45s ease"
+    position:      "absolute",
+    width:         size + "px",
+    height:        size + "px",
+    left:          x + "px",
+    top:           y + "px",
+    borderRadius:  "50%",
+    background:    "rgba(255,255,255,0.3)",
+    transform:     "scale(0)",
+    opacity:       "1",
+    pointerEvents: "none",
+    transition:    "transform 0.5s ease, opacity 0.5s ease"
   });
 
-  target.style.position = "relative";
+  const prevPosition = getComputedStyle(target).position;
+  if (prevPosition === "static") target.style.position = "relative";
   target.style.overflow = "hidden";
   target.appendChild(ripple);
 
+  /* Double rAF — ensures browser paints scale(0) before animating */
   requestAnimationFrame(() => {
-    ripple.style.transform = "scale(2.5)";
-    ripple.style.opacity   = "0";
+    requestAnimationFrame(() => {
+      ripple.style.transform = "scale(2.5)";
+      ripple.style.opacity   = "0";
+    });
   });
 
-  setTimeout(() => ripple.remove(), 500);
+  ripple.addEventListener("transitionend", () => {
+    ripple.remove();
+    if (!target.querySelector(".ripple-fx")) {
+      target.style.overflow = "";
+      if (prevPosition === "static") target.style.position = "";
+    }
+  }, { once: true });
 });
 
 /* ============================================================
@@ -298,8 +327,7 @@ const clickSound = $("#clickSound");
 if (clickSound) {
   document.addEventListener("click", e => {
     const tag = e.target.tagName.toLowerCase();
-    if (["button", "a", "input", "label"].includes(tag) ||
-        e.target.classList.contains("nav-item")) {
+    if (["button", "a"].includes(tag) || e.target.classList.contains("nav-item")) {
       clickSound.currentTime = 0;
       clickSound.play().catch(() => {});
     }
@@ -318,11 +346,9 @@ window.addEventListener("beforeinstallprompt", e => {
   if (installBtn) installBtn.style.display = "block";
 });
 
-if (installBtn) {
-  installBtn.onclick = () => deferredPrompt?.prompt();
-}
+if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
 
 /* ============================================================
    READY LOG
    ============================================================ */
-console.log("%c360 V2.0 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
+console.log("%c360 V2.1 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");

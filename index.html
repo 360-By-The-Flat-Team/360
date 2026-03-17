@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="main.css" />
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="responsive.css" />
+  <link rel="stylesheet" href="cursor.css" />
 
   <!-- Prefetch all routes -->
   <link rel="prefetch" href="ai/" />
@@ -41,6 +42,8 @@
   <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
 
   <!-- ============================
        TOP-RIGHT AUTH BUTTONS
@@ -124,6 +127,42 @@
       <span style="font-size:14px;">Dark mode</span>
       <input type="checkbox" id="darkToggle" />
     </label>
+
+
+    <!-- Cursor Customization -->
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default">
+        <div class="cursor-preview preview-default"></div>
+        Default
+      </div>
+      <div class="cursor-option" data-cursor="dot">
+        <div class="cursor-preview preview-dot"></div>
+        Dot
+      </div>
+      <div class="cursor-option" data-cursor="ring">
+        <div class="cursor-preview preview-ring"></div>
+        Ring
+      </div>
+      <div class="cursor-option" data-cursor="crosshair">
+        <div class="cursor-preview preview-crosshair"></div>
+        Crosshair
+      </div>
+      <div class="cursor-option" data-cursor="blob">
+        <div class="cursor-preview preview-blob"></div>
+        Blob
+      </div>
+      <div class="cursor-option" data-cursor="system">
+        <div class="cursor-preview preview-system"></div>
+        System
+      </div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
 
     <!-- Temp Unit -->
     <div class="temp-unit-box" style="margin-top:20px;">
