@@ -4,69 +4,41 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360 — Chat</title>
-  <link rel="icon" type="image/png" href="/favicon-32x32.png" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="stylesheet" href="/main.css" />
+  <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="stylesheet" href="../main.css" />
+  <link rel="stylesheet" href="../responsive.css" />
+  <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .chat-page { max-width: 760px; margin: 0 auto; padding: 80px 20px 20px;
-      display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-    .chat-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 16px;
-      background: linear-gradient(120deg, var(--a), var(--a2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    #chat-window { flex: 1; overflow-y: auto; padding: 16px; border-radius: 14px;
-      background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
-      border: 1px solid var(--br); margin-bottom: 10px; }
-    body.dark #chat-window { background: rgba(15,23,42,.7); }
-    .chat-message { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
-    .chat-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-    .chat-avatar.initials { background: linear-gradient(120deg, var(--a), var(--a2));
-      color: #050816; display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 13px; }
-    .chat-bubble { background: rgba(148,163,184,.15); padding: 8px 12px;
-      border-radius: 10px; max-width: 80%; font-size: 14px; line-height: 1.6; }
-    .chat-bubble strong { font-size: 13px; }
-    .role-badge { display: inline-block; margin-left: 5px; padding: 1px 6px;
-      border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-    .role-admin { background: #dc2626; color: #fff; }
-    .role-mod   { background: #7c3aed; color: #fff; }
-    .role-user  { background: #6b7280; color: #fff; }
-    .user-tag   { color: #facc15; font-weight: 700; margin-left: 4px; font-size: 12px; }
-    #typing-indicator { font-size: 12px; color: var(--mut); height: 18px; margin-bottom: 6px; }
-    body.dark #typing-indicator { color: var(--mutd); }
-    #chat-input-row { display: flex; gap: 10px; }
-    #message-input { flex: 1; padding: 12px 16px; border-radius: 999px;
-      border: 1px solid var(--br); background: rgba(255,255,255,.15);
-      backdrop-filter: blur(6px); color: var(--txt); font-size: 14px; outline: none; }
-    body.dark #message-input { color: var(--txtd); }
-    #send-button { padding: 12px 22px; border-radius: 999px; border: none;
-      background: linear-gradient(110deg, var(--a), var(--a2));
-      color: #050816; font-weight: 700; cursor: pointer; }
-    .back-btn { position:fixed;top:12px;left:90px;padding:6px 14px;border-radius:999px;
-      background:rgba(255,255,255,.85);border:1px solid var(--br);cursor:pointer;font-size:13px;z-index:50; }
-    body.dark .back-btn { background:rgba(15,23,42,.85);color:var(--txtd); }
-  </style>
 </head>
 <body>
+
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
-  <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <button class="back-btn" onclick="window.location.href='../'">← Back</button>
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
     <nav class="nav-list">
-      <div class="nav-item" data-href="/">Home</div>
-      <div class="nav-item" data-href="/ai.html/">AI</div>
-      <div class="nav-item" data-href="/weather.html/">Weather</div>
-      <div class="nav-item" data-href="/translator.html/">Translator</div>
-      <div class="nav-item" data-href="/stocks.html/">Stocks</div>
-      <div class="nav-item" data-href="/url-shortener.html/">URL Shortener</div>
-      <div class="nav-item active" data-href="/chat.html/">Chat</div>
-      <div class="nav-item" data-href="/games.html/">Games</div>
+      <div class="nav-item" data-href="../">Home</div>
+      <div class="nav-item" data-href="../ai.html">AI</div>
+      <div class="nav-item" data-href="../weather.html">Weather</div>
+      <div class="nav-item" data-href="../translator.html">Translator</div>
+      <div class="nav-item" data-href="../stocks.html">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener.html">URL Shortener</div>
+      <div class="nav-item active" data-href="../chat.html">Chat</div>
+      <div class="nav-item" data-href="../games.html">Games</div>
     </nav>
-    <div class="sidebar-footer">© 2026 360 INC. · V2.0</div>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
   </aside>
+
   <div class="overlay" id="overlay"></div>
+
   <div class="settings-panel" id="settingsPanel">
     <h3>Appearance</h3>
     <div class="settings-label">Theme</div>
@@ -83,6 +55,41 @@
       <span style="font-size:14px;">Dark mode</span>
       <input type="checkbox" id="darkToggle" />
     </label>
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+  </div>
+
+  <div id="auth-popup" class="auth-popup hidden">
+    <div class="auth-box">
+      <h2>Account</h2>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+      <button id="auth-login-btn">Log In</button>
+      <button id="auth-signup-btn">Sign Up</button>
+      <button id="github-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>Sign in with GitHub</span>
+      </button>
+      <button id="google-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-close-btn" class="close-btn">Close</button>
+    </div>
   </div>
 
   <div class="chat-page">
@@ -95,109 +102,97 @@
     </div>
   </div>
 
-  <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
-  <script src="/main.js"></script>
+  <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
+  <script src="../main.js"></script>
+  <script src="../cookie.js"></script>
+  <script src="../cursor.js"></script>
   <script>
-    const chatWindow    = document.getElementById("chat-window");
-    const messageInput  = document.getElementById("message-input");
-    const sendButton    = document.getElementById("send-button");
-    const typingEl      = document.getElementById("typing-indicator");
-    let typingTimeouts  = {};
+    const chatWindow   = document.getElementById("chat-window");
+    const messageInput = document.getElementById("message-input");
+    const sendButton   = document.getElementById("send-button");
+    const typingEl     = document.getElementById("typing-indicator");
+    let typingTimeouts = {};
 
     function getInitials(name) {
       if (!name) return "?";
-      const p = name.trim().split(" ");
-      return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[1][0]).toUpperCase();
+      const p = (name||"").trim().split(" ");
+      return p.length===1 ? p[0][0].toUpperCase() : (p[0][0]+p[1][0]).toUpperCase();
     }
 
     function renderAvatar(url, username) {
-      if (url) return `<img class="chat-avatar" src="${url}" alt="${username}">`;
-      return `<div class="chat-avatar initials">${getInitials(username)}</div>`;
+      if (url) return "<img class=\"chat-avatar\" src=\""+url+"\" alt=\""+username+"\" onerror=\"this.outerHTML='<div class=chevron'chat-avatar initialschiron>"+getInitials(username)+"</div>'\"/>";
+      return "<div class=\"chat-avatar initials\">"+getInitials(username)+"</div>";
     }
 
     function renderMessage(msg) {
-      const div      = document.createElement("div");
-      div.className  = "chat-message";
-      const roleBadge = msg.role ? `<span class="role-badge role-${msg.role}">${msg.role}</span>` : "";
-      const tagBadge  = msg.tag  ? `<span class="user-tag">[${msg.tag}]</span>` : "";
-      div.innerHTML = `
-        ${renderAvatar(msg.avatar_url, msg.username)}
-        <div class="chat-bubble">
-          <strong>${msg.username || "Unknown"}${tagBadge}${roleBadge}</strong>
-          <p>${msg.text}</p>
-        </div>`;
+      const div = document.createElement("div");
+      div.className = "chat-message";
+      const roleBadge = msg.role && msg.role!=="user" ? "<span class=\"role-badge role-"+msg.role+"\">"+msg.role+"</span>" : "";
+      const tagBadge  = msg.tag ? "<span class=\"user-tag\">["+msg.tag+"]</span>" : "";
+      const safeText  = (msg.text||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      div.innerHTML = (msg.avatar_url ? "<img class=\"chat-avatar\" src=\""+msg.avatar_url+"\" alt=\""+msg.username+"\">" : "<div class=\"chat-avatar initials\">"+getInitials(msg.username)+"</div>")+"<div class=\"chat-bubble\"><strong>"+( msg.username||"Unknown")+tagBadge+roleBadge+"</strong><p>"+safeText+"</p></div>";
       chatWindow.appendChild(div);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    async function getUserProfile(userId) {
-      const { data, error } = await supabaseClient.from("profiles")
-        .select("username, avatar_url, role, tag").eq("id", userId).single();
-      if (error) return { username: "Unknown", avatar_url: null, role: "user", tag: null };
-      return data;
+    async function getProfile(userId) {
+      try {
+        const { data } = await supabaseClient.from("profiles").select("username,avatar_url,role,tag").eq("id",userId).single();
+        if (!data) return { username:"Unknown", avatar_url:null, role:"user", tag:null };
+        if (!data.avatar_url) {
+          const { data:{ user } } = await supabaseClient.auth.getUser();
+          const av = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+          if (av) { data.avatar_url=av; await supabaseClient.from("profiles").update({avatar_url:av}).eq("id",userId); }
+        }
+        return data;
+      } catch { return { username:"Unknown", avatar_url:null, role:"user", tag:null }; }
     }
 
     async function loadHistory() {
-      const { data } = await supabaseClient.from("messages")
-        .select("*").order("created_at", { ascending: true });
-      if (data) { chatWindow.innerHTML = ""; data.forEach(renderMessage); }
+      chatWindow.innerHTML = "";
+      const { data } = await supabaseClient.from("messages").select("*").order("created_at",{ascending:true}).limit(100);
+      if (data) data.forEach(renderMessage);
     }
 
     supabaseClient.channel("realtime-messages")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" },
-        payload => renderMessage(payload.new))
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>renderMessage(payload.new))
       .subscribe();
 
-    supabaseClient.channel("typing")
-      .on("broadcast", { event: "typing" }, payload => {
-        typingEl.textContent = `${payload.payload.username} is typing…`;
-        if (typingTimeouts[payload.payload.username])
-          clearTimeout(typingTimeouts[payload.payload.username]);
-        typingTimeouts[payload.payload.username] = setTimeout(() => {
-          typingEl.textContent = "";
-        }, 2000);
+    supabaseClient.channel("typing-360")
+      .on("broadcast",{event:"typing"},payload=>{
+        const name=payload.payload?.username; if(!name)return;
+        typingEl.textContent=name+" is typing…";
+        clearTimeout(typingTimeouts[name]);
+        typingTimeouts[name]=setTimeout(()=>{typingEl.textContent="";},2000);
       }).subscribe();
 
-    messageInput.addEventListener("input", async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) return;
-      const profile = await getUserProfile(session.user.id);
-      supabaseClient.channel("typing").send({
-        type: "broadcast", event: "typing", payload: { username: profile.username }
-      });
+    messageInput.addEventListener("input", async()=>{
+      const{data:{session}}=await supabaseClient.auth.getSession();
+      if(!session)return;
+      const p=await getProfile(session.user.id);
+      supabaseClient.channel("typing-360").send({type:"broadcast",event:"typing",payload:{username:p.username}});
     });
 
-    async function runCommand(text) {
-      const parts   = text.trim().split(" ");
-      const cmd     = parts[0].toLowerCase();
-      const args    = parts.slice(1);
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) return;
-      const profile = await getUserProfile(session.user.id);
-      if (profile.role !== "admin") { alert("Admins only."); return; }
-      if (cmd === "/promote") { await supabaseClient.from("profiles").update({ role: "mod" }).eq("username", args[0]); alert(`Promoted ${args[0]}`); }
-      else if (cmd === "/demote") { await supabaseClient.from("profiles").update({ role: "user" }).eq("username", args[0]); alert(`Demoted ${args[0]}`); }
-      else if (cmd === "/tag") { const tag = args.slice(1).join(" "); await supabaseClient.from("profiles").update({ tag }).eq("username", args[0]); alert(`Tagged ${args[0]}: ${tag}`); }
-      else alert("Unknown command.");
-    }
-
     async function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      if (text.startsWith("/")) { await runCommand(text); messageInput.value = ""; return; }
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) { alert("Please sign in to chat."); return; }
-      const profile = await getUserProfile(session.user.id);
-      await supabaseClient.from("messages").insert({
-        user_id: session.user.id, username: profile.username,
-        avatar_url: profile.avatar_url, tag: profile.tag,
-        text, role: profile.role
-      });
-      messageInput.value = "";
+      const text=messageInput.value.trim(); if(!text)return;
+      const{data:{session}}=await supabaseClient.auth.getSession();
+      if(!session){openAuth();return;}
+      const p=await getProfile(session.user.id);
+      if(text.startsWith("/")){
+        if(p.role!=="admin"){alert("Admins only.");messageInput.value="";return;}
+        const parts=text.trim().split(" "),cmd=parts[0].toLowerCase(),args=parts.slice(1);
+        if(cmd==="/promote") await supabaseClient.from("profiles").update({role:"mod"}).eq("username",args[0]);
+        else if(cmd==="/demote") await supabaseClient.from("profiles").update({role:"user"}).eq("username",args[0]);
+        else if(cmd==="/tag"){const tag=args.slice(1).join(" ");await supabaseClient.from("profiles").update({tag}).eq("username",args[0]);}
+        messageInput.value=""; return;
+      }
+      const{error}=await supabaseClient.from("messages").insert({user_id:session.user.id,username:p.username||session.user.email,avatar_url:p.avatar_url,tag:p.tag,text,role:p.role||"user"});
+      if(error){console.error("Send error:",error.message);return;}
+      messageInput.value="";
     }
 
-    sendButton.onclick = sendMessage;
-    messageInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
+    sendButton.addEventListener("click",sendMessage);
+    messageInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
     loadHistory();
   </script>
 </body>
