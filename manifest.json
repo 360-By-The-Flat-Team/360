@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "360 Search",
+  "name": "360",
   "short_name": "360",
   "version": "1.1.0",
   "description": "360 as your default search engine and new tab page — AI, weather, translator and more.",
@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "chrome_url_overrides": {
-    "newtab": "newtab.html"
+    "newtab": "360-search.com/newtab.html"
   },
   "omnibox": {
     "keyword": "360"
@@ -23,6 +23,6 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "360 Search"
+    "default_title": "360"
   }
 }
