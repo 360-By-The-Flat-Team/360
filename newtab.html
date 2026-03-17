@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Tab — 360</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link id="font-link" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" />
+  <style>
+    /* ══════════════════════════════════════════
+       RESET + ROOT
+    ══════════════════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --accent: #3b82f6;
+      --accent2: #06b6d4;
+      --blur: 8px;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font);
+      background: #0a0f1e;
+      color: #e7e7ea;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background .3s, color .3s;
+      position: relative;
+    }
+
+    body.light {
+      background: #f0f4ff;
+      color: #111827;
+    }
+
+    /* ══════════════════════════════════════════
+       BACKGROUND
+    ══════════════════════════════════════════ */
+    #bg {
+      position: fixed;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      transition: opacity .5s;
+    }
+
+    #bg-blur {
+      position: fixed;
+      inset: 0;
+      backdrop-filter: blur(var(--blur));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ══════════════════════════════════════════
+       LAYOUT
+    ══════════════════════════════════════════ */
+    .stage {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 900px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      max-height: 100vh;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .stage::-webkit-scrollbar { display: none; }
+
+    body.layout-left  .stage { align-items: flex-start; }
+    body.layout-right .stage { align-items: flex-end; }
+
+    /* ══════════════════════════════════════════
+       GLASS CARD
+    ══════════════════════════════════════════ */
+    .card {
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 16px 20px;
+      width: 100%;
+    }
+    body.light .card {
+      background: rgba(255,255,255,.7);
+      border-color: rgba(0,0,0,.08);
+    }
+
+    /* ══════════════════════════════════════════
+       GREETING
+    ══════════════════════════════════════════ */
+    #greeting {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 2px 20px rgba(0,0,0,.3);
+    }
+
+    /* ══════════════════════════════════════════
+       CLOCK
+    ══════════════════════════════════════════ */
+    #clock-wrap { text-align: center; }
+    #clock {
+      font-size: 80px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      line-height: 1;
+      background: linear-gradient(120deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #clock-date {
+      font-size: 15px;
+      opacity: .6;
+      margin-top: 6px;
+    }
+
+    /* ══════════════════════════════════════════
+       WEATHER
+    ══════════════════════════════════════════ */
+    #weather-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+    }
+    body.light #weather-chip { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.1); }
+
+    /* ══════════════════════════════════════════
+       SEARCH
+    ══════════════════════════════════════════ */
+    #search-wrap {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 580px;
+    }
+    #search-input {
+      flex: 1;
+      padding: 13px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.1);
+      backdrop-filter: blur(12px);
+      color: inherit;
+      font-size: 15px;
+      outline: none;
+      font-family: var(--font);
+      transition: .2s;
+    }
+    body.light #search-input { background: rgba(255,255,255,.8); border-color: rgba(0,0,0,.15); color: #111; }
+    #search-input::placeholder { opacity: .5; }
+    #search-input:focus { border-color: var(--accent); background: rgba(255,255,255,.15); }
+    #search-btn {
+      padding: 13px 22px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(110deg, var(--accent), var(--accent2));
+      color: #050816;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    /* ══════════════════════════════════════════
+       QUICK LINKS
+    ══════════════════════════════════════════ */
+    #quicklinks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      max-width: 580px;
+    }
+    .ql-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.1);
+      cursor: pointer;
+      transition: .2s;
+      text-decoration: none;
+      color: inherit;
+      min-width: 72px;
+      font-size: 11px;
+      text-align: center;
+      position: relative;
+      backdrop-filter: blur(10px);
+    }
+    body.light .ql-item { background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.08); }
+    .ql-item:hover { background: rgba(255,255,255,.18); transform: translateY(-2px); }
+    .ql-icon { font-size: 20px; }
+    .ql-del {
+      position: absolute;
+      top: -6px; right: -6px;
+      width: 17px; height: 17px;
+      border-radius: 50%;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .ql-item:hover .ql-del { display: flex; }
+    .ql-add {
+      border-style: dashed;
+      opacity: .5;
+    }
+    .ql-add:hover { opacity: 1; }
+
+    /* ══════════════════════════════════════════
+       DAILY QUOTE
+    ══════════════════════════════════════════ */
+    #quote-widget {
+      text-align: center;
+      max-width: 500px;
+    }
+    #quote-text {
+      font-size: 15px;
+      font-style: italic;
+      opacity: .75;
+      line-height: 1.6;
+    }
+    #quote-author {
+      font-size: 12px;
+      opacity: .5;
+      margin-top: 6px;
+    }
+
+    /* ══════════════════════════════════════════
+       WIDGETS ROW
+    ══════════════════════════════════════════ */
+    .widgets-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .widget-card {
+      flex: 1;
+      min-width: 200px;
+      max-width: 280px;
+    }
+
+    /* ── TODO ── */
+    #todo-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
+    #todo-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; }
+    #todo-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    #todo-list li input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+    #todo-list li span { flex: 1; }
+    #todo-list li.done span { text-decoration: line-through; opacity: .4; }
+    #todo-list li button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; padding: 0 4px; box-shadow: none; transform: none; }
+    #todo-list li button:hover { transform: none; box-shadow: none; }
+    #todo-input-row { display: flex; gap: 6px; margin-top: 8px; }
+    #todo-input {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color: inherit;
+      font-size: 13px;
+      outline: none;
+      font-family: var(--font);
+    }
+    body.light #todo-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.15); }
+    #todo-add-btn {
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(110deg, var(--accent), var(--accent2));
+      color: #050816;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    /* ── CALCULATOR ── */
+    #calc-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
+    #calc-display {
+      background: rgba(0,0,0,.3);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: right;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      min-height: 44px;
+      word-break: break-all;
+    }
+    body.light #calc-display { background: rgba(0,0,0,.06); color: #111; }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .calc-btn {
+      padding: 9px 4px;
+      border-radius: 7px;
+      border: none;
+      background: rgba(255,255,255,.08);
+      color: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: .15s;
+    }
+    body.light .calc-btn { background: rgba(0,0,0,.06); color: #111; }
+    .calc-btn:hover { background: rgba(255,255,255,.18); transform: none; box-shadow: none; }
+    .calc-btn.op { color: var(--accent); }
+    .calc-btn.eq { background: linear-gradient(110deg, var(--accent), var(--accent2)); color: #050816; grid-column: span 2; }
+    .calc-btn.eq:hover { opacity: .85; background: linear-gradient(110deg, var(--accent), var(--accent2)); }
+    .calc-btn.clr { color: #ef4444; }
+
+    /* ── AI CHAT ── */
+    #ai-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
+    #ai-messages {
+      max-height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+      scrollbar-width: none;
+    }
+    #ai-messages::-webkit-scrollbar { display: none; }
+    .ai-msg {
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 95%;
+    }
+    .ai-msg.user {
+      background: linear-gradient(110deg, var(--accent), var(--accent2));
+      color: #050816;
+      align-self: flex-end;
+    }
+    .ai-msg.bot {
+      background: rgba(255,255,255,.08);
+      align-self: flex-start;
+    }
+    body.light .ai-msg.bot { background: rgba(0,0,0,.06); }
+    #ai-input-row { display: flex; gap: 6px; }
+    #ai-widget-input {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color: inherit;
+      font-size: 12px;
+      outline: none;
+      font-family: var(--font);
+    }
+    body.light #ai-widget-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.15); }
+    #ai-widget-send {
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(110deg, var(--accent), var(--accent2));
+      color: #050816;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    /* ── NEWS ── */
+    #news-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
+    #news-list { display: flex; flex-direction: column; gap: 8px; max-height: 160px; overflow-y: auto; scrollbar-width: none; }
+    #news-list::-webkit-scrollbar { display: none; }
+    .news-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-decoration: none;
+      color: inherit;
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: .15s;
+    }
+    .news-item:hover { background: rgba(255,255,255,.08); }
+    body.light .news-item:hover { background: rgba(0,0,0,.04); }
+    .news-title { font-size: 12px; font-weight: 600; line-height: 1.4; }
+    .news-source { font-size: 10px; opacity: .5; }
+
+    /* ── SPOTIFY ── */
+    #spotify-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
+    .spotify-inner { text-align: center; }
+    .spotify-note { font-size: 12px; opacity: .5; line-height: 1.6; margin-bottom: 10px; }
+    #spotify-url-input {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color: inherit;
+      font-size: 12px;
+      outline: none;
+      font-family: var(--font);
+      margin-bottom: 6px;
+    }
+    body.light #spotify-url-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.15); }
+    #spotify-embed { width: 100%; border-radius: 10px; border: none; margin-top: 6px; }
+    #spotify-embed-btn {
+      width: 100%;
+      padding: 7px;
+      border-radius: 8px;
+      border: none;
+      background: #1db954;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    /* ══════════════════════════════════════════
+       CUSTOMIZE BUTTON
+    ══════════════════════════════════════════ */
+    #customize-btn {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(12px);
+      color: rgba(255,255,255,.85);
+      font-size: 13px;
+      cursor: pointer;
+      z-index: 50;
+      font-family: var(--font);
+      transition: .2s;
+    }
+    body.light #customize-btn { color: #333; background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.15); }
+    #customize-btn:hover { background: rgba(255,255,255,.18); transform: none; box-shadow: none; }
+
+    /* ══════════════════════════════════════════
+       CUSTOMIZE PANEL
+    ══════════════════════════════════════════ */
+    #panel-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 90;
+      display: none;
+    }
+    #panel-overlay.open { display: block; }
+
+    #customize-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: 320px; height: 100%;
+      background: #0d1120;
+      border-left: 1px solid rgba(255,255,255,.1);
+      padding: 0;
+      transform: translateX(100%);
+      transition: transform .3s;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    #customize-panel.open { transform: translateX(0); }
+    body.light #customize-panel { background: #f8faff; border-color: rgba(0,0,0,.1); }
+
+    .panel-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    body.light .panel-header { border-color: rgba(0,0,0,.08); }
+    .panel-title { font-size: 16px; font-weight: 700; }
+
+    #panel-close {
+      background: none; border: none;
+      color: inherit; font-size: 20px;
+      cursor: pointer; opacity: .5;
+      padding: 4px 8px;
+      box-shadow: none; transform: none;
+    }
+    #panel-close:hover { opacity: 1; transform: none; box-shadow: none; }
+
+    .panel-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* Panel tabs */
+    .panel-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .panel-tab {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: transparent;
+      color: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--font);
+      opacity: .6;
+      transition: .2s;
+    }
+    body.light .panel-tab { border-color: rgba(0,0,0,.15); }
+    .panel-tab.active { background: linear-gradient(110deg, var(--accent), var(--accent2)); color: #050816; opacity: 1; border-color: transparent; }
+    .panel-tab:hover { opacity: 1; transform: none; box-shadow: none; }
+
+    .panel-section { display: none; flex-direction: column; gap: 12px; }
+    .panel-section.active { display: flex; }
+
+    .panel-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .4; margin-bottom: 2px; }
+
+    .panel-input {
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: inherit;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+      font-family: var(--font);
+    }
+    body.light .panel-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); }
+    .panel-input:focus { border-color: var(--accent); }
+
+    .panel-btn {
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(110deg, var(--accent), var(--accent2));
+      color: #050816;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      font-family: var(--font);
+    }
+    .panel-btn:hover { opacity: .85; transform: none; box-shadow: none; }
+
+    .panel-btn-ghost {
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: transparent;
+      color: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      font-family: var(--font);
+    }
+    body.light .panel-btn-ghost { border-color: rgba(0,0,0,.15); }
+    .panel-btn-ghost:hover { background: rgba(255,255,255,.08); transform: none; box-shadow: none; }
+
+    .panel-btn-danger {
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(239,68,68,.3);
+      background: rgba(239,68,68,.1);
+      color: #ef4444;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      font-family: var(--font);
+    }
+    .panel-btn-danger:hover { background: rgba(239,68,68,.2); transform: none; box-shadow: none; }
+
+    /* Toggle switches */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .toggle {
+      position: relative;
+      width: 40px; height: 22px;
+    }
+    .toggle input { display: none; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,.15);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: .3s;
+    }
+    .toggle input:checked + .toggle-track { background: var(--accent); }
+    .toggle-track::before {
+      content: "";
+      position: absolute;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      top: 3px; left: 3px;
+      transition: .3s;
+    }
+    .toggle input:checked + .toggle-track::before { transform: translateX(18px); }
+
+    /* Range slider */
+    .panel-range {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    /* Color picker row */
+    .color-row { display: flex; gap: 8px; align-items: center; }
+    .color-row input[type=color] {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      background: none;
+    }
+
+    /* Font options */
+    .font-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .font-opt {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      transition: .2s;
+    }
+    body.light .font-opt { border-color: rgba(0,0,0,.12); background: rgba(0,0,0,.02); }
+    .font-opt.active { border-color: var(--accent); background: rgba(59,130,246,.1); color: var(--accent); font-weight: 600; }
+    .font-opt:hover { border-color: var(--accent); transform: none; box-shadow: none; }
+
+    /* Layout options */
+    .layout-options { display: flex; gap: 8px; }
+    .layout-opt {
+      flex: 1;
+      padding: 10px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: .2s;
+    }
+    body.light .layout-opt { border-color: rgba(0,0,0,.12); }
+    .layout-opt.active { border-color: var(--accent); background: rgba(59,130,246,.1); color: var(--accent); font-weight: 600; }
+    .layout-opt:hover { transform: none; box-shadow: none; border-color: var(--accent); }
+
+    /* Wallpaper grid */
+    .wp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .wp-thumb {
+      aspect-ratio: 16/9;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      background-size: cover;
+      background-position: center;
+      transition: .2s;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .wp-thumb.active { border-color: var(--accent); }
+    .wp-thumb:hover { transform: scale(1.04); }
+
+    /* Widget visibility toggles */
+    .widget-toggle-list { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ══════════════════════════════════════════
+       ADD LINK MODAL
+    ══════════════════════════════════════════ */
+    #add-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    #add-modal.open { display: flex; }
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 16px;
+      padding: 24px;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    body.light .modal-box { background: #fff; border-color: rgba(0,0,0,.1); }
+    .modal-box h3 { font-size: 15px; font-weight: 700; }
+    .modal-input {
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color: inherit;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+      font-family: var(--font);
+    }
+    body.light .modal-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-confirm {
+      flex: 1; padding: 9px;
+      border-radius: 8px; border: none;
+      background: linear-gradient(110deg, var(--accent), var(--accent2));
+      color: #050816; font-weight: 700;
+      font-size: 13px; cursor: pointer;
+      font-family: var(--font);
+    }
+    .modal-cancel {
+      flex: 1; padding: 9px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: transparent; color: inherit;
+      font-size: 13px; cursor: pointer;
+      font-family: var(--font);
+    }
+    .modal-confirm:hover, .modal-cancel:hover { transform: none; box-shadow: none; }
+
+    /* ══════════════════════════════════════════
+       HIDDEN
+    ══════════════════════════════════════════ */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="bg"></div>
+  <div id="bg-blur"></div>
+
+  <div class="stage">
+
+    <!-- Greeting -->
+    <div id="greeting" class="widget-el">Good morning 👋</div>
+
+    <!-- Clock -->
+    <div id="clock-wrap" class="widget-el">
+      <div id="clock">00:00</div>
+      <div id="clock-date">Monday, January 1</div>
+    </div>
+
+    <!-- Weather -->
+    <div id="weather-chip" class="widget-el">
+      <span id="weather-icon">🌤️</span>
+      <span id="weather-text">Loading...</span>
+    </div>
+
+    <!-- Search -->
+    <div id="search-wrap" class="widget-el">
+      <input type="text" id="search-input" placeholder="Search 360..." autofocus />
+      <button id="search-btn">Search</button>
+    </div>
+
+    <!-- Quick links -->
+    <div id="quicklinks" class="widget-el"></div>
+
+    <!-- Daily quote -->
+    <div id="quote-widget" class="widget-el">
+      <div id="quote-text">Loading quote...</div>
+      <div id="quote-author"></div>
+    </div>
+
+    <!-- Widgets row -->
+    <div class="widgets-row">
+
+      <!-- Todo -->
+      <div class="card widget-card widget-el" id="todo-widget">
+        <h4>📝 To-do</h4>
+        <ul id="todo-list"></ul>
+        <div id="todo-input-row">
+          <input type="text" id="todo-input" placeholder="Add task..." />
+          <button id="todo-add-btn">Add</button>
+        </div>
+      </div>
+
+      <!-- Calculator -->
+      <div class="card widget-card widget-el" id="calc-widget">
+        <h4>🧮 Calculator</h4>
+        <div id="calc-display">0</div>
+        <div class="calc-grid">
+          <button class="calc-btn clr" data-val="C">C</button>
+          <button class="calc-btn op" data-val="±">±</button>
+          <button class="calc-btn op" data-val="%">%</button>
+          <button class="calc-btn op" data-val="/">÷</button>
+          <button class="calc-btn" data-val="7">7</button>
+          <button class="calc-btn" data-val="8">8</button>
+          <button class="calc-btn" data-val="9">9</button>
+          <button class="calc-btn op" data-val="*">×</button>
+          <button class="calc-btn" data-val="4">4</button>
+          <button class="calc-btn" data-val="5">5</button>
+          <button class="calc-btn" data-val="6">6</button>
+          <button class="calc-btn op" data-val="-">−</button>
+          <button class="calc-btn" data-val="1">1</button>
+          <button class="calc-btn" data-val="2">2</button>
+          <button class="calc-btn" data-val="3">3</button>
+          <button class="calc-btn op" data-val="+">+</button>
+          <button class="calc-btn" data-val="0" style="grid-column:span 2">0</button>
+          <button class="calc-btn" data-val=".">.</button>
+          <button class="calc-btn eq" data-val="=">=</button>
+        </div>
+      </div>
+
+      <!-- AI Chat -->
+      <div class="card widget-card widget-el" id="ai-widget">
+        <h4>🤖 360 AI</h4>
+        <div id="ai-messages"></div>
+        <div id="ai-input-row">
+          <input type="text" id="ai-widget-input" placeholder="Ask anything..." />
+          <button id="ai-widget-send">→</button>
+        </div>
+      </div>
+
+      <!-- News -->
+      <div class="card widget-card widget-el" id="news-widget">
+        <h4>📰 News</h4>
+        <div id="news-list">Loading news...</div>
+      </div>
+
+      <!-- Spotify -->
+      <div class="card widget-card widget-el" id="spotify-widget">
+        <h4>🎵 Music</h4>
+        <div class="spotify-inner">
+          <p class="spotify-note">Paste a Spotify track, album, or playlist URL</p>
+          <input type="text" id="spotify-url-input" placeholder="https://open.spotify.com/..." />
+          <button id="spotify-embed-btn">Load Player</button>
+          <iframe id="spotify-embed" style="display:none" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Customize button -->
+  <button id="customize-btn">✦ Customize</button>
+
+  <!-- Panel overlay -->
+  <div id="panel-overlay"></div>
+
+  <!-- Customize panel -->
+  <div id="customize-panel">
+    <div class="panel-header">
+      <div class="panel-title">Customize</div>
+      <button id="panel-close">✕</button>
+    </div>
+    <div class="panel-body">
+
+      <!-- Tabs -->
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="general">General</button>
+        <button class="panel-tab" data-tab="appearance">Appearance</button>
+        <button class="panel-tab" data-tab="widgets">Widgets</button>
+        <button class="panel-tab" data-tab="wallpaper">Wallpaper</button>
+        <button class="panel-tab" data-tab="links">Links</button>
+      </div>
+
+      <!-- GENERAL -->
+      <div class="panel-section active" id="tab-general">
+        <div>
+          <div class="panel-label">Your name</div>
+          <input class="panel-input" id="name-input" placeholder="Enter your name..." />
+        </div>
+        <button class="panel-btn" id="save-name-btn">Save name</button>
+        <div>
+          <div class="panel-label">Custom greeting</div>
+          <input class="panel-input" id="greeting-input" placeholder="e.g. Let's build something 🚀" />
+          <div style="font-size:11px;opacity:.4;margin-top:4px;">Leave blank to use Good morning/afternoon/evening</div>
+        </div>
+        <button class="panel-btn" id="save-greeting-btn">Save greeting</button>
+        <div class="toggle-row">
+          <span>12hr clock</span>
+          <label class="toggle"><input type="checkbox" id="toggle-12hr"><div class="toggle-track"></div></label>
+        </div>
+        <div class="toggle-row">
+          <span>Show seconds</span>
+          <label class="toggle"><input type="checkbox" id="toggle-seconds"><div class="toggle-track"></div></label>
+        </div>
+        <div class="toggle-row">
+          <span>Light mode</span>
+          <label class="toggle"><input type="checkbox" id="toggle-light"><div class="toggle-track"></div></label>
+        </div>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="panel-section" id="tab-appearance">
+        <div>
+          <div class="panel-label">Accent color</div>
+          <div class="color-row">
+            <input type="color" id="accent-picker" value="#3b82f6" />
+            <input type="color" id="accent2-picker" value="#06b6d4" />
+            <span style="font-size:12px;opacity:.5;">Color 1 &amp; 2</span>
+          </div>
+        </div>
+        <div>
+          <div class="panel-label">Background blur</div>
+          <input type="range" class="panel-range" id="blur-range" min="0" max="20" value="8" step="1" />
+          <div style="font-size:11px;opacity:.4;margin-top:2px;" id="blur-label">8px</div>
+        </div>
+        <div>
+          <div class="panel-label">Layout alignment</div>
+          <div class="layout-options">
+            <div class="layout-opt active" data-layout="center">Center</div>
+            <div class="layout-opt" data-layout="left">Left</div>
+            <div class="layout-opt" data-layout="right">Right</div>
+          </div>
+        </div>
+        <div>
+          <div class="panel-label">Font</div>
+          <div class="font-options">
+            <div class="font-opt active" data-font="Inter" style="font-family:'Inter'">Inter</div>
+            <div class="font-opt" data-font="Poppins" style="font-family:'Poppins'">Poppins</div>
+            <div class="font-opt" data-font="DM Sans" style="font-family:'DM Sans'">DM Sans</div>
+            <div class="font-opt" data-font="Roboto" style="font-family:'Roboto'">Roboto</div>
+            <div class="font-opt" data-font="Playfair Display" style="font-family:'Playfair Display'">Playfair</div>
+            <div class="font-opt" data-font="Space Grotesk" style="font-family:'Space Grotesk'">Space</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGETS -->
+      <div class="panel-section" id="tab-widgets">
+        <div class="panel-label">Show / hide widgets</div>
+        <div class="widget-toggle-list" id="widget-toggles"></div>
+      </div>
+
+      <!-- WALLPAPER -->
+      <div class="panel-section" id="tab-wallpaper">
+        <div class="panel-label">Preset wallpapers</div>
+        <div class="wp-grid" id="wp-grid"></div>
+        <div>
+          <div class="panel-label" style="margin-top:8px;">Custom URL</div>
+          <input class="panel-input" id="bg-url-input" placeholder="Paste image URL..." />
+          <button class="panel-btn" id="bg-url-btn" style="margin-top:6px;">Apply</button>
+        </div>
+        <div>
+          <div class="panel-label">Upload image</div>
+          <input type="file" id="bg-file" accept="image/*" style="display:none" />
+          <button class="panel-btn-ghost" id="bg-file-btn">Choose file</button>
+        </div>
+        <button class="panel-btn-danger" id="bg-reset-btn">Remove background</button>
+      </div>
+
+      <!-- LINKS -->
+      <div class="panel-section" id="tab-links">
+        <div class="panel-label">Quick links</div>
+        <button class="panel-btn" id="add-link-btn">+ Add link</button>
+        <div id="links-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <button class="panel-btn-danger" id="reset-links-btn">Reset to defaults</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Add link modal -->
+  <div id="add-modal">
+    <div class="modal-box">
+      <h3>Add quick link</h3>
+      <input class="modal-input" id="link-name" placeholder="Name (e.g. YouTube)" />
+      <input class="modal-input" id="link-url" placeholder="URL (e.g. https://youtube.com)" />
+      <input class="modal-input" id="link-icon" placeholder="Emoji (e.g. 📺)" />
+      <div class="modal-actions">
+        <button class="modal-cancel" id="modal-cancel">Cancel</button>
+        <button class="modal-confirm" id="modal-confirm">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /* ════════════════════════════════════════════
+     STORAGE
+  ════════════════════════════════════════════ */
+  const S = {
+    get: k => { try { return JSON.parse(localStorage.getItem("360nt_"+k)); } catch { return null; } },
+    set: (k,v) => localStorage.setItem("360nt_"+k, JSON.stringify(v)),
+  };
+
+  /* ════════════════════════════════════════════
+     WALLPAPERS
+  ════════════════════════════════════════════ */
+  const WALLPAPERS = [
+    { label:"🌌 Space",   url:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80" },
+    { label:"🌊 Ocean",   url:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80" },
+    { label:"🏔️ Mountain",url:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80" },
+    { label:"🌸 Bloom",   url:"https://images.unsplash.com/photo-1490750967868-88df5691cc04?w=1920&q=80" },
+    { label:"🌆 City",    url:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=80" },
+    { label:"⬛ Dark",    url:"" },
+  ];
+
+  /* ════════════════════════════════════════════
+     WIDGET CONFIG
+  ════════════════════════════════════════════ */
+  const WIDGETS = [
+    { id:"greeting",    label:"Greeting" },
+    { id:"clock-wrap",  label:"Clock" },
+    { id:"weather-chip",label:"Weather" },
+    { id:"search-wrap", label:"Search" },
+    { id:"quicklinks",  label:"Quick links" },
+    { id:"quote-widget",label:"Daily quote" },
+    { id:"todo-widget", label:"To-do" },
+    { id:"calc-widget", label:"Calculator" },
+    { id:"ai-widget",   label:"360 AI" },
+    { id:"news-widget", label:"News" },
+    { id:"spotify-widget",label:"Music" },
+  ];
+
+  /* ════════════════════════════════════════════
+     DEFAULT LINKS
+  ════════════════════════════════════════════ */
+  const DEFAULT_LINKS = [
+    { name:"360",     url:"https://360-search.com",         icon:"🔍" },
+    { name:"AI",      url:"https://360-search.com/ai.html", icon:"🤖" },
+    { name:"YouTube", url:"https://youtube.com",            icon:"📺" },
+    { name:"GitHub",  url:"https://github.com",             icon:"🐙" },
+  ];
+
+  /* ════════════════════════════════════════════
+     DAILY QUOTES
+  ════════════════════════════════════════════ */
+  const QUOTES = [
+    { text:"The best way to predict the future is to create it.", author:"Peter Drucker" },
+    { text:"Code is like humor. When you have to explain it, it's bad.", author:"Cory House" },
+    { text:"First, solve the problem. Then, write the code.", author:"John Johnson" },
+    { text:"Simplicity is the soul of efficiency.", author:"Austin Freeman" },
+    { text:"Make it work, make it right, make it fast.", author:"Kent Beck" },
+    { text:"The only way to do great work is to love what you do.", author:"Steve Jobs" },
+    { text:"In the middle of every difficulty lies opportunity.", author:"Albert Einstein" },
+  ];
+
+  /* ════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════ */
+  function init() {
+    loadSettings();
+    startClock();
+    loadWeather();
+    renderLinks();
+    renderQuote();
+    renderWidgetToggles();
+    buildWpGrid();
+    initTodo();
+    initCalc();
+    initAI();
+    loadNews();
+    initSpotify();
+    wirePanel();
+    wireSearch();
+  }
+
+  /* ════════════════════════════════════════════
+     LOAD ALL SETTINGS
+  ════════════════════════════════════════════ */
+  function loadSettings() {
+    // Accent
+    const a1 = S.get("accent")  || "#3b82f6";
+    const a2 = S.get("accent2") || "#06b6d4";
+    document.documentElement.style.setProperty("--accent",  a1);
+    document.documentElement.style.setProperty("--accent2", a2);
+    document.getElementById("accent-picker").value  = a1;
+    document.getElementById("accent2-picker").value = a2;
+
+    // Blur
+    const blur = S.get("blur") ?? 8;
+    document.documentElement.style.setProperty("--blur", blur+"px");
+    document.getElementById("blur-range").value = blur;
+    document.getElementById("blur-label").textContent = blur+"px";
+
+    // Font
+    const font = S.get("font") || "Inter";
+    applyFont(font);
+    document.querySelectorAll(".font-opt").forEach(o => o.classList.toggle("active", o.dataset.font === font));
+
+    // Layout
+    const layout = S.get("layout") || "center";
+    applyLayout(layout);
+    document.querySelectorAll(".layout-opt").forEach(o => o.classList.toggle("active", o.dataset.layout === layout));
+
+    // Light mode
+    const light = S.get("light") || false;
+    document.body.classList.toggle("light", light);
+    document.getElementById("toggle-light").checked = light;
+
+    // 12hr / seconds
+    document.getElementById("toggle-12hr").checked    = S.get("12hr")    || false;
+    document.getElementById("toggle-seconds").checked = S.get("seconds")  || false;
+
+    // Name / greeting
+    const name = S.get("name") || "";
+    document.getElementById("name-input").value     = name;
+    const cg = S.get("custom-greeting") || "";
+    document.getElementById("greeting-input").value = cg;
+    updateGreeting();
+
+    // Background
+    const bg = S.get("bg") || "";
+    applyBg(bg);
+
+    // Widget visibility
+    WIDGETS.forEach(w => {
+      const hidden = S.get("hide_"+w.id) || false;
+      document.getElementById(w.id)?.classList.toggle("hidden", hidden);
+    });
+
+    // Spotify
+    const spUrl = S.get("spotify") || "";
+    if (spUrl) loadSpotify(spUrl);
+  }
+
+  /* ════════════════════════════════════════════
+     CLOCK
+  ════════════════════════════════════════════ */
+  function startClock() {
+    function tick() {
+      const now  = new Date();
+      const h12  = document.getElementById("toggle-12hr").checked;
+      const secs = document.getElementById("toggle-seconds").checked;
+      const opts = { hour:"2-digit", minute:"2-digit" };
+      if (secs) opts.second = "2-digit";
+      if (h12)  opts.hour12 = true;
+      document.getElementById("clock").textContent = now.toLocaleTimeString([], opts);
+      document.getElementById("clock-date").textContent = now.toLocaleDateString([], { weekday:"long", month:"long", day:"numeric" });
+    }
+    setInterval(tick, 1000);
+    tick();
+  }
+
+  /* ════════════════════════════════════════════
+     GREETING
+  ════════════════════════════════════════════ */
+  function updateGreeting() {
+    const name = S.get("name") || "";
+    const cg   = S.get("custom-greeting") || "";
+    const h    = new Date().getHours();
+    const part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+    const nameStr = name ? `, ${name}` : "";
+    document.getElementById("greeting").textContent = cg || `${part}${nameStr} 👋`;
+  }
+
+  /* ════════════════════════════════════════════
+     WEATHER
+  ════════════════════════════════════════════ */
+  async function loadWeather() {
+    const el   = document.getElementById("weather-text");
+    const icon = document.getElementById("weather-icon");
+    if (!navigator.geolocation) { el.textContent = "Unavailable"; return; }
+    navigator.geolocation.getCurrentPosition(async pos => {
+      try {
+        const res  = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`);
+        const data = await res.json();
+        const temp = Math.round(data.current_weather.temperature);
+        const code = data.current_weather.weathercode;
+        icon.textContent = code<=1?"☀️":code<=3?"⛅":code<=67?"🌧️":code<=77?"❄️":"🌩️";
+        el.textContent   = `${temp}°C`;
+      } catch { el.textContent = "Unavailable"; }
+    }, () => { el.textContent = "Unavailable"; });
+  }
+
+  /* ════════════════════════════════════════════
+     SEARCH
+  ════════════════════════════════════════════ */
+  function wireSearch() {
+    const go = () => {
+      const q = document.getElementById("search-input").value.trim();
+      if (q) window.location.href = `https://360-search.com/?q=${encodeURIComponent(q)}`;
+    };
+    document.getElementById("search-btn").addEventListener("click", go);
+    document.getElementById("search-input").addEventListener("keydown", e => { if (e.key==="Enter") go(); });
+  }
+
+  /* ════════════════════════════════════════════
+     QUICK LINKS
+  ════════════════════════════════════════════ */
+  function getLinks() { return S.get("links") || DEFAULT_LINKS; }
+
+  function renderLinks() {
+    const c     = document.getElementById("quicklinks");
+    const links = getLinks();
+    c.innerHTML = "";
+    links.forEach((l, i) => {
+      const a = document.createElement("a");
+      a.className  = "ql-item";
+      a.href       = l.url;
+      a.target     = "_blank";
+      a.innerHTML  = `<span class="ql-icon">${l.icon||"🔗"}</span><span>${l.name}</span><button class="ql-del" data-i="${i}">✕</button>`;
+      a.querySelector(".ql-del").addEventListener("click", e => {
+        e.preventDefault(); e.stopPropagation();
+        const arr = getLinks(); arr.splice(i,1); S.set("links",arr); renderLinks();
+      });
+      c.appendChild(a);
+    });
+    renderLinksList();
+  }
+
+  function renderLinksList() {
+    const list  = document.getElementById("links-list");
+    const links = getLinks();
+    list.innerHTML = "";
+    links.forEach((l, i) => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.04);";
+      row.innerHTML = `<span>${l.icon}</span><span style="flex:1">${l.name}</span><button style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0;box-shadow:none;transform:none;" data-i="${i}">Remove</button>`;
+      row.querySelector("button").addEventListener("click", () => {
+        const arr = getLinks(); arr.splice(i,1); S.set("links",arr); renderLinks();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     DAILY QUOTE
+  ════════════════════════════════════════════ */
+  function renderQuote() {
+    const idx  = new Date().getDate() % QUOTES.length;
+    const q    = QUOTES[idx];
+    document.getElementById("quote-text").textContent   = `"${q.text}"`;
+    document.getElementById("quote-author").textContent = `— ${q.author}`;
+  }
+
+  /* ════════════════════════════════════════════
+     TODO
+  ════════════════════════════════════════════ */
+  function getTodos() { return S.get("todos") || []; }
+
+  function renderTodos() {
+    const list  = document.getElementById("todo-list");
+    const todos = getTodos();
+    list.innerHTML = "";
+    todos.forEach((t, i) => {
+      const li = document.createElement("li");
+      li.className = t.done ? "done" : "";
+      li.innerHTML = `<input type="checkbox" ${t.done?"checked":""}><span>${t.text}</span><button data-i="${i}">✕</button>`;
+      li.querySelector("input").addEventListener("change", () => {
+        const arr = getTodos(); arr[i].done = !arr[i].done; S.set("todos",arr); renderTodos();
+      });
+      li.querySelector("button").addEventListener("click", () => {
+        const arr = getTodos(); arr.splice(i,1); S.set("todos",arr); renderTodos();
+      });
+      list.appendChild(li);
+    });
+  }
+
+  function initTodo() {
+    renderTodos();
+    const add = () => {
+      const val = document.getElementById("todo-input").value.trim();
+      if (!val) return;
+      const arr = getTodos(); arr.push({ text:val, done:false }); S.set("todos",arr);
+      document.getElementById("todo-input").value = "";
+      renderTodos();
+    };
+    document.getElementById("todo-add-btn").addEventListener("click", add);
+    document.getElementById("todo-input").addEventListener("keydown", e => { if (e.key==="Enter") add(); });
+  }
+
+  /* ════════════════════════════════════════════
+     CALCULATOR
+  ════════════════════════════════════════════ */
+  function initCalc() {
+    let expr = "";
+    const display = document.getElementById("calc-display");
+
+    document.querySelectorAll(".calc-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.val;
+        if (v === "C")  { expr = ""; display.textContent = "0"; return; }
+        if (v === "±")  { expr = expr ? String(-parseFloat(expr)) : "0"; display.textContent = expr; return; }
+        if (v === "=")  {
+          try {
+            const result = Function('"use strict"; return (' + expr.replace(/÷/g,"/").replace(/×/g,"*") + ')')();
+            display.textContent = parseFloat(result.toFixed(8));
+            expr = String(result);
+          } catch { display.textContent = "Error"; expr = ""; }
+          return;
+        }
+        if (v === "%") { expr = String(parseFloat(expr||0)/100); display.textContent = expr; return; }
+        expr += v;
+        display.textContent = expr;
+      });
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     360 AI WIDGET
+  ════════════════════════════════════════════ */
+  function initAI() {
+    const messages = document.getElementById("ai-messages");
+    const input    = document.getElementById("ai-widget-input");
+    const send     = document.getElementById("ai-widget-send");
+    const history  = [{ role:"system", content:"You are 360 AI. Be concise and helpful. Keep responses short." }];
+    const PROXY    = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
+
+    function addMsg(text, role) {
+      const div = document.createElement("div");
+      div.className = `ai-msg ${role}`;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      return div;
+    }
+
+    async function askAI() {
+      const q = input.value.trim();
+      if (!q) return;
+      input.value = "";
+      history.push({ role:"user", content:q });
+      addMsg(q, "user");
+      const bubble = addMsg("...", "bot");
+      try {
+        const res = await fetch(PROXY, {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({ messages:history, model:"llama3-8b-8192" })
+        });
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf="", full="";
+        bubble.textContent="";
+        while(true){
+          const{value,done}=await reader.read(); if(done)break;
+          buf+=decoder.decode(value,{stream:true});
+          const lines=buf.split("\n"); buf=lines.pop();
+          for(const line of lines){
+            if(!line.startsWith("data:"))continue;
+            const json=line.replace("data:","").trim();
+            if(json==="[DONE]")continue;
+            try{const d=JSON.parse(json).choices?.[0]?.delta?.content;if(d){full+=d;bubble.textContent=full;messages.scrollTop=messages.scrollHeight;}}catch{}
+          }
+        }
+        if(full)history.push({role:"assistant",content:full});
+      } catch(err){ bubble.textContent="Error: "+err.message; history.pop(); }
+    }
+
+    send.addEventListener("click", askAI);
+    input.addEventListener("keydown", e => { if(e.key==="Enter") askAI(); });
+  }
+
+  /* ════════════════════════════════════════════
+     NEWS
+  ════════════════════════════════════════════ */
+  async function loadNews() {
+    const list = document.getElementById("news-list");
+    try {
+      const res  = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/rss.xml&count=6");
+      const data = await res.json();
+      if (!data.items) throw new Error("No items");
+      list.innerHTML = "";
+      data.items.forEach(item => {
+        const a = document.createElement("a");
+        a.className = "news-item";
+        a.href      = item.link;
+        a.target    = "_blank";
+        a.innerHTML = `<div class="news-title">${item.title}</div><div class="news-source">BBC News</div>`;
+        list.appendChild(a);
+      });
+    } catch {
+      list.innerHTML = "<div style='font-size:12px;opacity:.5;'>News unavailable</div>";
+    }
+  }
+
+  /* ════════════════════════════════════════════
+     SPOTIFY
+  ════════════════════════════════════════════ */
+  function loadSpotify(url) {
+    const iframe = document.getElementById("spotify-embed");
+    if (!url) { iframe.style.display="none"; return; }
+    const match = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
+    if (!match) { alert("Invalid Spotify URL"); return; }
+    iframe.src    = `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
+    iframe.height = match[1]==="track" ? "80" : "352";
+    iframe.style.display = "block";
+  }
+
+  function initSpotify() {
+    document.getElementById("spotify-embed-btn").addEventListener("click", () => {
+      const url = document.getElementById("spotify-url-input").value.trim();
+      S.set("spotify", url);
+      loadSpotify(url);
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     BACKGROUND
+  ════════════════════════════════════════════ */
+  function applyBg(url) {
+    document.getElementById("bg").style.backgroundImage = url ? `url('${url}')` : "";
+    document.getElementById("bg").style.opacity         = url ? "0.45" : "0";
+    S.set("bg", url||"");
+  }
+
+  function buildWpGrid() {
+    const grid = document.getElementById("wp-grid");
+    const cur  = S.get("bg") || "";
+    WALLPAPERS.forEach(wp => {
+      const div = document.createElement("div");
+      div.className = "wp-thumb" + (cur===wp.url?" active":"");
+      div.textContent = wp.label;
+      if (wp.url) div.style.backgroundImage = `url('${wp.url}')`;
+      else div.style.background = "#0a0f1e";
+      div.addEventListener("click", () => {
+        document.querySelectorAll(".wp-thumb").forEach(t=>t.classList.remove("active"));
+        div.classList.add("active");
+        applyBg(wp.url);
+      });
+      grid.appendChild(div);
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     FONT
+  ════════════════════════════════════════════ */
+  function applyFont(font) {
+    document.getElementById("font-link").href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;600;700;800&display=swap`;
+    document.documentElement.style.setProperty("--font", `'${font}', system-ui, sans-serif`);
+  }
+
+  /* ════════════════════════════════════════════
+     LAYOUT
+  ════════════════════════════════════════════ */
+  function applyLayout(layout) {
+    document.body.classList.remove("layout-left","layout-center","layout-right");
+    if (layout!=="center") document.body.classList.add("layout-"+layout);
+  }
+
+  /* ════════════════════════════════════════════
+     WIDGET TOGGLES
+  ════════════════════════════════════════════ */
+  function renderWidgetToggles() {
+    const container = document.getElementById("widget-toggles");
+    container.innerHTML = "";
+    WIDGETS.forEach(w => {
+      const hidden = S.get("hide_"+w.id) || false;
+      const row = document.createElement("div");
+      row.className = "toggle-row";
+      row.innerHTML = `<span>${w.label}</span>
+        <label class="toggle">
+          <input type="checkbox" ${hidden?"":"checked"} data-widget="${w.id}">
+          <div class="toggle-track"></div>
+        </label>`;
+      row.querySelector("input").addEventListener("change", e => {
+        const show = e.target.checked;
+        S.set("hide_"+w.id, !show);
+        document.getElementById(w.id)?.classList.toggle("hidden", !show);
+      });
+      container.appendChild(row);
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     PANEL WIRING
+  ════════════════════════════════════════════ */
+  function wirePanel() {
+    const panel   = document.getElementById("customize-panel");
+    const overlay = document.getElementById("panel-overlay");
+
+    document.getElementById("customize-btn").addEventListener("click", () => {
+      panel.classList.add("open");
+      overlay.classList.add("open");
+    });
+    const closePanel = () => { panel.classList.remove("open"); overlay.classList.remove("open"); };
+    document.getElementById("panel-close").addEventListener("click", closePanel);
+    overlay.addEventListener("click", closePanel);
+
+    /* Tabs */
+    document.querySelectorAll(".panel-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".panel-tab").forEach(t=>t.classList.remove("active"));
+        document.querySelectorAll(".panel-section").forEach(s=>s.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("tab-"+tab.dataset.tab).classList.add("active");
+      });
+    });
+
+    /* General */
+    document.getElementById("save-name-btn").addEventListener("click", () => {
+      S.set("name", document.getElementById("name-input").value.trim());
+      updateGreeting();
+    });
+    document.getElementById("save-greeting-btn").addEventListener("click", () => {
+      S.set("custom-greeting", document.getElementById("greeting-input").value.trim());
+      updateGreeting();
+    });
+    document.getElementById("toggle-12hr").addEventListener("change", e => S.set("12hr", e.target.checked));
+    document.getElementById("toggle-seconds").addEventListener("change", e => S.set("seconds", e.target.checked));
+    document.getElementById("toggle-light").addEventListener("change", e => {
+      S.set("light", e.target.checked);
+      document.body.classList.toggle("light", e.target.checked);
+    });
+
+    /* Appearance */
+    document.getElementById("accent-picker").addEventListener("input", e => {
+      document.documentElement.style.setProperty("--accent", e.target.value);
+      S.set("accent", e.target.value);
+    });
+    document.getElementById("accent2-picker").addEventListener("input", e => {
+      document.documentElement.style.setProperty("--accent2", e.target.value);
+      S.set("accent2", e.target.value);
+    });
+    document.getElementById("blur-range").addEventListener("input", e => {
+      document.documentElement.style.setProperty("--blur", e.target.value+"px");
+      document.getElementById("blur-label").textContent = e.target.value+"px";
+      S.set("blur", parseInt(e.target.value));
+    });
+    document.querySelectorAll(".layout-opt").forEach(opt => {
+      opt.addEventListener("click", () => {
+        document.querySelectorAll(".layout-opt").forEach(o=>o.classList.remove("active"));
+        opt.classList.add("active");
+        S.set("layout", opt.dataset.layout);
+        applyLayout(opt.dataset.layout);
+      });
+    });
+    document.querySelectorAll(".font-opt").forEach(opt => {
+      opt.addEventListener("click", () => {
+        document.querySelectorAll(".font-opt").forEach(o=>o.classList.remove("active"));
+        opt.classList.add("active");
+        S.set("font", opt.dataset.font);
+        applyFont(opt.dataset.font);
+      });
+    });
+
+    /* Wallpaper */
+    document.getElementById("bg-url-btn").addEventListener("click", () => {
+      const url = document.getElementById("bg-url-input").value.trim();
+      if (url) { applyBg(url); buildWpGrid(); }
+    });
+    document.getElementById("bg-file-btn").addEventListener("click", () => document.getElementById("bg-file").click());
+    document.getElementById("bg-file").addEventListener("change", e => {
+      const f = e.target.files[0]; if(!f)return;
+      const r = new FileReader(); r.onload=()=>{ applyBg(r.result); buildWpGrid(); }; r.readAsDataURL(f);
+    });
+    document.getElementById("bg-reset-btn").addEventListener("click", () => { applyBg(""); buildWpGrid(); });
+
+    /* Links */
+    const modal = document.getElementById("add-modal");
+    document.getElementById("add-link-btn").addEventListener("click", () => modal.classList.add("open"));
+    document.getElementById("modal-cancel").addEventListener("click",  () => modal.classList.remove("open"));
+    modal.addEventListener("click", e => { if(e.target===modal) modal.classList.remove("open"); });
+    document.getElementById("modal-confirm").addEventListener("click", () => {
+      const name = document.getElementById("link-name").value.trim();
+      const url  = document.getElementById("link-url").value.trim();
+      const icon = document.getElementById("link-icon").value.trim() || "🔗";
+      if (!name||!url) return;
+      const arr  = getLinks();
+      arr.push({ name, url: url.startsWith("http")?url:"https://"+url, icon });
+      S.set("links", arr); renderLinks();
+      document.getElementById("link-name").value="";
+      document.getElementById("link-url").value="";
+      document.getElementById("link-icon").value="";
+      modal.classList.remove("open");
+    });
+    ["link-name","link-url","link-icon"].forEach(id => {
+      document.getElementById(id).addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("modal-confirm").click(); });
+    });
+    document.getElementById("reset-links-btn").addEventListener("click", () => {
+      S.set("links", DEFAULT_LINKS); renderLinks();
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     GO
+  ════════════════════════════════════════════ */
+  init();
+  </script>
+</body>
+</html>
