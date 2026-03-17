@@ -1,0 +1,212 @@
+/* ============================================================
+   360 — RESPONSIVE.CSS
+   Device detection + mobile/tablet layout fixes
+   ============================================================ */
+
+/* ============================================================
+   TABLET (601px – 1024px)
+   ============================================================ */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .sidebar { width: 200px; }
+
+  .home-inner {
+    max-width: 90%;
+    padding-top: 60px;
+    gap: 16px;
+  }
+
+  .logo-main { font-size: 42px; padding: 8px 20px; }
+
+  .search-shell { max-width: 90%; }
+
+  .auth-top-right {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+
+  .auth-btn {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .settings-panel { width: 240px; }
+
+  .back-btn { left: 80px; }
+}
+
+/* ============================================================
+   MOBILE (max 600px)
+   ============================================================ */
+@media (max-width: 600px) {
+
+  /* Sidebar — fullscreen on mobile */
+  .sidebar {
+    width: 100vw;
+    height: 100vh;
+    padding: 24px 20px;
+    border-right: none;
+  }
+
+  .sidebar .nav-list { gap: 8px; }
+
+  .nav-item {
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  .sidebar-footer {
+    padding-bottom: 24px;
+  }
+
+  /* Settings panel — fullscreen on mobile */
+  .settings-panel {
+    width: 100vw;
+    border-left: none;
+    padding: 24px 20px;
+  }
+
+  /* Sidebar toggle */
+  .sidebar-toggle {
+    top: 12px;
+    left: 12px;
+    font-size: 13px;
+    padding: 7px 14px;
+  }
+
+  /* Auth buttons */
+  .auth-top-right {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+
+  .auth-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+
+  /* Auth popup — full width on mobile */
+  .auth-box {
+    width: 92vw;
+    padding: 22px 18px;
+  }
+
+  /* Home page */
+  .home-inner {
+    padding: 70px 16px 20px;
+    gap: 14px;
+    max-width: 100%;
+  }
+
+  .logo-main {
+    font-size: 36px;
+    padding: 6px 18px;
+    border-radius: 14px;
+  }
+
+  .search-shell {
+    max-width: 100%;
+    padding: 0 4px;
+  }
+
+  .clock-pill,
+  .weather-chip {
+    font-size: 13px;
+    padding: 5px 12px;
+  }
+
+  .temp-unit-box {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+
+  #musicToggle {
+    font-size: 13px;
+    padding: 7px 14px;
+  }
+
+  /* Back button — tuck in closer on mobile */
+  .back-btn {
+    left: 12px;
+    top: 56px;
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  /* Theme swatches — 2 columns on mobile */
+  .theme-swatches {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* PWA install banner */
+  .install-banner {
+    bottom: 12px;
+    right: 12px;
+    font-size: 13px;
+    padding: 9px 16px;
+  }
+
+  /* Page content padding */
+  .ai-page,
+  .weather-page,
+  .chat-page,
+  .translator-page,
+  .stocks-page,
+  .shortener-page,
+  .games-page {
+    padding: 100px 14px 20px;
+  }
+
+  /* Chat window height on mobile */
+  #chat-window { height: 55vh; }
+
+  /* AI output height on mobile */
+  #ai-output { min-height: 45vh; }
+
+  /* Stock form column on mobile */
+  .stock-form {
+    flex-direction: column;
+  }
+
+  .stock-form button {
+    border-radius: 12px;
+  }
+
+  /* Shortener box column on mobile */
+  .shortener-box {
+    flex-direction: column;
+  }
+
+  .shortener-box button {
+    border-radius: 12px;
+  }
+
+  /* Games grid — 1 column on mobile */
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Translator lang row wraps */
+  .lang-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Input + textarea full width */
+  input, textarea, select {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+
+/* ============================================================
+   TOUCH DEVICES — disable custom cursor
+   ============================================================ */
+@media (hover: none) and (pointer: coarse) {
+  html, body, * { cursor: auto !important; }
+  .cursor-dot, .cursor-trail { display: none !important; }
+}
