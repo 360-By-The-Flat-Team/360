@@ -351,4 +351,4 @@ if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
 /* ============================================================
    READY LOG
    ============================================================ */
-console.log("%c360 V2.1 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
+console.log("%c360 V2.1 — main.js loaded (cursor handled by cursor.js)", "color:#4ade80;font-weight:bold;font-size:14px;");
