@@ -113,8 +113,17 @@
       result.style.display = "block";
       result.textContent = "Shortening...";
       try {
-        const res   = await fetch("https://tinyurl.com/api-create.php?url=" + encodeURIComponent(url));
-        const short = await res.text();
+        const res = await fetch("https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/smooth-endpoint", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        if (!data.shortUrl) {
+          result.textContent = "Failed to shorten URL.";
+          return;
+        }
+        const short = data.shortUrl;
         result.innerHTML = "Short URL: <a href=\"" + short + "\" target=\"_blank\">" + short + "</a><br><button onclick=\"navigator.clipboard.writeText('" + short + "');this.textContent='Copied!'\" style=\"margin-top:8px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(110deg,var(--a),var(--a2));color:#050816;font-weight:700;cursor:pointer;\">Copy</button>";
       } catch { result.textContent = "Failed to shorten URL."; }
     };
