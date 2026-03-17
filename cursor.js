@@ -1,94 +1,71 @@
 /* ============================================================
-   360 — CURSOR.JS V2.1
-   No device detection. Works on all non-touch devices.
+   360 — CURSOR.JS
+   Completely self-contained. Works on every page.
    ============================================================ */
-(function initCursor() {
+(function () {
+  /* Skip on touch devices */
+  if (!window.matchMedia("(hover: hover)").matches) return;
+
   const body = document.body;
 
-  /* ── Create elements if missing ── */
-  function getOrCreate(cls) {
-    let el = document.querySelector("." + cls);
-    if (!el) {
-      el = document.createElement("div");
-      el.className = cls;
-      document.body.appendChild(el);
-    }
-    return el;
-  }
-
-  const dot       = getOrCreate("cursor-dot");
-  const trail     = getOrCreate("cursor-trail");
-  const crosshair = getOrCreate("cursor-crosshair");
-  const blob      = getOrCreate("cursor-blob");
-
-  let cx = 0, cy = 0;
-  let moved = false;
-
-  /* ── Only show cursor after first mouse move ── */
-  /* This naturally handles touch devices — they never fire mousemove */
-  document.addEventListener("mousemove", e => {
-    cx = e.clientX;
-    cy = e.clientY;
-
-    if (!moved) {
-      moved = true;
-      dot.style.opacity       = "1";
-      trail.style.opacity     = "1";
-      crosshair.style.opacity = "1";
-      blob.style.opacity      = "1";
-    }
-
-    dot.style.left       = cx + "px";
-    dot.style.top        = cy + "px";
-    crosshair.style.left = cx + "px";
-    crosshair.style.top  = cy + "px";
-  }, { passive: true });
-
-  /* ── Trail + blob lag via rAF ── */
-  (function animatePassive() {
-    trail.style.left = cx + "px";
-    trail.style.top  = cy + "px";
-    blob.style.left  = cx + "px";
-    blob.style.top   = cy + "px";
-    requestAnimationFrame(animatePassive);
-  })();
-
-  /* ── Apply style ── */
-  function applyCursorStyle(style) {
-    body.dataset.cursor = style;
-    localStorage.setItem("360_cursor_style", style);
-    document.querySelectorAll(".cursor-option").forEach(opt => {
-      opt.classList.toggle("active", opt.dataset.cursor === style);
+  /* Inject cursor elements directly into body */
+  function inject() {
+    ["cursor-dot", "cursor-trail", "cursor-crosshair", "cursor-blob"].forEach(cls => {
+      if (!document.querySelector("." + cls)) {
+        const el = document.createElement("div");
+        el.className = cls;
+        body.appendChild(el);
+      }
     });
+    run();
   }
 
-  /* ── Apply color ── */
-  function applyCursorColor(hex) {
-    body.style.setProperty("--cursor-color", hex);
-    localStorage.setItem("360_cursor_color", hex);
-    const picker = document.getElementById("cursorColorPicker");
-    if (picker) picker.value = hex;
-  }
+  function run() {
+    const dot       = document.querySelector(".cursor-dot");
+    const trail     = document.querySelector(".cursor-trail");
+    const crosshair = document.querySelector(".cursor-crosshair");
+    const blob      = document.querySelector(".cursor-blob");
 
-  /* ── Load saved prefs ── */
-  const savedStyle = localStorage.getItem("360_cursor_style") || "default";
-  const savedColor = localStorage.getItem("360_cursor_color");
-  applyCursorStyle(savedStyle);
-  if (savedColor) applyCursorColor(savedColor);
+    let mx = 0, my = 0;
+    let tx = 0, ty = 0;
 
-  /* ── Wire up settings panel ── */
-  function initCursorUI() {
-    document.querySelectorAll(".cursor-option").forEach(opt => {
-      opt.addEventListener("click", e => {
+    /* Instant elements — dot + crosshair */
+    document.addEventListener("mousemove", e => {
+      mx = e.clientX;
+      my = e.clientY;
+      if (dot)       { dot.style.left = mx + "px"; dot.style.top = my + "px"; }
+      if (crosshair) { crosshair.style.left = mx + "px"; crosshair.style.top = my + "px"; }
+    });
+
+    /* Lagging elements — trail + blob */
+    function animateTrail() {
+      tx += (mx - tx) * 0.18;
+      ty += (my - ty) * 0.18;
+      if (trail) { trail.style.left = tx + "px"; trail.style.top = ty + "px"; }
+      if (blob)  { blob.style.left  = tx + "px"; blob.style.top  = ty + "px"; }
+      requestAnimationFrame(animateTrail);
+    }
+    animateTrail();
+
+    /* Load + apply saved style */
+    const savedStyle = localStorage.getItem("360_cursor_style") || "default";
+    const savedColor = localStorage.getItem("360_cursor_color");
+    applyStyle(savedStyle);
+    if (savedColor) applyColor(savedColor);
+
+    /* Wire up settings panel */
+    document.addEventListener("click", e => {
+      const opt = e.target.closest(".cursor-option");
+      if (opt && opt.dataset.cursor) {
         e.stopPropagation();
-        applyCursorStyle(opt.dataset.cursor);
-      });
+        applyStyle(opt.dataset.cursor);
+      }
     });
 
     const picker = document.getElementById("cursorColorPicker");
     if (picker) {
       picker.value = savedColor || "#3b82f6";
-      picker.addEventListener("input", e => applyCursorColor(e.target.value));
+      picker.addEventListener("input", e => applyColor(e.target.value));
     }
 
     const resetBtn = document.getElementById("cursorColorReset");
@@ -100,11 +77,45 @@
         if (picker) picker.value = "#3b82f6";
       });
     }
+
+    /* Re-wire if settings panel opens later */
+    const observer = new MutationObserver(() => {
+      const p = document.getElementById("cursorColorPicker");
+      if (p && !p._wired) {
+        p._wired = true;
+        p.value = localStorage.getItem("360_cursor_color") || "#3b82f6";
+        p.addEventListener("input", e => applyColor(e.target.value));
+      }
+      document.querySelectorAll(".cursor-option").forEach(opt => {
+        if (!opt._wired) {
+          opt._wired = true;
+          opt.addEventListener("click", e => {
+            e.stopPropagation();
+            applyStyle(opt.dataset.cursor);
+          });
+        }
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  function applyStyle(style) {
+    body.dataset.cursor = style;
+    localStorage.setItem("360_cursor_style", style);
+    document.querySelectorAll(".cursor-option").forEach(opt => {
+      opt.classList.toggle("active", opt.dataset.cursor === style);
+    });
+  }
+
+  function applyColor(hex) {
+    body.style.setProperty("--cursor-color", hex);
+    localStorage.setItem("360_cursor_color", hex);
+  }
+
+  /* Run after DOM is ready */
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCursorUI);
+    document.addEventListener("DOMContentLoaded", inject);
   } else {
-    initCursorUI();
+    inject();
   }
 })();
