@@ -205,7 +205,14 @@
     const aiInput   = document.getElementById("ai-input");
     const aiSendBtn = document.getElementById("ai-send-btn");
     const aiOutput  = document.getElementById("ai-output");
-    const GROQ_KEY  = "YOUR_GROQ_API_KEY"; // Replace with real key server-side
+
+    // Supabase Edge Function proxy — Groq key never touches the frontend
+    const PROXY_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
+
+    // Conversation history for multi-turn context
+    const history = [
+      { role: "system", content: "You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. Be concise, friendly, and helpful." }
+    ];
 
     function appendBubble(text, role) {
       const div = document.createElement("div");
@@ -220,24 +227,23 @@
       const prompt = aiInput.value.trim();
       if (!prompt) return;
       aiInput.value = "";
+
+      // Add user message to history
+      history.push({ role: "user", content: prompt });
       appendBubble(prompt, "user");
 
       const bubble = appendBubble("Thinking…", "assistant");
 
       try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        const res = await fetch(PROXY_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${GROQ_KEY}`
+            "Authorization": `Bearer ${supabaseClient.supabaseKey}`
           },
           body: JSON.stringify({
-            model: "llama3-8b-8192",
-            messages: [
-              { role: "system", content: "You are 360 AI, a helpful assistant built into the 360 search engine." },
-              { role: "user", content: prompt }
-            ],
-            stream: true
+            messages: history,
+            model: "llama3-8b-8192"
           })
         });
 
@@ -263,8 +269,12 @@
             } catch {}
           }
         }
+        // Save assistant response to history for context
+        if (full) history.push({ role: "assistant", content: full });
+
       } catch (err) {
-        bubble.textContent = "Error: " + err.message;
+        bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
+        history.pop(); // Remove failed user message from history
       }
     }
 
