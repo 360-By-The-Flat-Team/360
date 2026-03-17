@@ -1,8 +1,7 @@
 /* ============================================================
-   360 — HOME.JS
+   360 — HOME.JS V2.0.1
    Home page only logic.
-   Handles: Clock, Weather, Temp Unit, Music
-   Requires: main.js loaded first (supabaseClient available)
+   Handles: Clock, Weather, Temp Unit, Music, URL search param
    ============================================================ */
 
 /* ============================================================
@@ -19,10 +18,10 @@ setInterval(updateClock, 1000);
 updateClock();
 
 /* ============================================================
-   TEMP UNIT — persisted, shared with weather chip
+   TEMP UNIT
    ============================================================ */
-let tempUnit   = localStorage.getItem("tempUnit") || "C";
-let lastTempC  = null; // store raw °C so we can reconvert on toggle
+let tempUnit  = localStorage.getItem("tempUnit") || "C";
+let lastTempC = null;
 
 function celsiusToFahrenheit(c) {
   return Math.round((c * 9 / 5) + 32);
@@ -47,7 +46,7 @@ if (tempUnitBtn) {
     tempUnit = tempUnit === "C" ? "F" : "C";
     localStorage.setItem("tempUnit", tempUnit);
     updateTempUnitLabel();
-    updateWeatherChip(); // re-render chip with new unit
+    updateWeatherChip();
   });
 }
 updateTempUnitLabel();
@@ -84,22 +83,19 @@ async function loadWeather() {
 loadWeather();
 
 /* ============================================================
-   MUSIC PLAYER (real audio element)
+   MUSIC PLAYER
    ============================================================ */
 const music       = document.getElementById("bgMusic");
 const musicToggle = document.getElementById("musicToggle");
-
-let musicEnabled = localStorage.getItem("music") === "true";
+let musicEnabled  = localStorage.getItem("music") === "true";
 
 function syncMusicUI() {
   if (musicToggle) musicToggle.textContent = musicEnabled ? "Music: On" : "Music: Off";
 }
 
 if (musicToggle && music) {
-  // Auto-play if user had it on last session
   if (musicEnabled) {
     music.play().catch(() => {
-      // Autoplay blocked — wait for user interaction
       musicEnabled = false;
       localStorage.setItem("music", false);
       syncMusicUI();
@@ -109,20 +105,60 @@ if (musicToggle && music) {
   musicToggle.addEventListener("click", async () => {
     musicEnabled = !musicEnabled;
     localStorage.setItem("music", musicEnabled);
-
     if (musicEnabled) {
-      try { await music.play(); }
-      catch (e) { console.error("Music error:", e); }
+      try { await music.play(); } catch (e) { console.error("Music error:", e); }
     } else {
       music.pause();
     }
-
     syncMusicUI();
   });
 }
 syncMusicUI();
 
 /* ============================================================
+   AUTO-SEARCH FROM URL PARAMETER
+   Handles Chrome address bar searches:
+   https://360-search.com/?q=your+search+term
+   ============================================================ */
+(function autoSearchFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const query  = params.get("q");
+  if (!query) return;
+
+  window.__gcse = window.__gcse || {};
+  const existingCallback = window.__gcse.initializationCallback;
+
+  window.__gcse.initializationCallback = function () {
+    if (existingCallback) existingCallback();
+    if (!trySearch(query)) {
+      const interval = setInterval(() => {
+        if (trySearch(query)) clearInterval(interval);
+      }, 100);
+      setTimeout(() => clearInterval(interval), 5000);
+    }
+  };
+
+  function trySearch(q) {
+    if (window.google?.search?.cse?.element) {
+      const el = window.google.search.cse.element.getElement("searchresults-only0")
+               || window.google.search.cse.element.getElement("searchresults0");
+      if (el) { el.execute(q); return true; }
+    }
+    const input = document.querySelector("input.gsc-input");
+    const btn   = document.querySelector("button.gsc-search-button, .gsc-search-button-v2");
+    if (input && btn) {
+      input.value = q;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      btn.click();
+      return true;
+    }
+    return false;
+  }
+
+  document.title = `${query} — 360`;
+})();
+
+/* ============================================================
    READY LOG
    ============================================================ */
-console.log("%c360 V2.0 — home.js loaded", "color:#38bdf8;font-weight:bold;font-size:14px;");
+console.log("%c360 V2.0.1 — home.js loaded", "color:#38bdf8;font-weight:bold;font-size:14px;");
