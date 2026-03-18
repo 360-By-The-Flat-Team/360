@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "chrome_url_overrides": {
-    "newtab": "360-search.com/newtab.html"
+    "newtab": "new-tab.html"
   },
   "omnibox": {
     "keyword": "360"
