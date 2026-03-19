@@ -551,43 +551,53 @@
 
     /* ── Slash commands ── */
     async function runCommand(text, profile) {
-      if (profile.role !== "admin") { alert("Admins only."); return; }
-      const parts = text.trim().split(" ");
-      const cmd   = parts[0].toLowerCase();
-      const args  = parts.slice(1);
-
-      if (cmd === "/promote") {
-        await supabaseClient.from("profiles").update({ role:"mod" }).eq("username", args[0]);
-        alert(`Promoted ${args[0]} to mod`);
-      } else if (cmd === "/demote") {
-        await supabaseClient.from("profiles").update({ role:"user" }).eq("username", args[0]);
-        alert(`Demoted ${args[0]}`);
-      } else if (cmd === "/tag") {
-        const tag = args.slice(1).join(" ");
-        await supabaseClient.from("profiles").update({ tag }).eq("username", args[0]);
-        alert(`Tagged ${args[0]}: ${tag}`);
-      } else if (cmd === "/ban") {
-        if (profile.role !== "admin") { alert("Admins only."); return; }
-        await supabaseClient.from("profiles").update({ banned:true }).eq("username", args[0]);
-        alert(`Banned ${args[0]}`);
-      } else if (cmd === "/unban") {
-        await supabaseClient.from("profiles").update({ banned:false }).eq("username", args[0]);
-        alert(`Unbanned ${args[0]}`);
-      } else if (cmd === "/delete") {
-        /* /delete <message_id> */
-        const msgId = parseInt(args[0]);
-        if (!msgId) { alert("Usage: /delete <message_id>"); return; }
-        await supabaseClient.from("messages")
-          .update({ deleted_at: new Date().toISOString() })
-          .eq("id", msgId);
-        const el = document.querySelector(`[data-msg-id="${msgId}"]`);
-        if (el) el.remove();
-        alert(`Message ${msgId} deleted`);
+    if (profile.role !== "admin") { alert("Admins only."); return; }
+    const parts = text.trim().split(" ");
+    const cmd   = parts[0].toLowerCase();
+    const args  = parts.slice(1);
+  
+    if (cmd === "/promote") {
+      await supabaseClient.from("profiles").update({ role:"mod" }).eq("username", args[0]);
+      alert(`Promoted ${args[0]} to mod`);
+    } else if (cmd === "/demote") {
+      await supabaseClient.from("profiles").update({ role:"user" }).eq("username", args[0]);
+      alert(`Demoted ${args[0]}`);
+    } else if (cmd === "/tag") {
+      const tag = args.slice(1).join(" ");
+      await supabaseClient.from("profiles").update({ tag }).eq("username", args[0]);
+      alert(`Tagged ${args[0]}: ${tag}`);
+    } else if (cmd === "/ban") {
+      await supabaseClient.from("profiles").update({ banned:true }).eq("username", args[0]);
+      alert(`Banned ${args[0]}`);
+    } else if (cmd === "/unban") {
+      await supabaseClient.from("profiles").update({ banned:false }).eq("username", args[0]);
+      alert(`Unbanned ${args[0]}`);
+    } else if (cmd === "/delete") {
+      const msgId = parseInt(args[0]);
+      if (!msgId) { alert("Usage: /delete <message_id>"); return; }
+      await supabaseClient.from("messages")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", msgId);
+      const el = document.querySelector(`[data-msg-id="${msgId}"]`);
+      if (el) el.remove();
+      alert(`Message ${msgId} deleted`);
+    } else if (cmd === "/role") {
+      const [targetUser, newRole] = args;
+      if (!targetUser || !newRole) { alert("Usage: /role <user> <role_name>"); return; }
+      const validRoles = ["user", "mod", "admin"];
+      if (!validRoles.includes(newRole.toLowerCase())) {
+        alert(`Invalid role. Valid roles: ${validRoles.join(", ")}`);
+        return;
+      }
+        const { error } = await supabaseClient.from("profiles")
+          .update({ role: newRole.toLowerCase() })
+          .eq("username", targetUser);
+        if (error) { alert(`Error: ${error.message}`); return; }
+        alert(`Set ${targetUser}'s role to ${newRole.toLowerCase()}`);
       } else {
-        alert("Unknown command. Available: /promote /demote /tag /ban /unban /delete");
+        alert("Unknown command. Available: /promote /demote /tag /ban /unban /delete /role");
       }
     }
-
     /* ── Send message ── */
     async function sendMessage() {
       const text = messageInput.value.trim();
