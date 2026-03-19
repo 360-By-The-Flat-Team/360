@@ -99,37 +99,36 @@
       <div class="lang-row">
         <label>From:
           <select id="sourceLang" autocomplete="off">
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="zh">Mandarin</option>
-            <option value="ar">Arabic</option>
-            <option value="de">German</option>
-            <option value="ja">Japanese</option>
-            <option value="pt">Portuguese</option>
-            <option value="ru">Russian</option>
-            <option value="ur">Urdu</option>
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="French">French</option>
+            <option value="Mandarin Chinese">Mandarin</option>
+            <option value="Arabic">Arabic</option>
+            <option value="German">German</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="Russian">Russian</option>
+            <option value="Urdu">Urdu</option>
           </select>
         </label>
         <label>To:
           <select id="targetLang" autocomplete="off">
-            <option value="es">Spanish</option>
-            <option value="en">English</option>
-            <option value="fr">French</option>
-            <option value="zh">Mandarin</option>
-            <option value="ar">Arabic</option>
-            <option value="de">German</option>
-            <option value="ja">Japanese</option>
-            <option value="pt">Portuguese</option>
-            <option value="ru">Russian</option>
-            <option value="ur">Urdu</option>
+            <option value="Spanish">Spanish</option>
+            <option value="English">English</option>
+            <option value="French">French</option>
+            <option value="Mandarin Chinese">Mandarin</option>
+            <option value="Arabic">Arabic</option>
+            <option value="German">German</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="Russian">Russian</option>
+            <option value="Urdu">Urdu</option>
           </select>
         </label>
         <button id="swapBtn" title="Swap languages">⇄</button>
         <button id="translateBtn">Translate</button>
       </div>
       <div id="translateResult">Translation will appear here.</div>
-      <div id="translateMeta" style="font-size:12px;opacity:0.5;margin-top:6px;"></div>
     </div>
   </div>
 
@@ -145,7 +144,6 @@
       const tmp = src.value;
       src.value = tgt.value;
       tgt.value = tmp;
-      // Also swap the textarea text and result text if a translation exists
       const result = document.getElementById("translateResult");
       const input  = document.getElementById("translateInput");
       if (result.textContent && result.textContent !== "Translation will appear here.") {
@@ -155,35 +153,44 @@
       }
     };
 
-    document.getElementById("translateBtn").onclick = async () => {
+    async function translateText() {
       const text = document.getElementById("translateInput").value.trim();
       const from = document.getElementById("sourceLang").value;
       const to   = document.getElementById("targetLang").value;
       const out  = document.getElementById("translateResult");
-      const meta = document.getElementById("translateMeta");
 
       if (!text) { out.textContent = "Please enter some text to translate."; return; }
       if (from === to) { out.textContent = "Source and target languages are the same."; return; }
 
       out.textContent = "Translating...";
-      meta.textContent = "";
-
-      // Build URL — explicitly pass langpair as from|to
-      const langpair = encodeURIComponent(from + "|" + to);
-      const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=" + langpair;
 
       try {
-        const res  = await fetch(url);
-        if (!res.ok) throw new Error("Network response was not ok: " + res.status);
-        const data = await res.json();
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1000,
+            system: "You are a professional translator. Translate the user's text accurately and naturally. Return ONLY the translated text with no explanations, notes, alternatives, or extra formatting. Just the translation itself.",
+            messages: [
+              {
+                role: "user",
+                content: `Translate the following text from ${from} to ${to}:\n\n${text}`
+              }
+            ]
+          })
+        });
 
-        // Check for a valid response status
-        if (data.responseStatus !== 200) {
-          out.textContent = "Translation failed: " + (data.responseDetails || "Unknown error");
-          return;
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err?.error?.message || "API error " + response.status);
         }
 
-        const translated = data.responseData?.translatedText;
+        const data = await response.json();
+        const translated = data.content?.[0]?.text?.trim();
+
         if (!translated) {
           out.textContent = "No translation returned. Please try again.";
           return;
@@ -191,23 +198,17 @@
 
         out.textContent = translated;
 
-        // Show match quality as a subtle hint
-        const match = data.responseData?.match;
-        if (match !== undefined) {
-          meta.textContent = "Confidence: " + Math.round(match * 100) + "%  ·  " + from.toUpperCase() + " → " + to.toUpperCase();
-        }
-
       } catch (err) {
         console.error("Translation error:", err);
-        out.textContent = "Translation failed. Please check your connection and try again.";
+        out.textContent = "Translation failed: " + err.message;
       }
-    };
+    }
 
-    // Allow Ctrl+Enter / Cmd+Enter to trigger translation
+    document.getElementById("translateBtn").onclick = translateText;
+
+    // Ctrl+Enter / Cmd+Enter shortcut
     document.getElementById("translateInput").addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        document.getElementById("translateBtn").click();
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") translateText();
     });
   </script>
 </body>
