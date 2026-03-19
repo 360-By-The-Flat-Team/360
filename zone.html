@@ -306,10 +306,8 @@
   </div>
 
   <script>
-  /* ── CONFIG — replace with your real Groq key ── */
-  const GROQ_KEY = "YOUR_GROQ_KEY_HERE";
-  const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-  const MODEL    = "llama-3.3-70b-versatile";
+  /* ── CONFIG ── */
+  const PROXY_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
 
   /* ── Dark mode ── */
   function toggleDarkMode() {
@@ -354,33 +352,23 @@
       list.map(p => `• Replace "${p}" with a specific noun for clarity`).join("\n");
   }
 
-  /* ── Universal AI call — direct Groq ── */
+  /* ── Universal AI call — Supabase groq-proxy ── */
   async function ai(prompt) {
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(PROXY_URL, {
       method: "POST",
-      headers: {
-        "Content-Type":  "application/json",
-        "Authorization": `Bearer ${GROQ_KEY}`
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: "You are a helpful ELA writing assistant. Be clear, academic, and concise. Return only what is asked." },
-          { role: "user",   content: prompt }
-        ],
-        max_tokens: 1024
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
     });
 
     if (!res.ok) {
       let errMsg = "";
-      try { const j = await res.json(); errMsg = j.error?.message || JSON.stringify(j); }
+      try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); }
       catch { errMsg = await res.text(); }
-      throw new Error(`Groq ${res.status}: ${errMsg}`);
+      throw new Error(`Error ${res.status}: ${errMsg}`);
     }
 
     const data = await res.json();
-    return data.choices?.[0]?.message?.content || "(No response)";
+    return data.output || "(No response)";
   }
 
   /* ── Paragraph Builder ── */
