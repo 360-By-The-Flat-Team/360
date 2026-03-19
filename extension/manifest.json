@@ -12,7 +12,7 @@
   },
 
   "chrome_url_overrides": {
-    "newtab": "new-tab.html"
+    "newtab": "360-search.com/new-tab.html"
   },
 
   "omnibox": {
