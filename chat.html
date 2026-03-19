@@ -551,7 +551,7 @@
 
     /* ── Slash commands ── */
     async function runCommand(text, profile) {
-      if (profile.role !== "admin" && profile.role !== "mod") { alert("Admins and mods only."); return; }
+      if (profile.role !== "admin") { alert("Admins only."); return; }
       const parts = text.trim().split(" ");
       const cmd   = parts[0].toLowerCase();
       const args  = parts.slice(1);
