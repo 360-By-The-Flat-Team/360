@@ -95,13 +95,41 @@
   <div class="translator-page">
     <h2>🌍 Translator</h2>
     <div class="translator-box">
-      <textarea id="translateInput" rows="4" placeholder="Enter text to translate..."></textarea>
+      <textarea id="translateInput" rows="4" placeholder="Enter text to translate..." autocomplete="off"></textarea>
       <div class="lang-row">
-        <label>From: <select id="sourceLang"><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="zh">Mandarin</option><option value="ar">Arabic</option><option value="de">German</option><option value="ja">Japanese</option><option value="pt">Portuguese</option><option value="ru">Russian</option><option value="ur">Urdu</option></select></label>
-        <label>To: <select id="targetLang"><option value="es">Spanish</option><option value="en">English</option><option value="fr">French</option><option value="zh">Mandarin</option><option value="ar">Arabic</option><option value="de">German</option><option value="ja">Japanese</option><option value="pt">Portuguese</option><option value="ru">Russian</option><option value="ur">Urdu</option></select></label>
-        <button id="translateBtn">Translate</button> 
+        <label>From:
+          <select id="sourceLang" autocomplete="off">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="zh">Mandarin</option>
+            <option value="ar">Arabic</option>
+            <option value="de">German</option>
+            <option value="ja">Japanese</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </label>
+        <label>To:
+          <select id="targetLang" autocomplete="off">
+            <option value="es">Spanish</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="zh">Mandarin</option>
+            <option value="ar">Arabic</option>
+            <option value="de">German</option>
+            <option value="ja">Japanese</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </label>
+        <button id="swapBtn" title="Swap languages">⇄</button>
+        <button id="translateBtn">Translate</button>
       </div>
       <div id="translateResult">Translation will appear here.</div>
+      <div id="translateMeta" style="font-size:12px;opacity:0.5;margin-top:6px;"></div>
     </div>
   </div>
 
@@ -110,19 +138,77 @@
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
+    // Swap languages button
+    document.getElementById("swapBtn").onclick = () => {
+      const src = document.getElementById("sourceLang");
+      const tgt = document.getElementById("targetLang");
+      const tmp = src.value;
+      src.value = tgt.value;
+      tgt.value = tmp;
+      // Also swap the textarea text and result text if a translation exists
+      const result = document.getElementById("translateResult");
+      const input  = document.getElementById("translateInput");
+      if (result.textContent && result.textContent !== "Translation will appear here.") {
+        const tmpText = input.value;
+        input.value = result.textContent;
+        result.textContent = tmpText;
+      }
+    };
+
     document.getElementById("translateBtn").onclick = async () => {
       const text = document.getElementById("translateInput").value.trim();
       const from = document.getElementById("sourceLang").value;
       const to   = document.getElementById("targetLang").value;
       const out  = document.getElementById("translateResult");
-      if (!text) { out.textContent = "Please enter text."; return; }
+      const meta = document.getElementById("translateMeta");
+
+      if (!text) { out.textContent = "Please enter some text to translate."; return; }
+      if (from === to) { out.textContent = "Source and target languages are the same."; return; }
+
       out.textContent = "Translating...";
+      meta.textContent = "";
+
+      // Build URL — explicitly pass langpair as from|to
+      const langpair = encodeURIComponent(from + "|" + to);
+      const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=" + langpair;
+
       try {
-        const res  = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=" + from + "|" + to);
+        const res  = await fetch(url);
+        if (!res.ok) throw new Error("Network response was not ok: " + res.status);
         const data = await res.json();
-        out.textContent = data.responseData.translatedText || "Translation failed.";
-      } catch { out.textContent = "Translation failed."; }
+
+        // Check for a valid response status
+        if (data.responseStatus !== 200) {
+          out.textContent = "Translation failed: " + (data.responseDetails || "Unknown error");
+          return;
+        }
+
+        const translated = data.responseData?.translatedText;
+        if (!translated) {
+          out.textContent = "No translation returned. Please try again.";
+          return;
+        }
+
+        out.textContent = translated;
+
+        // Show match quality as a subtle hint
+        const match = data.responseData?.match;
+        if (match !== undefined) {
+          meta.textContent = "Confidence: " + Math.round(match * 100) + "%  ·  " + from.toUpperCase() + " → " + to.toUpperCase();
+        }
+
+      } catch (err) {
+        console.error("Translation error:", err);
+        out.textContent = "Translation failed. Please check your connection and try again.";
+      }
     };
+
+    // Allow Ctrl+Enter / Cmd+Enter to trigger translation
+    document.getElementById("translateInput").addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        document.getElementById("translateBtn").click();
+      }
+    });
   </script>
 </body>
 </html>
