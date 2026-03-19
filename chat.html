@@ -68,24 +68,34 @@
 <audio id="clickSound" src="../click-sound.mp3"></audio>
 
 <script>
-const supabaseClient = window.supabase.createClient("YOUR_URL","YOUR_KEY");
+/* USE YOUR EXISTING CLIENT */
+const supabaseClient = window.supabaseClient || window.supabase.createClient("YOUR_URL","YOUR_KEY");
 
-let currentUserId=null;
-let currentServer=null;
-let currentChannel=null;
-let replyingTo=null;
+let currentUserId = null;
+let currentServer = null;
+let currentChannel = null;
+let replyingTo = null;
+
+const chatWindow   = document.getElementById("chat-window");
+const messageInput = document.getElementById("message-input");
+const sendButton   = document.getElementById("send-button");
+const typingEl     = document.getElementById("typing-indicator");
 
 /* ---------- SERVERS ---------- */
 async function loadServers(){
   const { data } = await supabaseClient.from("servers").select("*");
-  const el=document.getElementById("servers-ui");
-  el.innerHTML="";
+  const el = document.getElementById("servers-ui");
+  if (!el) return;
 
+  el.innerHTML = "";
   data?.forEach(s=>{
-    let d=document.createElement("div");
+    const d = document.createElement("div");
     d.className="server-pill";
     d.textContent=s.name;
-    d.onclick=()=>{ currentServer=s.id; loadChannels(); };
+    d.onclick=()=>{
+      currentServer=s.id;
+      loadChannels();
+    };
     el.appendChild(d);
   });
 }
@@ -97,17 +107,18 @@ async function loadChannels(){
     .select("*")
     .eq("server_id",currentServer);
 
-  const el=document.getElementById("channels-ui");
-  el.innerHTML="";
+  const el = document.getElementById("channels-ui");
+  if (!el) return;
 
+  el.innerHTML="";
   data?.forEach(c=>{
-    let d=document.createElement("div");
+    const d=document.createElement("div");
     d.className="channel-pill";
     d.textContent="# "+c.name;
 
     d.onclick=async ()=>{
       if(!c.is_public){
-        let pass=prompt("Password?");
+        const pass=prompt("Password?");
         if(pass!==c.password) return alert("Wrong password");
       }
       currentChannel=c.id;
@@ -120,11 +131,12 @@ async function loadChannels(){
 
 /* ---------- LOAD MESSAGES ---------- */
 async function loadMessages(){
-  const { data } = await supabaseClient
-    .from("messages")
+  if (!currentChannel) return;
+
+  const { data } = await supabaseClient.from("messages")
     .select("*")
-    .eq("channel_id",currentChannel)
-    .is("deleted_at",null)
+    .eq("channel_id", currentChannel)
+    .is("deleted_at", null)
     .order("created_at");
 
   chatWindow.innerHTML="";
@@ -133,90 +145,131 @@ async function loadMessages(){
 
 /* ---------- RENDER ---------- */
 function renderMessage(msg){
-  if(document.querySelector(`[data-id="${msg.id}"]`)) return;
+  if(document.querySelector(`[data-msg-id="${msg.id}"]`)) return;
 
-  let div=document.createElement("div");
+  const div=document.createElement("div");
   div.className="chat-message";
-  div.dataset.id=msg.id;
+  div.dataset.msgId=msg.id;
 
-  let text = msg.text.replace(/@(\w+)/g,'<span class="mention">@$1</span>');
+  const text = (msg.text || "")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/@(\w+)/g,'<span class="mention">@$1</span>');
 
-  div.innerHTML = `<div class="chat-bubble">
-    <strong>${msg.username}</strong>
-    <p>${text}</p>
-  </div>`;
+  div.innerHTML = `
+    <div class="chat-bubble">
+      <strong>${msg.username || "User"}</strong>
+      <p>${text}</p>
+    </div>
+  `;
 
-  div.ondblclick=()=>{
-    replyingTo=msg.id;
-    messageInput.placeholder="Replying...";
+  div.ondblclick = ()=>{
+    replyingTo = msg.id;
+    messageInput.placeholder = "Replying...";
   };
 
   chatWindow.appendChild(div);
-  chatWindow.scrollTop=chatWindow.scrollHeight;
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
 /* ---------- SEND ---------- */
 async function sendMessage(){
-  let text=messageInput.value.trim();
-  if(!text) return;
+  const text = messageInput.value.trim();
+  if(!text || !currentChannel) return;
 
   const { data:{ session } } = await supabaseClient.auth.getSession();
-  if(!session) return alert("Login first");
+  if(!session){
+    alert("You must be logged in");
+    return;
+  }
 
-  await supabaseClient.from("messages").insert({
-    user_id:session.user.id,
-    username:session.user.email,
+  const { error } = await supabaseClient.from("messages").insert({
+    user_id: session.user.id,
+    username: session.user.email,
     text,
-    channel_id:currentChannel,
-    reply_to:replyingTo
+    channel_id: currentChannel,
+    reply_to: replyingTo
   });
 
-  if(text.includes("@")) clickSound.play();
+  if(error){
+    console.error(error);
+    return;
+  }
 
-  replyingTo=null;
-  messageInput.value="";
+  if(text.includes("@")){
+    document.getElementById("clickSound")?.play();
+  }
+
+  replyingTo = null;
+  messageInput.value = "";
 }
 
 /* ---------- REALTIME ---------- */
-supabaseClient.channel("live")
-.on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},
-  payload=>{
-    if(payload.new.channel_id===currentChannel){
+supabaseClient.channel("messages-live")
+  .on("postgres_changes", {
+    event:"INSERT",
+    schema:"public",
+    table:"messages"
+  }, payload=>{
+    if(payload.new.channel_id === currentChannel){
       renderMessage(payload.new);
     }
   })
-.subscribe();
+  .subscribe();
 
 /* ---------- TYPING ---------- */
-let typingTimeout;
+const typingChannel = supabaseClient.channel("typing-room");
 
-messageInput.addEventListener("input",async ()=>{
+typingChannel.on("broadcast",{event:"typing"}, payload=>{
+  typingEl.innerHTML = payload.payload.name + " is typing...";
+  setTimeout(()=>typingEl.innerHTML="",1500);
+}).subscribe();
+
+messageInput.addEventListener("input", async ()=>{
   const { data:{ session } } = await supabaseClient.auth.getSession();
   if(!session) return;
 
-  supabaseClient.channel("typing")
-    .send({type:"broadcast",event:"typing",payload:{name:session.user.email}});
-
-  clearTimeout(typingTimeout);
+  typingChannel.send({
+    type:"broadcast",
+    event:"typing",
+    payload:{ name: session.user.email }
+  });
 });
 
-supabaseClient.channel("typing")
-.on("broadcast",{event:"typing"},payload=>{
-  typingIndicator.innerHTML = payload.payload.name + " is typing...";
-  setTimeout(()=>typingIndicator.innerHTML="",1500);
-}).subscribe();
-
 /* ---------- EVENTS ---------- */
-sendButton.onclick=sendMessage;
-messageInput.addEventListener("keydown",e=>{
-  if(e.key==="Enter"){ e.preventDefault(); sendMessage(); }
+sendButton.onclick = sendMessage;
+
+messageInput.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
 /* ---------- INIT ---------- */
 (async ()=>{
   const { data:{ session } } = await supabaseClient.auth.getSession();
-  currentUserId=session?.user?.id;
-  loadServers();
+  currentUserId = session?.user?.id || null;
+
+  await loadServers();
+
+  /* AUTO CREATE DEFAULT IF NONE */
+  const { data: servers } = await supabaseClient.from("servers").select("*");
+  if(!servers || servers.length === 0){
+    const { data:newServer } = await supabaseClient
+      .from("servers")
+      .insert({ name:"Main" })
+      .select()
+      .single();
+
+    await supabaseClient.from("channels").insert({
+      name:"general",
+      server_id:newServer.id,
+      is_public:true
+    });
+
+    loadServers();
+  }
 })();
 </script>
 
