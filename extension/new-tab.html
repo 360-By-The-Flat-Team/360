@@ -1017,38 +1017,49 @@
   /* ════════════════════════════════════════════
      STORAGE
   ════════════════════════════════════════════ */
+  const STORAGE_PREFIX = "360nt_";
+  const $ = id => document.getElementById(id);
+
   const S = {
-    get: k => { try { return JSON.parse(localStorage.getItem("360nt_"+k)); } catch { return null; } },
-    set: (k,v) => localStorage.setItem("360nt_"+k, JSON.stringify(v)),
+    get(key) {
+      try {
+        return JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}${key}`));
+      } catch {
+        return null;
+      }
+    },
+    set(key, value) {
+      localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(value));
+    },
   };
 
   /* ════════════════════════════════════════════
      WALLPAPERS
   ════════════════════════════════════════════ */
   const WALLPAPERS = [
-    { label:"🌌 Space",   url:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80" },
-    { label:"🌊 Ocean",   url:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80" },
-    { label:"🏔️ Mountain",url:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80" },
-    { label:"🌸 Bloom",   url:"https://images.unsplash.com/photo-1490750967868-88df5691cc04?w=1920&q=80" },
-    { label:"🌆 City",    url:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=80" },
-    { label:"⬛ Dark",    url:"" },
+    { label:"🌌 Space",    url:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80" },
+    { label:"🌊 Ocean",    url:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80" },
+    { label:"🏔️ Mountain", url:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80" },
+    { label:"🌸 Bloom",    url:"https://images.unsplash.com/photo-1490750967868-88df5691cc04?w=1920&q=80" },
+    { label:"🌆 City",     url:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=80" },
+    { label:"⬛ Dark",     url:"" },
   ];
 
   /* ════════════════════════════════════════════
      WIDGET CONFIG
   ════════════════════════════════════════════ */
   const WIDGETS = [
-    { id:"greeting",    label:"Greeting" },
-    { id:"clock-wrap",  label:"Clock" },
-    { id:"weather-chip",label:"Weather" },
-    { id:"search-wrap", label:"Search" },
-    { id:"quicklinks",  label:"Quick links" },
-    { id:"quote-widget",label:"Daily quote" },
-    { id:"todo-widget", label:"To-do" },
-    { id:"calc-widget", label:"Calculator" },
-    { id:"ai-widget",   label:"360 AI" },
-    { id:"news-widget", label:"News" },
-    { id:"spotify-widget",label:"Music" },
+    { id:"greeting",       label:"Greeting" },
+    { id:"clock-wrap",     label:"Clock" },
+    { id:"weather-chip",   label:"Weather" },
+    { id:"search-wrap",    label:"Search" },
+    { id:"quicklinks",     label:"Quick links" },
+    { id:"quote-widget",   label:"Daily quote" },
+    { id:"todo-widget",    label:"To-do" },
+    { id:"calc-widget",    label:"Calculator" },
+    { id:"ai-widget",      label:"360 AI" },
+    { id:"news-widget",    label:"News" },
+    { id:"spotify-widget", label:"Music" },
   ];
 
   /* ════════════════════════════════════════════
@@ -1074,6 +1085,40 @@
     { text:"In the middle of every difficulty lies opportunity.", author:"Albert Einstein" },
   ];
 
+  let clockTimer;
+
+  /* ════════════════════════════════════════════
+     UTILITIES
+  ════════════════════════════════════════════ */
+  function normalizeUrl(url) {
+    if (!url) return "";
+
+    try {
+      return new URL(url).href;
+    } catch {
+      try {
+        return new URL(`https://${url}`).href;
+      } catch {
+        return "";
+      }
+    }
+  }
+
+  function createEl(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  }
+
+  function showAddLinkModal() {
+    $("add-modal").classList.add("open");
+  }
+
+  function hideAddLinkModal() {
+    $("add-modal").classList.remove("open");
+  }
+
   /* ════════════════════════════════════════════
      INIT
   ════════════════════════════════════════════ */
@@ -1098,77 +1143,86 @@
      LOAD ALL SETTINGS
   ════════════════════════════════════════════ */
   function loadSettings() {
-    // Accent
-    const a1 = S.get("accent")  || "#3b82f6";
-    const a2 = S.get("accent2") || "#06b6d4";
-    document.documentElement.style.setProperty("--accent",  a1);
-    document.documentElement.style.setProperty("--accent2", a2);
-    document.getElementById("accent-picker").value  = a1;
-    document.getElementById("accent2-picker").value = a2;
+    const accent1 = S.get("accent") || "#3b82f6";
+    const accent2 = S.get("accent2") || "#06b6d4";
+    document.documentElement.style.setProperty("--accent", accent1);
+    document.documentElement.style.setProperty("--accent2", accent2);
+    $("accent-picker").value = accent1;
+    $("accent2-picker").value = accent2;
 
-    // Blur
     const blur = S.get("blur") ?? 8;
-    document.documentElement.style.setProperty("--blur", blur+"px");
-    document.getElementById("blur-range").value = blur;
-    document.getElementById("blur-label").textContent = blur+"px";
+    document.documentElement.style.setProperty("--blur", `${blur}px`);
+    $("blur-range").value = blur;
+    $("blur-label").textContent = `${blur}px`;
 
-    // Font
     const font = S.get("font") || "Inter";
     applyFont(font);
-    document.querySelectorAll(".font-opt").forEach(o => o.classList.toggle("active", o.dataset.font === font));
-
-    // Layout
-    const layout = S.get("layout") || "center";
-    applyLayout(layout);
-    document.querySelectorAll(".layout-opt").forEach(o => o.classList.toggle("active", o.dataset.layout === layout));
-
-    // Light mode
-    const light = S.get("light") || false;
-    document.body.classList.toggle("light", light);
-    document.getElementById("toggle-light").checked = light;
-
-    // 12hr / seconds
-    document.getElementById("toggle-12hr").checked    = S.get("12hr")    || false;
-    document.getElementById("toggle-seconds").checked = S.get("seconds")  || false;
-
-    // Name / greeting
-    const name = S.get("name") || "";
-    document.getElementById("name-input").value     = name;
-    const cg = S.get("custom-greeting") || "";
-    document.getElementById("greeting-input").value = cg;
-    updateGreeting();
-
-    // Background
-    const bg = S.get("bg") || "";
-    applyBg(bg);
-
-    // Widget visibility
-    WIDGETS.forEach(w => {
-      const hidden = S.get("hide_"+w.id) || false;
-      document.getElementById(w.id)?.classList.toggle("hidden", hidden);
+    document.querySelectorAll(".font-opt").forEach(option => {
+      option.classList.toggle("active", option.dataset.font === font);
     });
 
-    // Spotify
-    const spUrl = S.get("spotify") || "";
-    if (spUrl) loadSpotify(spUrl);
+    const layout = S.get("layout") || "center";
+    applyLayout(layout);
+    document.querySelectorAll(".layout-opt").forEach(option => {
+      option.classList.toggle("active", option.dataset.layout === layout);
+    });
+
+    const lightMode = Boolean(S.get("light"));
+    document.body.classList.toggle("light", lightMode);
+    $("toggle-light").checked = lightMode;
+
+    $("toggle-12hr").checked = Boolean(S.get("12hr"));
+    $("toggle-seconds").checked = Boolean(S.get("seconds"));
+
+    const name = S.get("name") || "";
+    const customGreeting = S.get("custom-greeting") || "";
+    $("name-input").value = name;
+    $("greeting-input").value = customGreeting;
+    updateGreeting();
+
+    const backgroundUrl = S.get("bg") || "";
+    $("bg-url-input").value = backgroundUrl;
+    applyBg(backgroundUrl, { persist: false });
+
+    WIDGETS.forEach(widget => {
+      const hidden = Boolean(S.get(`hide_${widget.id}`));
+      $(widget.id)?.classList.toggle("hidden", hidden);
+    });
+
+    const spotifyUrl = S.get("spotify") || "";
+    $("spotify-url-input").value = spotifyUrl;
+    if (spotifyUrl) {
+      loadSpotify(spotifyUrl, { silent: true });
+    }
   }
 
   /* ════════════════════════════════════════════
      CLOCK
   ════════════════════════════════════════════ */
-  function startClock() {
-    function tick() {
-      const now  = new Date();
-      const h12  = document.getElementById("toggle-12hr").checked;
-      const secs = document.getElementById("toggle-seconds").checked;
-      const opts = { hour:"2-digit", minute:"2-digit" };
-      if (secs) opts.second = "2-digit";
-      if (h12)  opts.hour12 = true;
-      document.getElementById("clock").textContent = now.toLocaleTimeString([], opts);
-      document.getElementById("clock-date").textContent = now.toLocaleDateString([], { weekday:"long", month:"long", day:"numeric" });
+  function renderClock() {
+    const now = new Date();
+    const options = {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: $("toggle-12hr").checked,
+    };
+
+    if ($("toggle-seconds").checked) {
+      options.second = "2-digit";
     }
-    setInterval(tick, 1000);
-    tick();
+
+    $("clock").textContent = now.toLocaleTimeString([], options);
+    $("clock-date").textContent = now.toLocaleDateString([], {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  function startClock() {
+    clearInterval(clockTimer);
+    renderClock();
+    clockTimer = window.setInterval(renderClock, 1000);
   }
 
   /* ════════════════════════════════════════════
@@ -1176,79 +1230,140 @@
   ════════════════════════════════════════════ */
   function updateGreeting() {
     const name = S.get("name") || "";
-    const cg   = S.get("custom-greeting") || "";
-    const h    = new Date().getHours();
-    const part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-    const nameStr = name ? `, ${name}` : "";
-    document.getElementById("greeting").textContent = cg || `${part}${nameStr} 👋`;
+    const customGreeting = S.get("custom-greeting") || "";
+    const hour = new Date().getHours();
+    const defaultGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    const nameSuffix = name ? `, ${name}` : "";
+
+    $("greeting").textContent = customGreeting || `${defaultGreeting}${nameSuffix} 👋`;
   }
 
   /* ════════════════════════════════════════════
      WEATHER
   ════════════════════════════════════════════ */
   async function loadWeather() {
-    const el   = document.getElementById("weather-text");
-    const icon = document.getElementById("weather-icon");
-    if (!navigator.geolocation) { el.textContent = "Unavailable"; return; }
-    navigator.geolocation.getCurrentPosition(async pos => {
-      try {
-        const res  = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`);
-        const data = await res.json();
-        const temp = Math.round(data.current_weather.temperature);
-        const code = data.current_weather.weathercode;
-        icon.textContent = code<=1?"☀️":code<=3?"⛅":code<=67?"🌧️":code<=77?"❄️":"🌩️";
-        el.textContent   = `${temp}°C`;
-      } catch { el.textContent = "Unavailable"; }
-    }, () => { el.textContent = "Unavailable"; });
+    const textEl = $("weather-text");
+    const iconEl = $("weather-icon");
+
+    if (!navigator.geolocation) {
+      textEl.textContent = "Unavailable";
+      return;
+    }
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 8000,
+          maximumAge: 10 * 60 * 1000,
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+      );
+      const data = await response.json();
+      const currentWeather = data?.current_weather;
+
+      if (!response.ok || !currentWeather) {
+        throw new Error("Missing weather data");
+      }
+
+      const temperature = Math.round(currentWeather.temperature);
+      const weatherCode = currentWeather.weathercode;
+      iconEl.textContent = weatherCode <= 1 ? "☀️" : weatherCode <= 3 ? "⛅" : weatherCode <= 67 ? "🌧️" : weatherCode <= 77 ? "❄️" : "🌩️";
+      textEl.textContent = `${temperature}°C`;
+    } catch {
+      textEl.textContent = "Unavailable";
+    }
   }
 
   /* ════════════════════════════════════════════
      SEARCH
   ════════════════════════════════════════════ */
   function wireSearch() {
-    const go = () => {
-      const q = document.getElementById("search-input").value.trim();
-      if (q) window.location.href = `https://360-search.com/?q=${encodeURIComponent(q)}`;
+    const searchInput = $("search-input");
+    const submitSearch = () => {
+      const query = searchInput.value.trim();
+      if (!query) return;
+      window.location.href = `https://360-search.com/?q=${encodeURIComponent(query)}`;
     };
-    document.getElementById("search-btn").addEventListener("click", go);
-    document.getElementById("search-input").addEventListener("keydown", e => { if (e.key==="Enter") go(); });
+
+    $("search-btn").addEventListener("click", submitSearch);
+    searchInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        submitSearch();
+      }
+    });
   }
 
   /* ════════════════════════════════════════════
      QUICK LINKS
   ════════════════════════════════════════════ */
-  function getLinks() { return S.get("links") || DEFAULT_LINKS; }
+  function getLinks() {
+    return S.get("links") || DEFAULT_LINKS;
+  }
 
   function renderLinks() {
-    const c     = document.getElementById("quicklinks");
+    const container = $("quicklinks");
     const links = getLinks();
-    c.innerHTML = "";
-    links.forEach((l, i) => {
-      const a = document.createElement("a");
-      a.className  = "ql-item";
-      a.href       = l.url;
-      a.target     = "_blank";
-      a.innerHTML  = `<span class="ql-icon">${l.icon||"🔗"}</span><span>${l.name}</span><button class="ql-del" data-i="${i}">✕</button>`;
-      a.querySelector(".ql-del").addEventListener("click", e => {
-        e.preventDefault(); e.stopPropagation();
-        const arr = getLinks(); arr.splice(i,1); S.set("links",arr); renderLinks();
+    container.innerHTML = "";
+
+    links.forEach((link, index) => {
+      const anchor = createEl("a", "ql-item");
+      anchor.href = link.url;
+      anchor.target = "_blank";
+      anchor.rel = "noreferrer";
+
+      anchor.appendChild(createEl("span", "ql-icon", link.icon || "🔗"));
+      anchor.appendChild(createEl("span", "", link.name));
+
+      const deleteButton = createEl("button", "ql-del", "✕");
+      deleteButton.type = "button";
+      deleteButton.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const nextLinks = getLinks().filter((_, linkIndex) => linkIndex !== index);
+        S.set("links", nextLinks);
+        renderLinks();
       });
-      c.appendChild(a);
+
+      anchor.appendChild(deleteButton);
+      container.appendChild(anchor);
     });
+
+    const addButton = createEl("button", "ql-item ql-add", "+ Add");
+    addButton.type = "button";
+    addButton.addEventListener("click", showAddLinkModal);
+    container.appendChild(addButton);
+
     renderLinksList();
   }
 
   function renderLinksList() {
-    const list  = document.getElementById("links-list");
+    const list = $("links-list");
     const links = getLinks();
     list.innerHTML = "";
-    links.forEach((l, i) => {
-      const row = document.createElement("div");
+
+    links.forEach((link, index) => {
+      const row = createEl("div");
       row.style.cssText = "display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.04);";
-      row.innerHTML = `<span>${l.icon}</span><span style="flex:1">${l.name}</span><button style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0;box-shadow:none;transform:none;" data-i="${i}">Remove</button>`;
-      row.querySelector("button").addEventListener("click", () => {
-        const arr = getLinks(); arr.splice(i,1); S.set("links",arr); renderLinks();
+
+      row.appendChild(createEl("span", "", link.icon || "🔗"));
+      const name = createEl("span", "", link.name);
+      name.style.flex = "1";
+      row.appendChild(name);
+
+      const removeButton = createEl("button", "", "Remove");
+      removeButton.type = "button";
+      removeButton.style.cssText = "background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0;box-shadow:none;transform:none;";
+      removeButton.addEventListener("click", () => {
+        const nextLinks = getLinks().filter((_, linkIndex) => linkIndex !== index);
+        S.set("links", nextLinks);
+        renderLinks();
       });
+
+      row.appendChild(removeButton);
       list.appendChild(row);
     });
   }
@@ -1257,71 +1372,164 @@
      DAILY QUOTE
   ════════════════════════════════════════════ */
   function renderQuote() {
-    const idx  = new Date().getDate() % QUOTES.length;
-    const q    = QUOTES[idx];
-    document.getElementById("quote-text").textContent   = `"${q.text}"`;
-    document.getElementById("quote-author").textContent = `— ${q.author}`;
+    const quote = QUOTES[new Date().getDate() % QUOTES.length];
+    $("quote-text").textContent = `“${quote.text}”`;
+    $("quote-author").textContent = `— ${quote.author}`;
   }
 
   /* ════════════════════════════════════════════
      TODO
   ════════════════════════════════════════════ */
-  function getTodos() { return S.get("todos") || []; }
+  function getTodos() {
+    return S.get("todos") || [];
+  }
 
   function renderTodos() {
-    const list  = document.getElementById("todo-list");
-    const todos = getTodos();
+    const list = $("todo-list");
     list.innerHTML = "";
-    todos.forEach((t, i) => {
-      const li = document.createElement("li");
-      li.className = t.done ? "done" : "";
-      li.innerHTML = `<input type="checkbox" ${t.done?"checked":""}><span>${t.text}</span><button data-i="${i}">✕</button>`;
-      li.querySelector("input").addEventListener("change", () => {
-        const arr = getTodos(); arr[i].done = !arr[i].done; S.set("todos",arr); renderTodos();
+
+    getTodos().forEach((todo, index) => {
+      const item = createEl("li");
+      if (todo.done) item.classList.add("done");
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = Boolean(todo.done);
+      checkbox.addEventListener("change", event => {
+        const nextTodos = [...getTodos()];
+        nextTodos[index] = { ...nextTodos[index], done: event.target.checked };
+        S.set("todos", nextTodos);
+        renderTodos();
       });
-      li.querySelector("button").addEventListener("click", () => {
-        const arr = getTodos(); arr.splice(i,1); S.set("todos",arr); renderTodos();
+
+      const text = createEl("span", "", todo.text);
+      const removeButton = createEl("button", "", "✕");
+      removeButton.type = "button";
+      removeButton.addEventListener("click", () => {
+        const nextTodos = getTodos().filter((_, todoIndex) => todoIndex !== index);
+        S.set("todos", nextTodos);
+        renderTodos();
       });
-      list.appendChild(li);
+
+      item.append(checkbox, text, removeButton);
+      list.appendChild(item);
     });
   }
 
   function initTodo() {
     renderTodos();
-    const add = () => {
-      const val = document.getElementById("todo-input").value.trim();
-      if (!val) return;
-      const arr = getTodos(); arr.push({ text:val, done:false }); S.set("todos",arr);
-      document.getElementById("todo-input").value = "";
+
+    const addTodo = () => {
+      const input = $("todo-input");
+      const value = input.value.trim();
+      if (!value) return;
+
+      S.set("todos", [...getTodos(), { text: value, done: false }]);
+      input.value = "";
       renderTodos();
     };
-    document.getElementById("todo-add-btn").addEventListener("click", add);
-    document.getElementById("todo-input").addEventListener("keydown", e => { if (e.key==="Enter") add(); });
+
+    $("todo-add-btn").addEventListener("click", addTodo);
+    $("todo-input").addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        addTodo();
+      }
+    });
   }
 
   /* ════════════════════════════════════════════
      CALCULATOR
   ════════════════════════════════════════════ */
   function initCalc() {
-    let expr = "";
-    const display = document.getElementById("calc-display");
+    let expression = "";
+    const display = $("calc-display");
 
-    document.querySelectorAll(".calc-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const v = btn.dataset.val;
-        if (v === "C")  { expr = ""; display.textContent = "0"; return; }
-        if (v === "±")  { expr = expr ? String(-parseFloat(expr)) : "0"; display.textContent = expr; return; }
-        if (v === "=")  {
-          try {
-            const result = Function('"use strict"; return (' + expr.replace(/÷/g,"/").replace(/×/g,"*") + ')')();
-            display.textContent = parseFloat(result.toFixed(8));
-            expr = String(result);
-          } catch { display.textContent = "Error"; expr = ""; }
-          return;
+    const normalizeExpression = expr => expr.replace(/×/g, "*").replace(/÷/g, "/");
+    const validExpressionPattern = /^-?\d*\.?\d+(?:[+\-*/]-?\d*\.?\d+)*$/;
+
+    function updateDisplay(value) {
+      display.textContent = value || "0";
+    }
+
+    function appendValue(value) {
+      if (/\d/.test(value)) {
+        expression += value;
+        return;
+      }
+
+      if (value === ".") {
+        const currentNumber = expression.split(/[+\-*/]/).pop();
+        expression += currentNumber.includes(".") ? "" : currentNumber ? "." : "0.";
+        return;
+      }
+
+      if (!expression) {
+        if (value === "-") {
+          expression = "-";
         }
-        if (v === "%") { expr = String(parseFloat(expr||0)/100); display.textContent = expr; return; }
-        expr += v;
-        display.textContent = expr;
+        return;
+      }
+
+      if (/[+\-*/]$/.test(expression)) {
+        expression = `${expression.slice(0, -1)}${value}`;
+        return;
+      }
+
+      expression += value;
+    }
+
+    function transformLastNumber(transform) {
+      const match = expression.match(/-?\d*\.?\d+$/);
+      if (!match) return;
+      const nextNumber = transform(Number(match[0]));
+      expression = `${expression.slice(0, match.index)}${Number.isFinite(nextNumber) ? nextNumber : match[0]}`;
+    }
+
+    function evaluateExpression() {
+      const normalized = normalizeExpression(expression);
+      if (!validExpressionPattern.test(normalized)) {
+        expression = "";
+        updateDisplay("Error");
+        return;
+      }
+
+      try {
+        const result = Function(`"use strict"; return (${normalized});`)();
+        if (!Number.isFinite(result)) {
+          throw new Error("Invalid result");
+        }
+        expression = `${parseFloat(result.toFixed(8))}`;
+        updateDisplay(expression);
+      } catch {
+        expression = "";
+        updateDisplay("Error");
+      }
+    }
+
+    document.querySelectorAll(".calc-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        const value = button.dataset.val;
+
+        switch (value) {
+          case "C":
+            expression = "";
+            updateDisplay(expression);
+            return;
+          case "±":
+            transformLastNumber(number => -number);
+            updateDisplay(expression);
+            return;
+          case "%":
+            transformLastNumber(number => number / 100);
+            updateDisplay(expression);
+            return;
+          case "=":
+            evaluateExpression();
+            return;
+          default:
+            appendValue(value);
+            updateDisplay(expression);
+        }
       });
     });
   }
@@ -1330,74 +1538,108 @@
      360 AI WIDGET
   ════════════════════════════════════════════ */
   function initAI() {
-    const messages = document.getElementById("ai-messages");
-    const input    = document.getElementById("ai-widget-input");
-    const send     = document.getElementById("ai-widget-send");
-    const history  = [{ role:"system", content:"You are 360 AI. Be concise and helpful. Keep responses short." }];
-    const PROXY    = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
+    const messages = $("ai-messages");
+    const input = $("ai-widget-input");
+    const sendButton = $("ai-widget-send");
+    const history = [{ role:"system", content:"You are 360 AI. Be concise and helpful. Keep responses short." }];
+    const proxyUrl = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
 
-    function addMsg(text, role) {
-      const div = document.createElement("div");
-      div.className = `ai-msg ${role}`;
-      div.textContent = text;
-      messages.appendChild(div);
+    function addMessage(text, role) {
+      const bubble = createEl("div", `ai-msg ${role}`, text);
+      messages.appendChild(bubble);
       messages.scrollTop = messages.scrollHeight;
-      return div;
+      return bubble;
     }
 
     async function askAI() {
-      const q = input.value.trim();
-      if (!q) return;
+      const question = input.value.trim();
+      if (!question) return;
+
       input.value = "";
-      history.push({ role:"user", content:q });
-      addMsg(q, "user");
-      const bubble = addMsg("...", "bot");
+      history.push({ role:"user", content: question });
+      addMessage(question, "user");
+      const replyBubble = addMessage("...", "bot");
+
       try {
-        const res = await fetch(PROXY, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ messages:history, model:"llama3-8b-8192" })
+        const response = await fetch(proxyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history, model: "llama3-8b-8192" }),
         });
-        const reader  = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buf="", full="";
-        bubble.textContent="";
-        while(true){
-          const{value,done}=await reader.read(); if(done)break;
-          buf+=decoder.decode(value,{stream:true});
-          const lines=buf.split("\n"); buf=lines.pop();
-          for(const line of lines){
-            if(!line.startsWith("data:"))continue;
-            const json=line.replace("data:","").trim();
-            if(json==="[DONE]")continue;
-            try{const d=JSON.parse(json).choices?.[0]?.delta?.content;if(d){full+=d;bubble.textContent=full;messages.scrollTop=messages.scrollHeight;}}catch{}
-          }
+
+        if (!response.ok || !response.body) {
+          throw new Error("Unable to reach 360 AI");
         }
-        if(full)history.push({role:"assistant",content:full});
-      } catch(err){ bubble.textContent="Error: "+err.message; history.pop(); }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullReply = "";
+        replyBubble.textContent = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          lines.forEach(line => {
+            if (!line.startsWith("data:")) return;
+            const payload = line.replace("data:", "").trim();
+            if (!payload || payload === "[DONE]") return;
+
+            try {
+              const delta = JSON.parse(payload).choices?.[0]?.delta?.content;
+              if (!delta) return;
+              fullReply += delta;
+              replyBubble.textContent = fullReply;
+              messages.scrollTop = messages.scrollHeight;
+            } catch {
+              // Ignore malformed streamed chunks.
+            }
+          });
+        }
+
+        replyBubble.textContent = fullReply || "No response received.";
+        history.push({ role:"assistant", content: replyBubble.textContent });
+      } catch (error) {
+        replyBubble.textContent = `Error: ${error.message}`;
+        history.pop();
+      }
     }
 
-    send.addEventListener("click", askAI);
-    input.addEventListener("keydown", e => { if(e.key==="Enter") askAI(); });
+    sendButton.addEventListener("click", askAI);
+    input.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        askAI();
+      }
+    });
   }
 
   /* ════════════════════════════════════════════
      NEWS
   ════════════════════════════════════════════ */
   async function loadNews() {
-    const list = document.getElementById("news-list");
+    const list = $("news-list");
+
     try {
-      const res  = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/rss.xml&count=6");
-      const data = await res.json();
-      if (!data.items) throw new Error("No items");
+      const response = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/rss.xml&count=6");
+      const data = await response.json();
+      if (!response.ok || !Array.isArray(data.items)) {
+        throw new Error("News unavailable");
+      }
+
       list.innerHTML = "";
       data.items.forEach(item => {
-        const a = document.createElement("a");
-        a.className = "news-item";
-        a.href      = item.link;
-        a.target    = "_blank";
-        a.innerHTML = `<div class="news-title">${item.title}</div><div class="news-source">BBC News</div>`;
-        list.appendChild(a);
+        const article = createEl("a", "news-item");
+        article.href = item.link;
+        article.target = "_blank";
+        article.rel = "noreferrer";
+        article.appendChild(createEl("div", "news-title", item.title));
+        article.appendChild(createEl("div", "news-source", "BBC News"));
+        list.appendChild(article);
       });
     } catch {
       list.innerHTML = "<div style='font-size:12px;opacity:.5;'>News unavailable</div>";
@@ -1407,48 +1649,73 @@
   /* ════════════════════════════════════════════
      SPOTIFY
   ════════════════════════════════════════════ */
-  function loadSpotify(url) {
-    const iframe = document.getElementById("spotify-embed");
-    if (!url) { iframe.style.display="none"; return; }
+  function loadSpotify(url, { silent = false } = {}) {
+    const iframe = $("spotify-embed");
+    if (!url) {
+      iframe.src = "";
+      iframe.style.display = "none";
+      return true;
+    }
+
     const match = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
-    if (!match) { alert("Invalid Spotify URL"); return; }
-    iframe.src    = `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
-    iframe.height = match[1]==="track" ? "80" : "352";
+    if (!match) {
+      if (!silent) {
+        window.alert("Invalid Spotify URL");
+      }
+      iframe.src = "";
+      iframe.style.display = "none";
+      return false;
+    }
+
+    iframe.src = `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
+    iframe.height = match[1] === "track" ? "80" : "352";
     iframe.style.display = "block";
+    return true;
   }
 
   function initSpotify() {
-    document.getElementById("spotify-embed-btn").addEventListener("click", () => {
-      const url = document.getElementById("spotify-url-input").value.trim();
-      S.set("spotify", url);
-      loadSpotify(url);
+    $("spotify-embed-btn").addEventListener("click", () => {
+      const url = $("spotify-url-input").value.trim();
+      if (loadSpotify(url)) {
+        S.set("spotify", url);
+      }
     });
   }
 
   /* ════════════════════════════════════════════
      BACKGROUND
   ════════════════════════════════════════════ */
-  function applyBg(url) {
-    document.getElementById("bg").style.backgroundImage = url ? `url('${url}')` : "";
-    document.getElementById("bg").style.opacity         = url ? "0.45" : "0";
-    S.set("bg", url||"");
+  function applyBg(url, { persist = true } = {}) {
+    $("bg").style.backgroundImage = url ? `url('${url}')` : "";
+    $("bg").style.opacity = url ? "0.45" : "0";
+    $("bg-url-input").value = url;
+
+    if (persist) {
+      S.set("bg", url || "");
+    }
   }
 
   function buildWpGrid() {
-    const grid = document.getElementById("wp-grid");
-    const cur  = S.get("bg") || "";
-    WALLPAPERS.forEach(wp => {
-      const div = document.createElement("div");
-      div.className = "wp-thumb" + (cur===wp.url?" active":"");
-      div.textContent = wp.label;
-      if (wp.url) div.style.backgroundImage = `url('${wp.url}')`;
-      else div.style.background = "#0a0f1e";
-      div.addEventListener("click", () => {
-        document.querySelectorAll(".wp-thumb").forEach(t=>t.classList.remove("active"));
-        div.classList.add("active");
-        applyBg(wp.url);
+    const grid = $("wp-grid");
+    const currentBackground = S.get("bg") || "";
+    grid.innerHTML = "";
+
+    WALLPAPERS.forEach(wallpaper => {
+      const thumb = createEl("div", `wp-thumb${currentBackground === wallpaper.url ? " active" : ""}`);
+      thumb.textContent = wallpaper.label;
+
+      if (wallpaper.url) {
+        thumb.style.backgroundImage = `url('${wallpaper.url}')`;
+      } else {
+        thumb.style.background = "#0a0f1e";
+      }
+
+      thumb.addEventListener("click", () => {
+        applyBg(wallpaper.url);
+        buildWpGrid();
       });
-      grid.appendChild(div);
+
+      grid.appendChild(thumb);
     });
   }
 
@@ -1456,7 +1723,7 @@
      FONT
   ════════════════════════════════════════════ */
   function applyFont(font) {
-    document.getElementById("font-link").href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;600;700;800&display=swap`;
+    $("font-link").href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;600;700;800&display=swap`;
     document.documentElement.style.setProperty("--font", `'${font}', system-ui, sans-serif`);
   }
 
@@ -1464,30 +1731,37 @@
      LAYOUT
   ════════════════════════════════════════════ */
   function applyLayout(layout) {
-    document.body.classList.remove("layout-left","layout-center","layout-right");
-    if (layout!=="center") document.body.classList.add("layout-"+layout);
+    document.body.classList.remove("layout-left", "layout-center", "layout-right");
+    if (layout !== "center") {
+      document.body.classList.add(`layout-${layout}`);
+    }
   }
 
   /* ════════════════════════════════════════════
      WIDGET TOGGLES
   ════════════════════════════════════════════ */
   function renderWidgetToggles() {
-    const container = document.getElementById("widget-toggles");
+    const container = $("widget-toggles");
     container.innerHTML = "";
-    WIDGETS.forEach(w => {
-      const hidden = S.get("hide_"+w.id) || false;
-      const row = document.createElement("div");
-      row.className = "toggle-row";
-      row.innerHTML = `<span>${w.label}</span>
-        <label class="toggle">
-          <input type="checkbox" ${hidden?"":"checked"} data-widget="${w.id}">
-          <div class="toggle-track"></div>
-        </label>`;
-      row.querySelector("input").addEventListener("change", e => {
-        const show = e.target.checked;
-        S.set("hide_"+w.id, !show);
-        document.getElementById(w.id)?.classList.toggle("hidden", !show);
+
+    WIDGETS.forEach(widget => {
+      const hidden = Boolean(S.get(`hide_${widget.id}`));
+      const row = createEl("div", "toggle-row");
+      row.appendChild(createEl("span", "", widget.label));
+
+      const label = createEl("label", "toggle");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = !hidden;
+      input.addEventListener("change", event => {
+        const isVisible = event.target.checked;
+        S.set(`hide_${widget.id}`, !isVisible);
+        $(widget.id)?.classList.toggle("hidden", !isVisible);
       });
+
+      label.appendChild(input);
+      label.appendChild(createEl("div", "toggle-track"));
+      row.appendChild(label);
       container.appendChild(row);
     });
   }
@@ -1496,109 +1770,149 @@
      PANEL WIRING
   ════════════════════════════════════════════ */
   function wirePanel() {
-    const panel   = document.getElementById("customize-panel");
-    const overlay = document.getElementById("panel-overlay");
+    const panel = $("customize-panel");
+    const overlay = $("panel-overlay");
+    const closePanel = () => {
+      panel.classList.remove("open");
+      overlay.classList.remove("open");
+    };
 
-    document.getElementById("customize-btn").addEventListener("click", () => {
+    $("customize-btn").addEventListener("click", () => {
       panel.classList.add("open");
       overlay.classList.add("open");
     });
-    const closePanel = () => { panel.classList.remove("open"); overlay.classList.remove("open"); };
-    document.getElementById("panel-close").addEventListener("click", closePanel);
+
+    $("panel-close").addEventListener("click", closePanel);
     overlay.addEventListener("click", closePanel);
 
-    /* Tabs */
     document.querySelectorAll(".panel-tab").forEach(tab => {
       tab.addEventListener("click", () => {
-        document.querySelectorAll(".panel-tab").forEach(t=>t.classList.remove("active"));
-        document.querySelectorAll(".panel-section").forEach(s=>s.classList.remove("active"));
+        document.querySelectorAll(".panel-tab").forEach(item => item.classList.remove("active"));
+        document.querySelectorAll(".panel-section").forEach(section => section.classList.remove("active"));
         tab.classList.add("active");
-        document.getElementById("tab-"+tab.dataset.tab).classList.add("active");
+        $(`tab-${tab.dataset.tab}`).classList.add("active");
       });
     });
 
-    /* General */
-    document.getElementById("save-name-btn").addEventListener("click", () => {
-      S.set("name", document.getElementById("name-input").value.trim());
+    $("save-name-btn").addEventListener("click", () => {
+      S.set("name", $("name-input").value.trim());
       updateGreeting();
     });
-    document.getElementById("save-greeting-btn").addEventListener("click", () => {
-      S.set("custom-greeting", document.getElementById("greeting-input").value.trim());
+
+    $("save-greeting-btn").addEventListener("click", () => {
+      S.set("custom-greeting", $("greeting-input").value.trim());
       updateGreeting();
     });
-    document.getElementById("toggle-12hr").addEventListener("change", e => S.set("12hr", e.target.checked));
-    document.getElementById("toggle-seconds").addEventListener("change", e => S.set("seconds", e.target.checked));
-    document.getElementById("toggle-light").addEventListener("change", e => {
-      S.set("light", e.target.checked);
-      document.body.classList.toggle("light", e.target.checked);
+
+    $("toggle-12hr").addEventListener("change", event => {
+      S.set("12hr", event.target.checked);
+      renderClock();
     });
 
-    /* Appearance */
-    document.getElementById("accent-picker").addEventListener("input", e => {
-      document.documentElement.style.setProperty("--accent", e.target.value);
-      S.set("accent", e.target.value);
+    $("toggle-seconds").addEventListener("change", event => {
+      S.set("seconds", event.target.checked);
+      renderClock();
     });
-    document.getElementById("accent2-picker").addEventListener("input", e => {
-      document.documentElement.style.setProperty("--accent2", e.target.value);
-      S.set("accent2", e.target.value);
+
+    $("toggle-light").addEventListener("change", event => {
+      S.set("light", event.target.checked);
+      document.body.classList.toggle("light", event.target.checked);
     });
-    document.getElementById("blur-range").addEventListener("input", e => {
-      document.documentElement.style.setProperty("--blur", e.target.value+"px");
-      document.getElementById("blur-label").textContent = e.target.value+"px";
-      S.set("blur", parseInt(e.target.value));
+
+    $("accent-picker").addEventListener("input", event => {
+      document.documentElement.style.setProperty("--accent", event.target.value);
+      S.set("accent", event.target.value);
     });
-    document.querySelectorAll(".layout-opt").forEach(opt => {
-      opt.addEventListener("click", () => {
-        document.querySelectorAll(".layout-opt").forEach(o=>o.classList.remove("active"));
-        opt.classList.add("active");
-        S.set("layout", opt.dataset.layout);
-        applyLayout(opt.dataset.layout);
+
+    $("accent2-picker").addEventListener("input", event => {
+      document.documentElement.style.setProperty("--accent2", event.target.value);
+      S.set("accent2", event.target.value);
+    });
+
+    $("blur-range").addEventListener("input", event => {
+      const blur = Number.parseInt(event.target.value, 10);
+      document.documentElement.style.setProperty("--blur", `${blur}px`);
+      $("blur-label").textContent = `${blur}px`;
+      S.set("blur", blur);
+    });
+
+    document.querySelectorAll(".layout-opt").forEach(option => {
+      option.addEventListener("click", () => {
+        document.querySelectorAll(".layout-opt").forEach(item => item.classList.remove("active"));
+        option.classList.add("active");
+        S.set("layout", option.dataset.layout);
+        applyLayout(option.dataset.layout);
       });
     });
-    document.querySelectorAll(".font-opt").forEach(opt => {
-      opt.addEventListener("click", () => {
-        document.querySelectorAll(".font-opt").forEach(o=>o.classList.remove("active"));
-        opt.classList.add("active");
-        S.set("font", opt.dataset.font);
-        applyFont(opt.dataset.font);
+
+    document.querySelectorAll(".font-opt").forEach(option => {
+      option.addEventListener("click", () => {
+        document.querySelectorAll(".font-opt").forEach(item => item.classList.remove("active"));
+        option.classList.add("active");
+        S.set("font", option.dataset.font);
+        applyFont(option.dataset.font);
       });
     });
 
-    /* Wallpaper */
-    document.getElementById("bg-url-btn").addEventListener("click", () => {
-      const url = document.getElementById("bg-url-input").value.trim();
-      if (url) { applyBg(url); buildWpGrid(); }
+    $("bg-url-btn").addEventListener("click", () => {
+      const normalizedUrl = normalizeUrl($("bg-url-input").value.trim());
+      if (!normalizedUrl) return;
+      applyBg(normalizedUrl);
+      buildWpGrid();
     });
-    document.getElementById("bg-file-btn").addEventListener("click", () => document.getElementById("bg-file").click());
-    document.getElementById("bg-file").addEventListener("change", e => {
-      const f = e.target.files[0]; if(!f)return;
-      const r = new FileReader(); r.onload=()=>{ applyBg(r.result); buildWpGrid(); }; r.readAsDataURL(f);
-    });
-    document.getElementById("bg-reset-btn").addEventListener("click", () => { applyBg(""); buildWpGrid(); });
 
-    /* Links */
-    const modal = document.getElementById("add-modal");
-    document.getElementById("add-link-btn").addEventListener("click", () => modal.classList.add("open"));
-    document.getElementById("modal-cancel").addEventListener("click",  () => modal.classList.remove("open"));
-    modal.addEventListener("click", e => { if(e.target===modal) modal.classList.remove("open"); });
-    document.getElementById("modal-confirm").addEventListener("click", () => {
-      const name = document.getElementById("link-name").value.trim();
-      const url  = document.getElementById("link-url").value.trim();
-      const icon = document.getElementById("link-icon").value.trim() || "🔗";
-      if (!name||!url) return;
-      const arr  = getLinks();
-      arr.push({ name, url: url.startsWith("http")?url:"https://"+url, icon });
-      S.set("links", arr); renderLinks();
-      document.getElementById("link-name").value="";
-      document.getElementById("link-url").value="";
-      document.getElementById("link-icon").value="";
-      modal.classList.remove("open");
+    $("bg-file-btn").addEventListener("click", () => $("bg-file").click());
+    $("bg-file").addEventListener("change", event => {
+      const [file] = event.target.files || [];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        applyBg(reader.result);
+        buildWpGrid();
+      };
+      reader.readAsDataURL(file);
     });
-    ["link-name","link-url","link-icon"].forEach(id => {
-      document.getElementById(id).addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("modal-confirm").click(); });
+
+    $("bg-reset-btn").addEventListener("click", () => {
+      applyBg("");
+      buildWpGrid();
     });
-    document.getElementById("reset-links-btn").addEventListener("click", () => {
-      S.set("links", DEFAULT_LINKS); renderLinks();
+
+    const modal = $("add-modal");
+    $("add-link-btn").addEventListener("click", showAddLinkModal);
+    $("modal-cancel").addEventListener("click", hideAddLinkModal);
+    modal.addEventListener("click", event => {
+      if (event.target === modal) {
+        hideAddLinkModal();
+      }
+    });
+
+    $("modal-confirm").addEventListener("click", () => {
+      const name = $("link-name").value.trim();
+      const url = normalizeUrl($("link-url").value.trim());
+      const icon = $("link-icon").value.trim() || "🔗";
+      if (!name || !url) return;
+
+      S.set("links", [...getLinks(), { name, url, icon }]);
+      renderLinks();
+      $("link-name").value = "";
+      $("link-url").value = "";
+      $("link-icon").value = "";
+      hideAddLinkModal();
+    });
+
+    ["link-name", "link-url", "link-icon"].forEach(id => {
+      $(id).addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          $("modal-confirm").click();
+        }
+      });
+    });
+
+    $("reset-links-btn").addEventListener("click", () => {
+      S.set("links", DEFAULT_LINKS);
+      renderLinks();
     });
   }
 
@@ -1607,5 +1921,6 @@
   ════════════════════════════════════════════ */
   init();
   </script>
+
 </body>
 </html>
