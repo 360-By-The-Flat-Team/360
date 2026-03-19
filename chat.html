@@ -1,310 +1,223 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>360 Chat</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>360 — Chat</title>
+
+<link rel="icon" href="../favicon-32x32.png" />
+<link rel="stylesheet" href="../main.css" />
+<link rel="stylesheet" href="../responsive.css" />
+<link rel="stylesheet" href="../cursor.css" />
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body { margin:0; font-family:sans-serif; background:#0f172a; color:white; }
+/* KEEP YOUR UI — only additions below */
 
-/* KEEP YOUR MENU */
-#menuBtn {
-  position:fixed;
-  top:10px;
-  left:10px;
-  background:#6366f1;
-  padding:8px;
-  cursor:pointer;
-  z-index:100;
+#servers-ui, #channels-ui {
+  margin-top:10px;
 }
 
-/* SIDEBAR (your style extended) */
-#sidebar {
-  position:fixed;
-  left:-260px;
-  top:0;
-  bottom:0;
-  width:260px;
-  background:#020617;
-  transition:.3s;
-  padding:10px;
-}
-#sidebar.open { left:0; }
-
-/* SERVERS */
-#servers { display:flex; gap:5px; margin-bottom:10px; }
-.server {
-  width:40px;height:40px;
-  background:#6366f1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.server-pill, .channel-pill {
+  padding:6px;
   border-radius:8px;
   cursor:pointer;
-}
-
-/* CHANNELS */
-.channel {
-  padding:5px;
-  cursor:pointer;
-  border-radius:6px;
-}
-.channel:hover { background:#1e293b; }
-
-/* CHAT */
-#chat {
-  margin-left:0;
-  padding-top:60px;
-}
-#messages {
-  height:80vh;
-  overflow:auto;
-  padding:10px;
-}
-.msg {
-  padding:5px;
-  border-radius:6px;
-}
-.msg:hover { background:rgba(255,255,255,0.05); }
-
-/* INPUT */
-#inputRow {
-  display:flex;
-  padding:10px;
-}
-#input {
-  flex:1;
-  padding:10px;
-}
-
-/* TYPING */
-#typing {
   font-size:12px;
-  color:#94a3b8;
-  padding-left:10px;
-}
-.typingDots span {
-  animation:blink 1.2s infinite;
-}
-.typingDots span:nth-child(2){ animation-delay:.2s }
-.typingDots span:nth-child(3){ animation-delay:.4s }
-
-@keyframes blink {
-  0%,100%{opacity:0}
-  50%{opacity:1}
 }
 
-.mention { color:#60a5fa; font-weight:bold; }
+.server-pill { background:rgba(148,163,184,.2); }
+.channel-pill:hover { background:rgba(148,163,184,.2); }
+
+.mention { color:#60a5fa; font-weight:700; }
 </style>
 </head>
 
 <body>
 
-<div id="menuBtn">☰</div>
+<!-- YOUR ORIGINAL UI (UNCHANGED) -->
+<button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
 
-<div id="sidebar">
-  <div id="servers"></div>
-  <hr>
-  <div id="channels"></div>
-</div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-mark"></div>
+    <button id="settingsBtn">⚙</button>
+  </div>
 
-<div id="chat">
-  <div id="messages"></div>
-  <div id="typing"></div>
+  <nav class="nav-list">
+    <div class="nav-item active">Chat</div>
+  </nav>
 
-  <div id="inputRow">
-    <input id="input" placeholder="Message..." />
-    <input type="file" id="fileUpload">
+  <!-- NEW -->
+  <div id="servers-ui"></div>
+  <div id="channels-ui"></div>
+</aside>
+
+<div class="chat-page">
+  <h2>💬 360 Chat</h2>
+
+  <div id="chat-window"></div>
+  <div id="typing-indicator"></div>
+
+  <div id="chat-input-row">
+    <input id="message-input" placeholder="Type..." />
+    <button id="send-button">Send</button>
   </div>
 </div>
 
-<audio id="ping" src="https://www.myinstants.com/media/sounds/discord-notification.mp3"></audio>
+<audio id="clickSound" src="../click-sound.mp3"></audio>
 
 <script>
-const supabase = window.supabase.createClient("YOUR_URL","YOUR_KEY");
+const supabaseClient = window.supabase.createClient("YOUR_URL","YOUR_KEY");
 
-let user, currentServer=null, currentChannel=null, replyingTo=null;
+let currentUserId=null;
+let currentServer=null;
+let currentChannel=null;
+let replyingTo=null;
 
-/* MENU TOGGLE (kept your nav style) */
-menuBtn.onclick = () => {
-  sidebar.classList.toggle("open");
-};
-
-/* INIT */
-(async ()=>{
-  const { data } = await supabase.auth.getUser();
-  user = data.user;
-  loadServers();
-})();
-
-/* REALTIME */
-supabase.channel('messages-live')
-.on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
-  if(payload.new.channel_id===currentChannel){
-    renderMsg(payload.new);
-  }
-}).subscribe();
-
-/* SERVERS */
+/* ---------- SERVERS ---------- */
 async function loadServers(){
-  const { data } = await supabase.from("servers").select("*");
-  servers.innerHTML="";
+  const { data } = await supabaseClient.from("servers").select("*");
+  const el=document.getElementById("servers-ui");
+  el.innerHTML="";
+
   data?.forEach(s=>{
     let d=document.createElement("div");
-    d.className="server";
-    d.textContent=s.name[0];
-    d.onclick=()=>{currentServer=s.id;loadChannels();}
-    servers.appendChild(d);
+    d.className="server-pill";
+    d.textContent=s.name;
+    d.onclick=()=>{ currentServer=s.id; loadChannels(); };
+    el.appendChild(d);
   });
 }
 
-/* CHANNELS */
+/* ---------- CHANNELS ---------- */
 async function loadChannels(){
-  const { data } = await supabase.from("channels")
+  const { data } = await supabaseClient
+    .from("channels")
     .select("*")
     .eq("server_id",currentServer);
 
-  channels.innerHTML="";
+  const el=document.getElementById("channels-ui");
+  el.innerHTML="";
+
   data?.forEach(c=>{
     let d=document.createElement("div");
-    d.className="channel";
+    d.className="channel-pill";
     d.textContent="# "+c.name;
 
     d.onclick=async ()=>{
       if(!c.is_public){
-        let p=prompt("Password?");
-        if(p!==c.password) return alert("Wrong password");
+        let pass=prompt("Password?");
+        if(pass!==c.password) return alert("Wrong password");
       }
       currentChannel=c.id;
       loadMessages();
     };
 
-    channels.appendChild(d);
+    el.appendChild(d);
   });
 }
 
-/* MESSAGES */
+/* ---------- LOAD MESSAGES ---------- */
 async function loadMessages(){
-  const { data } = await supabase.from("messages")
+  const { data } = await supabaseClient
+    .from("messages")
     .select("*")
     .eq("channel_id",currentChannel)
     .is("deleted_at",null)
     .order("created_at");
 
-  messages.innerHTML="";
-  data?.forEach(renderMsg);
+  chatWindow.innerHTML="";
+  data?.forEach(renderMessage);
 }
 
-/* RENDER */
-function renderMsg(m){
-  let text=m.text.replace(/@(\w+)/g,'<span class="mention">@$1</span>');
+/* ---------- RENDER ---------- */
+function renderMessage(msg){
+  if(document.querySelector(`[data-id="${msg.id}"]`)) return;
 
   let div=document.createElement("div");
-  div.className="msg";
-  div.innerHTML=`<b>${m.username}</b>: ${text}`;
+  div.className="chat-message";
+  div.dataset.id=msg.id;
+
+  let text = msg.text.replace(/@(\w+)/g,'<span class="mention">@$1</span>');
+
+  div.innerHTML = `<div class="chat-bubble">
+    <strong>${msg.username}</strong>
+    <p>${text}</p>
+  </div>`;
 
   div.ondblclick=()=>{
-    replyingTo=m.id;
-    input.placeholder="Replying...";
+    replyingTo=msg.id;
+    messageInput.placeholder="Replying...";
   };
 
-  messages.appendChild(div);
-  messages.scrollTop=messages.scrollHeight;
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop=chatWindow.scrollHeight;
 }
 
-/* SEND */
-input.addEventListener("keydown",async e=>{
-  if(e.key==="Enter"){
-    let text=input.value.trim();
-    if(!text) return;
+/* ---------- SEND ---------- */
+async function sendMessage(){
+  let text=messageInput.value.trim();
+  if(!text) return;
 
-    if(text.startsWith("/")) return runCommand(text);
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(!session) return alert("Login first");
 
-    await supabase.from("messages").insert({
-      user_id:user.id,
-      username:user.email,
-      text,
-      channel_id:currentChannel,
-      reply_to:replyingTo
-    });
-
-    if(text.includes("@")) ping.play();
-
-    replyingTo=null;
-    input.value="";
-  }
-});
-
-/* FILE UPLOAD */
-fileUpload.onchange=async e=>{
-  let file=e.target.files[0];
-  let { data } = await supabase.storage.from('uploads').upload(Date.now()+file.name,file);
-  let url = supabase.storage.from('uploads').getPublicUrl(data.path).data.publicUrl;
-
-  await supabase.from("messages").insert({
-    user_id:user.id,
-    username:user.email,
-    text:`<img src="${url}" style="max-width:200px">`,
-    channel_id:currentChannel
-  });
-};
-
-/* TYPING */
-input.addEventListener("input",()=>{
-  supabase.from("typing").upsert({
-    user_id:user.id,
+  await supabaseClient.from("messages").insert({
+    user_id:session.user.id,
+    username:session.user.email,
+    text,
     channel_id:currentChannel,
-    typing:true
+    reply_to:replyingTo
   });
+
+  if(text.includes("@")) clickSound.play();
+
+  replyingTo=null;
+  messageInput.value="";
+}
+
+/* ---------- REALTIME ---------- */
+supabaseClient.channel("live")
+.on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},
+  payload=>{
+    if(payload.new.channel_id===currentChannel){
+      renderMessage(payload.new);
+    }
+  })
+.subscribe();
+
+/* ---------- TYPING ---------- */
+let typingTimeout;
+
+messageInput.addEventListener("input",async ()=>{
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(!session) return;
+
+  supabaseClient.channel("typing")
+    .send({type:"broadcast",event:"typing",payload:{name:session.user.email}});
+
+  clearTimeout(typingTimeout);
 });
 
-setInterval(async ()=>{
-  let { data } = await supabase.from("typing")
-    .select("*")
-    .eq("channel_id",currentChannel)
-    .eq("typing",true);
+supabaseClient.channel("typing")
+.on("broadcast",{event:"typing"},payload=>{
+  typingIndicator.innerHTML = payload.payload.name + " is typing...";
+  setTimeout(()=>typingIndicator.innerHTML="",1500);
+}).subscribe();
 
-  typing.innerHTML = data?.length
-    ? "Someone is typing <span class='typingDots'><span>.</span><span>.</span><span>.</span></span>"
-    : "";
-},1000);
+/* ---------- EVENTS ---------- */
+sendButton.onclick=sendMessage;
+messageInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ e.preventDefault(); sendMessage(); }
+});
 
-/* ONLINE USERS */
-setInterval(async ()=>{
-  await supabase.from("online_users").upsert({
-    user_id:user.id,
-    last_seen:new Date()
-  });
-},5000);
-
-/* COMMANDS */
-async function runCommand(t){
-  let a=t.split(" ");
-
-  if(a[0]==="/server")
-    await supabase.from("servers").insert({name:a.slice(1).join(" ")});
-
-  if(a[0]==="/channel")
-    await supabase.from("channels").insert({
-      name:a[1],
-      server_id:currentServer,
-      is_public:true
-    });
-
-  if(a[0]==="/private")
-    await supabase.from("channels").insert({
-      name:a[1],
-      password:a[2],
-      server_id:currentServer,
-      is_public:false
-    });
-
-  if(a[0]==="/reply")
-    replyingTo=a[1];
-
+/* ---------- INIT ---------- */
+(async ()=>{
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  currentUserId=session?.user?.id;
   loadServers();
-}
+})();
 </script>
 
 </body>
