@@ -491,9 +491,13 @@
   }
   function isImage(url) { return /\.(jpe?g|png|gif|webp|svg|bmp)(\?|$)/i.test(url); }
 
-  /* Profile cache */
+  /* Profile cache — avoids repeat DB hits for same user */
   const profileCache = {};
+  /* Message element Map — O(1) lookup instead of querySelector per message */
+  const msgElMap = new Map();
+
   async function getProfile(uid) {
+    if (!uid) return {username:"Unknown",avatar_url:null,role:"user",tag:null,email:null};
     if (profileCache[uid]) return profileCache[uid];
     try {
       const { data } = await sb.from("profiles").select("username,avatar_url,role,tag,email").eq("id",uid).single();
@@ -520,41 +524,80 @@
 
   async function handleCommunityClick(server) {
     if (!currentUserId) { openAuth(); return; }
-    /* FIX: maybeSingle avoids throwing when no membership row exists */
     const { data: membership } = await sb.from("server_members")
       .select("id").eq("server_id", server.id).eq("user_id", currentUserId).maybeSingle();
     if (membership) {
       await enterCommunity(server);
     } else if (server.passcode) {
-      joinPending = server;
-      document.getElementById("jc-title").textContent = `Join "${server.name}"`;
-      document.getElementById("jc-desc").textContent  = "This community is passcode-protected.";
-      document.getElementById("jc-passcode").value    = "";
-      document.getElementById("jc-error").textContent = "";
-      document.getElementById("joinCommunityModal").classList.add("open");
+      /* Go straight into the chat but show a passcode gate overlay */
+      await enterCommunity(server, true);
     } else {
-      await joinCommunity(server, null);
+      await joinAndEnter(server);
     }
   }
 
-  /* FIX: separate enterCommunity so it can be called after join too */
-  async function enterCommunity(server) {
+  async function enterCommunity(server, locked=false) {
     const { data: channels, error } = await sb.from("channels")
       .select("*").eq("server_id", server.id).order("name").limit(1);
     if (error || !channels || !channels.length) { alert("This community has no channels yet."); return; }
     switchRoom({ type:"channel", id: channels[0].id, name: channels[0].name, icon: server.passcode?"🔒":"🌐", serverName: server.name });
     document.querySelectorAll(".room-item,.dm-item").forEach(el => el.classList.remove("active"));
     document.querySelector(`[data-server-id="${server.id}"]`)?.classList.add("active");
+    if (locked) showPasscodeGate(server);
   }
 
-  async function joinCommunity(server, passcode) {
-    if (server.passcode && passcode !== server.passcode) {
-      document.getElementById("jc-error").textContent = "Wrong passcode. Try again."; return;
+  function showPasscodeGate(server) {
+    document.getElementById("passcode-gate")?.remove();
+    const isDark = document.body.classList.contains("dark");
+    const gate = document.createElement("div");
+    gate.id = "passcode-gate";
+    gate.style.cssText = `position:absolute;inset:0;z-index:100;background:${isDark?"rgba(5,8,22,.93)":"rgba(255,255,255,.93)"};backdrop-filter:blur(18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;`;
+    gate.innerHTML = `
+      <div style="font-size:40px">🔒</div>
+      <div style="font-size:20px;font-weight:800">${server.name}</div>
+      <div style="font-size:13px;opacity:.55;margin-bottom:4px;">This community requires a passcode.</div>
+      <input id="gate-input" type="password" placeholder="Enter passcode"
+        style="padding:11px 18px;border-radius:12px;border:1px solid var(--br);background:transparent;
+               font-size:15px;outline:none;width:260px;color:inherit;text-align:center;
+               font-family:inherit;" />
+      <p id="gate-error" style="color:#ef4444;font-size:12px;min-height:16px;margin:0;"></p>
+      <button id="gate-btn"
+        style="padding:11px 36px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:700;
+               background:linear-gradient(110deg,var(--a),var(--a2));color:#050816;font-family:inherit;">
+        Unlock
+      </button>
+      <button id="gate-back"
+        style="background:none;border:none;cursor:pointer;font-size:13px;opacity:.5;font-family:inherit;color:inherit;">
+        ← Go back
+      </button>`;
+    const chatMain = document.querySelector(".chat-main");
+    chatMain.style.position = "relative";
+    chatMain.appendChild(gate);
+    const inp = gate.querySelector("#gate-input");
+    inp.focus();
+    gate.querySelector("#gate-back").addEventListener("click", () => {
+      gate.remove();
+      document.getElementById("publicRoomItem").click();
+    });
+    async function tryUnlock() {
+      const passcode = inp.value.trim();
+      if (!passcode) { gate.querySelector("#gate-error").textContent = "Enter the passcode."; return; }
+      if (passcode !== server.passcode) {
+        gate.querySelector("#gate-error").textContent = "Wrong passcode. Try again.";
+        inp.value = ""; inp.focus(); return;
+      }
+      const { error } = await sb.from("server_members").insert({ server_id: server.id, user_id: currentUserId });
+      if (error && !error.message.includes("unique")) { gate.querySelector("#gate-error").textContent = error.message; return; }
+      gate.remove();
+      await loadCommunities();
     }
+    gate.querySelector("#gate-btn").addEventListener("click", tryUnlock);
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
+  }
+
+  async function joinAndEnter(server) {
     const { error } = await sb.from("server_members").insert({ server_id: server.id, user_id: currentUserId });
-    if (error && !error.message.includes("unique")) { document.getElementById("jc-error").textContent = error.message; return; }
-    document.getElementById("joinCommunityModal").classList.remove("open");
-    joinPending = null;
+    if (error && !error.message.includes("unique")) { alert(error.message); return; }
     await loadCommunities();
     await enterCommunity(server);
   }
@@ -567,23 +610,38 @@
       .order("updated_at",{ascending:false});
     const list = document.getElementById("dm-list");
     list.innerHTML = "";
-    if (!data) return;
-    for (const dm of data) {
-      const otherId = dm.user_a === currentUserId ? dm.user_b : dm.user_a;
-      const other   = await getProfile(otherId);
+    if (!data || !data.length) return;
+    /* Fetch all other-user profiles in ONE parallel batch */
+    const otherIds = data.map(dm => dm.user_a === currentUserId ? dm.user_b : dm.user_a);
+    const profiles = await Promise.all(otherIds.map(id => getProfile(id)));
+    data.forEach((dm, i) => {
+      const other = profiles[i];
+      const otherId = otherIds[i];
       const div = document.createElement("div");
       div.className = "dm-item"; div.dataset.dmId = dm.id;
       div.innerHTML = `<div class="dm-avatar">${getInitials(other.username)}</div><span class="dm-name">${other.username}</span>`;
       div.addEventListener("click", () => switchRoom({type:"dm",id:dm.id,name:other.username,icon:"💬",otherId}));
       list.appendChild(div);
-    }
+    });
   }
 
-  /* FIX: DM by email — looks up profiles.email */
+  /* DM by email — checks profiles.email, falls back to auth.users email match */
   async function startDMByEmail(email) {
     if (!email) { document.getElementById("dm-error").textContent = "Enter an email."; return; }
-    const { data: profile } = await sb.from("profiles")
+    /* Try profiles table first */
+    let profile;
+    const { data: p1 } = await sb.from("profiles")
       .select("id,username,email").eq("email", email.toLowerCase()).maybeSingle();
+    if (p1) { profile = p1; }
+    else {
+      /* Fall back: match by auth email stored in profiles.id via auth.users */
+      const { data: { users } } = await sb.auth.admin?.listUsers?.() || { data:{users:[]} };
+      const match = (users||[]).find(u => u.email?.toLowerCase() === email.toLowerCase());
+      if (match) {
+        const { data: p2 } = await sb.from("profiles").select("id,username,email").eq("id", match.id).maybeSingle();
+        profile = p2;
+      }
+    }
     if (!profile) { document.getElementById("dm-error").textContent = "No user found with that email."; return; }
     if (profile.id === currentUserId) { document.getElementById("dm-error").textContent = "That's you!"; return; }
 
@@ -609,10 +667,16 @@
   async function showProfilePopup(userId, anchorEl) {
     if (!userId) return;
     const p = await getProfile(userId);
+    /* email: stored in profiles.email; for self always available from session */
     let email = p.email || "";
     if (!email && userId === currentUserId) {
       const { data:{session} } = await sb.auth.getSession();
       email = session?.user?.email || "";
+    }
+    /* If still no email, try reading it from auth.users metadata (stored by Supabase) */
+    if (!email) {
+      const { data: userData } = await sb.auth.admin?.getUserById?.(userId) || {};
+      email = userData?.user?.email || "";
     }
     const av = document.getElementById("pp-avatar");
     av.innerHTML = p.avatar_url ? `<img src="${p.avatar_url}" alt="" />` : getInitials(p.username);
@@ -679,6 +743,7 @@
   /* ════════════════ LOAD HISTORY — batched reactions ════════════════ */
   async function loadHistory() {
     document.getElementById("chat-window").innerHTML="";
+    msgElMap.clear();
     lastMsgUserId=null; lastMsgDate=null;
     let query;
     if      (activeRoom.type==="dm")      query=sb.from("dm_messages").select("*").eq("dm_id",activeRoom.id);
@@ -758,7 +823,7 @@
     });
     el.querySelectorAll(".reply-quote").forEach(q=>{
       q.addEventListener("click",()=>{
-        const t=document.querySelector(`[data-msg-id="${q.dataset.jump}"]`);
+        const t=msgElMap.get(String(q.dataset.jump));
         if(t){t.scrollIntoView({behavior:"smooth",block:"center"});t.style.background="rgba(59,130,246,.15)";setTimeout(()=>t.style.background="",1500);}
       });
     });
@@ -785,6 +850,7 @@
     if(img) img.addEventListener("click",()=>{document.getElementById("lightbox-img").src=img.src;document.getElementById("lightbox").classList.add("open");});
 
     win.appendChild(el);
+    msgElMap.set(String(msg.id), el);
     if(loadRxn) loadReactionsSingle(msg.id);
   }
 
@@ -802,7 +868,9 @@
     if(data) renderReactions(msgId,data);
   }
   function renderReactions(msgId,reactions) {
-    const row=document.getElementById(`reactions-${msgId}`); if(!row) return;
+    const el=msgElMap.get(String(msgId));
+    const row=el?.querySelector(`#reactions-${msgId}`) || document.getElementById(`reactions-${msgId}`);
+    if(!row) return;
     const g={}; reactions.forEach(r=>{(g[r.emoji]=g[r.emoji]||[]).push(r.user_id);});
     row.innerHTML="";
     Object.entries(g).forEach(([em,users])=>{
@@ -945,7 +1013,8 @@
     if(!confirm("Delete this message?")) return;
     if(activeRoom.type==="dm") await sb.from("dm_messages").delete().eq("id",msgId);
     else await sb.from("messages").update({deleted_at:new Date().toISOString()}).eq("id",msgId);
-    document.querySelector(`[data-msg-id="${msgId}"]`)?.remove();
+    msgElMap.get(String(msgId))?.remove();
+    msgElMap.delete(String(msgId));
   }
 
   /* ════════════════ SLASH COMMANDS ════════════════ */
