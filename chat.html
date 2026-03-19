@@ -6,15 +6,96 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body { margin:0; display:flex; height:100vh; font-family:sans-serif; }
-#servers { width:70px; background:#111; display:flex; flex-direction:column; align-items:center; gap:10px; padding:10px; }
-.server { width:45px;height:45px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer; }
-#channels { width:180px;background:#1e1e1e;padding:10px;color:white; }
-.channel { cursor:pointer; padding:5px; }
-#chat { flex:1; display:flex; flex-direction:column; }
-#messages { flex:1; overflow:auto; padding:10px; }
-.msg { margin-bottom:10px; }
+body {
+  margin:0;
+  display:flex;
+  height:100vh;
+  background:#0f172a;
+  color:white;
+  font-family:sans-serif;
+}
+
+/* SERVERS */
+#servers {
+  width:70px;
+  background:#020617;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+}
+
+/* CHANNELS */
+#channels {
+  width:200px;
+  background:#020617;
+  padding:10px;
+}
+
+.channel {
+  padding:6px;
+  cursor:pointer;
+  border-radius:6px;
+}
+.channel:hover { background:#1e293b; }
+
+/* CHAT */
+#chat {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+#messages {
+  flex:1;
+  overflow:auto;
+  padding:10px;
+}
+
+/* MESSAGE */
+.msg {
+  margin-bottom:10px;
+  animation:fadeIn .2s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform:translateY(5px);}
+  to {opacity:1;}
+}
+
 .mention { color:#60a5fa; font-weight:bold; }
+
+/* INPUT */
+#inputRow {
+  display:flex;
+  padding:10px;
+  background:#020617;
+}
+#input {
+  flex:1;
+  padding:10px;
+  border:none;
+  outline:none;
+}
+
+/* TYPING */
+#typing {
+  font-size:12px;
+  color:#94a3b8;
+  padding-left:10px;
+}
+
+.typingDots span {
+  animation:blink 1.2s infinite;
+}
+.typingDots span:nth-child(2){ animation-delay:.2s }
+.typingDots span:nth-child(3){ animation-delay:.4s }
+
+@keyframes blink {
+  0%,100%{opacity:0}
+  50%{opacity:1}
+}
 </style>
 </head>
 
@@ -25,7 +106,10 @@ body { margin:0; display:flex; height:100vh; font-family:sans-serif; }
 
 <div id="chat">
   <div id="messages"></div>
-  <input id="input" placeholder="Message..." />
+  <div id="typing"></div>
+  <div id="inputRow">
+    <input id="input" placeholder="Message..." />
+  </div>
 </div>
 
 <script>
@@ -47,8 +131,8 @@ async function loadServers(){
   el.innerHTML="";
   data?.forEach(s=>{
     const d=document.createElement("div");
+    d.textContent=s.name[0];
     d.className="server";
-    d.textContent=s.name?.[0]||"?";
     d.onclick=()=>{ currentServer=s.id; loadChannels(); };
     el.appendChild(d);
   });
@@ -56,14 +140,30 @@ async function loadServers(){
 
 /* CHANNELS */
 async function loadChannels(){
-  const { data } = await supabase.from("channels").select("*").eq("server_id",currentServer);
+  const { data } = await supabase.from("channels")
+    .select("*")
+    .eq("server_id",currentServer);
+
   const el=document.getElementById("channels");
   el.innerHTML="";
+
   data?.forEach(c=>{
     const d=document.createElement("div");
     d.className="channel";
     d.textContent="# "+c.name;
-    d.onclick=()=>{ currentChannel=c.id; loadMessages(); };
+
+    d.onclick=async ()=>{
+      if(!c.is_public){
+        const pass = prompt("Enter channel password:");
+        if(pass !== c.password){
+          alert("Wrong password");
+          return;
+        }
+      }
+      currentChannel=c.id;
+      loadMessages();
+    };
+
     el.appendChild(d);
   });
 }
@@ -85,7 +185,9 @@ async function loadMessages(){
 function renderMsg(m){
   const el=document.getElementById("messages");
 
-  let text=m.text.replace(/@(\w+)/g,'<span class="mention">@$1</span>');
+  let text=m.text.replace(/@(\w+)/g,
+    '<span class="mention">@$1</span>'
+  );
 
   const div=document.createElement("div");
   div.className="msg";
@@ -99,35 +201,67 @@ function renderMsg(m){
   el.appendChild(div);
 }
 
-/* SEND */
-document.getElementById("input").addEventListener("keydown",async e=>{
+/* SEND + TYPING */
+const input = document.getElementById("input");
+
+input.addEventListener("input", async ()=>{
+  await supabase.from("typing").upsert({
+    user_id:user.id,
+    channel_id:currentChannel,
+    typing:true
+  });
+});
+
+input.addEventListener("keydown", async e=>{
   if(e.key==="Enter"){
-    const text=e.target.value.trim();
+    const text=input.value.trim();
     if(!text) return;
 
     if(text.startsWith("/")){
       runCommand(text);
-      e.target.value="";
+      input.value="";
       return;
     }
 
-    const { data } = await supabase.from("messages").insert({
+    await supabase.from("messages").insert({
       user_id:user.id,
       username:user.email,
       text,
       channel_id:currentChannel,
       reply_to:replyingTo
-    }).select().single();
+    });
 
-    if(text.includes("@")){
-      document.title="🔔 Mention!";
-    }
-
+    input.value="";
     replyingTo=null;
-    e.target.value="";
     loadMessages();
+
+    await supabase.from("typing").upsert({
+      user_id:user.id,
+      channel_id:currentChannel,
+      typing:false
+    });
   }
 });
+
+/* TYPING UI */
+async function checkTyping(){
+  const { data } = await supabase.from("typing")
+    .select("*")
+    .eq("channel_id",currentChannel)
+    .eq("typing",true);
+
+  const el=document.getElementById("typing");
+
+  if(data?.length){
+    el.innerHTML=`Someone is typing 
+      <span class="typingDots">
+        <span>.</span><span>.</span><span>.</span>
+      </span>`;
+  } else {
+    el.innerHTML="";
+  }
+}
+setInterval(checkTyping,1000);
 
 /* COMMANDS */
 async function runCommand(text){
@@ -142,20 +276,24 @@ async function runCommand(text){
   else if(cmd==="/channel"){
     await supabase.from("channels").insert({
       name:args[1],
-      server_id:currentServer
+      server_id:currentServer,
+      is_public:true
+    });
+    loadChannels();
+  }
+
+  else if(cmd==="/private"){
+    await supabase.from("channels").insert({
+      name:args[1],
+      password:args[2],
+      server_id:currentServer,
+      is_public:false
     });
     loadChannels();
   }
 
   else if(cmd==="/reply"){
     replyingTo=args[1];
-  }
-
-  else if(cmd==="/delete"){
-    await supabase.from("messages")
-      .update({ deleted_at:new Date() })
-      .eq("id",args[1]);
-    loadMessages();
   }
 }
 </script>
