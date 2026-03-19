@@ -308,6 +308,7 @@
   <script>
   /* ── CONFIG ── */
   const PROXY_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
+  const ANON_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM";
 
   /* ── Dark mode ── */
   function toggleDarkMode() {
@@ -356,8 +357,14 @@
   async function ai(prompt) {
     const res = await fetch(PROXY_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
+      headers: { "Content-Type": "application/json", "apikey": ANON_KEY, "Authorization": `Bearer ${ANON_KEY}` },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: "You are a helpful ELA writing assistant. Be clear, academic, and concise. Return only what is asked." },
+          { role: "user",   content: prompt }
+        ],
+        model: "llama3-8b-8192"
+      })
     });
 
     if (!res.ok) {
@@ -367,8 +374,26 @@
       throw new Error(`Error ${res.status}: ${errMsg}`);
     }
 
-    const data = await res.json();
-    return data.output || "(No response)";
+    /* groq-proxy returns SSE stream — read it fully */
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "", full = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n"); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const json = line.replace("data:", "").trim();
+        if (json === "[DONE]") continue;
+        try {
+          const delta = JSON.parse(json).choices?.[0]?.delta?.content;
+          if (delta) full += delta;
+        } catch {}
+      }
+    }
+    return full || "(No response)";
   }
 
   /* ── Paragraph Builder ── */
