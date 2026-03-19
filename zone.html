@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>360 | Zone</title>
-
   <style>
     :root {
       --accent: #4a6cff;
@@ -19,141 +18,110 @@
       --transition: 0.25s ease;
     }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: system-ui, sans-serif;
       max-width: 900px;
       margin: 2rem auto;
-      padding: 0 1rem;
+      padding: 0 1.5rem 4rem;
       background: var(--bg);
       color: var(--text);
       transition: background var(--transition), color var(--transition);
     }
 
-    body.dark {
-      background: var(--bg-dark);
-      color: var(--text-dark);
-    }
+    body.dark { background: var(--bg-dark); color: var(--text-dark); }
 
-    h1 {
-      margin-bottom: 0.25rem;
+    /* ── Header ── */
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    body.dark .header { border-color: #374151; }
+    .header h1 { font-size: 1.4rem; font-weight: 800; }
+    .header h1 span {
+      background: linear-gradient(120deg, #4a6cff, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .toggleRow {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      font-size: 0.9rem;
-    }
-
+    .toggleRow { display: flex; gap: 8px; }
     .toggleBtn {
-      padding: 6px 10px;
+      padding: 6px 14px;
       border-radius: 999px;
       border: 1px solid #ccc;
       background: #f3f4ff;
       cursor: pointer;
       font-size: 0.8rem;
+      transition: var(--transition);
     }
+    body.dark .toggleBtn { background: #1f2937; border-color: #4b5563; color: #e5e7eb; }
+    .toggleBtn:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
-    body.dark .toggleBtn {
-      background: #111827;
-      border-color: #4b5563;
-      color: #e5e7eb;
-    }
-
-    .action {
-      position: relative;
-      overflow: hidden;
-    }
-    .action::after {
-      content: "";
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background: rgba(255,255,255,0.5);
-      border-radius: 50%;
-      transform: scale(0);
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 0.5s, opacity 0.8s;
-      left: var(--ripple-x, 50%);
-      top: var(--ripple-y, 50%);
-    }
-    .action:active::after {
-      transform: scale(20);
-      opacity: 1;
-    }
-
+    /* ── Tabs ── */
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 1.5rem;
       flex-wrap: wrap;
     }
-
     .tabBtn {
-      padding: 10px 18px;
+      padding: 9px 18px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
-      background: #e0e0e0;
+      background: #e5e7eb;
+      color: #374151;
       transition: var(--transition);
     }
+    .tabBtn:hover { background: var(--accent-light); color: white; transform: translateY(-2px); }
+    .tabBtn.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(74,108,255,.35); }
+    body.dark .tabBtn { background: #374151; color: #e5e7eb; }
+    body.dark .tabBtn.active { background: var(--accent); color: white; }
 
-    .tabBtn:hover {
-      background: var(--accent-light);
-      color: white;
-      transform: translateY(-3px);
-    }
-
-    .tabBtn.active {
-      background: var(--accent);
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    }
-
-    body.dark .tabBtn {
-      background: #374151;
-      color: #e5e7eb;
-    }
-    body.dark .tabBtn.active {
-      background: var(--accent);
-      color: white;
-    }
-
+    /* ── Tab content ── */
     .tabContent {
       display: none;
-      padding: 1rem;
-      border: 1px solid #ddd;
+      padding: 1.5rem;
+      border: 1px solid #e5e7eb;
       border-radius: var(--radius);
       background: var(--card);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
     }
+    body.dark .tabContent { background: var(--card-dark); border-color: #374151; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
 
-    body.dark .tabContent {
-      background: var(--card-dark);
-      border-color: #4b5563;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    /* ── Form elements ── */
+    label {
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+      font-size: 0.9rem;
     }
+    label:first-child { margin-top: 0; }
 
-    label { display: block; margin-top: 1rem; font-weight: 600; }
-    textarea, select, input {
+    textarea, select, input[type="text"], input:not([type]) {
       width: 100%;
-      margin-top: 0.25rem;
-      padding: 0.5rem;
+      padding: 0.6rem 0.8rem;
       font-size: 0.95rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: white;
+      border-radius: 7px;
+      border: 1px solid #d1d5db;
+      background: #fafafa;
       color: #111827;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
     }
-
+    textarea:focus, select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(74,108,255,.15);
+    }
     body.dark textarea,
     body.dark select,
     body.dark input {
@@ -162,160 +130,243 @@
       border-color: #4b5563;
     }
 
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+
     button.action {
-      margin-top: 1rem;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.95rem;
+      position: relative;
+      overflow: hidden;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 7px;
       border: none;
       background: var(--accent);
       color: white;
       font-weight: 600;
       transition: var(--transition);
     }
-
-    button.action:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
+    button.action:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(74,108,255,.3); }
+    button.action:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    button.action::after {
+      content: "";
+      position: absolute;
+      width: 10px; height: 10px;
+      background: rgba(255,255,255,.5);
+      border-radius: 50%;
+      transform: scale(0);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform .5s, opacity .8s;
+      left: var(--rx, 50%);
+      top: var(--ry, 50%);
     }
+    button.action:active::after { transform: scale(20); opacity: 1; }
 
+    button.copy-btn {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 7px;
+      border: 1px solid #d1d5db;
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    body.dark button.copy-btn { border-color: #4b5563; color: #e5e7eb; }
+    button.copy-btn:hover { background: #f3f4ff; border-color: var(--accent); color: var(--accent); }
+
+    /* ── Output box ── */
+    .output-wrap { position: relative; margin-top: 1rem; }
     .output {
-      margin-top: 1rem;
       padding: 1rem;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 7px;
+      background: #f9fafb;
       white-space: pre-wrap;
       min-height: 60px;
       font-size: 0.95rem;
+      line-height: 1.6;
+      color: #111827;
     }
-
-    body.dark .output {
-      background: #111827;
-      border-color: #4b5563;
-      color: #e5e7eb;
-    }
-
-    mark {
-      background: #ffe066;
-      padding: 2px 4px;
-      border-radius: 4px;
-    }
+    body.dark .output { background: #111827; border-color: #374151; color: #e5e7eb; }
+    .output:empty { display: none; }
+    .output.loading { color: #9ca3af; font-style: italic; }
 
     .error {
       color: #b91c1c;
       font-size: 0.85rem;
       margin-top: 0.5rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      display: none;
     }
+    body.dark .error { background: #1f1212; border-color: #7f1d1d; color: #fca5a5; }
+    .error.visible { display: block; }
 
-    body.dark .error {
-      color: #fecaca;
+    /* ── Mark / highlight ── */
+    mark { background: #ffe066; padding: 1px 3px; border-radius: 3px; }
+    body.dark mark { background: #854d0e; color: #fef3c7; }
+
+    /* ── Pronoun suggestions ── */
+    #pronounSuggestions {
+      margin-top: 0.8rem;
+      padding: 0.8rem 1rem;
+      border-radius: 7px;
+      background: #f0f4ff;
+      border: 1px solid #c7d2fe;
+      font-size: 0.9rem;
+      line-height: 1.7;
     }
+    body.dark #pronounSuggestions { background: #1e1b4b; border-color: #3730a3; color: #c7d2fe; }
+
+    /* ── MLA output special ── */
+    #mlaOut { font-family: "Times New Roman", serif; font-size: 1rem; }
+
+    /* ── Char counter ── */
+    .char-count { font-size: 0.75rem; color: #9ca3af; text-align: right; margin-top: 2px; }
   </style>
 </head>
 
 <body>
-  <h1>
-    <span>Zone Essay Helper</span>
+  <div class="header">
+    <h1>Zone <span>Essay Helper</span></h1>
     <div class="toggleRow">
-      <button class="toggleBtn" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+      <button class="toggleBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
     </div>
-  </h1>
+  </div>
 
   <div class="tabs">
-    <button class="tabBtn active" onclick="showTab('builder', this)">Paragraph Builder</button>
-    <button class="tabBtn" onclick="showTab('grammar', this)">Grammar Fixer</button>
-    <button class="tabBtn" onclick="showTab('mla', this)">MLA Generator</button>
-    <button class="tabBtn" onclick="showTab('evidence', this)">Evidence Helper</button>
-    <button class="tabBtn" onclick="showTab('pronouns', this)">Pronoun Checker</button>
+    <button class="tabBtn active" onclick="showTab('builder', this)">📝 Paragraph Builder</button>
+    <button class="tabBtn" onclick="showTab('grammar', this)">✏️ Grammar Fixer</button>
+    <button class="tabBtn" onclick="showTab('mla', this)">📚 MLA Generator</button>
+    <button class="tabBtn" onclick="showTab('evidence', this)">🔍 Evidence Helper</button>
+    <button class="tabBtn" onclick="showTab('pronouns', this)">👁️ Pronoun Checker</button>
   </div>
 
   <!-- PARAGRAPH BUILDER -->
   <div id="builder" class="tabContent" style="display:block;">
     <label>Paragraph type</label>
     <select id="paragraphType">
-      <option value="intro">Intro</option>
-      <option value="body1">Body 1</option>
-      <option value="body2">Body 2</option>
-      <option value="body3">Body 3</option>
+      <option value="introduction">Introduction</option>
+      <option value="body (first)">Body 1</option>
+      <option value="body (second)">Body 2</option>
+      <option value="body (third)">Body 3</option>
       <option value="conclusion">Conclusion</option>
     </select>
-    <label>Claim</label>
-    <textarea id="claim" rows="2"></textarea>
-    <label>Evidence / notes</label>
-    <textarea id="evidence" rows="6"></textarea>
-    <button class="action" onclick="buildParagraph()">Build Paragraph (AI)</button>
-    <div class="output" id="builderOut"></div>
-    <div class="error" id="builderErr"></div>
+    <label>Topic / Claim</label>
+    <textarea id="claim" rows="2" placeholder="e.g. Social media negatively impacts mental health in teenagers."></textarea>
+    <label>Evidence / Notes</label>
+    <textarea id="evidence" rows="5" placeholder="Paste your evidence, quotes, or bullet points here..."></textarea>
+    <div class="btn-row">
+      <button class="action" onclick="buildParagraph(this)">✨ Build Paragraph</button>
+      <button class="copy-btn" onclick="copyOutput('builderOut')">Copy</button>
+    </div>
+    <div class="output-wrap">
+      <div class="output" id="builderOut"></div>
+      <div class="error" id="builderErr"></div>
+    </div>
   </div>
 
   <!-- GRAMMAR FIXER -->
   <div id="grammar" class="tabContent">
-    <label>Paste text to clean up</label>
-    <textarea id="grammarInput" rows="6"></textarea>
-    <button class="action" onclick="fixGrammar()">Fix Grammar (AI)</button>
-    <div class="output" id="grammarOut"></div>
-    <div class="error" id="grammarErr"></div>
+    <label>Paste your text</label>
+    <textarea id="grammarInput" rows="8" placeholder="Paste your essay or paragraph here and AI will fix grammar, punctuation, and flow..."></textarea>
+    <div class="btn-row">
+      <button class="action" onclick="fixGrammar(this)">✨ Fix Grammar</button>
+      <button class="copy-btn" onclick="copyOutput('grammarOut')">Copy</button>
+    </div>
+    <div class="output-wrap">
+      <div class="output" id="grammarOut"></div>
+      <div class="error" id="grammarErr"></div>
+    </div>
   </div>
 
   <!-- MLA GENERATOR -->
   <div id="mla" class="tabContent">
-    <label>Author</label>
-    <input id="mlaAuthor" />
-    <label>Title</label>
-    <input id="mlaTitle" />
-    <label>Website / Container</label>
-    <input id="mlaSite" />
+    <label>Author (Last, First)</label>
+    <input id="mlaAuthor" placeholder="e.g. Smith, John" />
+    <label>Article / Page Title</label>
+    <input id="mlaTitle" placeholder="e.g. The Effects of Climate Change" />
+    <label>Website / Publication Name</label>
+    <input id="mlaSite" placeholder="e.g. National Geographic" />
     <label>URL</label>
-    <input id="mlaURL" />
-    <label>Date Published (optional)</label>
-    <input id="mlaDate" placeholder="2024-05-12" />
+    <input id="mlaURL" placeholder="https://..." />
+    <label>Date Published <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+    <input id="mlaDate" placeholder="e.g. 12 May 2024" />
     <label>Date Accessed</label>
-    <input id="mlaAccess" placeholder="2026-03-10" />
-    <button class="action" onclick="generateMLA()">Generate MLA (AI)</button>
-    <div class="output" id="mlaOut"></div>
-    <div class="error" id="mlaErr"></div>
+    <input id="mlaAccess" placeholder="e.g. 10 Mar. 2026" />
+    <div class="btn-row">
+      <button class="action" onclick="generateMLA(this)">✨ Generate Citation</button>
+      <button class="copy-btn" onclick="copyOutput('mlaOut')">Copy</button>
+    </div>
+    <div class="output-wrap">
+      <div class="output" id="mlaOut"></div>
+      <div class="error" id="mlaErr"></div>
+    </div>
   </div>
 
   <!-- EVIDENCE HELPER -->
   <div id="evidence" class="tabContent">
-    <label>Claim</label>
-    <textarea id="evClaim" rows="2"></textarea>
-    <label>Evidence chunks (one per line)</label>
-    <textarea id="evChunks" rows="6"></textarea>
-    <button class="action" onclick="alignEvidence()">Align Evidence (AI)</button>
-    <div class="output" id="evidenceOut"></div>
-    <div class="error" id="evidenceErr"></div>
+    <label>Your Claim</label>
+    <textarea id="evClaim" rows="2" placeholder="e.g. Renewable energy is essential for reducing carbon emissions."></textarea>
+    <label>Evidence chunks <span style="font-weight:400;color:#9ca3af">(one per line or paste multiple)</span></label>
+    <textarea id="evChunks" rows="6" placeholder="Paste each piece of evidence on its own line..."></textarea>
+    <div class="btn-row">
+      <button class="action" onclick="alignEvidence(this)">✨ Align Evidence</button>
+      <button class="copy-btn" onclick="copyOutput('evidenceOut')">Copy</button>
+    </div>
+    <div class="output-wrap">
+      <div class="output" id="evidenceOut"></div>
+      <div class="error" id="evidenceErr"></div>
+    </div>
   </div>
 
   <!-- PRONOUN CHECKER -->
   <div id="pronouns" class="tabContent">
-    <label>Paste text</label>
-    <textarea id="pronounInput" rows="6"></textarea>
-    <label>Select pronoun category</label>
+    <label>Paste your text</label>
+    <textarea id="pronounInput" rows="6" placeholder="Paste your paragraph here..."></textarea>
+    <label>Pronoun category to highlight</label>
     <select id="pronounCategory">
-      <option value="subjective">Subjective (he, she, they)</option>
-      <option value="objective">Objective (him, her, them)</option>
-      <option value="possessive">Possessive (his, hers, theirs)</option>
-      <option value="reflexive">Reflexive (himself, herself, themselves)</option>
+      <option value="subjective">Subjective — he, she, they, I, we, you</option>
+      <option value="objective">Objective — him, her, them, me, us, you</option>
+      <option value="possessive">Possessive — his, hers, theirs, mine, ours</option>
+      <option value="reflexive">Reflexive — himself, herself, themselves, myself</option>
     </select>
-    <button class="action" onclick="checkPronouns()">Check Pronouns</button>
-    <div class="output" id="pronounOut"></div>
-    <div class="output" id="pronounSuggestions"></div>
+    <div class="btn-row">
+      <button class="action" onclick="checkPronouns()">🔎 Highlight Pronouns</button>
+      <button class="action" onclick="aiCheckPronouns(this)" style="background:#7c3aed;">✨ AI Suggestions</button>
+    </div>
+    <div class="output-wrap">
+      <div class="output" id="pronounOut"></div>
+      <div id="pronounSuggestions" style="display:none;"></div>
+      <div class="error" id="pronounErr"></div>
+    </div>
   </div>
 
   <script>
-  /* ── CONFIG ── */
+  /* ══════════════════════════════════════
+     CONFIG
+  ══════════════════════════════════════ */
   const GROQ_KEY = "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";
   const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+  const MODEL    = "llama-3.1-8b-instant";
 
-  /* ── Dark mode ── */
+  /* ══════════════════════════════════════
+     DARK MODE
+  ══════════════════════════════════════ */
   function toggleDarkMode() {
     document.body.classList.toggle("dark");
+    const btn = document.querySelector('.toggleBtn');
+    btn.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
   }
 
-  /* ── Tabs ── */
+  /* ══════════════════════════════════════
+     TABS
+  ══════════════════════════════════════ */
   function showTab(id, btn) {
     document.querySelectorAll('.tabContent').forEach(d => d.style.display = 'none');
     document.getElementById(id).style.display = 'block';
@@ -323,139 +374,214 @@
     btn.classList.add('active');
   }
 
-  /* ── Ripple ── */
+  /* ══════════════════════════════════════
+     RIPPLE
+  ══════════════════════════════════════ */
   document.addEventListener("click", e => {
     if (e.target.classList.contains("action")) {
-      const rect = e.target.getBoundingClientRect();
-      e.target.style.setProperty("--ripple-x", `${e.clientX - rect.left}px`);
-      e.target.style.setProperty("--ripple-y", `${e.clientY - rect.top}px`);
+      const r = e.target.getBoundingClientRect();
+      e.target.style.setProperty("--rx", `${e.clientX - r.left}px`);
+      e.target.style.setProperty("--ry", `${e.clientY - r.top}px`);
     }
   });
 
-  /* ── Pronoun checker ── */
-  const pronounSets = {
-    subjective: ["he","she","they","i","we","you"],
-    objective:  ["him","her","them","me","us","you"],
-    possessive: ["his","hers","theirs","mine","ours","yours"],
-    reflexive:  ["himself","herself","themselves","myself","ourselves","yourself"]
-  };
-
-  function checkPronouns() {
-    const text     = document.getElementById("pronounInput").value;
-    const category = document.getElementById("pronounCategory").value;
-    const list     = pronounSets[category];
-    let highlighted = text;
-    list.forEach(p => {
-      highlighted = highlighted.replace(new RegExp(`\\b${p}\\b`, "gi"), m => `<mark>${m}</mark>`);
+  /* ══════════════════════════════════════
+     COPY
+  ══════════════════════════════════════ */
+  function copyOutput(id) {
+    const el   = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    if (!text.trim()) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = event.target;
+      btn.textContent = "Copied!";
+      setTimeout(() => btn.textContent = "Copy", 1500);
     });
-    document.getElementById("pronounOut").innerHTML = highlighted;
-    document.getElementById("pronounSuggestions").textContent =
-      list.map(p => `• Replace "${p}" with a specific noun for clarity`).join("\n");
   }
 
-  /* ── Universal AI call — Groq direct ── */
+  /* ══════════════════════════════════════
+     LOADING STATE
+  ══════════════════════════════════════ */
+  function setLoading(btn, outId, errId, loading) {
+    const out = document.getElementById(outId);
+    const err = document.getElementById(errId);
+    if (loading) {
+      btn.disabled = true;
+      btn.dataset.orig = btn.textContent;
+      btn.textContent = "Thinking...";
+      out.classList.add("loading");
+      out.textContent = "Generating response...";
+      err.classList.remove("visible");
+    } else {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.orig || btn.textContent;
+      out.classList.remove("loading");
+    }
+  }
+
+  function showError(errId, msg) {
+    const err = document.getElementById(errId);
+    err.textContent = "⚠️ " + msg;
+    err.classList.add("visible");
+  }
+
+  /* ══════════════════════════════════════
+     UNIVERSAL AI CALL
+  ══════════════════════════════════════ */
   async function ai(prompt) {
     const res = await fetch(GROQ_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":  "application/json",
         "Authorization": `Bearer ${GROQ_KEY}`
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: MODEL,
         messages: [
-          { role: "system", content: "You are a helpful ELA writing assistant. Be clear, academic, and concise. Return only what is asked." },
+          { role: "system", content: "You are a helpful ELA writing assistant for middle and high school students. Be clear, academic, and concise. Return only what is asked with no extra commentary or preamble." },
           { role: "user",   content: prompt }
         ],
-        max_tokens: 1024
+        max_tokens: 1024,
+        temperature: 0.7
       })
     });
 
     if (!res.ok) {
-      let errMsg = "";
-      try { const j = await res.json(); errMsg = j.error?.message || JSON.stringify(j); }
-      catch { errMsg = await res.text(); }
-      throw new Error(`Error ${res.status}: ${errMsg}`);
+      let msg = "";
+      try { const j = await res.json(); msg = j.error?.message || JSON.stringify(j); }
+      catch { msg = await res.text(); }
+      throw new Error(`${res.status}: ${msg}`);
     }
 
     const data = await res.json();
-    return data.choices?.[0]?.message?.content || "(No response)";
+    return data.choices?.[0]?.message?.content?.trim() || "(No response)";
   }
 
-  /* ── Paragraph Builder ── */
-  async function buildParagraph() {
-    const out = document.getElementById("builderOut");
-    const err = document.getElementById("builderErr");
-    err.textContent = "";
+  /* ══════════════════════════════════════
+     PARAGRAPH BUILDER
+  ══════════════════════════════════════ */
+  async function buildParagraph(btn) {
     const type     = document.getElementById("paragraphType").value;
     const claim    = document.getElementById("claim").value.trim();
     const evidence = document.getElementById("evidence").value.trim();
-    out.textContent = "Thinking...";
+    if (!claim) { showError("builderErr", "Please enter a claim or topic."); return; }
+    setLoading(btn, "builderOut", "builderErr", true);
     try {
-      out.textContent = await ai(
-        `Write a ${type} paragraph using this claim and evidence.\n\nClaim:\n${claim}\n\nEvidence:\n${evidence}\n\nUse clear academic language and proper structure. Return only the paragraph.`
+      document.getElementById("builderOut").textContent = await ai(
+        `Write a well-structured ${type} paragraph for a middle or high school essay.\n\nClaim/Topic:\n${claim}\n\n${evidence ? `Evidence/Notes:\n${evidence}\n\n` : ""}Requirements:\n- Use clear academic language\n- Follow proper ${type} paragraph structure\n- Include a topic sentence, supporting details, and a closing sentence\n- Do NOT include labels like "Topic sentence:" or "Closing sentence:"\n- Return only the finished paragraph`
       );
     } catch (e) {
-      out.textContent = "";
-      err.textContent = "Error: " + e.message;
+      document.getElementById("builderOut").textContent = "";
+      showError("builderErr", e.message);
     }
+    setLoading(btn, "builderOut", "builderErr", false);
   }
 
-  /* ── Grammar Fixer ── */
-  async function fixGrammar() {
-    const out = document.getElementById("grammarOut");
-    const err = document.getElementById("grammarErr");
-    err.textContent = "";
-    const text = document.getElementById("grammarInput").value;
-    out.textContent = "Thinking...";
+  /* ══════════════════════════════════════
+     GRAMMAR FIXER
+  ══════════════════════════════════════ */
+  async function fixGrammar(btn) {
+    const text = document.getElementById("grammarInput").value.trim();
+    if (!text) { showError("grammarErr", "Please paste some text to fix."); return; }
+    setLoading(btn, "grammarOut", "grammarErr", true);
     try {
-      out.textContent = await ai(
-        `Fix grammar, punctuation, clarity, and flow. Do not change the meaning. Return only the corrected text.\n\nText:\n${text}`
+      document.getElementById("grammarOut").textContent = await ai(
+        `Fix all grammar, punctuation, spelling, and clarity issues in the following text. Improve sentence flow where needed. Do NOT change the meaning or content. Return only the corrected text with no commentary.\n\nText:\n${text}`
       );
     } catch (e) {
-      out.textContent = "";
-      err.textContent = "Error: " + e.message;
+      document.getElementById("grammarOut").textContent = "";
+      showError("grammarErr", e.message);
     }
+    setLoading(btn, "grammarOut", "grammarErr", false);
   }
 
-  /* ── MLA Generator ── */
-  async function generateMLA() {
-    const out = document.getElementById("mlaOut");
-    const err = document.getElementById("mlaErr");
-    err.textContent = "";
+  /* ══════════════════════════════════════
+     MLA GENERATOR
+  ══════════════════════════════════════ */
+  async function generateMLA(btn) {
     const author = document.getElementById("mlaAuthor").value.trim();
     const title  = document.getElementById("mlaTitle").value.trim();
     const site   = document.getElementById("mlaSite").value.trim();
     const url    = document.getElementById("mlaURL").value.trim();
     const date   = document.getElementById("mlaDate").value.trim();
     const access = document.getElementById("mlaAccess").value.trim();
-    out.textContent = "Thinking...";
+    if (!title) { showError("mlaErr", "Please enter at least an article title."); return; }
+    setLoading(btn, "mlaOut", "mlaErr", true);
     try {
-      out.textContent = await ai(
-        `Create a correct MLA 9 citation.\n\nAuthor: ${author}\nTitle: ${title}\nWebsite: ${site}\nURL: ${url}\nDate Published: ${date}\nDate Accessed: ${access}\n\nReturn only the MLA citation.`
+      document.getElementById("mlaOut").textContent = await ai(
+        `Generate a correctly formatted MLA 9th edition Works Cited citation for an online source.\n\nAuthor: ${author || "No author"}\nArticle Title: ${title}\nWebsite/Publication: ${site || "N/A"}\nURL: ${url || "N/A"}\nDate Published: ${date || "N/A"}\nDate Accessed: ${access || "N/A"}\n\nRules:\n- Use hanging indent format (describe with spaces if needed)\n- Follow MLA 9 exactly\n- Return only the citation, nothing else`
       );
     } catch (e) {
-      out.textContent = "";
-      err.textContent = "Error: " + e.message;
+      document.getElementById("mlaOut").textContent = "";
+      showError("mlaErr", e.message);
     }
+    setLoading(btn, "mlaOut", "mlaErr", false);
   }
 
-  /* ── Evidence Helper ── */
-  async function alignEvidence() {
-    const out = document.getElementById("evidenceOut");
-    const err = document.getElementById("evidenceErr");
-    err.textContent = "";
+  /* ══════════════════════════════════════
+     EVIDENCE HELPER
+  ══════════════════════════════════════ */
+  async function alignEvidence(btn) {
     const claim  = document.getElementById("evClaim").value.trim();
     const chunks = document.getElementById("evChunks").value.trim();
-    out.textContent = "Thinking...";
+    if (!claim || !chunks) { showError("evidenceErr", "Please enter both a claim and evidence."); return; }
+    setLoading(btn, "evidenceOut", "evidenceErr", true);
     try {
-      out.textContent = await ai(
-        `Claim:\n${claim}\n\nEvidence:\n${chunks}\n\nExplain how each evidence chunk supports the claim in clear, student-friendly reasoning.`
+      document.getElementById("evidenceOut").textContent = await ai(
+        `A student is writing an essay with the following claim:\n"${claim}"\n\nThey have collected this evidence:\n${chunks}\n\nFor each piece of evidence:\n1. Explain clearly how it supports the claim\n2. Suggest how to integrate it smoothly into a paragraph\n3. Rate its relevance (Strong / Moderate / Weak)\n\nUse clear, student-friendly language. Format each piece of evidence as a numbered item.`
       );
     } catch (e) {
-      out.textContent = "";
-      err.textContent = "Error: " + e.message;
+      document.getElementById("evidenceOut").textContent = "";
+      showError("evidenceErr", e.message);
     }
+    setLoading(btn, "evidenceOut", "evidenceErr", false);
+  }
+
+  /* ══════════════════════════════════════
+     PRONOUN CHECKER
+  ══════════════════════════════════════ */
+  const pronounSets = {
+    subjective: ["he","she","they","i","we","you","it"],
+    objective:  ["him","her","them","me","us","you","it"],
+    possessive: ["his","hers","theirs","mine","ours","yours","its"],
+    reflexive:  ["himself","herself","themselves","myself","ourselves","yourself","itself"]
+  };
+
+  function checkPronouns() {
+    const text     = document.getElementById("pronounInput").value;
+    const category = document.getElementById("pronounCategory").value;
+    if (!text.trim()) return;
+    let highlighted = text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    pronounSets[category].forEach(p => {
+      highlighted = highlighted.replace(new RegExp(`\\b${p}\\b`, "gi"), m => `<mark>${m}</mark>`);
+    });
+    const out = document.getElementById("pronounOut");
+    out.innerHTML = highlighted;
+    out.style.display = "block";
+    const sug = document.getElementById("pronounSuggestions");
+    sug.style.display = "block";
+    sug.innerHTML = `<strong>💡 Tip:</strong> Highlighted pronouns may be too vague in academic writing. Consider replacing them with specific nouns or names for clarity.`;
+  }
+
+  async function aiCheckPronouns(btn) {
+    const text = document.getElementById("pronounInput").value.trim();
+    if (!text) { showError("pronounErr", "Please paste some text first."); return; }
+    btn.disabled = true;
+    btn.dataset.orig = btn.textContent;
+    btn.textContent = "Thinking...";
+    document.getElementById("pronounErr").classList.remove("visible");
+    try {
+      const result = await ai(
+        `Review the following text for pronoun usage in an academic essay context.\n\nText:\n${text}\n\nProvide:\n1. A list of pronouns found and whether they are clear or ambiguous\n2. Specific suggestions for replacing vague pronouns with nouns\n3. A rewritten version of the text with improved pronoun clarity\n\nFormat clearly with numbered sections.`
+      );
+      const sug = document.getElementById("pronounSuggestions");
+      sug.style.display = "block";
+      sug.textContent = result;
+    } catch (e) {
+      showError("pronounErr", e.message);
+    }
+    btn.disabled = false;
+    btn.textContent = btn.dataset.orig;
   }
   </script>
 </body>
