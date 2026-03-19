@@ -307,9 +307,9 @@
 
   <script>
   /* ── CONFIG — replace with your real Groq key ── */
-  const GROQ_KEY = "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";
+  const GROQ_KEY = "YOUR_GROQ_KEY_HERE";
   const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-  const MODEL    = "llama3-8b-8192";
+  const MODEL    = "llama-3.3-70b-versatile";
 
   /* ── Dark mode ── */
   function toggleDarkMode() {
@@ -373,8 +373,10 @@
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Groq error ${res.status}: ${err}`);
+      let errMsg = "";
+      try { const j = await res.json(); errMsg = j.error?.message || JSON.stringify(j); }
+      catch { errMsg = await res.text(); }
+      throw new Error(`Groq ${res.status}: ${errMsg}`);
     }
 
     const data = await res.json();
