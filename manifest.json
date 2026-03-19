@@ -1,0 +1,37 @@
+{
+  "name": "360",
+  "short_name": "360",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "dir": "ltr",
+  "lang": "en-US",
+
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
+
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/v2.0.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ]
+}
