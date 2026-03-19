@@ -106,12 +106,23 @@
   <script src="../main.js"></script>
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
-  <script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const SUPABASE_URL = "https://yfnwexvsibzqyuqfkepa.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbndleHZzaWJ6cXl1cWZrZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM1MzMsImV4cCI6MjA4MzMxOTUzM30.t_AAtIDD0o7IDN8sUdwdtKxoqFyKdw5n6_-l3e0I-kM";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const aiInput   = document.getElementById("ai-input");
     const aiSendBtn = document.getElementById("ai-send-btn");
     const aiOutput  = document.getElementById("ai-output");
-    const PROXY_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
-    const history   = [{ role: "system", content: "You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze." }];
+
+    const today = new Date();
+    const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const history = [
+      { role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. Today's date is ${currentDate}.` }
+    ];
 
     function appendBubble(text, role) {
       const div = document.createElement("div");
@@ -126,42 +137,34 @@
       const prompt = aiInput.value.trim();
       if (!prompt) return;
       aiInput.value = "";
-      history.push({ role: "user", content: prompt });
+
       appendBubble(prompt, "user");
       const bubble = appendBubble("Thinking…", "assistant");
+
       try {
-        const res = await fetch(PROXY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history, model: "llama3-8b-8192" })
-        });
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "", full = "";
-        bubble.textContent = "";
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop();
-          for (const line of lines) {
-            if (!line.startsWith("data:")) continue;
-            const json = line.replace("data:", "").trim();
-            if (json === "[DONE]") continue;
-            try {
-              const delta = JSON.parse(json).choices?.[0]?.delta?.content;
-              if (delta) { full += delta; bubble.innerHTML = marked.parse(full); aiOutput.scrollTop = aiOutput.scrollHeight; }
-            } catch {}
+        const { data, error } = await supabase.functions.invoke('hyper-task', {
+          body: {
+            message: prompt,
+            memory: history
           }
-        }
-        if (full) history.push({ role: "assistant", content: full });
+        });
+
+        if (error) throw error;
+
+        const aiMessage = data?.reply || "No response";
+
+        history.push({ role: "user", content: prompt });
+        history.push({ role: "assistant", content: aiMessage });
+
+        bubble.innerHTML = marked.parse(aiMessage);
+        aiOutput.scrollTop = aiOutput.scrollHeight;
+
       } catch (err) {
-        bubble.innerHTML = "<span style=\"color:#ef4444;\">Error: " + err.message + "</span>";
-        history.pop();
+        bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
       }
     }
-    aiSendBtn.onclick = sendAI;
+
+    aiSendBtn.addEventListener("click", sendAI);
     aiInput.addEventListener("keydown", e => { if (e.key === "Enter") sendAI(); });
   </script>
 </body>
