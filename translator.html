@@ -267,7 +267,7 @@
         <label>From</label>
         <div class="custom-select-wrapper" id="sourceWrapper">
           <div class="custom-select-trigger" id="sourceTrigger">
-            <span id="sourceLabel">🇬🇧 English</span>
+            <span id="sourceLabel">🔍 Auto-Detect</span>
             <span class="arrow">▼</span>
           </div>
           <div class="custom-select-dropdown" id="sourceDropdown">
@@ -310,6 +310,7 @@
 
     // ── Language data ──
     const LANGUAGES = [
+      { value: "Auto-Detect", label: "Auto-Detect", native: "Detect language", flag: "🔍" },
       { group: "Most Used" },
       { value: "English",            label: "English",           native: "English",          flag: "🇬🇧" },
       { value: "Spanish",            label: "Spanish",           native: "Español",          flag: "🇪🇸" },
@@ -395,18 +396,22 @@
     ];
 
     // ── State ──
-    let sourceValue = "English";
+    let sourceValue = "Auto-Detect";
     let targetValue = "Spanish";
 
+    // ── Separate lists: source includes Auto-Detect, target does not ──
+    const SOURCE_LANGUAGES = LANGUAGES;
+    const TARGET_LANGUAGES = LANGUAGES.filter(item => item.value !== "Auto-Detect");
+
     // ── Build list items ──
-    function buildList(listEl, searchEl, wrapperEl, triggerLabelEl, currentValueGetter, onSelect) {
+    function buildList(listEl, searchEl, wrapperEl, triggerLabelEl, currentValueGetter, onSelect, langs) {
       function render(filter = "") {
         listEl.innerHTML = "";
         const f = filter.toLowerCase();
         let hasResults = false;
         let currentGroup = null;
 
-        LANGUAGES.forEach(item => {
+        langs.forEach(item => {
           if (item.group) {
             currentGroup = item.group;
             return;
@@ -457,7 +462,8 @@
       document.getElementById("sourceWrapper"),
       document.getElementById("sourceLabel"),
       () => sourceValue,
-      setSource
+      setSource,
+      SOURCE_LANGUAGES
     );
 
     buildList(
@@ -466,7 +472,8 @@
       document.getElementById("targetWrapper"),
       document.getElementById("targetLabel"),
       () => targetValue,
-      setTarget
+      setTarget,
+      TARGET_LANGUAGES
     );
 
     // ── Toggle open/close ──
@@ -516,7 +523,7 @@
       const out  = document.getElementById("translateResult");
 
       if (!text) { out.textContent = "Please enter some text to translate."; return; }
-      if (sourceValue === targetValue) { out.textContent = "Source and target languages are the same."; return; }
+      if (sourceValue !== "Auto-Detect" && sourceValue === targetValue) { out.textContent = "Source and target languages are the same."; return; }
 
       out.textContent = "Translating...";
 
