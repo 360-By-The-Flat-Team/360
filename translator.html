@@ -301,8 +301,12 @@
   <script src="../main.js"></script>
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
-  <script>
-    const TRANSLATE_ENDPOINT = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/dynamic-endpoint";
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL      = "https://wiswfpfsjiowtrdyqpxy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ── Language data ──
     const LANGUAGES = [
@@ -468,7 +472,6 @@
     // ── Toggle open/close ──
     function toggleDropdown(wrapperEl) {
       const isOpen = wrapperEl.classList.contains("open");
-      // Close all
       document.querySelectorAll(".custom-select-wrapper.open").forEach(w => w.classList.remove("open"));
       if (!isOpen) {
         wrapperEl.classList.add("open");
@@ -485,7 +488,6 @@
       toggleDropdown(document.getElementById("targetWrapper"));
     });
 
-    // Close on outside click
     document.addEventListener("click", () => {
       document.querySelectorAll(".custom-select-wrapper.open").forEach(w => w.classList.remove("open"));
     });
@@ -519,20 +521,13 @@
       out.textContent = "Translating...";
 
       try {
-        const response = await fetch(TRANSLATE_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, from: sourceValue, to: targetValue })
+        const { data, error } = await supabase.functions.invoke("dynamic-endpoint", {
+          body: { text, from: sourceValue, to: targetValue }
         });
 
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err?.error ?? "API error " + response.status);
-        }
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        if (!data.translated) { out.textContent = "No translation returned. Please try again."; return; }
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        if (!data?.translated) { out.textContent = "No translation returned. Please try again."; return; }
 
         out.textContent = data.translated;
 
