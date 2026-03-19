@@ -11,6 +11,172 @@
   <link rel="stylesheet" href="../responsive.css" />
   <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ── Custom Dropdown ── */
+    .custom-select-wrapper {
+      position: relative;
+      display: inline-block;
+      min-width: 180px;
+    }
+
+    .custom-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(128,128,128,0.25);
+      background: rgba(128,128,128,0.07);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      user-select: none;
+      transition: border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .custom-select-trigger:hover {
+      border-color: rgba(128,128,128,0.45);
+      background: rgba(128,128,128,0.12);
+    }
+    .custom-select-trigger .arrow {
+      font-size: 10px;
+      opacity: 0.5;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .custom-select-wrapper.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .custom-select-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 100%;
+      width: 240px;
+      background: var(--bg, #fff);
+      border: 1px solid rgba(128,128,128,0.2);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      z-index: 9999;
+      overflow: hidden;
+      animation: dropIn 0.15s ease;
+    }
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .custom-select-wrapper.open .custom-select-dropdown {
+      display: block;
+    }
+
+    .dropdown-search {
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid rgba(128,128,128,0.12);
+    }
+    .dropdown-search input {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid rgba(128,128,128,0.2);
+      background: rgba(128,128,128,0.07);
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .dropdown-search input:focus {
+      border-color: rgba(59,130,246,0.5);
+    }
+
+    .dropdown-list {
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 4px 0;
+      scrollbar-width: thin;
+    }
+    .dropdown-list::-webkit-scrollbar { width: 4px; }
+    .dropdown-list::-webkit-scrollbar-track { background: transparent; }
+    .dropdown-list::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+
+    .dropdown-group-label {
+      padding: 8px 14px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.4;
+    }
+
+    .dropdown-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.1s;
+      border-radius: 0;
+    }
+    .dropdown-option:hover {
+      background: rgba(59,130,246,0.1);
+    }
+    .dropdown-option.selected {
+      background: rgba(59,130,246,0.12);
+      font-weight: 600;
+    }
+    .dropdown-option .flag {
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .dropdown-option .lang-name {
+      flex: 1;
+    }
+    .dropdown-option .lang-native {
+      font-size: 12px;
+      opacity: 0.45;
+    }
+    .no-results {
+      padding: 16px 14px;
+      font-size: 13px;
+      opacity: 0.45;
+      text-align: center;
+    }
+
+    /* ── Lang row layout ── */
+    .lang-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .lang-row label {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swap-btn {
+      background: rgba(128,128,128,0.1);
+      border: 1px solid rgba(128,128,128,0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.15s, transform 0.2s;
+      line-height: 1;
+    }
+    .swap-btn:hover {
+      background: rgba(128,128,128,0.18);
+      transform: rotate(180deg);
+    }
+  </style>
 </head>
 <body>
 
@@ -96,38 +262,37 @@
     <h2>🌍 Translator</h2>
     <div class="translator-box">
       <textarea id="translateInput" rows="4" placeholder="Enter text to translate..." autocomplete="off"></textarea>
+
       <div class="lang-row">
-        <label>From:
-          <select id="sourceLang" autocomplete="off">
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="Mandarin Chinese">Mandarin</option>
-            <option value="Arabic">Arabic</option>
-            <option value="German">German</option>
-            <option value="Japanese">Japanese</option>
-            <option value="Portuguese">Portuguese</option>
-            <option value="Russian">Russian</option>
-            <option value="Urdu">Urdu</option>
-          </select>
-        </label>
-        <label>To:
-          <select id="targetLang" autocomplete="off">
-            <option value="Spanish">Spanish</option>
-            <option value="English">English</option>
-            <option value="French">French</option>
-            <option value="Mandarin Chinese">Mandarin</option>
-            <option value="Arabic">Arabic</option>
-            <option value="German">German</option>
-            <option value="Japanese">Japanese</option>
-            <option value="Portuguese">Portuguese</option>
-            <option value="Russian">Russian</option>
-            <option value="Urdu">Urdu</option>
-          </select>
-        </label>
-        <button id="swapBtn" title="Swap languages">⇄</button>
+        <label>From</label>
+        <div class="custom-select-wrapper" id="sourceWrapper">
+          <div class="custom-select-trigger" id="sourceTrigger">
+            <span id="sourceLabel">🇬🇧 English</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="custom-select-dropdown" id="sourceDropdown">
+            <div class="dropdown-search"><input type="text" placeholder="Search language..." id="sourceSearch" /></div>
+            <div class="dropdown-list" id="sourceList"></div>
+          </div>
+        </div>
+
+        <button class="swap-btn" id="swapBtn" title="Swap languages">⇄</button>
+
+        <label>To</label>
+        <div class="custom-select-wrapper" id="targetWrapper">
+          <div class="custom-select-trigger" id="targetTrigger">
+            <span id="targetLabel">🇪🇸 Spanish</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="custom-select-dropdown" id="targetDropdown">
+            <div class="dropdown-search"><input type="text" placeholder="Search language..." id="targetSearch" /></div>
+            <div class="dropdown-list" id="targetList"></div>
+          </div>
+        </div>
+
         <button id="translateBtn">Translate</button>
       </div>
+
       <div id="translateResult">Translation will appear here.</div>
     </div>
   </div>
@@ -137,66 +302,239 @@
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
-    // Swap languages button
+    const TRANSLATE_ENDPOINT = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/dynamic-endpoint";
+
+    // ── Language data ──
+    const LANGUAGES = [
+      { group: "Most Used" },
+      { value: "English",            label: "English",           native: "English",          flag: "🇬🇧" },
+      { value: "Spanish",            label: "Spanish",           native: "Español",          flag: "🇪🇸" },
+      { value: "Mandarin Chinese",   label: "Mandarin",          native: "普通话",            flag: "🇨🇳" },
+      { value: "French",             label: "French",            native: "Français",         flag: "🇫🇷" },
+      { value: "Arabic",             label: "Arabic",            native: "العربية",           flag: "🇸🇦" },
+      { value: "Hindi",              label: "Hindi",             native: "हिन्दी",             flag: "🇮🇳" },
+      { value: "Portuguese",         label: "Portuguese",        native: "Português",        flag: "🇧🇷" },
+      { value: "Russian",            label: "Russian",           native: "Русский",          flag: "🇷🇺" },
+      { value: "German",             label: "German",            native: "Deutsch",          flag: "🇩🇪" },
+      { value: "Japanese",           label: "Japanese",          native: "日本語",            flag: "🇯🇵" },
+      { group: "European" },
+      { value: "Italian",            label: "Italian",           native: "Italiano",         flag: "🇮🇹" },
+      { value: "Dutch",              label: "Dutch",             native: "Nederlands",       flag: "🇳🇱" },
+      { value: "Polish",             label: "Polish",            native: "Polski",           flag: "🇵🇱" },
+      { value: "Swedish",            label: "Swedish",           native: "Svenska",          flag: "🇸🇪" },
+      { value: "Norwegian",          label: "Norwegian",         native: "Norsk",            flag: "🇳🇴" },
+      { value: "Danish",             label: "Danish",            native: "Dansk",            flag: "🇩🇰" },
+      { value: "Finnish",            label: "Finnish",           native: "Suomi",            flag: "🇫🇮" },
+      { value: "Greek",              label: "Greek",             native: "Ελληνικά",         flag: "🇬🇷" },
+      { value: "Czech",              label: "Czech",             native: "Čeština",          flag: "🇨🇿" },
+      { value: "Romanian",           label: "Romanian",          native: "Română",           flag: "🇷🇴" },
+      { value: "Hungarian",          label: "Hungarian",         native: "Magyar",           flag: "🇭🇺" },
+      { value: "Slovak",             label: "Slovak",            native: "Slovenčina",       flag: "🇸🇰" },
+      { value: "Bulgarian",          label: "Bulgarian",         native: "Български",        flag: "🇧🇬" },
+      { value: "Croatian",           label: "Croatian",          native: "Hrvatski",         flag: "🇭🇷" },
+      { value: "Serbian",            label: "Serbian",           native: "Српски",           flag: "🇷🇸" },
+      { value: "Ukrainian",          label: "Ukrainian",         native: "Українська",       flag: "🇺🇦" },
+      { value: "Catalan",            label: "Catalan",           native: "Català",           flag: "🏴" },
+      { value: "Lithuanian",         label: "Lithuanian",        native: "Lietuvių",         flag: "🇱🇹" },
+      { value: "Latvian",            label: "Latvian",           native: "Latviešu",         flag: "🇱🇻" },
+      { value: "Estonian",           label: "Estonian",          native: "Eesti",            flag: "🇪🇪" },
+      { value: "Slovenian",          label: "Slovenian",         native: "Slovenščina",      flag: "🇸🇮" },
+      { value: "Albanian",           label: "Albanian",          native: "Shqip",            flag: "🇦🇱" },
+      { value: "Macedonian",         label: "Macedonian",        native: "Македонски",       flag: "🇲🇰" },
+      { value: "Maltese",            label: "Maltese",           native: "Malti",            flag: "🇲🇹" },
+      { value: "Welsh",              label: "Welsh",             native: "Cymraeg",          flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+      { value: "Irish",              label: "Irish",             native: "Gaeilge",          flag: "🇮🇪" },
+      { group: "Asian" },
+      { value: "Korean",             label: "Korean",            native: "한국어",            flag: "🇰🇷" },
+      { value: "Vietnamese",         label: "Vietnamese",        native: "Tiếng Việt",       flag: "🇻🇳" },
+      { value: "Thai",               label: "Thai",              native: "ภาษาไทย",           flag: "🇹🇭" },
+      { value: "Indonesian",         label: "Indonesian",        native: "Bahasa Indonesia", flag: "🇮🇩" },
+      { value: "Malay",              label: "Malay",             native: "Bahasa Melayu",    flag: "🇲🇾" },
+      { value: "Filipino",           label: "Filipino",          native: "Filipino",         flag: "🇵🇭" },
+      { value: "Bengali",            label: "Bengali",           native: "বাংলা",             flag: "🇧🇩" },
+      { value: "Urdu",               label: "Urdu",              native: "اردو",              flag: "🇵🇰" },
+      { value: "Punjabi",            label: "Punjabi",           native: "ਪੰਜਾਬੀ",            flag: "🇮🇳" },
+      { value: "Tamil",              label: "Tamil",             native: "தமிழ்",             flag: "🇮🇳" },
+      { value: "Telugu",             label: "Telugu",            native: "తెలుగు",            flag: "🇮🇳" },
+      { value: "Marathi",            label: "Marathi",           native: "मराठी",             flag: "🇮🇳" },
+      { value: "Gujarati",           label: "Gujarati",          native: "ગુજરાતી",           flag: "🇮🇳" },
+      { value: "Kannada",            label: "Kannada",           native: "ಕನ್ನಡ",             flag: "🇮🇳" },
+      { value: "Malayalam",          label: "Malayalam",         native: "മലയാളം",            flag: "🇮🇳" },
+      { value: "Sinhala",            label: "Sinhala",           native: "සිංහල",             flag: "🇱🇰" },
+      { value: "Nepali",             label: "Nepali",            native: "नेपाली",            flag: "🇳🇵" },
+      { value: "Burmese",            label: "Burmese",           native: "မြန်မာဘာသာ",        flag: "🇲🇲" },
+      { value: "Khmer",              label: "Khmer",             native: "ភាសាខ្មែរ",          flag: "🇰🇭" },
+      { value: "Lao",                label: "Lao",               native: "ພາສາລາວ",           flag: "🇱🇦" },
+      { value: "Mongolian",          label: "Mongolian",         native: "Монгол",           flag: "🇲🇳" },
+      { value: "Tibetan",            label: "Tibetan",           native: "བོད་སྐད།",           flag: "🏔️" },
+      { group: "Middle Eastern & African" },
+      { value: "Turkish",            label: "Turkish",           native: "Türkçe",           flag: "🇹🇷" },
+      { value: "Persian",            label: "Persian",           native: "فارسی",             flag: "🇮🇷" },
+      { value: "Hebrew",             label: "Hebrew",            native: "עברית",             flag: "🇮🇱" },
+      { value: "Kurdish",            label: "Kurdish",           native: "Kurdî",            flag: "🏳️" },
+      { value: "Swahili",            label: "Swahili",           native: "Kiswahili",        flag: "🇰🇪" },
+      { value: "Amharic",            label: "Amharic",           native: "አማርኛ",             flag: "🇪🇹" },
+      { value: "Hausa",              label: "Hausa",             native: "Hausa",            flag: "🇳🇬" },
+      { value: "Yoruba",             label: "Yoruba",            native: "Yorùbá",           flag: "🇳🇬" },
+      { value: "Igbo",               label: "Igbo",              native: "Igbo",             flag: "🇳🇬" },
+      { value: "Zulu",               label: "Zulu",              native: "isiZulu",          flag: "🇿🇦" },
+      { value: "Afrikaans",          label: "Afrikaans",         native: "Afrikaans",        flag: "🇿🇦" },
+      { value: "Somali",             label: "Somali",            native: "Soomaali",         flag: "🇸🇴" },
+      { value: "Azerbaijani",        label: "Azerbaijani",       native: "Azərbaycan",       flag: "🇦🇿" },
+      { value: "Kazakh",             label: "Kazakh",            native: "Қазақ",            flag: "🇰🇿" },
+      { value: "Uzbek",              label: "Uzbek",             native: "Oʻzbek",           flag: "🇺🇿" },
+      { value: "Georgian",           label: "Georgian",          native: "ქართული",          flag: "🇬🇪" },
+      { value: "Armenian",           label: "Armenian",          native: "Հայերեն",          flag: "🇦🇲" },
+      { group: "Other" },
+      { value: "Latin",              label: "Latin",             native: "Latina",           flag: "🏛️" },
+      { value: "Esperanto",          label: "Esperanto",         native: "Esperanto",        flag: "🌍" },
+    ];
+
+    // ── State ──
+    let sourceValue = "English";
+    let targetValue = "Spanish";
+
+    // ── Build list items ──
+    function buildList(listEl, searchEl, wrapperEl, triggerLabelEl, currentValueGetter, onSelect) {
+      function render(filter = "") {
+        listEl.innerHTML = "";
+        const f = filter.toLowerCase();
+        let hasResults = false;
+        let currentGroup = null;
+
+        LANGUAGES.forEach(item => {
+          if (item.group) {
+            currentGroup = item.group;
+            return;
+          }
+          if (f && !item.label.toLowerCase().includes(f) && !item.native.toLowerCase().includes(f)) return;
+          hasResults = true;
+
+          if (currentGroup && !f) {
+            const g = document.createElement("div");
+            g.className = "dropdown-group-label";
+            g.textContent = currentGroup;
+            listEl.appendChild(g);
+            currentGroup = null;
+          }
+
+          const opt = document.createElement("div");
+          opt.className = "dropdown-option" + (item.value === currentValueGetter() ? " selected" : "");
+          opt.innerHTML = `<span class="flag">${item.flag}</span><span class="lang-name">${item.label}</span><span class="lang-native">${item.native}</span>`;
+          opt.addEventListener("click", () => {
+            onSelect(item);
+            wrapperEl.classList.remove("open");
+          });
+          listEl.appendChild(opt);
+        });
+
+        if (!hasResults) {
+          listEl.innerHTML = `<div class="no-results">No languages found</div>`;
+        }
+      }
+
+      searchEl.addEventListener("input", () => render(searchEl.value));
+      wrapperEl.addEventListener("open", () => { render(""); searchEl.value = ""; searchEl.focus(); });
+    }
+
+    function setSource(item) {
+      sourceValue = item.value;
+      document.getElementById("sourceLabel").textContent = item.flag + " " + item.label;
+    }
+
+    function setTarget(item) {
+      targetValue = item.value;
+      document.getElementById("targetLabel").textContent = item.flag + " " + item.label;
+    }
+
+    buildList(
+      document.getElementById("sourceList"),
+      document.getElementById("sourceSearch"),
+      document.getElementById("sourceWrapper"),
+      document.getElementById("sourceLabel"),
+      () => sourceValue,
+      setSource
+    );
+
+    buildList(
+      document.getElementById("targetList"),
+      document.getElementById("targetSearch"),
+      document.getElementById("targetWrapper"),
+      document.getElementById("targetLabel"),
+      () => targetValue,
+      setTarget
+    );
+
+    // ── Toggle open/close ──
+    function toggleDropdown(wrapperEl) {
+      const isOpen = wrapperEl.classList.contains("open");
+      // Close all
+      document.querySelectorAll(".custom-select-wrapper.open").forEach(w => w.classList.remove("open"));
+      if (!isOpen) {
+        wrapperEl.classList.add("open");
+        wrapperEl.dispatchEvent(new Event("open"));
+      }
+    }
+
+    document.getElementById("sourceTrigger").addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown(document.getElementById("sourceWrapper"));
+    });
+    document.getElementById("targetTrigger").addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown(document.getElementById("targetWrapper"));
+    });
+
+    // Close on outside click
+    document.addEventListener("click", () => {
+      document.querySelectorAll(".custom-select-wrapper.open").forEach(w => w.classList.remove("open"));
+    });
+    document.querySelectorAll(".custom-select-dropdown").forEach(d => d.addEventListener("click", e => e.stopPropagation()));
+
+    // ── Swap ──
     document.getElementById("swapBtn").onclick = () => {
-      const src = document.getElementById("sourceLang");
-      const tgt = document.getElementById("targetLang");
-      const tmp = src.value;
-      src.value = tgt.value;
-      tgt.value = tmp;
+      const oldSource = LANGUAGES.find(l => l.value === sourceValue);
+      const oldTarget = LANGUAGES.find(l => l.value === targetValue);
+      if (oldSource && oldTarget) {
+        setSource(oldTarget);
+        setTarget(oldSource);
+      }
       const result = document.getElementById("translateResult");
       const input  = document.getElementById("translateInput");
       if (result.textContent && result.textContent !== "Translation will appear here.") {
-        const tmpText = input.value;
+        const tmp = input.value;
         input.value = result.textContent;
-        result.textContent = tmpText;
+        result.textContent = tmp;
       }
     };
 
+    // ── Translate ──
     async function translateText() {
       const text = document.getElementById("translateInput").value.trim();
-      const from = document.getElementById("sourceLang").value;
-      const to   = document.getElementById("targetLang").value;
       const out  = document.getElementById("translateResult");
 
       if (!text) { out.textContent = "Please enter some text to translate."; return; }
-      if (from === to) { out.textContent = "Source and target languages are the same."; return; }
+      if (sourceValue === targetValue) { out.textContent = "Source and target languages are the same."; return; }
 
       out.textContent = "Translating...";
 
       try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
+        const response = await fetch(TRANSLATE_ENDPOINT, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1000,
-            system: "You are a professional translator. Translate the user's text accurately and naturally. Return ONLY the translated text with no explanations, notes, alternatives, or extra formatting. Just the translation itself.",
-            messages: [
-              {
-                role: "user",
-                content: `Translate the following text from ${from} to ${to}:\n\n${text}`
-              }
-            ]
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, from: sourceValue, to: targetValue })
         });
 
         if (!response.ok) {
           const err = await response.json().catch(() => ({}));
-          throw new Error(err?.error?.message || "API error " + response.status);
+          throw new Error(err?.error ?? "API error " + response.status);
         }
 
         const data = await response.json();
-        const translated = data.content?.[0]?.text?.trim();
+        if (data.error) throw new Error(data.error);
+        if (!data.translated) { out.textContent = "No translation returned. Please try again."; return; }
 
-        if (!translated) {
-          out.textContent = "No translation returned. Please try again.";
-          return;
-        }
-
-        out.textContent = translated;
+        out.textContent = data.translated;
 
       } catch (err) {
         console.error("Translation error:", err);
@@ -205,8 +543,6 @@
     }
 
     document.getElementById("translateBtn").onclick = translateText;
-
-    // Ctrl+Enter / Cmd+Enter shortcut
     document.getElementById("translateInput").addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") translateText();
     });
