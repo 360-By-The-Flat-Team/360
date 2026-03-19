@@ -63,7 +63,6 @@
       color: #e5e7eb;
     }
 
-    /* Ripple */
     .action {
       position: relative;
       overflow: hidden;
@@ -87,7 +86,6 @@
       opacity: 1;
     }
 
-    /* Tabs */
     .tabs {
       display: flex;
       gap: 10px;
@@ -243,13 +241,10 @@
       <option value="body3">Body 3</option>
       <option value="conclusion">Conclusion</option>
     </select>
-
     <label>Claim</label>
     <textarea id="claim" rows="2"></textarea>
-
     <label>Evidence / notes</label>
     <textarea id="evidence" rows="6"></textarea>
-
     <button class="action" onclick="buildParagraph()">Build Paragraph (AI)</button>
     <div class="output" id="builderOut"></div>
     <div class="error" id="builderErr"></div>
@@ -259,7 +254,6 @@
   <div id="grammar" class="tabContent">
     <label>Paste text to clean up</label>
     <textarea id="grammarInput" rows="6"></textarea>
-
     <button class="action" onclick="fixGrammar()">Fix Grammar (AI)</button>
     <div class="output" id="grammarOut"></div>
     <div class="error" id="grammarErr"></div>
@@ -269,22 +263,16 @@
   <div id="mla" class="tabContent">
     <label>Author</label>
     <input id="mlaAuthor" />
-
     <label>Title</label>
     <input id="mlaTitle" />
-
     <label>Website / Container</label>
     <input id="mlaSite" />
-
     <label>URL</label>
     <input id="mlaURL" />
-
     <label>Date Published (optional)</label>
     <input id="mlaDate" placeholder="2024-05-12" />
-
     <label>Date Accessed</label>
     <input id="mlaAccess" placeholder="2026-03-10" />
-
     <button class="action" onclick="generateMLA()">Generate MLA (AI)</button>
     <div class="output" id="mlaOut"></div>
     <div class="error" id="mlaErr"></div>
@@ -294,10 +282,8 @@
   <div id="evidence" class="tabContent">
     <label>Claim</label>
     <textarea id="evClaim" rows="2"></textarea>
-
     <label>Evidence chunks (one per line)</label>
     <textarea id="evChunks" rows="6"></textarea>
-
     <button class="action" onclick="alignEvidence()">Align Evidence (AI)</button>
     <div class="output" id="evidenceOut"></div>
     <div class="error" id="evidenceErr"></div>
@@ -307,7 +293,6 @@
   <div id="pronouns" class="tabContent">
     <label>Paste text</label>
     <textarea id="pronounInput" rows="6"></textarea>
-
     <label>Select pronoun category</label>
     <select id="pronounCategory">
       <option value="subjective">Subjective (he, she, they)</option>
@@ -315,215 +300,162 @@
       <option value="possessive">Possessive (his, hers, theirs)</option>
       <option value="reflexive">Reflexive (himself, herself, themselves)</option>
     </select>
-
     <button class="action" onclick="checkPronouns()">Check Pronouns</button>
-
     <div class="output" id="pronounOut"></div>
     <div class="output" id="pronounSuggestions"></div>
   </div>
 
   <script>
-  /* ---------- CONFIG ---------- */
-  const FUNCTION_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy"; 
-  
+  /* ── CONFIG — replace with your real Groq key ── */
+  const GROQ_KEY = "YOUR_GROQ_KEY_HERE";
+  const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+  const MODEL    = "llama3-8b-8192";
 
-  /* ---------- DARK MODE ---------- */
+  /* ── Dark mode ── */
   function toggleDarkMode() {
     document.body.classList.toggle("dark");
   }
 
-  /* ---------- TAB SYSTEM ---------- */
+  /* ── Tabs ── */
   function showTab(id, btn) {
-    document.querySelectorAll('.tabContent').forEach(div => div.style.display = 'none');
+    document.querySelectorAll('.tabContent').forEach(d => d.style.display = 'none');
     document.getElementById(id).style.display = 'block';
-
     document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
 
-  /* ---------- RIPPLE POSITIONING ---------- */
-  document.addEventListener("click", (e) => {
+  /* ── Ripple ── */
+  document.addEventListener("click", e => {
     if (e.target.classList.contains("action")) {
-      const btn = e.target;
-      const rect = btn.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      btn.style.setProperty("--ripple-x", `${x}px`);
-      btn.style.setProperty("--ripple-y", `${y}px`);
+      const rect = e.target.getBoundingClientRect();
+      e.target.style.setProperty("--ripple-x", `${e.clientX - rect.left}px`);
+      e.target.style.setProperty("--ripple-y", `${e.clientY - rect.top}px`);
     }
   });
 
-  /* ---------- PRONOUN CHECKER ---------- */
+  /* ── Pronoun checker ── */
   const pronounSets = {
-    subjective: ["he", "she", "they", "i", "we", "you"],
-    objective: ["him", "her", "them", "me", "us", "you"],
-    possessive: ["his", "hers", "theirs", "mine", "ours", "yours"],
-    reflexive: ["himself", "herself", "themselves", "myself", "ourselves", "yourself"]
+    subjective: ["he","she","they","i","we","you"],
+    objective:  ["him","her","them","me","us","you"],
+    possessive: ["his","hers","theirs","mine","ours","yours"],
+    reflexive:  ["himself","herself","themselves","myself","ourselves","yourself"]
   };
 
   function checkPronouns() {
-    const text = document.getElementById("pronounInput").value;
+    const text     = document.getElementById("pronounInput").value;
     const category = document.getElementById("pronounCategory").value;
-    const list = pronounSets[category];
-
+    const list     = pronounSets[category];
     let highlighted = text;
-
     list.forEach(p => {
-      const regex = new RegExp(`\\b${p}\\b`, "gi");
-      highlighted = highlighted.replace(regex, match => `<mark>${match}</mark>`);
+      highlighted = highlighted.replace(new RegExp(`\\b${p}\\b`, "gi"), m => `<mark>${m}</mark>`);
+    });
+    document.getElementById("pronounOut").innerHTML = highlighted;
+    document.getElementById("pronounSuggestions").textContent =
+      list.map(p => `• Replace "${p}" with a specific noun for clarity`).join("\n");
+  }
+
+  /* ── Universal AI call — direct Groq ── */
+  async function ai(prompt) {
+    const res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${GROQ_KEY}`
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: "You are a helpful ELA writing assistant. Be clear, academic, and concise. Return only what is asked." },
+          { role: "user",   content: prompt }
+        ],
+        max_tokens: 1024
+      })
     });
 
-    document.getElementById("pronounOut").innerHTML = highlighted;
-
-    const suggestions = list
-      .map(p => `• Replace "${p}" with a specific noun for clarity`)
-      .join("\n");
-
-    document.getElementById("pronounSuggestions").textContent = suggestions;
-  }
-
-  /* ---------- UNIVERSAL AI CALL (SUPABASE → GROQ) ---------- */
-  async function ai(prompt) {
-    try {
-      const res = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errText}`);
-      }
-
-      const data = await res.json();
-      return data.output || "(No response)";
-    } catch (err) {
-      console.error(err);
-      throw err;
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Groq error ${res.status}: ${err}`);
     }
+
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "(No response)";
   }
 
-  /* ---------- PARAGRAPH BUILDER ---------- */
+  /* ── Paragraph Builder ── */
   async function buildParagraph() {
     const out = document.getElementById("builderOut");
     const err = document.getElementById("builderErr");
     err.textContent = "";
-    const type = document.getElementById("paragraphType").value;
-    const claim = document.getElementById("claim").value.trim();
+    const type     = document.getElementById("paragraphType").value;
+    const claim    = document.getElementById("claim").value.trim();
     const evidence = document.getElementById("evidence").value.trim();
-
-    const prompt = `
-You are an ELA writing assistant. Write a ${type} paragraph using this claim and evidence.
-
-Claim:
-${claim}
-
-Evidence:
-${evidence}
-
-Use clear academic language, proper structure, and stay on topic. Return only the paragraph.
-    `;
-
     out.textContent = "Thinking...";
     try {
-      const result = await ai(prompt);
-      out.textContent = result;
+      out.textContent = await ai(
+        `Write a ${type} paragraph using this claim and evidence.\n\nClaim:\n${claim}\n\nEvidence:\n${evidence}\n\nUse clear academic language and proper structure. Return only the paragraph.`
+      );
     } catch (e) {
       out.textContent = "";
-      err.textContent = "Error generating draft. Please try again.";
+      err.textContent = "Error: " + e.message;
     }
   }
 
-  /* ---------- GRAMMAR FIXER ---------- */
+  /* ── Grammar Fixer ── */
   async function fixGrammar() {
     const out = document.getElementById("grammarOut");
     const err = document.getElementById("grammarErr");
     err.textContent = "";
     const text = document.getElementById("grammarInput").value;
-
-    const prompt = `
-Fix grammar, punctuation, clarity, and flow. 
-Do not change the meaning. Return only the corrected text.
-
-Text:
-${text}
-    `;
-
     out.textContent = "Thinking...";
     try {
-      const result = await ai(prompt);
-      out.textContent = result;
+      out.textContent = await ai(
+        `Fix grammar, punctuation, clarity, and flow. Do not change the meaning. Return only the corrected text.\n\nText:\n${text}`
+      );
     } catch (e) {
       out.textContent = "";
-      err.textContent = "Error fixing grammar. Please try again.";
+      err.textContent = "Error: " + e.message;
     }
   }
 
-  /* ---------- MLA GENERATOR ---------- */
+  /* ── MLA Generator ── */
   async function generateMLA() {
     const out = document.getElementById("mlaOut");
     const err = document.getElementById("mlaErr");
     err.textContent = "";
-
     const author = document.getElementById("mlaAuthor").value.trim();
-    const title = document.getElementById("mlaTitle").value.trim();
-    const site = document.getElementById("mlaSite").value.trim();
-    const url = document.getElementById("mlaURL").value.trim();
-    const date = document.getElementById("mlaDate").value.trim();
+    const title  = document.getElementById("mlaTitle").value.trim();
+    const site   = document.getElementById("mlaSite").value.trim();
+    const url    = document.getElementById("mlaURL").value.trim();
+    const date   = document.getElementById("mlaDate").value.trim();
     const access = document.getElementById("mlaAccess").value.trim();
-
-    const prompt = `
-Create a correct MLA 9 citation for an online source.
-
-Author: ${author}
-Title: ${title}
-Website: ${site}
-URL: ${url}
-Date Published: ${date}
-Date Accessed: ${access}
-
-Return only the MLA citation.
-    `;
-
     out.textContent = "Thinking...";
     try {
-      const result = await ai(prompt);
-      out.textContent = result;
+      out.textContent = await ai(
+        `Create a correct MLA 9 citation.\n\nAuthor: ${author}\nTitle: ${title}\nWebsite: ${site}\nURL: ${url}\nDate Published: ${date}\nDate Accessed: ${access}\n\nReturn only the MLA citation.`
+      );
     } catch (e) {
       out.textContent = "";
-      err.textContent = "Error generating MLA citation. Please try again.";
+      err.textContent = "Error: " + e.message;
     }
   }
 
-  /* ---------- EVIDENCE ALIGNMENT ---------- */
+  /* ── Evidence Helper ── */
   async function alignEvidence() {
     const out = document.getElementById("evidenceOut");
     const err = document.getElementById("evidenceErr");
     err.textContent = "";
-
-    const claim = document.getElementById("evClaim").value.trim();
+    const claim  = document.getElementById("evClaim").value.trim();
     const chunks = document.getElementById("evChunks").value.trim();
-
-    const prompt = `
-Claim:
-${claim}
-
-Evidence:
-${chunks}
-
-Explain how each evidence chunk supports the claim in clear, student-friendly reasoning.
-    `;
-
     out.textContent = "Thinking...";
     try {
-      const result = await ai(prompt);
-      out.textContent = result;
+      out.textContent = await ai(
+        `Claim:\n${claim}\n\nEvidence:\n${chunks}\n\nExplain how each evidence chunk supports the claim in clear, student-friendly reasoning.`
+      );
     } catch (e) {
       out.textContent = "";
-      err.textContent = "Error analyzing evidence. Please try again.";
+      err.textContent = "Error: " + e.message;
     }
   }
-</script>
+  </script>
 </body>
 </html>
