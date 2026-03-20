@@ -1407,24 +1407,28 @@
 
   /* ════════════════ SLASH COMMANDS ════════════════ */
   const SLASH_COMMANDS = [
-    /* Admin only */
-    { cmd:"/promote",  args:"<user>",          desc:"Promote user to mod",          adminOnly:true  },
-    { cmd:"/demote",   args:"<user>",          desc:"Demote user to member",        adminOnly:true  },
-    { cmd:"/ban",      args:"<user>",          desc:"Ban a user",                   adminOnly:true  },
-    { cmd:"/unban",    args:"<user>",          desc:"Unban a user",                 adminOnly:true  },
-    { cmd:"/tag",      args:"<user> <tag>",    desc:"Set a custom tag on a user",   adminOnly:true  },
-    { cmd:"/delete",   args:"<message_id>",    desc:"Delete a message by ID",       adminOnly:true  },
-    { cmd:"/announce", args:"<message>",       desc:"Send a bold announcement",     adminOnly:true  },
-    { cmd:"/kick",     args:"<user>",          desc:"Remove user from community",   adminOnly:true  },
-    { cmd:"/slow",     args:"<seconds>",       desc:"Set slow mode (0 to disable)", adminOnly:true  },
-    /* All users */
-    { cmd:"/me",       args:"<action>",        desc:"Send an action message",       adminOnly:false },
-    { cmd:"/shrug",    args:"",                desc:"¯\_(ツ)_/¯",                   adminOnly:false },
-    { cmd:"/tableflip",args:"",               desc:"(╯°□°）╯︵ ┻━┻",               adminOnly:false },
-    { cmd:"/unflip",   args:"",               desc:"┬─┬ ノ( ゜-゜ノ)",              adminOnly:false },
-    { cmd:"/lenny",    args:"",               desc:"( ͡° ͜ʖ ͡°)",                  adminOnly:false },
-    { cmd:"/clear",    args:"",               desc:"Clear your local chat view",    adminOnly:false },
-    { cmd:"/help",     args:"",               desc:"Show all commands",             adminOnly:false },
+    /* ── All users ── */
+    { cmd:"/me",        args:"<action>",           desc:"Send an action message",       adminOnly:false, modAllowed:false },
+    { cmd:"/shrug",     args:"",                   desc:"¯\\_(ツ)_/¯",                  adminOnly:false, modAllowed:false },
+    { cmd:"/tableflip", args:"",                   desc:"(╯°□°）╯︵ ┻━┻",              adminOnly:false, modAllowed:false },
+    { cmd:"/unflip",    args:"",                   desc:"┬─┬ ノ( ゜-゜ノ)",             adminOnly:false, modAllowed:false },
+    { cmd:"/lenny",     args:"",                   desc:"( ͡° ͜ʖ ͡°)",                 adminOnly:false, modAllowed:false },
+    { cmd:"/clear",     args:"",                   desc:"Clear your local chat view",   adminOnly:false, modAllowed:false },
+    { cmd:"/help",      args:"",                   desc:"Show available commands",      adminOnly:false, modAllowed:false },
+    /* ── Mod + Admin ── */
+    { cmd:"/warn",      args:"<user> <msg>|<msg>", desc:"Warn a user or broadcast",     adminOnly:true,  modAllowed:true  },
+    { cmd:"/mute",      args:"<user> <time> <s|m>",desc:"Mute a user",                  adminOnly:true,  modAllowed:true  },
+    /* ── Admin only ── */
+    { cmd:"/promote",   args:"<user>",             desc:"Promote user to mod",          adminOnly:true,  modAllowed:false },
+    { cmd:"/demote",    args:"<user>",             desc:"Demote user to member",        adminOnly:true,  modAllowed:false },
+    { cmd:"/ban",       args:"<user>",             desc:"Ban a user",                   adminOnly:true,  modAllowed:false },
+    { cmd:"/unban",     args:"<user>",             desc:"Unban a user",                 adminOnly:true,  modAllowed:false },
+    { cmd:"/tag",       args:"<user> <tag>",       desc:"Set a custom tag on a user",   adminOnly:true,  modAllowed:false },
+    { cmd:"/role",      args:"<user> <role>",      desc:"Set role (user/mod/admin)",    adminOnly:true,  modAllowed:false },
+    { cmd:"/delete",    args:"<message_id>",       desc:"Delete a message by ID",       adminOnly:true,  modAllowed:false },
+    { cmd:"/announce",  args:"<message>",          desc:"Send a bold announcement",     adminOnly:true,  modAllowed:false },
+    { cmd:"/kick",      args:"<user>",             desc:"Remove user from community",   adminOnly:true,  modAllowed:false },
+    { cmd:"/slow",      args:"<seconds>",          desc:"Set slow mode (0 to disable)", adminOnly:true,  modAllowed:false },
   ];
 
   let slowModeSeconds = 0;
@@ -1434,73 +1438,131 @@
     const parts = text.trim().split(" ");
     const cmd   = parts[0].toLowerCase();
     const args  = parts.slice(1);
-    const isAdmin = profile.role === "admin" || profile.role === "mod";
-
+  
+    const isAdmin = profile.role === "admin";
+    const isMod   = profile.role === "mod" || isAdmin;
+  
+    const userCommands  = ["/me","/shrug","/tableflip","/unflip","/lenny","/clear","/help"];
+    const modCommands   = ["/warn","/mute"];
+    const adminCommands = ["/promote","/demote","/ban","/unban","/tag","/role","/delete","/announce","/kick","/slow"];
+  
+    if (userCommands.includes(cmd)) {
+      /* allowed for everyone — fall through */
+    } else if (modCommands.includes(cmd)) {
+      if (!isMod) { showToast("❌ Mods and admins only."); return; }
+    } else if (adminCommands.includes(cmd)) {
+      if (!isAdmin) { showToast("❌ Admins only."); return; }
+    } else {
+      showToast("❌ Unknown command. Type /help for a list.");
+      return;
+    }
+  
     /* ── All-user commands ── */
     if (cmd === "/me") {
       if (!args.length) return;
-      const action = args.join(" ");
       const { data:{session} } = await sb.auth.getSession();
       await sb.from("messages").insert({
         user_id: session.user.id, username: profile.username,
         avatar_url: profile.avatar_url||null, role: profile.role||"user",
-        text: `_${profile.username} ${filterProfanity(action)}_`,
+        text: `_${profile.username} ${filterProfanity(args.join(" "))}_`,
         ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
       });
       return;
     }
-    if (cmd === "/shrug")     { msgInput.value = "¯\_(ツ)_/¯";     return; }
+    if (cmd === "/shrug")     { msgInput.value = "¯\\_(ツ)_/¯";     return; }
     if (cmd === "/tableflip") { msgInput.value = "(╯°□°）╯︵ ┻━┻"; return; }
     if (cmd === "/unflip")    { msgInput.value = "┬─┬ ノ( ゜-゜ノ)"; return; }
     if (cmd === "/lenny")     { msgInput.value = "( ͡° ͜ʖ ͡°)";     return; }
-    if (cmd === "/clear") {
-      document.getElementById("chat-window").innerHTML="";
-      msgElMap.clear(); return;
-    }
+    if (cmd === "/clear")     { document.getElementById("chat-window").innerHTML=""; msgElMap.clear(); return; }
     if (cmd === "/help") {
       const list = SLASH_COMMANDS
-        .filter(c => !c.adminOnly || isAdmin)
-        .map(c => `${c.cmd} ${c.args} - ${c.desc}`).join("\n");
+        .filter(c => !c.adminOnly || isAdmin || (isMod && c.modAllowed))
+        .map(c => `${c.cmd} ${c.args} — ${c.desc}`).join("\n");
       alert("Available commands:\n\n" + list);
       return;
     }
-
-    /* ── Admin/mod only commands ── */
-    if (!isAdmin) { alert("You don't have permission to use that command."); return; }
-
+  
+    /* ── Mod + Admin commands ── */
+    if (cmd === "/warn") {
+      if (!args[0]) { showToast("Usage: /warn <user> <message>  or  /warn <message>"); return; }
+      const { data: matched } = await sb.from("profiles").select("username").eq("username", args[0]).single();
+      if (matched) {
+        const warnMsg = args.slice(1).join(" ");
+        if (!warnMsg) { showToast("Usage: /warn <user> <message>"); return; }
+        await sb.from("messages").insert({
+          user_id:"system", username:"System", avatar_url:null, tag:"warn",
+          text:`⚠️ Warning to ${args[0]}: ${warnMsg} — issued by ${profile.username}`, role:"admin",
+          ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+        });
+        showToast(`⚠️ Warning issued to ${args[0]}`);
+      } else {
+        await sb.from("messages").insert({
+          user_id:"system", username:"System", avatar_url:null, tag:"warn",
+          text:`⚠️ Warning to all: ${args.join(" ")} — issued by ${profile.username}`, role:"admin",
+          ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+        });
+        showToast("⚠️ Broadcast warning sent");
+      }
+      return;
+    }
+  
+    if (cmd === "/mute") {
+      const targetUser = args[0], timeVal = parseInt(args[1]), unit = (args[2]||"s").toLowerCase();
+      if (!targetUser || isNaN(timeVal)) { showToast("Usage: /mute <user> <time> <s|m>"); return; }
+      if (!["s","m"].includes(unit))     { showToast("Unit must be 's' or 'm'."); return; }
+      const durationMs   = unit === "m" ? timeVal * 60000 : timeVal * 1000;
+      const mutedUntilTs = new Date(Date.now() + durationMs).toISOString();
+      const { error } = await sb.from("profiles").update({ muted_until: mutedUntilTs }).eq("username", targetUser);
+      if (error) { showToast(`Error: ${error.message}`); return; }
+      const dur = unit === "m" ? `${timeVal}m` : `${timeVal}s`;
+      await sb.from("messages").insert({
+        user_id:"system", username:"System", avatar_url:null, tag:null,
+        text:`🔇 ${targetUser} muted for ${dur} by ${profile.username}`, role:"admin",
+        ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+      });
+      showToast(`🔇 Muted ${targetUser} for ${dur}`);
+      return;
+    }
+  
+    /* ── Admin-only commands ── */
     if (cmd === "/promote")  { await sb.from("profiles").update({role:"mod"}).eq("username",args[0]);   showToast(`✅ Promoted ${args[0]} to mod`); }
-    else if (cmd==="/demote") { await sb.from("profiles").update({role:"user"}).eq("username",args[0]);  showToast(`✅ Demoted ${args[0]}`); }
-    else if (cmd==="/ban")    { await sb.from("profiles").update({banned:true}).eq("username",args[0]);  showToast(`🚫 Banned ${args[0]}`); }
-    else if (cmd==="/unban")  { await sb.from("profiles").update({banned:false}).eq("username",args[0]); showToast(`✅ Unbanned ${args[0]}`); }
-    else if (cmd==="/tag")    { const tag=args.slice(1).join(" "); await sb.from("profiles").update({tag}).eq("username",args[0]); showToast(`🏷️ Tagged ${args[0]}: ${tag}`); }
-    else if (cmd==="/delete") {
-      const id=parseInt(args[0]); if(!id){alert("Usage: /delete <message_id>");return;}
+    else if (cmd === "/demote")   { await sb.from("profiles").update({role:"user"}).eq("username",args[0]);  showToast(`✅ Demoted ${args[0]}`); }
+    else if (cmd === "/ban")      { await sb.from("profiles").update({banned:true}).eq("username",args[0]);  showToast(`🚫 Banned ${args[0]}`); }
+    else if (cmd === "/unban")    { await sb.from("profiles").update({banned:false}).eq("username",args[0]); showToast(`✅ Unbanned ${args[0]}`); }
+    else if (cmd === "/tag")      { const tag=args.slice(1).join(" "); await sb.from("profiles").update({tag}).eq("username",args[0]); showToast(`🏷️ Tagged ${args[0]}: ${tag}`); }
+    else if (cmd === "/role") {
+      const [targetUser, newRole] = args;
+      if (!targetUser || !newRole) { showToast("Usage: /role <user> <role>"); return; }
+      const valid = ["user","mod","admin"];
+      if (!valid.includes(newRole.toLowerCase())) { showToast(`Invalid role. Valid: ${valid.join(", ")}`); return; }
+      const { error } = await sb.from("profiles").update({role:newRole.toLowerCase()}).eq("username",targetUser);
+      if (error) { showToast(`Error: ${error.message}`); return; }
+      showToast(`✅ Set ${targetUser}'s role to ${newRole.toLowerCase()}`);
+    }
+    else if (cmd === "/delete") {
+      const id = parseInt(args[0]); if (!id) { showToast("Usage: /delete <message_id>"); return; }
       await sb.from("messages").update({deleted_at:new Date().toISOString()}).eq("id",id);
       msgElMap.get(String(id))?.remove(); msgElMap.delete(String(id));
       showToast("🗑️ Message deleted");
     }
-    else if (cmd==="/announce") {
+    else if (cmd === "/announce") {
       const { data:{session} } = await sb.auth.getSession();
-      const msg = args.join(" ");
       await sb.from("messages").insert({
         user_id:session.user.id, username:profile.username,
         avatar_url:profile.avatar_url||null, role:profile.role,
-        text:`📢 **${msg}**`,
+        text:`📢 **${args.join(" ")}**`,
         ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
       });
     }
-    else if (cmd==="/kick") {
-      await sb.from("server_members").delete()
-        .eq("user_id", args[0]).eq("server_id", activeRoom.serverId||activeRoom.id);
+    else if (cmd === "/kick") {
+      await sb.from("server_members").delete().eq("user_id",args[0]).eq("server_id",activeRoom.serverId||activeRoom.id);
       showToast(`👢 Kicked ${args[0]}`);
     }
-    else if (cmd==="/slow") {
-      slowModeSeconds = parseInt(args[0])||0;
+    else if (cmd === "/slow") {
+      slowModeSeconds = parseInt(args[0]) || 0;
       showToast(slowModeSeconds ? `🐌 Slow mode: ${slowModeSeconds}s` : "✅ Slow mode disabled");
     }
-    else { alert("Unknown command. Type /help for a list."); }
   }
-
   /* ── Toast notification ── */
   function showToast(msg) {
     const t = document.createElement("div");
@@ -1665,18 +1727,21 @@
   }
 
   function showSlashPopup(query) {
-    const popup  = document.getElementById("slash-popup");
-    const isAdmin = currentProfile?.role === "admin" || currentProfile?.role === "mod";
-    const matches = SLASH_COMMANDS
-      .filter(c => (!c.adminOnly || isAdmin) && c.cmd.startsWith("/" + query))
-      .slice(0, 8);
-    if (!matches.length || query === "" && msgInput.value === "/") {
-      /* show all on bare "/" */
-    }
+    const popup   = document.getElementById("slash-popup");
+    const isAdmin = currentProfile?.role === "admin";
+    const isMod   = currentProfile?.role === "mod" || isAdmin;
+  
     const show = SLASH_COMMANDS
-      .filter(c => (!c.adminOnly || isAdmin) && c.cmd.startsWith("/" + query))
+      .filter(c => {
+        if (!c.adminOnly) return c.cmd.startsWith("/" + query);
+        if (isAdmin)      return c.cmd.startsWith("/" + query);
+        if (isMod && c.modAllowed) return c.cmd.startsWith("/" + query);
+        return false;
+      })
       .slice(0, 8);
+  
     if (!show.length) { popup.classList.remove("open"); return; }
+  
     popup.innerHTML = show.map((c,i) =>
       `<div class="slash-option${i===slashSelIndex?" selected":""}" data-cmd="${c.cmd}">
         <span class="slash-cmd">${c.cmd} <small style="opacity:.5;font-weight:400;">${c.args}</small></span>
@@ -1692,7 +1757,7 @@
       });
     });
   }
-
+  
   msgInput.addEventListener("input", () => {
     const val = msgInput.value;
     const pos = msgInput.selectionStart;
