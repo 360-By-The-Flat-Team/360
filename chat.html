@@ -176,6 +176,7 @@
     .typing-dots span:nth-child(1) { animation-delay:0s; }
     .typing-dots span:nth-child(2) { animation-delay:.2s; }
     .typing-dots span:nth-child(3) { animation-delay:.4s; }
+    @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
     @keyframes typingBounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
     .typing-avatars { display:flex; }
     .typing-avatar { width:18px; height:18px; border-radius:50%; border:1.5px solid var(--bg); margin-left:-5px; font-size:9px; display:flex; align-items:center; justify-content:center; font-weight:700; background:linear-gradient(120deg,var(--a),var(--a2)); color:#050816; flex-shrink:0; }
@@ -251,6 +252,65 @@
     }
     /* promote chat-window to its own GPU layer so hover repaints don't affect it */
     #chat-window { will-change: scroll-position; }
+
+    /* ── @mention highlight ── */
+    .mention-highlight {
+      color: var(--a); font-weight: 700; background: rgba(59,130,246,.1);
+      border-radius: 3px; padding: 0 2px;
+    }
+    .mention-highlight.mine { background: rgba(59,130,246,.2); }
+
+    /* ── unread badge on DM/room items ── */
+    .unread-dot {
+      width:8px;height:8px;border-radius:50%;background:var(--a);
+      flex-shrink:0;margin-left:auto;
+    }
+
+    /* ── message unread indicator bar ── */
+    .unread-divider {
+      display:flex;align-items:center;gap:8px;margin:8px 0;
+      font-size:11px;color:#ef4444;font-weight:700;
+    }
+    .unread-divider::before,.unread-divider::after{content:"";flex:1;height:1px;background:#ef4444;opacity:.4;}
+
+    /* ── @mention autocomplete ── */
+    #mention-popup {
+      position:absolute;bottom:calc(100% + 4px);left:0;right:0;
+      background:#fff;border:1px solid var(--br);border-radius:10px;
+      box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:300;
+      display:none;overflow:hidden;max-height:200px;overflow-y:auto;
+    }
+    body.dark #mention-popup { background:#0f172a; }
+    #mention-popup.open { display:block; }
+    .mention-option {
+      display:flex;align-items:center;gap:8px;padding:8px 12px;
+      cursor:pointer;font-size:13px;
+    }
+    .mention-option:hover,.mention-option.selected { background:rgba(59,130,246,.1); }
+    .mention-avatar {
+      width:24px;height:24px;border-radius:50%;background:linear-gradient(120deg,var(--a),var(--a2));
+      color:#050816;display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;flex-shrink:0;
+    }
+
+    /* ── slash command helper ── */
+    #slash-popup {
+      position:absolute;bottom:calc(100% + 4px);left:0;right:0;
+      background:#fff;border:1px solid var(--br);border-radius:10px;
+      box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:300;
+      display:none;overflow:hidden;
+    }
+    body.dark #slash-popup { background:#0f172a; }
+    #slash-popup.open { display:block; }
+    .slash-option {
+      display:flex;align-items:center;gap:10px;padding:8px 12px;
+      cursor:pointer;font-size:13px;border-bottom:1px solid var(--br);
+    }
+    .slash-option:last-child { border-bottom:none; }
+    .slash-option:hover,.slash-option.selected { background:rgba(59,130,246,.1); }
+    .slash-cmd { font-weight:700;color:var(--a);font-family:monospace;min-width:100px; }
+    .slash-desc { color:var(--mut);font-size:12px; }
+    body.dark .slash-desc { color:var(--mutd); }
 
     @media (max-width:600px) {
       .chat-left { position:fixed; left:-240px; top:0; bottom:0; z-index:200; transition:left .25s; padding-top:48px; }
@@ -398,6 +458,13 @@
   <!-- Chat layout -->
   <div class="chat-root">
     <div class="chat-left" id="chatLeft">
+      <div style="padding:8px 14px 4px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);">360 Chat</span>
+        <span id="online-counter" style="font-size:11px;color:#22c55e;font-weight:600;display:flex;align-items:center;gap:4px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+          <span id="online-count">0</span> online
+        </span>
+      </div>
       <div class="panel-section">
         <div class="panel-label">Public</div>
         <div class="room-item active" id="publicRoomItem">
@@ -439,6 +506,10 @@
         </div>
         <div class="upload-progress" id="upload-progress">
           <div class="upload-progress-bar" id="upload-progress-bar"></div>
+        </div>
+        <div style="position:relative;">
+          <div id="mention-popup"></div>
+          <div id="slash-popup"></div>
         </div>
         <div id="chat-input-row">
           <button class="input-action-btn" id="attachBtn" title="Attach">📎</button>
@@ -1054,7 +1125,12 @@
 
     const roleBadge=msg.role&&msg.role!=="user"?`<span class="role-badge role-${msg.role}">${msg.role}</span>`:"";
     const tagBadge =msg.tag?`<span class="user-tag">[${msg.tag}]</span>`:"";
-    const safeText =(msg.text||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const rawText = (msg.text||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    /* Highlight @mentions — bold blue, extra highlight if it's the current user */
+    const safeText = rawText.replace(/@(\w+)/g, (match, name) => {
+      const isMe = currentProfile && name.toLowerCase() === (currentProfile.username||"").toLowerCase();
+      return `<span class="mention-highlight${isMe?" mine":""}">${match}</span>`;
+    });
 
     let replyHTML="";
     if (msg.reply_to_id&&msg.reply_to_text) {
@@ -1120,6 +1196,19 @@
 
     win.appendChild(el);
     msgElMap.set(String(msg.id), el);
+    /* Ping sound if current user is @mentioned */
+    if (loadRxn && msg.text && currentProfile) {
+      const mentioned = new RegExp("@"+currentProfile.username+"\\b","i").test(msg.text);
+      if (mentioned && msg.user_id !== currentUserId) {
+        const pingAudio = new Audio("../click-sound.mp3");
+        pingAudio.volume = 0.6;
+        pingAudio.play().catch(()=>{});
+        /* Flash tab title */
+        const origTitle = document.title;
+        let flash = 0;
+        const fi = setInterval(()=>{ document.title = flash++%2===0?"🔔 Mentioned!" : origTitle; if(flash>6){clearInterval(fi);document.title=origTitle;} }, 500);
+      }
+    }
     /* Auto-translate if enabled */
     if (msg.text) maybeTranslateMessage(el, msg.text);
     if(loadRxn) {
@@ -1246,6 +1335,14 @@
   /* ════════════════ SEND — with isSending guard ════════════════ */
   async function sendMessage() {
     if (isSending) return;
+    /* Slow mode check */
+    if (slowModeSeconds > 0) {
+      const elapsed = (Date.now() - lastSentTime) / 1000;
+      if (elapsed < slowModeSeconds) {
+        showToast(`🐌 Slow mode — wait ${Math.ceil(slowModeSeconds - elapsed)}s`);
+        return;
+      }
+    }
     const text=msgInput.value.trim();
     if (!text&&!pendingFile) return;
     const{data:{session}}=await sb.auth.getSession();
@@ -1287,6 +1384,7 @@
         if(error){console.error("Send:",error.message);alert("Error: "+error.message);return;}
       }
       msgInput.value=""; msgInput.style.height="auto";
+      lastSentTime = Date.now();
     } finally { isSending=false; document.getElementById("send-button").disabled=false; }
   }
 
@@ -1300,16 +1398,114 @@
   }
 
   /* ════════════════ SLASH COMMANDS ════════════════ */
-  async function runCommand(text,profile) {
-    if(profile.role!=="admin"){alert("Admins only.");return;}
-    const parts=text.trim().split(" "),cmd=parts[0].toLowerCase(),args=parts.slice(1);
-    if(cmd==="/promote") { await sb.from("profiles").update({role:"mod"}).eq("username",args[0]); alert(`Promoted ${args[0]}`); }
-    else if(cmd==="/demote")  { await sb.from("profiles").update({role:"user"}).eq("username",args[0]); alert(`Demoted ${args[0]}`); }
-    else if(cmd==="/ban")     { await sb.from("profiles").update({banned:true}).eq("username",args[0]);  alert(`Banned ${args[0]}`); }
-    else if(cmd==="/unban")   { await sb.from("profiles").update({banned:false}).eq("username",args[0]); alert(`Unbanned ${args[0]}`); }
-    else if(cmd==="/tag")     { await sb.from("profiles").update({tag:args.slice(1).join(" ")}).eq("username",args[0]); alert(`Tagged ${args[0]}`); }
-    else if(cmd==="/delete")  { const id=parseInt(args[0]);if(!id)return; await sb.from("messages").update({deleted_at:new Date().toISOString()}).eq("id",id); document.querySelector(`[data-msg-id="${id}"]`)?.remove(); }
-    else alert("Commands: /promote /demote /ban /unban /tag /delete");
+  const SLASH_COMMANDS = [
+    /* Admin only */
+    { cmd:"/promote",  args:"<user>",          desc:"Promote user to mod",          adminOnly:true  },
+    { cmd:"/demote",   args:"<user>",          desc:"Demote user to member",        adminOnly:true  },
+    { cmd:"/ban",      args:"<user>",          desc:"Ban a user",                   adminOnly:true  },
+    { cmd:"/unban",    args:"<user>",          desc:"Unban a user",                 adminOnly:true  },
+    { cmd:"/tag",      args:"<user> <tag>",    desc:"Set a custom tag on a user",   adminOnly:true  },
+    { cmd:"/delete",   args:"<message_id>",    desc:"Delete a message by ID",       adminOnly:true  },
+    { cmd:"/announce", args:"<message>",       desc:"Send a bold announcement",     adminOnly:true  },
+    { cmd:"/kick",     args:"<user>",          desc:"Remove user from community",   adminOnly:true  },
+    { cmd:"/slow",     args:"<seconds>",       desc:"Set slow mode (0 to disable)", adminOnly:true  },
+    /* All users */
+    { cmd:"/me",       args:"<action>",        desc:"Send an action message",       adminOnly:false },
+    { cmd:"/shrug",    args:"",                desc:"¯\_(ツ)_/¯",                   adminOnly:false },
+    { cmd:"/tableflip",args:"",               desc:"(╯°□°）╯︵ ┻━┻",               adminOnly:false },
+    { cmd:"/unflip",   args:"",               desc:"┬─┬ ノ( ゜-゜ノ)",              adminOnly:false },
+    { cmd:"/lenny",    args:"",               desc:"( ͡° ͜ʖ ͡°)",                  adminOnly:false },
+    { cmd:"/clear",    args:"",               desc:"Clear your local chat view",    adminOnly:false },
+    { cmd:"/help",     args:"",               desc:"Show all commands",             adminOnly:false },
+  ];
+
+  let slowModeSeconds = 0;
+  let lastSentTime    = 0;
+
+  async function runCommand(text, profile) {
+    const parts = text.trim().split(" ");
+    const cmd   = parts[0].toLowerCase();
+    const args  = parts.slice(1);
+    const isAdmin = profile.role === "admin" || profile.role === "mod";
+
+    /* ── All-user commands ── */
+    if (cmd === "/me") {
+      if (!args.length) return;
+      const action = args.join(" ");
+      const { data:{session} } = await sb.auth.getSession();
+      await sb.from("messages").insert({
+        user_id: session.user.id, username: profile.username,
+        avatar_url: profile.avatar_url||null, role: profile.role||"user",
+        text: `_${profile.username} ${filterProfanity(action)}_`,
+        ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+      });
+      return;
+    }
+    if (cmd === "/shrug")     { msgInput.value = "¯\_(ツ)_/¯";     return; }
+    if (cmd === "/tableflip") { msgInput.value = "(╯°□°）╯︵ ┻━┻"; return; }
+    if (cmd === "/unflip")    { msgInput.value = "┬─┬ ノ( ゜-゜ノ)"; return; }
+    if (cmd === "/lenny")     { msgInput.value = "( ͡° ͜ʖ ͡°)";     return; }
+    if (cmd === "/clear") {
+      document.getElementById("chat-window").innerHTML="";
+      msgElMap.clear(); return;
+    }
+    if (cmd === "/help") {
+      const list = SLASH_COMMANDS
+        .filter(c => !c.adminOnly || isAdmin)
+        .map(c => `${c.cmd} ${c.args} — ${c.desc}`).join("
+");
+      alert("Available commands:
+
+" + list);
+      return;
+    }
+
+    /* ── Admin/mod only commands ── */
+    if (!isAdmin) { alert("You don't have permission to use that command."); return; }
+
+    if (cmd === "/promote")  { await sb.from("profiles").update({role:"mod"}).eq("username",args[0]);   showToast(`✅ Promoted ${args[0]} to mod`); }
+    else if (cmd==="/demote") { await sb.from("profiles").update({role:"user"}).eq("username",args[0]);  showToast(`✅ Demoted ${args[0]}`); }
+    else if (cmd==="/ban")    { await sb.from("profiles").update({banned:true}).eq("username",args[0]);  showToast(`🚫 Banned ${args[0]}`); }
+    else if (cmd==="/unban")  { await sb.from("profiles").update({banned:false}).eq("username",args[0]); showToast(`✅ Unbanned ${args[0]}`); }
+    else if (cmd==="/tag")    { const tag=args.slice(1).join(" "); await sb.from("profiles").update({tag}).eq("username",args[0]); showToast(`🏷️ Tagged ${args[0]}: ${tag}`); }
+    else if (cmd==="/delete") {
+      const id=parseInt(args[0]); if(!id){alert("Usage: /delete <message_id>");return;}
+      await sb.from("messages").update({deleted_at:new Date().toISOString()}).eq("id",id);
+      msgElMap.get(String(id))?.remove(); msgElMap.delete(String(id));
+      showToast("🗑️ Message deleted");
+    }
+    else if (cmd==="/announce") {
+      const { data:{session} } = await sb.auth.getSession();
+      const msg = args.join(" ");
+      await sb.from("messages").insert({
+        user_id:session.user.id, username:profile.username,
+        avatar_url:profile.avatar_url||null, role:profile.role,
+        text:`📢 **${msg}**`,
+        ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+      });
+    }
+    else if (cmd==="/kick") {
+      await sb.from("server_members").delete()
+        .eq("user_id", args[0]).eq("server_id", activeRoom.serverId||activeRoom.id);
+      showToast(`👢 Kicked ${args[0]}`);
+    }
+    else if (cmd==="/slow") {
+      slowModeSeconds = parseInt(args[0])||0;
+      showToast(slowModeSeconds ? `🐌 Slow mode: ${slowModeSeconds}s` : "✅ Slow mode disabled");
+    }
+    else { alert("Unknown command. Type /help for a list."); }
+  }
+
+  /* ── Toast notification ── */
+  function showToast(msg) {
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:rgba(15,23,42,.95);color:#fff;padding:8px 18px;border-radius:999px;
+      font-size:13px;font-weight:600;z-index:9999;pointer-events:none;
+      animation:toastIn .2s ease;`;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 2500);
   }
 
   /* ════════════════════════════════════════
@@ -1427,6 +1623,160 @@
 
   document.getElementById("roomsToggle").addEventListener("click",()=>document.getElementById("chatLeft").classList.toggle("mobile-open"));
 
+  /* ════════════════════════════════════════
+     @MENTION AUTOCOMPLETE + /SLASH HELPER
+  ════════════════════════════════════════ */
+  let mentionQuery     = null;
+  let mentionStart     = 0;
+  let mentionSelIndex  = 0;
+  let slashSelIndex    = 0;
+  const knownUsers     = [];   /* populated from message senders we see */
+
+  function registerUser(username) {
+    if (username && !knownUsers.includes(username)) knownUsers.push(username);
+  }
+
+  function showMentionPopup(query) {
+    const popup = document.getElementById("mention-popup");
+    const matches = knownUsers.filter(u => u.toLowerCase().startsWith(query.toLowerCase())).slice(0,8);
+    if (!matches.length) { popup.classList.remove("open"); return; }
+    popup.innerHTML = matches.map((u,i) =>
+      `<div class="mention-option${i===mentionSelIndex?" selected":""}" data-user="${u}">
+        <div class="mention-avatar">${u[0].toUpperCase()}</div>
+        <span>@${u}</span>
+      </div>`).join("");
+    popup.classList.add("open");
+    popup.querySelectorAll(".mention-option").forEach(opt => {
+      opt.addEventListener("mousedown", e => { e.preventDefault(); insertMention(opt.dataset.user); });
+    });
+  }
+
+  function insertMention(username) {
+    const val = msgInput.value;
+    msgInput.value = val.slice(0, mentionStart) + "@" + username + " " + val.slice(msgInput.selectionStart);
+    mentionQuery = null;
+    document.getElementById("mention-popup").classList.remove("open");
+    msgInput.focus();
+  }
+
+  function showSlashPopup(query) {
+    const popup  = document.getElementById("slash-popup");
+    const isAdmin = currentProfile?.role === "admin" || currentProfile?.role === "mod";
+    const matches = SLASH_COMMANDS
+      .filter(c => (!c.adminOnly || isAdmin) && c.cmd.startsWith("/" + query))
+      .slice(0, 8);
+    if (!matches.length || query === "" && msgInput.value === "/") {
+      /* show all on bare "/" */
+    }
+    const show = SLASH_COMMANDS
+      .filter(c => (!c.adminOnly || isAdmin) && c.cmd.startsWith("/" + query))
+      .slice(0, 8);
+    if (!show.length) { popup.classList.remove("open"); return; }
+    popup.innerHTML = show.map((c,i) =>
+      `<div class="slash-option${i===slashSelIndex?" selected":""}" data-cmd="${c.cmd}">
+        <span class="slash-cmd">${c.cmd} <small style="opacity:.5;font-weight:400;">${c.args}</small></span>
+        <span class="slash-desc">${c.desc}</span>
+      </div>`).join("");
+    popup.classList.add("open");
+    popup.querySelectorAll(".slash-option").forEach(opt => {
+      opt.addEventListener("mousedown", e => {
+        e.preventDefault();
+        msgInput.value = opt.dataset.cmd + " ";
+        popup.classList.remove("open");
+        msgInput.focus();
+      });
+    });
+  }
+
+  msgInput.addEventListener("input", () => {
+    const val = msgInput.value;
+    const pos = msgInput.selectionStart;
+
+    /* Slash command helper */
+    if (val.startsWith("/") && !val.includes(" ")) {
+      slashSelIndex = 0;
+      showSlashPopup(val.slice(1));
+      document.getElementById("mention-popup").classList.remove("open");
+      return;
+    }
+    document.getElementById("slash-popup").classList.remove("open");
+
+    /* @mention autocomplete */
+    const textBefore = val.slice(0, pos);
+    const atMatch    = textBefore.match(/@(\w*)$/);
+    if (atMatch) {
+      mentionQuery  = atMatch[1];
+      mentionStart  = textBefore.lastIndexOf("@");
+      mentionSelIndex = 0;
+      showMentionPopup(mentionQuery);
+    } else {
+      mentionQuery = null;
+      document.getElementById("mention-popup").classList.remove("open");
+    }
+  });
+
+  /* Keyboard navigation for popups */
+  msgInput.addEventListener("keydown", e => {
+    const mp = document.getElementById("mention-popup");
+    const sp = document.getElementById("slash-popup");
+    if (mp.classList.contains("open")) {
+      const opts = mp.querySelectorAll(".mention-option");
+      if (e.key === "ArrowDown")  { e.preventDefault(); mentionSelIndex = Math.min(mentionSelIndex+1, opts.length-1); showMentionPopup(mentionQuery); }
+      if (e.key === "ArrowUp")    { e.preventDefault(); mentionSelIndex = Math.max(mentionSelIndex-1, 0); showMentionPopup(mentionQuery); }
+      if (e.key === "Tab"||e.key==="Enter") { e.preventDefault(); const sel=mp.querySelector(".selected"); if(sel) insertMention(sel.dataset.user); return; }
+      if (e.key === "Escape")     { mp.classList.remove("open"); mentionQuery=null; }
+    }
+    if (sp.classList.contains("open")) {
+      const opts = sp.querySelectorAll(".slash-option");
+      if (e.key === "ArrowDown")  { e.preventDefault(); slashSelIndex = Math.min(slashSelIndex+1, opts.length-1); showSlashPopup(msgInput.value.slice(1)); }
+      if (e.key === "ArrowUp")    { e.preventDefault(); slashSelIndex = Math.max(slashSelIndex-1, 0); showSlashPopup(msgInput.value.slice(1)); }
+      if (e.key === "Tab")        { e.preventDefault(); const sel=sp.querySelector(".selected"); if(sel){msgInput.value=sel.dataset.cmd+" ";sp.classList.remove("open");} }
+      if (e.key === "Escape")     { sp.classList.remove("open"); }
+    }
+  });
+
+  /* ════════════════════════════════════════
+     ONLINE PRESENCE — Supabase broadcast
+  ════════════════════════════════════════ */
+  const onlineUsers = new Set();
+
+  function updateOnlineCount() {
+    document.getElementById("online-count").textContent = onlineUsers.size;
+  }
+
+  function startPresence() {
+    if (!currentUserId || !currentProfile) return;
+    const presenceChan = sb.channel("presence-global", {
+      config: { presence: { key: currentUserId } }
+    });
+    presenceChan
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChan.presenceState();
+        onlineUsers.clear();
+        Object.values(state).forEach(presences => {
+          presences.forEach(p => onlineUsers.add(p.user_id||p.presence_ref));
+        });
+        updateOnlineCount();
+      })
+      .on("presence", { event: "join" }, ({ newPresences }) => {
+        newPresences.forEach(p => onlineUsers.add(p.user_id||p.presence_ref));
+        updateOnlineCount();
+      })
+      .on("presence", { event: "leave" }, ({ leftPresences }) => {
+        leftPresences.forEach(p => onlineUsers.delete(p.user_id||p.presence_ref));
+        updateOnlineCount();
+      })
+      .subscribe(async status => {
+        if (status === "SUBSCRIBED") {
+          await presenceChan.track({
+            user_id:  currentUserId,
+            username: currentProfile.username,
+            online_at: new Date().toISOString()
+          });
+        }
+      });
+  }
+
   /* ════════════════ INIT ════════════════ */
   (async()=>{
     const{data:{session}}=await sb.auth.getSession();
@@ -1439,6 +1789,7 @@
       switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
     });
     switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
+    startPresence();
 
     sb.channel("reactions-global")
       .on("postgres_changes",{event:"*",schema:"public",table:"reactions"},payload=>{
@@ -1450,6 +1801,7 @@
       currentUserId=session?.user?.id||null;
       currentProfile=currentUserId?await getProfile(currentUserId):null;
       loadDMs();
+      startPresence();
     });
   })();
   </script>
