@@ -1745,6 +1745,7 @@
   }
 
   function startPresence() {
+    try {
     if (!currentUserId || !currentProfile) return;
     const presenceChan = sb.channel("presence-global", {
       config: { presence: { key: currentUserId } }
@@ -1775,10 +1776,12 @@
           });
         }
       });
+    } catch(e) { console.warn("Presence error:", e); }
   }
 
   /* ════════════════ INIT ════════════════ */
   (async()=>{
+    try {
     const{data:{session}}=await sb.auth.getSession();
     currentUserId=session?.user?.id||null;
     if(currentUserId) currentProfile=await getProfile(currentUserId);
@@ -1803,6 +1806,7 @@
       loadDMs();
       startPresence();
     });
+    } catch(e) { console.error("Init error:", e); }
   })();
   </script>
 </body>
