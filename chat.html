@@ -1053,21 +1053,27 @@
     else if (room.type==="dm")      pgFilter = `dm_id=eq.${room.id}`;
 
     const rtChan = sb.channel(rtKey);
-    if (pgFilter && room.type !== "dm") {
-      /* Use server-side filter for channel/server rooms — reliable for bigint/uuid PKs */
-      rtChan.on("postgres_changes",{event:"INSERT",schema:"public",table:tbl,filter:pgFilter}, payload=>{
-        renderMessage(payload.new, true);
-        scrollBottom();
-      });
+    if (room.type === "channel") {
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"messages",
+        filter:`channel_id=eq.${room.id}`
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else if (room.type === "server") {
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"messages",
+        filter:`server_id=eq.${room.id}`
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else if (room.type === "dm") {
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"dm_messages",
+        filter:`dm_id=eq.${room.id}`
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
     } else {
-      /* DMs and public: match client-side (Realtime UUID filter on FK is unreliable) */
-      rtChan.on("postgres_changes",{event:"INSERT",schema:"public",table:tbl}, payload=>{
-        const m = payload.new;
-        const match =
-          (room.type === "public" && !m.channel_id && !m.dm_id) ||
-          (room.type === "dm"     && String(m.dm_id) === String(room.id));
-        if (match) { renderMessage(m, true); scrollBottom(); }
-      });
+      /* Public — server-side filter isn't reliable for NULL checks,
+         so we use the client-side guard in renderMessage instead */
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"messages"
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
     }
     realtimeChannel = rtChan.subscribe();
 
