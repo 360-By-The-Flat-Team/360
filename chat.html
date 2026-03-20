@@ -199,8 +199,8 @@
     .input-action-btn { width:34px; height:34px; border-radius:8px; border:none; background:transparent; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; color:var(--mut); flex-shrink:0; transition:none !important; transform:none !important; box-shadow:none !important; }
     .input-action-btn:hover { background:rgba(148,163,184,.15); color:var(--a); }
     body.dark .input-action-btn { color:var(--mutd); }
-    #send-button { width:36px; height:36px; border-radius:10px; border:none; background:linear-gradient(110deg,var(--a),var(--a2)); color:#050816; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:.15s; }
-    #send-button:hover { opacity:.85; transform:none; box-shadow:none; }
+    #send-button { height:36px; padding:0 16px; border-radius:10px; border:none; background:linear-gradient(110deg,var(--a),var(--a2)); color:#050816; cursor:pointer; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:inherit; }
+    #send-button:hover { opacity:.85; }
     #send-button:disabled { opacity:.4; cursor:not-allowed; }
 
     .emoji-picker { position:absolute; bottom:110%; right:0; background:white; border:1px solid var(--br); border-radius:14px; padding:10px; display:none; flex-wrap:wrap; gap:3px; width:230px; z-index:200; box-shadow:0 12px 32px rgba(0,0,0,.15); }
@@ -250,7 +250,7 @@
       box-shadow: none !important;
     }
     /* promote chat-window to its own GPU layer so hover repaints don't affect it */
-    #chat-window { will-change: scroll-position; contain: strict; }
+    #chat-window { will-change: scroll-position; }
 
     @media (max-width:600px) {
       .chat-left { position:fixed; left:-240px; top:0; bottom:0; z-index:200; transition:left .25s; padding-top:48px; }
@@ -442,17 +442,44 @@
         </div>
         <div id="chat-input-row">
           <button class="input-action-btn" id="attachBtn" title="Attach">📎</button>
-          <input type="file" id="fileInput" accept="image/*,video/*,.pdf,.doc,.docx,.zip,.txt" style="display:none" />
+          <input type="file" id="fileInput" style="display:none" />
           <textarea id="message-input" rows="1" placeholder="Message General..." maxlength="4000"></textarea>
           <div style="position:relative;">
             <button class="input-action-btn" id="emojiBtn">😊</button>
             <div class="emoji-picker" id="inputEmojiPicker"></div>
           </div>
-          <button id="send-button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </button>
+          <button id="send-button">Send</button>
         </div>
-        <div style="font-size:11px;opacity:.35;padding:4px 4px 0;">Shortcodes: :fire: :skull: :heart: :rocket: · Enter to send · Shift+Enter for newline</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 4px 0;gap:8px;">
+          <div style="font-size:11px;opacity:.35;">Shortcodes: :fire: :skull: :heart: :rocket: · Enter to send · Shift+Enter for newline</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="font-size:11px;opacity:.5;">Auto-translate:</span>
+            <select id="translateLang" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--br);background:transparent;color:inherit;font-family:inherit;cursor:pointer;">
+              <option value="">Off</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="it">🇮🇹 Italian</option>
+              <option value="pt">🇧🇷 Portuguese</option>
+              <option value="ru">🇷🇺 Russian</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+              <option value="zh">🇨🇳 Chinese</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="hi">🇮🇳 Hindi</option>
+              <option value="tr">🇹🇷 Turkish</option>
+              <option value="pl">🇵🇱 Polish</option>
+              <option value="nl">🇳🇱 Dutch</option>
+              <option value="sv">🇸🇪 Swedish</option>
+              <option value="uk">🇺🇦 Ukrainian</option>
+              <option value="th">🇹🇭 Thai</option>
+              <option value="vi">🇻🇳 Vietnamese</option>
+              <option value="id">🇮🇩 Indonesian</option>
+              <option value="tl">🇵🇭 Filipino</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -600,6 +627,88 @@
       /s[o0]n[\s\-_.]*[o0]f[\s\-_.]*a[\s\-_.]*b[i1!][t7]ch/gi,
       /* ── Goon ── */
       /g[o0][o0]n/gi,
+
+      /* SPANISH */
+      /\bputa\b/gi, /\bputo\b/gi, /\bpinche\b/gi, /\bchinga[r]?\b/gi,
+      /\bchingada\b/gi, /\bchingado\b/gi, /\bcabron\b/gi,
+      /\bcono\b/gi, /\bjoder\b/gi, /\bhdp\b/gi,
+      /\bpendejo\b/gi, /\bculero\b/gi, /\bverga\b/gi, /\bcarajo\b/gi,
+      /\bmaricon\b/gi, /\bculo\b/gi,
+
+      /* FRENCH */
+      /\bmerde\b/gi, /\bputain\b/gi, /\bsalope\b/gi, /\bconnard\b/gi,
+      /\bconne\b/gi, /\bencule\b/gi, /\bfoutre\b/gi, /\bbatard\b/gi,
+      /\bniquer\b/gi, /\bnique\b/gi, /\btrouduc\b/gi,
+
+      /* GERMAN */
+      /\bscheisse\b/gi, /\bficken\b/gi, /\bfick\b/gi,
+      /\bwichser\b/gi, /\bhurensohn\b/gi, /\bhure\b/gi,
+      /\barschloch\b/gi, /\barsch\b/gi, /\bschlampe\b/gi, /\bkacke\b/gi,
+
+      /* PORTUGUESE */
+      /\bporra\b/gi, /\bmerda\b/gi, /\bfoda\b/gi, /\bfoder\b/gi,
+      /\bfdp\b/gi, /\bviado\b/gi, /\bbuceta\b/gi, /\bvadia\b/gi,
+      /\bcaralho\b/gi,
+
+      /* ITALIAN */
+      /\bcazzo\b/gi, /\bvaffanculo\b/gi, /\bvaffa\b/gi,
+      /\bstronzo\b/gi, /\bstronza\b/gi, /\bputtana\b/gi,
+      /\btroia\b/gi, /\bminchia\b/gi, /\bcoglione\b/gi,
+
+      /* DUTCH */
+      /\bkut\b/gi, /\bklootzak\b/gi, /\bhoer\b/gi, /\bkanker\b/gi,
+      /\bteef\b/gi, /\bflikker\b/gi, /\bgodverdomme\b/gi,
+
+      /* RUSSIAN (transliterated) */
+      /\bkhuy\b/gi, /\bkhui\b/gi, /\bpizda\b/gi, /\bpizdets\b/gi,
+      /\bblyad\b/gi, /\bsuka\b/gi, /\byebat\b/gi, /\bgovno\b/gi,
+      /\bmudak\b/gi, /\bpidor\b/gi, /\bzalupa\b/gi, /\bdolboyob\b/gi,
+
+      /* ARABIC (transliterated) */
+      /\bkuss\b/gi, /\bkahba\b/gi, /\bsharmuta\b/gi, /\bkhawal\b/gi,
+      /\bniik\b/gi, /\byinak\b/gi,
+
+      /* HINDI/URDU (transliterated) */
+      /\bbhenchod\b/gi, /\bmadarchod\b/gi, /\bbhosdike\b/gi,
+      /\bchutiya\b/gi, /\bchut\b/gi, /\bgaand\b/gi, /\bbhosda\b/gi,
+      /\brandi\b/gi, /\bharami\b/gi,
+
+      /* CHINESE (pinyin) */
+      /\btmd\b/gi, /\bcnm\b/gi, /\bdiu\b/gi,
+
+      /* JAPANESE (transliterated) */
+      /\bkuso\b/gi, /\bchikusho\b/gi, /\bbaka\b/gi, /\bmanko\b/gi,
+      /\byariman\b/gi,
+
+      /* KOREAN (transliterated) */
+      /\bssibal\b/gi, /\bsibal\b/gi, /\bshibal\b/gi, /\bboji\b/gi,
+      /\bjiral\b/gi, /\bsaekki\b/gi, /\bgaesaekki\b/gi,
+
+      /* TURKISH */
+      /\borospu\b/gi, /\bpezeveng\b/gi, /\bserefsiz\b/gi,
+
+      /* POLISH */
+      /\bkurwa\b/gi, /\bchuj\b/gi, /\bjebac\b/gi, /\bspierdolic\b/gi,
+      /\bsrac\b/gi, /\bpedal\b/gi, /\bcwel\b/gi,
+
+      /* SCANDINAVIAN */
+      /\bjavla\b/gi, /\bskit\b/gi, /\bfitta\b/gi, /\bhora\b/gi,
+      /\bluder\b/gi, /\bfaen\b/gi, /\brovhul\b/gi,
+
+      /* GREEK (transliterated) */
+      /\bgamoto\b/gi, /\bmalaka\b/gi, /\bpoustis\b/gi, /\bskata\b/gi,
+
+      /* HEBREW (transliterated) */
+      /\bzayin\b/gi, /\bkoos\b/gi, /\bzona\b/gi, /\btipesh\b/gi,
+
+      /* INDONESIAN/MALAY */
+      /\bkontol\b/gi, /\bmemek\b/gi, /\bpantek\b/gi, /\bjancok\b/gi,
+      /\bbangsat\b/gi, /\banjing\b/gi,
+
+      /* TAGALOG */
+      /\btangina\b/gi, /\bgago\b/gi, /\btanga\b/gi,
+      /\bulol\b/gi, /\bkantot\b/gi,
+
     ];
   })();
 
@@ -1007,9 +1116,11 @@
 
     win.appendChild(el);
     msgElMap.set(String(msg.id), el);
+    /* Auto-translate if enabled */
+    if (msg.text) maybeTranslateMessage(el, msg.text);
     if(loadRxn) {
       loadReactionsSingle(msg.id);
-      /* Auto-scroll — only if user is near the bottom (within 150px) */
+      /* Auto-scroll — only if user is near the bottom */
       const w=document.getElementById("chat-window");
       if(w.scrollHeight - w.scrollTop - w.clientHeight < 300) scrollBottom();
     }
@@ -1194,6 +1305,67 @@
     else alert("Commands: /promote /demote /ban /unban /tag /delete");
   }
 
+  /* ════════════════════════════════════════
+     AUTO-TRANSLATE
+     Uses MyMemory free API — no key needed.
+     Translates incoming messages if user has
+     a target language selected.
+  ════════════════════════════════════════ */
+  const translateCache = {};
+
+  async function translateText(text, targetLang) {
+    if (!text || !targetLang) return null;
+    const key = `${targetLang}:${text}`;
+    if (translateCache[key]) return translateCache[key];
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=autodetect|${targetLang}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const translated = data?.responseData?.translatedText;
+      /* MyMemory returns the original if it can't translate */
+      if (!translated || translated === text) return null;
+      translateCache[key] = translated;
+      return translated;
+    } catch { return null; }
+  }
+
+  async function maybeTranslateMessage(el, originalText) {
+    const lang = document.getElementById("translateLang")?.value;
+    if (!lang || !originalText) return;
+    /* Don't translate very short strings or pure emoji */
+    if (originalText.trim().length < 3) return;
+    const translated = await translateText(originalText, lang);
+    if (!translated) return;
+    /* Find the msg-text div inside this element */
+    const textDiv = el.querySelector(".msg-text");
+    if (!textDiv) return;
+    /* Add translation below in a muted pill */
+    if (el.querySelector(".msg-translation")) return;
+    const pill = document.createElement("div");
+    pill.className = "msg-translation";
+    pill.style.cssText = "font-size:12px;color:var(--mut);margin-top:3px;font-style:italic;";
+    pill.textContent = "⟳ " + translated;
+    textDiv.after(pill);
+  }
+
+  /* Re-translate all visible messages when language changes */
+  document.getElementById("translateLang")?.addEventListener("change", () => {
+    const lang = document.getElementById("translateLang").value;
+    if (!lang) {
+      /* Remove all existing translations */
+      document.querySelectorAll(".msg-translation").forEach(el => el.remove());
+      return;
+    }
+    /* Translate all currently visible messages */
+    msgElMap.forEach((el, msgId) => {
+      const textDiv = el.querySelector(".msg-text");
+      if (textDiv) {
+        el.querySelector(".msg-translation")?.remove();
+        maybeTranslateMessage(el, textDiv.textContent);
+      }
+    });
+  });
+
   function scrollBottom() {
     /* Double rAF: first frame lets browser finish layout,
        second frame measures the final scrollHeight after paint */
@@ -1255,6 +1427,10 @@
     if(currentUserId) currentProfile=await getProfile(currentUserId);
     await loadCommunities();
     await loadDMs();
+    /* Wire General room click */
+    document.getElementById("publicRoomItem").addEventListener("click", () => {
+      switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
+    });
     switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
 
     sb.channel("reactions-global")
