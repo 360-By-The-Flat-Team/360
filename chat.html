@@ -532,7 +532,8 @@
      Catches every common spelling, leet-speak
      substitution, spacing trick, and abbreviation.
   ════════════════════════════════════════ */
-  const PROFANITY_PATTERNS = (()=>{
+  let PROFANITY_PATTERNS = [];
+  try { PROFANITY_PATTERNS = (()=>{
     /* Normalise leet/spacing/punctuation so "f.u.c.k", "f u c k",
        "f*ck", "ph4ck", etc. all collapse to the same base word      */
     function leet(word) {
@@ -710,12 +711,14 @@
       /\bulol\b/gi, /\bkantot\b/gi,
 
     ];
-  })();
+  })(); } catch(e) { console.warn("Profanity filter init error:", e); }
 
   function filterProfanity(text) {
+    if (!text) return text;
     let out = text;
     for (const pat of PROFANITY_PATTERNS) {
-      out = out.replace(pat, match => "*".repeat(match.length));
+      try { out = out.replace(pat, match => "*".repeat(match.length)); }
+      catch(e) { /* bad pattern — skip */ }
     }
     return out;
   }
@@ -982,7 +985,7 @@
       rtChan.on("postgres_changes",{event:"INSERT",schema:"public",table:tbl}, payload=>{
         const m = payload.new;
         const match =
-          (room.type === "public" && !m.channel_id && !m.dm_id && !m.server_id) ||
+          (room.type === "public" && !m.channel_id && !m.dm_id) ||
           (room.type === "dm"     && String(m.dm_id) === String(room.id));
         if (match) { renderMessage(m, true); scrollBottom(); }
       });
@@ -1010,7 +1013,8 @@
     if      (activeRoom.type==="dm")      query=sb.from("dm_messages").select("*").eq("dm_id",activeRoom.id);
     else if (activeRoom.type==="channel") query=sb.from("messages").select("*").eq("channel_id",activeRoom.id).is("deleted_at",null);
     else if (activeRoom.type==="server")  query=sb.from("messages").select("*").eq("server_id",activeRoom.id).is("deleted_at",null);
-    else                                   query=sb.from("messages").select("*").is("channel_id",null).is("dm_id",null).is("server_id",null).is("deleted_at",null);
+    /* public: only rows with no channel_id and no dm_id (server_id may not exist yet) */
+    else                                   query=sb.from("messages").select("*").is("channel_id",null).is("dm_id",null).is("deleted_at",null);
 
     const {data,error}=await query.order("created_at",{ascending:false}).limit(100);
     if (error){console.error("loadHistory:",error.message);return;}
@@ -1275,7 +1279,10 @@
         await sb.from("direct_messages").update({updated_at:new Date().toISOString()}).eq("id",activeRoom.id);
       } else {
         if(activeRoom.type==="channel") payload.channel_id=activeRoom.id;
-        else if(activeRoom.type==="server") payload.server_id=activeRoom.id;
+        /* server_id only set if the column exists — safe to attempt, Supabase ignores unknown keys */
+        if(activeRoom.type==="server") {
+          try { payload.server_id=activeRoom.id; } catch(e) {}
+        }
         const{error}=await sb.from("messages").insert(payload);
         if(error){console.error("Send:",error.message);alert("Error: "+error.message);return;}
       }
