@@ -1502,7 +1502,7 @@
     /* ── Mod + Admin commands ── */
     if (cmd === "/warn") {
       if (!args[0]) { showToast("Usage: /warn <user> <message>  or  /warn <message>"); return; }
-      const { data: matched } = await sb.from("profiles").select("username").eq("username", args[0]).single();
+      const { data: matched } = await sb.from("profiles").select("username").eq("username", args[0]).maybeSingle();
       if (matched) {
         const warnMsg = args.slice(1).join(" ");
         if (!warnMsg) { showToast("Usage: /warn <user> <message>"); return; }
