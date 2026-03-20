@@ -15,10 +15,10 @@
 
     .chat-left {
       width:240px; flex-shrink:0; display:flex; flex-direction:column;
-      background:rgba(255,255,255,.55); backdrop-filter:blur(18px);
+      background:#f5f6f8;
       border-right:1px solid var(--br); padding:56px 0 12px; overflow-y:auto; z-index:10;
     }
-    body.dark .chat-left { background:rgba(9,9,11,.75); }
+    body.dark .chat-left { background:#0a0a0f; }
 
     .panel-section { padding:0 10px; margin-bottom:6px; }
     .panel-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--mut); padding:10px 6px 4px; }
@@ -46,9 +46,9 @@
 
     .chat-header {
       padding:10px 18px; border-bottom:1px solid var(--br); display:flex; align-items:center; gap:10px;
-      background:rgba(255,255,255,.6); backdrop-filter:blur(10px); flex-shrink:0;
+      background:#fff; flex-shrink:0;
     }
-    body.dark .chat-header { background:rgba(9,9,11,.7); }
+    body.dark .chat-header { background:#0a0a0f; }
     .chat-header-icon { font-size:18px; }
     .chat-header-name { font-size:15px; font-weight:700; }
     .chat-header-desc { font-size:12px; color:var(--mut); margin-left:auto; }
@@ -65,7 +65,7 @@
 
     .chat-message {
       display:flex; align-items:flex-start; gap:10px; padding:3px 6px;
-      border-radius:8px; transition:background .1s; position:relative;
+      border-radius:8px; position:relative;
     }
     .chat-message:hover { background:rgba(148,163,184,.07); }
     .chat-message:hover .msg-actions { opacity:1; }
@@ -120,7 +120,7 @@
 
     .msg-actions {
       opacity:0; display:flex; gap:3px; position:absolute; right:8px; top:4px;
-      background:rgba(255,255,255,.92); backdrop-filter:blur(8px);
+      background:rgba(255,255,255,.96);
       border:1px solid var(--br); border-radius:8px; padding:3px 5px; transition:opacity .15s;
     }
     body.dark .msg-actions { background:rgba(15,23,42,.95); }
@@ -191,7 +191,7 @@
     .upload-progress { height:3px; background:rgba(148,163,184,.2); border-radius:999px; margin-bottom:6px; display:none; overflow:hidden; }
     .upload-progress.show { display:block; }
     .upload-progress-bar { height:100%; background:linear-gradient(90deg,var(--a),var(--a2)); border-radius:999px; width:0%; transition:width .3s; }
-    #chat-input-row { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.15); backdrop-filter:blur(8px); border:1px solid var(--br); border-radius:14px; padding:6px 8px 6px 14px; transition:border-color .2s; }
+    #chat-input-row { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.12); border:1px solid var(--br); border-radius:14px; padding:6px 8px 6px 14px; transition:border-color .2s; }
     #chat-input-row:focus-within { border-color:var(--a); }
     body.dark #chat-input-row { background:rgba(15,23,42,.5); }
     #message-input { flex:1; border:none; background:transparent; color:var(--txt); font-size:14px; outline:none; resize:none; max-height:120px; line-height:1.5; padding:4px 0; font-family:inherit; }
@@ -537,10 +537,14 @@
   }
 
   async function enterCommunity(server, locked=false) {
-    const { data: channels, error } = await sb.from("channels")
+    /* Try to find a channel first; if none, use the server itself as the room */
+    const { data: channels } = await sb.from("channels")
       .select("*").eq("server_id", server.id).order("name").limit(1);
-    if (error || !channels || !channels.length) { alert("This community has no channels yet."); return; }
-    switchRoom({ type:"channel", id: channels[0].id, name: channels[0].name, icon: server.passcode?"🔒":"🌐", serverName: server.name });
+    const hasChannel = channels && channels.length > 0;
+    const roomId   = hasChannel ? channels[0].id   : server.id;
+    const roomName = hasChannel ? channels[0].name  : server.name;
+    const roomType = hasChannel ? "channel"         : "server";
+    switchRoom({ type:roomType, id:roomId, name:roomName, icon:server.passcode?"🔒":"🌐", serverName:server.name, serverId:server.id });
     document.querySelectorAll(".room-item,.dm-item").forEach(el => el.classList.remove("active"));
     document.querySelector(`[data-server-id="${server.id}"]`)?.classList.add("active");
     if (locked) showPasscodeGate(server);
@@ -589,7 +593,9 @@
       const { error } = await sb.from("server_members").insert({ server_id: server.id, user_id: currentUserId });
       if (error && !error.message.includes("unique")) { gate.querySelector("#gate-error").textContent = error.message; return; }
       gate.remove();
+      chatMain.style.position = "";
       await loadCommunities();
+      await loadHistory();
     }
     gate.querySelector("#gate-btn").addEventListener("click", tryUnlock);
     inp.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
@@ -718,14 +724,17 @@
     loadHistory();
 
     const tbl = room.type==="dm"?"dm_messages":"messages";
-    realtimeChannel = sb.channel(`room-${room.type}-${room.id}-${Date.now()}`)
+    /* Use a stable unique name so Supabase doesn't deduplicate channels */
+    const rtKey = `rt-${room.type}-${String(room.id).replace(/-/g,"")}-${Date.now()}`;
+    realtimeChannel = sb.channel(rtKey)
       .on("postgres_changes",{event:"INSERT",schema:"public",table:tbl}, payload=>{
         const m=payload.new;
         const match =
-          (room.type==="public"  && !m.channel_id && !m.dm_id) ||
+          (room.type==="public"  && !m.channel_id && !m.dm_id && !m.server_id) ||
           (room.type==="channel" && String(m.channel_id)===String(room.id)) ||
-          (room.type==="dm"      && m.dm_id===room.id);
-        if (match) renderMessage(m, true);
+          (room.type==="server"  && String(m.server_id)===String(room.id)) ||
+          (room.type==="dm"      && String(m.dm_id)===String(room.id));
+        if (match) { renderMessage(m, true); scrollBottom(); }
       }).subscribe();
 
     typingChannel = sb.channel(`typing-${room.type}-${room.id}`)
@@ -748,7 +757,8 @@
     let query;
     if      (activeRoom.type==="dm")      query=sb.from("dm_messages").select("*").eq("dm_id",activeRoom.id);
     else if (activeRoom.type==="channel") query=sb.from("messages").select("*").eq("channel_id",activeRoom.id).is("deleted_at",null);
-    else                                   query=sb.from("messages").select("*").is("channel_id",null).is("dm_id",null).is("deleted_at",null);
+    else if (activeRoom.type==="server")  query=sb.from("messages").select("*").eq("server_id",activeRoom.id).is("deleted_at",null);
+    else                                   query=sb.from("messages").select("*").is("channel_id",null).is("dm_id",null).is("server_id",null).is("deleted_at",null);
 
     const {data,error}=await query.order("created_at",{ascending:false}).limit(100);
     if (error){console.error("loadHistory:",error.message);return;}
@@ -771,7 +781,7 @@
 
   /* ════════════════ RENDER MESSAGE ════════════════ */
   function renderMessage(msg, loadRxn=true) {
-    if (document.querySelector(`[data-msg-id="${msg.id}"]`)) return;
+    if (msgElMap.has(String(msg.id))) return;
     const win=document.getElementById("chat-window");
     const msgDate=formatDate(msg.created_at);
     if (msgDate!==lastMsgDate) {
@@ -851,7 +861,12 @@
 
     win.appendChild(el);
     msgElMap.set(String(msg.id), el);
-    if(loadRxn) loadReactionsSingle(msg.id);
+    if(loadRxn) {
+      loadReactionsSingle(msg.id);
+      /* Auto-scroll — only if user is near the bottom (within 150px) */
+      const w=document.getElementById("chat-window");
+      if(w.scrollHeight - w.scrollTop - w.clientHeight < 150) scrollBottom();
+    }
   }
 
   /* ════════════════ REACTIONS ════════════════ */
@@ -920,8 +935,10 @@
     document.getElementById("up-name").textContent="";
   }
   async function uploadFile(file) {
-    const ext=file.name.split(".").pop();
-    const path=`chat/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const ext=file.name.split(".").pop().toLowerCase();
+    /* Include user_id in path — satisfies Supabase default storage RLS */
+    const uid=currentUserId||"anon";
+    const path=`${uid}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const prog=document.getElementById("upload-progress"),bar=document.getElementById("upload-progress-bar");
     prog.classList.add("show"); bar.style.width="40%";
     const{error}=await sb.storage.from("chat-uploads").upload(path,file,{cacheControl:"3600",upsert:false});
@@ -997,12 +1014,13 @@
       if (activeRoom.type==="dm") {
         payload.dm_id=activeRoom.id;
         const{error}=await sb.from("dm_messages").insert(payload);
-        if(error){console.error("Send:",error.message);return;}
+        if(error){console.error("Send:",error.message);alert("Error: "+error.message);return;}
         await sb.from("direct_messages").update({updated_at:new Date().toISOString()}).eq("id",activeRoom.id);
       } else {
         if(activeRoom.type==="channel") payload.channel_id=activeRoom.id;
+        else if(activeRoom.type==="server") payload.server_id=activeRoom.id;
         const{error}=await sb.from("messages").insert(payload);
-        if(error){console.error("Send:",error.message);return;}
+        if(error){console.error("Send:",error.message);alert("Error: "+error.message);return;}
       }
       msgInput.value=""; msgInput.style.height="auto";
     } finally { isSending=false; document.getElementById("send-button").disabled=false; }
@@ -1030,7 +1048,12 @@
     else alert("Commands: /promote /demote /ban /unban /tag /delete");
   }
 
-  function scrollBottom() { const w=document.getElementById("chat-window"); w.scrollTop=w.scrollHeight; }
+  function scrollBottom() {
+    requestAnimationFrame(()=>{
+      const w=document.getElementById("chat-window");
+      w.scrollTop=w.scrollHeight;
+    });
+  }
 
   document.getElementById("send-button").addEventListener("click",sendMessage);
   msgInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
@@ -1044,11 +1067,12 @@
     if(!name){document.getElementById("cc-error").textContent="Name required.";return;}
     const{data:server,error}=await sb.from("servers").insert({name,passcode:passcode||null,owner_id:currentUserId}).select().single();
     if(error){document.getElementById("cc-error").textContent=error.message;return;}
-    const{data:channel}=await sb.from("channels").insert({name:"general",server_id:server.id,is_public:true}).select().single();
+    /* Try to create a default channel; if it fails just use the server as the room */
+    await sb.from("channels").insert({name:"general",server_id:server.id,is_public:true});
     await sb.from("server_members").insert({server_id:server.id,user_id:currentUserId});
     document.getElementById("createCommunityModal").classList.remove("open");
     await loadCommunities();
-    if(channel) switchRoom({type:"channel",id:channel.id,name:channel.name,icon:passcode?"🔒":"🌐",serverName:server.name});
+    await enterCommunity(server);
   });
 
   document.getElementById("browseCommunityBtn").addEventListener("click",async()=>{
