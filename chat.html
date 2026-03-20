@@ -74,9 +74,8 @@
     .chat-avatar {
       width:36px; height:36px; border-radius:50%; object-fit:cover;
       flex-shrink:0; border:1.5px solid var(--br); margin-top:2px;
-      cursor:pointer; transition:opacity .15s;
+      cursor:pointer;
     }
-    .chat-avatar:hover { opacity:.8; }
     .chat-avatar.initials {
       background:linear-gradient(120deg,var(--a),var(--a2)); color:#050816;
       display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;
@@ -120,18 +119,19 @@
 
     .msg-actions {
       opacity:0; display:flex; gap:3px; position:absolute; right:8px; top:4px;
-      background:rgba(255,255,255,.96);
-      border:1px solid var(--br); border-radius:8px; padding:3px 5px; transition:opacity .15s;
+      background:#fff;
+      border:1px solid var(--br); border-radius:8px; padding:3px 5px;
     }
-    body.dark .msg-actions { background:rgba(15,23,42,.95); }
-    .msg-action-btn { font-size:14px; padding:3px 5px; border-radius:5px; border:none; background:none; cursor:pointer; transition:background .1s; line-height:1; }
-    .msg-action-btn:hover { background:rgba(148,163,184,.2); transform:none; box-shadow:none; }
+    body.dark .msg-actions { background:#0f172a; }
+    .chat-message:hover .msg-actions { opacity:1; }
+    .msg-action-btn { font-size:14px; padding:3px 5px; border-radius:5px; border:none; background:none; cursor:pointer; line-height:1; transition:none !important; transform:none !important; box-shadow:none !important; }
+    .msg-action-btn:hover { background:rgba(148,163,184,.2); }
 
     .reactions-row { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
     .reaction-pill {
       display:inline-flex; align-items:center; gap:4px; padding:2px 8px;
       border-radius:999px; background:rgba(148,163,184,.12);
-      border:1px solid rgba(148,163,184,.2); font-size:13px; cursor:pointer; transition:.12s; user-select:none;
+      border:1px solid rgba(148,163,184,.2); font-size:13px; cursor:pointer; user-select:none;
     }
     .reaction-pill:hover { background:rgba(148,163,184,.25); }
     .reaction-pill.mine { background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.35); }
@@ -196,8 +196,8 @@
     body.dark #chat-input-row { background:rgba(15,23,42,.5); }
     #message-input { flex:1; border:none; background:transparent; color:var(--txt); font-size:14px; outline:none; resize:none; max-height:120px; line-height:1.5; padding:4px 0; font-family:inherit; }
     body.dark #message-input { color:var(--txtd); }
-    .input-action-btn { width:34px; height:34px; border-radius:8px; border:none; background:transparent; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; color:var(--mut); transition:.15s; flex-shrink:0; }
-    .input-action-btn:hover { background:rgba(148,163,184,.15); color:var(--a); transform:none; box-shadow:none; }
+    .input-action-btn { width:34px; height:34px; border-radius:8px; border:none; background:transparent; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; color:var(--mut); flex-shrink:0; transition:none !important; transform:none !important; box-shadow:none !important; }
+    .input-action-btn:hover { background:rgba(148,163,184,.15); color:var(--a); }
     body.dark .input-action-btn { color:var(--mutd); }
     #send-button { width:36px; height:36px; border-radius:10px; border:none; background:linear-gradient(110deg,var(--a),var(--a2)); color:#050816; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:.15s; }
     #send-button:hover { opacity:.85; transform:none; box-shadow:none; }
@@ -233,6 +233,24 @@
     body.dark .modal-btn.secondary { color:var(--txtd); }
     .modal-btn:hover { opacity:.85; transform:none; box-shadow:none; }
     .modal-error { color:#ef4444; font-size:12px; min-height:16px; }
+
+    /* Neutralise main.css button hover transform/shadow inside chat */
+    .chat-root button,
+    .chat-input-wrap button,
+    .msg-action-btn,
+    .input-action-btn,
+    #send-button {
+      transition: none !important;
+    }
+    .chat-root button:hover,
+    .chat-input-wrap button:hover,
+    .msg-action-btn:hover,
+    .input-action-btn:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    /* promote chat-window to its own GPU layer so hover repaints don't affect it */
+    #chat-window { will-change: scroll-position; contain: strict; }
 
     @media (max-width:600px) {
       .chat-left { position:fixed; left:-240px; top:0; bottom:0; z-index:200; transition:left .25s; padding-top:48px; }
@@ -481,6 +499,117 @@
   const EMOJIS = ['👍','❤️','😂','💀','🔥','😮','😢','👏','🥀','✨','💯','🚀','⭐','🎉','👀'];
 
   function applyShortcodes(t) { return t.replace(/:[a-z0-9_]+:/g, m => SHORTCODES[m] || m); }
+
+  /* ════════════════════════════════════════
+     PROFANITY FILTER
+     Catches every common spelling, leet-speak
+     substitution, spacing trick, and abbreviation.
+  ════════════════════════════════════════ */
+  const PROFANITY_PATTERNS = (()=>{
+    /* Normalise leet/spacing/punctuation so "f.u.c.k", "f u c k",
+       "f*ck", "ph4ck", etc. all collapse to the same base word      */
+    function leet(word) {
+      return word
+        .split("")
+        .map(c => {
+          switch(c) {
+            case "a": return "[a4@]";
+            case "b": return "[b8]";
+            case "c": return "[ck(]";
+            case "e": return "[e3]";
+            case "f": return "[f]";
+            case "g": return "[g9]";
+            case "h": return "[h#]";
+            case "i": return "[i1!|]";
+            case "k": return "[kc]";
+            case "l": return "[l1|]";
+            case "n": return "[n]";
+            case "o": return "[o0]";
+            case "p": return "[p]";
+            case "r": return "[r]";
+            case "s": return "[s5$]";
+            case "t": return "[t7+]";
+            case "u": return "[uv]";
+            case "v": return "[vu]";
+            case "x": return "[x]";
+            default:  return c;
+          }
+        })
+        /* allow optional separator (space, dot, dash, underscore, *) between every char */
+        .join("[\s\-_.\*]*");
+    }
+
+    /* Optionally wrap in a word-boundary-ish check so "classic" isn't caught */
+    function pat(word, opts={}) {
+      const core = leet(word);
+      const prefix = opts.noPrefix ? "(?<![a-z])" : "(?<![a-z])";
+      const suffix = opts.noSuffix ? "(?![a-z])"  : "(?![a-z])";
+      return new RegExp(prefix + core + suffix, "gi");
+    }
+
+    return [
+      /* ── The F-word and variants ── */
+      pat("fuck"),   pat("fuk"),   pat("fck"),
+      /ph[uv][ck]+/gi,
+      /f+[uv]+[ck]+[e]*/gi,
+      /f[\s\-_.]*u[\s\-_.]*c[\s\-_.]*k/gi,
+      /* ── Shit ── */
+      pat("shit"),  pat("sht"),  /sh[i1!]t/gi,
+      /* ── Ass / arse ── */
+      /a+[s$][s$]+/gi,
+      /a+r+[s$][e]?/gi,
+      /as+hole/gi,  /a[s$]+h[o0]l[e3]/gi,
+      /* ── Bitch ── */
+      pat("bitch"),  /b[i1!][t7]ch/gi,  /b1tch/gi,
+      /* ── Cunt ── */
+      pat("cunt"),  /c[uv]n[t7]/gi,
+      /* ── Dick ── */
+      /d[i1!][ck]+/gi,  /d[i1!]ck?h[e3]a[d]/gi,
+      /* ── Cock ── */
+      /c[o0][ck]+/gi,  /c[o0][ck]su[ck]/gi,
+      /* ── Pussy ── */
+      /p[uv][s$][s$][yi1!]/gi,
+      /* ── Bastard ── */
+      pat("bastard"),  /b[a4][s$][t7][a4]r[d]/gi,
+      /* ── Damn / damnit ── */
+      /d[a4@]mn[i1!][t7]/gi,
+      /* ── Whore ── */
+      /wh[o0]r[e3]?/gi,  /h[o0]r[e3]?/gi,
+      /* ── Slut ── */
+      /sl[uv][t7]/gi,
+      /* ── Nigger / nigga and variants ── */
+      /n[i1!][g9][g9][e3]r/gi,  /n[i1!][g9][g9][a4]/gi,
+      /n[i1!]gg[a4@]/gi,  /n[i1!]g+[a4@]?/gi,
+      /* ── Faggot / fag ── */
+      /f[a4][g9][g9][o0][t7]/gi,  /f[a4][g9][s$]?/gi,
+      /* ── Retard ── */
+      /r[e3][t7][a4]r[d][e3]?[d]?/gi,
+      /* ── Twat ── */
+      /[t7]w[a4@][t7]/gi,
+      /* ── Prick ── */
+      /pr[i1!][ck]+/gi,
+      /* ── Wank ── */
+      /w[a4@]nk[e3]?r?/gi,
+      /* ── Common abbreviations / acronyms ── */
+      /wtf/gi,  /stfu/gi,  /ffs/gi,
+      /fuq/gi,  /fml/gi,
+      /* ── Motherfucker ── */
+      /m[o0][t7]h[e3]r[\s\-_.]*f[uv][ck]/gi,
+      /mf+/gi,
+      /* ── Son of a bitch ── */
+      /s[o0]n[\s\-_.]*[o0]f[\s\-_.]*a[\s\-_.]*b[i1!][t7]ch/gi,
+      /* ── Goon ── */
+      /g[o0][o0]n/gi,
+    ];
+  })();
+
+  function filterProfanity(text) {
+    let out = text;
+    for (const pat of PROFANITY_PATTERNS) {
+      out = out.replace(pat, match => "*".repeat(match.length));
+    }
+    return out;
+  }
   function getInitials(n) { if (!n) return "?"; const p=n.trim().split(" "); return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[1][0]).toUpperCase(); }
   function formatTime(ts) { return new Date(ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}); }
   function formatDate(ts) {
@@ -724,18 +853,32 @@
     loadHistory();
 
     const tbl = room.type==="dm"?"dm_messages":"messages";
-    /* Use a stable unique name so Supabase doesn't deduplicate channels */
+    /* Unique channel key per room switch */
     const rtKey = `rt-${room.type}-${String(room.id).replace(/-/g,"")}-${Date.now()}`;
-    realtimeChannel = sb.channel(rtKey)
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:tbl}, payload=>{
-        const m=payload.new;
+    /* Build a Postgres filter so only relevant rows come through */
+    let pgFilter = undefined;
+    if      (room.type==="channel") pgFilter = `channel_id=eq.${room.id}`;
+    else if (room.type==="server")  pgFilter = `server_id=eq.${room.id}`;
+    else if (room.type==="dm")      pgFilter = `dm_id=eq.${room.id}`;
+
+    const rtChan = sb.channel(rtKey);
+    if (pgFilter && room.type !== "dm") {
+      /* Use server-side filter for channel/server rooms — reliable for bigint/uuid PKs */
+      rtChan.on("postgres_changes",{event:"INSERT",schema:"public",table:tbl,filter:pgFilter}, payload=>{
+        renderMessage(payload.new, true);
+        scrollBottom();
+      });
+    } else {
+      /* DMs and public: match client-side (Realtime UUID filter on FK is unreliable) */
+      rtChan.on("postgres_changes",{event:"INSERT",schema:"public",table:tbl}, payload=>{
+        const m = payload.new;
         const match =
-          (room.type==="public"  && !m.channel_id && !m.dm_id && !m.server_id) ||
-          (room.type==="channel" && String(m.channel_id)===String(room.id)) ||
-          (room.type==="server"  && String(m.server_id)===String(room.id)) ||
-          (room.type==="dm"      && String(m.dm_id)===String(room.id));
+          (room.type === "public" && !m.channel_id && !m.dm_id && !m.server_id) ||
+          (room.type === "dm"     && String(m.dm_id) === String(room.id));
         if (match) { renderMessage(m, true); scrollBottom(); }
-      }).subscribe();
+      });
+    }
+    realtimeChannel = rtChan.subscribe();
 
     typingChannel = sb.channel(`typing-${room.type}-${room.id}`)
       .on("broadcast",{event:"typing"}, payload=>{
@@ -776,7 +919,10 @@
         Object.entries(byMsg).forEach(([mid,rList])=>renderReactions(mid,rList));
       }
     }
+    /* Wait for reaction renders then scroll */
     scrollBottom();
+    /* Second scroll after a tick in case images/reactions shifted height */
+    setTimeout(scrollBottom, 80);
   }
 
   /* ════════════════ RENDER MESSAGE ════════════════ */
@@ -865,7 +1011,7 @@
       loadReactionsSingle(msg.id);
       /* Auto-scroll — only if user is near the bottom (within 150px) */
       const w=document.getElementById("chat-window");
-      if(w.scrollHeight - w.scrollTop - w.clientHeight < 150) scrollBottom();
+      if(w.scrollHeight - w.scrollTop - w.clientHeight < 300) scrollBottom();
     }
   }
 
@@ -1003,7 +1149,7 @@
       const payload={
         user_id:session.user.id, username:p.username||session.user.email,
         avatar_url:p.avatar_url||null, tag:p.tag||null, role:p.role||"user",
-        text:applyShortcodes(text), file_url:fileUrl,
+        text:filterProfanity(applyShortcodes(text)), file_url:fileUrl,
       };
       if (replyingTo) {
         payload.reply_to_id=replyingTo.id;
@@ -1049,9 +1195,13 @@
   }
 
   function scrollBottom() {
+    /* Double rAF: first frame lets browser finish layout,
+       second frame measures the final scrollHeight after paint */
     requestAnimationFrame(()=>{
-      const w=document.getElementById("chat-window");
-      w.scrollTop=w.scrollHeight;
+      requestAnimationFrame(()=>{
+        const w=document.getElementById("chat-window");
+        w.scrollTop=w.scrollHeight;
+      });
     });
   }
 
