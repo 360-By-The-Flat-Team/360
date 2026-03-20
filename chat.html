@@ -820,10 +820,18 @@
 
   /* ════════════════ COMMUNITIES ════════════════ */
   async function loadCommunities() {
-    const { data } = await sb.from("servers").select("*").order("name");
+    const { data, error } = await sb.from("servers").select("*").order("name");
     const list = document.getElementById("communities-list");
     list.innerHTML = "";
-    if (!data) return;
+    if (error) {
+      console.error("loadCommunities error:", error.message, error.code);
+      list.innerHTML = `<div style="font-size:11px;color:#ef4444;padding:6px 10px;">Error loading: ${error.message}</div>`;
+      return;
+    }
+    if (!data || !data.length) {
+      list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`;
+      return;
+    }
     data.forEach(s => {
       const div = document.createElement("div");
       div.className = "room-item";
