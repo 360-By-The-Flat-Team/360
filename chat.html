@@ -1119,6 +1119,17 @@
 
   /* ════════════════ RENDER MESSAGE ════════════════ */
   function renderMessage(msg, loadRxn=true) {
+    /* ── Room isolation guard ── */
+    const r = activeRoom;
+    if (r.type === "public") {
+      if (msg.channel_id || msg.dm_id || msg.server_id) return;
+    } else if (r.type === "channel") {
+      if (String(msg.channel_id) !== String(r.id)) return;
+    } else if (r.type === "server") {
+      if (String(msg.server_id) !== String(r.id)) return;
+    } else if (r.type === "dm") {
+      if (String(msg.dm_id) !== String(r.id)) return;
+    }
     if (msgElMap.has(String(msg.id))) return;
     const win=document.getElementById("chat-window");
     const msgDate=formatDate(msg.created_at);
