@@ -1460,11 +1460,8 @@
     if (cmd === "/help") {
       const list = SLASH_COMMANDS
         .filter(c => !c.adminOnly || isAdmin)
-        .map(c => `${c.cmd} ${c.args} — ${c.desc}`).join("
-");
-      alert("Available commands:
-
-" + list);
+        .map(c => `${c.cmd} ${c.args} - ${c.desc}`).join("\n");
+      alert("Available commands:\n\n" + list);
       return;
     }
 
