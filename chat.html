@@ -1120,8 +1120,8 @@
     if      (activeRoom.type === "dm")      query = sb.from("dm_messages").select("*").eq("dm_id", activeRoom.id);
     else if (activeRoom.type === "channel") query = sb.from("messages").select("*").eq("channel_id", activeRoom.id).is("deleted_at", null);
     else if (activeRoom.type === "server")  query = sb.from("messages").select("*").eq("server_id", activeRoom.id).is("deleted_at", null);
-    else                                     query = sb.from("messages").select("*").is("channel_id", null).is("dm_id", null).is("deleted_at", null);
-  
+    else query = sb.from("messages").select("*").is("channel_id", null).is("dm_id", null).is("server_id", null).is("deleted_at", null);  
+    
     if (beforeDate) query = query.lt("created_at", beforeDate);
   
     const { data, error } = await query.order("created_at", { ascending: false }).limit(LIMIT);
