@@ -1181,7 +1181,7 @@
   function renderMessageToFrag(msg, arr) {
     /* Room guard */
     const r = activeRoom;
-    if (r.type === "public") { if (msg.channel_id || msg.dm_id || msg.server_id) return; }
+    if (r.type === "public") { if (msg.channel_id || msg.dm_id) return; }
     else if (r.type === "channel") { if (String(msg.channel_id) !== String(r.id)) return; }
     else if (r.type === "server")  { if (String(msg.server_id)  !== String(r.id)) return; }
     else if (r.type === "dm")      { if (String(msg.dm_id)       !== String(r.id)) return; }
@@ -1303,7 +1303,7 @@
     /* ── Room isolation guard ── */
     const r = activeRoom;
     if (r.type === "public") {
-      if (msg.channel_id || msg.dm_id || msg.server_id) return;
+      if (msg.channel_id || msg.dm_id) return;
     } else if (r.type === "channel") {
       if (String(msg.channel_id) !== String(r.id)) return;
     } else if (r.type === "server") {
