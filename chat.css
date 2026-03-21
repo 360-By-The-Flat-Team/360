@@ -329,10 +329,35 @@ body.dark #typing-indicator { color: var(--mutd); }
   border-color: var(--glass-border-strong);
   box-shadow: 0 0 0 3px rgba(59,130,246,0.10), var(--glass-shadow);
 }
+#chat-input-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px; padding: 6px 8px 6px 14px;
+  transition: border-color .2s, box-shadow .2s;
+  box-shadow: var(--glass-shadow);
+}
+#chat-input-row:focus-within {
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.10), var(--glass-shadow);
+}
+
 #message-input {
-  flex: 1; border: none; background: transparent; color: var(--txt);
+  flex: 1; border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  color: var(--txt);
   font-size: 14px; outline: none; resize: none; max-height: 120px;
-  line-height: 1.5; padding: 4px 0; font-family: inherit;
+  line-height: 1.5; padding: 6px 10px; font-family: inherit;
+  border-radius: 10px;
+  transition: border-color .2s;
+}
+#message-input:focus {
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
 }
 body.dark #message-input { color: var(--txtd); }
 
