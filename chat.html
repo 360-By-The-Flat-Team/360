@@ -1098,40 +1098,206 @@
     document.getElementById("chatLeft").classList.remove("mobile-open");
   }
 
-  /* ════════════════ LOAD HISTORY — batched reactions ════════════════ */
+  /* ════════════════ LOAD HISTORY — paginated ════════════════ */
+  let historyExhausted = false;
+  let oldestMsgDate    = null;
+  let isLoadingMore    = false;
+  
   async function loadHistory() {
-    document.getElementById("chat-window").innerHTML="";
+    document.getElementById("chat-window").innerHTML = "";
     msgElMap.clear();
-    lastMsgUserId=null; lastMsgDate=null;
-    let query;
-    if      (activeRoom.type==="dm")      query=sb.from("dm_messages").select("*").eq("dm_id",activeRoom.id);
-    else if (activeRoom.type==="channel") query=sb.from("messages").select("*").eq("channel_id",activeRoom.id).is("deleted_at",null);
-    else if (activeRoom.type==="server")  query=sb.from("messages").select("*").eq("server_id",activeRoom.id).is("deleted_at",null);
-    /* public: only rows with no channel_id and no dm_id (server_id may not exist yet) */
-    else                                   query=sb.from("messages").select("*").is("channel_id",null).is("dm_id",null).is("deleted_at",null);
-
-    const {data,error}=await query.order("created_at",{ascending:false}).limit(100);
-    if (error){console.error("loadHistory:",error.message);return;}
-    if (!data) return;
-    const msgs=data.reverse();
-    msgs.forEach(m=>renderMessage(m,false));
-
-    /* Batch load all reactions in ONE query */
-    if (msgs.length && activeRoom.type!=="dm") {
-      const ids=msgs.map(m=>m.id);
-      const{data:rxns}=await sb.from("reactions").select("emoji,user_id,message_id").in("message_id",ids);
-      if (rxns) {
-        const byMsg={};
-        rxns.forEach(r=>{(byMsg[r.message_id]=byMsg[r.message_id]||[]).push(r);});
-        Object.entries(byMsg).forEach(([mid,rList])=>renderReactions(mid,rList));
-      }
-    }
-    /* Wait for reaction renders then scroll */
+    lastMsgUserId = null; lastMsgDate = null;
+    historyExhausted = false; oldestMsgDate = null;
+    await fetchMessages(null);
     scrollBottom();
-    /* Second scroll after a tick in case images/reactions shifted height */
     setTimeout(scrollBottom, 80);
   }
-
+  
+  async function fetchMessages(beforeDate) {
+    let query;
+    const LIMIT = 50;
+  
+    if      (activeRoom.type === "dm")      query = sb.from("dm_messages").select("*").eq("dm_id", activeRoom.id);
+    else if (activeRoom.type === "channel") query = sb.from("messages").select("*").eq("channel_id", activeRoom.id).is("deleted_at", null);
+    else if (activeRoom.type === "server")  query = sb.from("messages").select("*").eq("server_id", activeRoom.id).is("deleted_at", null);
+    else                                     query = sb.from("messages").select("*").is("channel_id", null).is("dm_id", null).is("deleted_at", null);
+  
+    if (beforeDate) query = query.lt("created_at", beforeDate);
+  
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(LIMIT);
+    if (error) { console.error("fetchMessages:", error.message); return; }
+    if (!data || !data.length) { historyExhausted = true; return; }
+    if (data.length < LIMIT) historyExhausted = true;
+  
+    const msgs = data.reverse();
+    oldestMsgDate = msgs[0].created_at;
+  
+    const win = document.getElementById("chat-window");
+    const prevScrollHeight = win.scrollHeight;
+  
+    /* Prepend older messages above existing ones */
+    if (beforeDate) {
+      /* Render into a temporary container then insert at top */
+      const savedLastUserId = lastMsgUserId;
+      const savedLastDate   = lastMsgDate;
+      lastMsgUserId = null; lastMsgDate = null;
+  
+      const frag = document.createDocumentFragment();
+      const tempWin = { appendChild: el => frag.appendChild(el), scrollTop: 0, scrollHeight: 0 };
+  
+      /* We need date dividers rendered in order, so render to a temp array */
+      const tempEls = [];
+      const origAppend = win.appendChild.bind(win);
+  
+      /* Temporarily redirect appendChild to collect elements */
+      msgs.forEach(m => renderMessageToFrag(m, tempEls));
+  
+      /* Insert collected elements at the top */
+      const firstChild = win.firstChild;
+      tempEls.reverse().forEach(el => win.insertBefore(el, firstChild));
+  
+      lastMsgUserId = savedLastUserId;
+      lastMsgDate   = savedLastDate;
+  
+      /* Maintain scroll position so user doesn't jump */
+      win.scrollTop = win.scrollHeight - prevScrollHeight;
+    } else {
+      msgs.forEach(m => renderMessage(m, false));
+  
+      /* Batch load reactions */
+      if (msgs.length && activeRoom.type !== "dm") {
+        const ids = msgs.map(m => m.id);
+        const { data: rxns } = await sb.from("reactions").select("emoji,user_id,message_id").in("message_id", ids);
+        if (rxns) {
+          const byMsg = {};
+          rxns.forEach(r => { (byMsg[r.message_id] = byMsg[r.message_id] || []).push(r); });
+          Object.entries(byMsg).forEach(([mid, rList]) => renderReactions(mid, rList));
+        }
+      }
+    }
+  }
+  
+  /* Renders a message and pushes its DOM element(s) into an array instead of the window */
+  function renderMessageToFrag(msg, arr) {
+    /* Room guard */
+    const r = activeRoom;
+    if (r.type === "public") { if (msg.channel_id || msg.dm_id || msg.server_id) return; }
+    else if (r.type === "channel") { if (String(msg.channel_id) !== String(r.id)) return; }
+    else if (r.type === "server")  { if (String(msg.server_id)  !== String(r.id)) return; }
+    else if (r.type === "dm")      { if (String(msg.dm_id)       !== String(r.id)) return; }
+    if (msgElMap.has(String(msg.id))) return;
+  
+    const win = document.getElementById("chat-window");
+    const msgDate = formatDate(msg.created_at);
+    if (msgDate !== lastMsgDate) {
+      const d = document.createElement("div");
+      d.className = "date-divider"; d.textContent = msgDate;
+      arr.push(d); lastMsgDate = msgDate; lastMsgUserId = null;
+    }
+  
+    const grouped = msg.user_id === lastMsgUserId; lastMsgUserId = msg.user_id;
+    const el = document.createElement("div");
+    el.className = "chat-message" + (grouped ? " grouped" : "");
+    el.dataset.msgId = msg.id; el.dataset.userId = msg.user_id || "";
+  
+    const roleBadge = msg.role && msg.role !== "user" ? `<span class="role-badge role-${msg.role}">${msg.role}</span>` : "";
+    const tagBadge  = msg.tag ? `<span class="user-tag">[${msg.tag}]</span>` : "";
+    const rawText   = (msg.text || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const safeText  = rawText.replace(/@(\w+)/g, (match, name) => {
+      const isMe = currentProfile && name.toLowerCase() === (currentProfile.username || "").toLowerCase();
+      return `<span class="mention-highlight${isMe ? " mine" : ""}">${match}</span>`;
+    });
+  
+    let replyHTML = "";
+    if (msg.reply_to_id && msg.reply_to_text) {
+      const sr = (msg.reply_to_text || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      replyHTML = `<div class="reply-quote" data-jump="${msg.reply_to_id}"><span class="rq-author">${msg.reply_to_username || "Unknown"}</span><span class="rq-text">${sr}</span></div>`;
+    }
+  
+    const avatarHTML = msg.avatar_url
+      ? `<img class="chat-avatar" src="${msg.avatar_url}" data-uid="${msg.user_id}" alt="" onerror="this.outerHTML='<div class=\\'chat-avatar initials\\' data-uid=\\'${msg.user_id}\\'>${getInitials(msg.username)}</div>'">`
+      : `<div class="chat-avatar initials" data-uid="${msg.user_id}">${getInitials(msg.username)}</div>`;
+  
+    let attachHTML = "";
+    if (msg.file_url) {
+      if (isImage(msg.file_url)) attachHTML = `<img class="msg-image" src="${msg.file_url}" alt="image" loading="lazy" />`;
+      else { const fn = decodeURIComponent(msg.file_url.split("/").pop().split("?")[0]); attachHTML = `<a class="msg-file" href="${msg.file_url}" target="_blank">📎 ${fn}</a>`; }
+    }
+  
+    el.innerHTML = `
+      ${avatarHTML}
+      <div class="msg-body">
+        ${!grouped ? `<div class="msg-meta"><span class="msg-username">${msg.username || "Unknown"}${tagBadge}${roleBadge}</span><span class="msg-time">${formatTime(msg.created_at)}</span></div>` : ""}
+        ${replyHTML}
+        ${safeText ? `<div class="msg-text">${safeText}</div>` : ""}
+        ${attachHTML}
+        <div class="reactions-row" id="reactions-${msg.id}"></div>
+      </div>
+      <div class="msg-actions">
+        <button class="msg-action-btn" data-reply="${msg.id}" title="Reply">↩️</button>
+        <button class="msg-action-btn" data-react="${msg.id}" title="React">😊</button>
+        ${currentUserId === msg.user_id ? `<button class="msg-action-btn" data-delete="${msg.id}" title="Delete">🗑️</button>` : ""}
+      </div>`;
+  
+    el.querySelectorAll(".chat-avatar").forEach(av => {
+      av.addEventListener("click", e => { e.stopPropagation(); showProfilePopup(av.dataset.uid, av); });
+    });
+    el.querySelectorAll(".reply-quote").forEach(q => {
+      q.addEventListener("click", () => {
+        const t = msgElMap.get(String(q.dataset.jump));
+        if (t) { t.scrollIntoView({ behavior:"smooth", block:"center" }); t.style.background = "rgba(59,130,246,.15)"; setTimeout(() => t.style.background = "", 1500); }
+      });
+    });
+  
+    const replyBtn = el.querySelector(`[data-reply="${msg.id}"]`);
+    if (replyBtn) replyBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      replyingTo = { id: msg.id, username: msg.username, text: msg.text || (msg.file_url ? "📎 file" : "") };
+      document.getElementById("rb-author").textContent = msg.username;
+      document.getElementById("rb-text").textContent = replyingTo.text;
+      document.getElementById("reply-bar").classList.add("show");
+      document.getElementById("message-input").focus();
+    });
+  
+    const reactBtn = el.querySelector(`[data-react="${msg.id}"]`);
+    const picker = buildMsgEmojiPicker(msg.id);
+    reactBtn.style.position = "relative"; reactBtn.appendChild(picker);
+    reactBtn.addEventListener("click", e => { e.stopPropagation(); picker.classList.toggle("open"); });
+  
+    const delBtn = el.querySelector(`[data-delete="${msg.id}"]`);
+    if (delBtn) delBtn.addEventListener("click", () => deleteMessage(msg.id));
+  
+    const img = el.querySelector(".msg-image");
+    if (img) img.addEventListener("click", () => { document.getElementById("lightbox-img").src = img.src; document.getElementById("lightbox").classList.add("open"); });
+  
+    msgElMap.set(String(msg.id), el);
+    arr.push(el);
+  
+    /* Load reactions */
+    loadReactionsSingle(msg.id);
+    if (msg.text) maybeTranslateMessage(el, msg.text);
+  }
+  
+  /* ── Scroll-up listener for infinite load ── */
+  document.getElementById("chat-window").addEventListener("scroll", async function() {
+    if (this.scrollTop > 120) return;          /* not near top */
+    if (isLoadingMore || historyExhausted) return;
+    if (!oldestMsgDate) return;
+  
+    isLoadingMore = true;
+  
+    /* Show a subtle loading indicator */
+    const loader = document.createElement("div");
+    loader.id = "history-loader";
+    loader.style.cssText = "text-align:center;padding:8px;font-size:12px;opacity:.45;";
+    loader.textContent = "Loading more…";
+    this.prepend(loader);
+  
+    await fetchMessages(oldestMsgDate);
+  
+    document.getElementById("history-loader")?.remove();
+    isLoadingMore = false;
+  });
   /* ════════════════ RENDER MESSAGE ════════════════ */
   function renderMessage(msg, loadRxn=true) {
     /* ── Room isolation guard ── */
