@@ -644,7 +644,7 @@
           }
         })
         /* allow optional separator (space, dot, dash, underscore, *) between every char */
-        .join("[\s\-_.\*]*");
+        .join("[\\s_.\\-*]*");
     }
 
     /* Optionally wrap in a word-boundary-ish check so "classic" isn't caught */
