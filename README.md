@@ -8,3 +8,10 @@ With many search engines and browsers losing trust from core users, this is a gr
                   RELEASES
 
 <a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.1">Release: V.2.0.1</a>
+
+
+                  EMAIL US
+Help Email: help@360-search.com
+Admin Email: admin@360-search.com
+Support Email 1: mingze@360-search.com
+Support Email 2: zakii@360-search.com
