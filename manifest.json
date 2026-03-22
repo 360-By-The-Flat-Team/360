@@ -1,17 +1,15 @@
 {
   "name": "360",
   "short_name": "360",
-  "id": "/",
-  "start_url": "/",
+  "id": "/https://360-search.com/",
+  "start_url": "https://360-search.com/",
   "scope": "/",
-  "display": "standalone",
-  "orientation": "any",
+  "display": "browser",
+  "orientation": "landscape",
   "dir": "ltr",
   "lang": "en-US",
-
-  "background_color": "#ffffff",
-  "theme_color": "#1a73e8",
-
+  "background_color": "#000000",
+  "theme_color": "#3677cc",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -26,12 +24,23 @@
       "purpose": "any"
     }
   ],
-
   "screenshots": [
     {
       "src": "/v2.0.png",
       "sizes": "1280x720",
       "type": "image/png"
     }
+  ],
+  "description": "360 is a Multi-Tool search engine made to make browsing feel faster, with everything in one spot.",
+  "categories": [
+    "games",
+    "music",
+    "navigation",
+    "news",
+    "personalization",
+    "productivity",
+    "social",
+    "utilities",
+    "weather"
   ]
 }
