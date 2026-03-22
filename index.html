@@ -48,7 +48,25 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBkseE2U7bot9WnMLsCc89gYonhLSUHnPs",
+    authDomain: "search360-dev.firebaseapp.com",
+    projectId: "search360-dev",
+    storageBucket: "search360-dev.firebasestorage.app",
+    messagingSenderId: "936030276122",
+    appId: "1:936030276122:web:5877f7152f8f2411e0dfa3"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
   <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
