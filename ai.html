@@ -382,6 +382,12 @@
     </div>
   </div>
 
+  <div class="auth-top-right">
+    <button id="signInBtn" class="auth-btn">Sign In</button>
+    <button id="signUpBtn" class="auth-btn">Sign Up</button>
+    <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
+  </div>
+
   <div class="ai-page">
     <div id="conv-sidebar">
       <div id="conv-sidebar-header">
@@ -527,12 +533,15 @@
     const bubble = appendBubble("Thinking…", "assistant");
 
     try {
-      const { data, error } = await sb.functions.invoke('hyper-task', {
-        body: { message: prompt || "The user sent a file.", memory: history }
+      const res = await fetch("https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/ai-chatbot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt || "The user sent a file.", memory: history })
       });
-      if (error) throw error;
-
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
       const aiMessage = data?.reply || "No response";
+      
       history.push({ role: "user", content: prompt || "(file attached)" + (fileUrl ? ` [${fileUrl}]` : "") });
       history.push({ role: "assistant", content: aiMessage });
 
