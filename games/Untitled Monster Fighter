@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Untitled Monster Fighter</title>
+
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        #left {
+            text-align: center;
+        }
+
+        canvas {
+            background-color: #333;
+            border: 3px solid #aaa;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #forge, #classMenu {
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 14px;
+            margin: 6px;
+            font-size: 15px;
+            background-color: #444;
+            color: white;
+            border: 1px solid #777;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #controls {
+            background-color: #2a2a2a;
+            border: 2px solid #888;
+            padding: 15px;
+            width: 260px;
+        }
+
+        #controls h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        #controls ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        #controls li {
+            margin-bottom: 8px;
+        }
+
+        #healthBar {
+            width: 600px;
+            height: 15px;
+            border: 2px solid white;
+            margin: 10px auto;
+            box-sizing: border-box;
+        }
+
+        #healthFill {
+            height: 100%;
+            background-color: lime;
+            width: 100%;
+            transition: width 0.15s linear;
+        }
+
+        #pauseMenu, #deathScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 30px;
+            backdrop-filter: blur(4px);
+            text-align: center;
+        }
+
+        #classMenu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid #555;
+            padding: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="container">
+    <div id="left">
+        <h1>Untitled Monster Fighter</h1>
+        <p id="info">Wave: 1 | Grace Period</p>
+
+        <div id="healthBar">
+            <div id="healthFill"></div>
+        </div>
+
+        <canvas id="game" width="600" height="400"></canvas>
+
+        <div id="forge">
+            <h3>Forge</h3>
+            <button onclick="forgeSword()">Sword</button>
+            <button onclick="forgeGun()">Gun</button>
+            <button onclick="forgeArmor()">Armor</button>
+        </div>
+    </div>
+
+    <div id="controls">
+        <h2>Controls</h2>
+        <ul>
+            <li><b>WASD</b> – Move</li>
+            <li><b>Mouse Click</b> – Shoot</li>
+            <li><b>Space</b> – Sword</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let keys = {};
+let paused = false;
+
+let player = {
+    x: 300,
+    y: 200,
+    weapon: "woodenSword"
+};
+
+let monsters = [
+    {x: 100, y: 100, size: 15, hp: 50}
+];
+
+const weapons = {
+    woodenSword: { type: "sword", damage: 8, range: 100, cooldown: 20 },
+    ironSword: { type: "sword", damage: 16, range: 120, cooldown: 18 },
+
+    shortBow: { type: "bow", damage: 12, range: 600, speed: 9 }
+};
+
+let arrows = [];
+let swordCooldown = 0;
+
+document.addEventListener("keydown", e => {
+    keys[e.key] = true;
+
+    if (e.key === "1") player.weapon = "woodenSword";
+    if (e.key === "2") player.weapon = "ironSword";
+    if (e.key === "3") player.weapon = "shortBow";
+});
+
+document.addEventListener("keyup", e => {
+    keys[e.key] = false;
+});
+
+canvas.addEventListener("mousedown", e => {
+    const weapon = weapons[player.weapon];
+    if (weapon.type !== "bow") return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const angle = Math.atan2(my - player.y, mx - player.x);
+
+    arrows.push({
+        x: player.x,
+        y: player.y,
+        dx: Math.cos(angle) * weapon.speed,
+        dy: Math.sin(angle) * weapon.speed,
+        life: weapon.range
+    });
+});
+
+function damageMonster(m, dmg) {
+    m.hp -= dmg;
+    if (m.hp <= 0) {
+        monsters.splice(monsters.indexOf(m), 1);
+    }
+}
+
+function updateAttacks() {
+    const weapon = weapons[player.weapon];
+
+    if (swordCooldown > 0) swordCooldown--;
+
+    if (keys[" "] && weapon.type === "sword" && swordCooldown <= 0) {
+        swordCooldown = weapon.cooldown;
+
+        monsters.forEach(m => {
+            const dist = Math.hypot(player.x - m.x, player.y - m.y);
+            if (dist < weapon.range + m.size) {
+                damageMonster(m, weapon.damage);
+            }
+        });
+    }
+
+    arrows.forEach((a, i) => {
+        a.x += a.dx;
+        a.y += a.dy;
+        a.life -= Math.hypot(a.dx, a.dy);
+
+        if (a.life <= 0) arrows.splice(i, 1);
+
+        monsters.forEach(m => {
+            if (Math.hypot(a.x - m.x, a.y - m.y) < m.size) {
+                damageMonster(m, weapon.damage);
+                arrows.splice(i, 1);
+            }
+        });
+    });
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // player
+    ctx.fillStyle = "blue";
+    ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
+
+    // monsters
+    ctx.fillStyle = "red";
+    monsters.forEach(m => {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // arrows
+    ctx.fillStyle = "brown";
+    arrows.forEach(a => {
+        ctx.fillRect(a.x, a.y, 4, 4);
+    });
+}
+
+function update() {
+    if (keys["w"]) player.y -= 3;
+    if (keys["s"]) player.y += 3;
+    if (keys["a"]) player.x -= 3;
+    if (keys["d"]) player.x += 3;
+
+    updateAttacks();
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
