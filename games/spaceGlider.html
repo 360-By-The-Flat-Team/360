@@ -47,7 +47,6 @@
       aspect-ratio: 16 / 9;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 0 40px #000a;
       /* Slight transparency so page bg tints through the edges */
       background: rgba(0, 0, 0, 0.88);
     }
@@ -198,10 +197,6 @@
     /* ── LIGHT MODE OVERRIDES ── */
     /* Page bg already handled above. Now fix all in-game UI text/panels */
 
-    /* Light mode: nicer shadow for the game canvas card */
-    body:not(.dark) #game-wrapper {
-      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.06);
-    }
 
     /* HUD pills: dark bg + light text in dark, light bg + dark text in light */
     body:not(.dark) .pill {
