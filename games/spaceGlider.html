@@ -65,7 +65,7 @@
       flex-direction: column;
       justify-content: space-between;
       font-size: 12px;
-      text-shadow: 0 0 4px #000;
+
     }
     #hud-top {
       display: flex;
@@ -106,7 +106,7 @@
     #upgrade-overlay {
       position: absolute;
       inset: 0;
-      background: transparent;
+      background: #050814dd;
       display: none;
       align-items: center;
       justify-content: center;
@@ -117,7 +117,7 @@
       border-radius: 12px;
       padding: 16px 18px;
       border: 1px solid #ffffff33;
-      box-shadow: 0 0 24px #000a;
+      box-shadow: none;
       max-width: 420px;
       width: 90%;
     }
@@ -168,6 +168,7 @@
       transform: translateX(-50%);
       font-size: 14px;
       color: #ffffffdd;
+
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.4s ease-out, transform 0.4s ease-out;
@@ -213,7 +214,6 @@
     /* "PRESS ENTER TO LAUNCH" and mid-game messages */
     body:not(.dark) #center-message {
       color: #ffffffee;
-      text-shadow: 0 0 10px #000, 0 0 4px #000;
     }
 
     /* Upgrade overlay backdrop */
@@ -225,7 +225,7 @@
     body:not(.dark) #upgrade-panel {
       background: rgba(255, 255, 255, 0.97);
       border-color: rgba(0, 0, 0, 0.12);
-      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.18);
+      box-shadow: none;
     }
     body:not(.dark) #upgrade-title {
       color: #2563eb;
