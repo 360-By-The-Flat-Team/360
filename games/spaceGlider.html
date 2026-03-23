@@ -384,7 +384,7 @@
     window.addEventListener('keydown', e => {
       keys[e.key.toLowerCase()] = true;
       if (e.key === 'Enter' && !running) startGame();
-      if (e.key.toLowerCase() === 'p') paused = !paused;
+      if (e.key.toLowerCase() === 'p' && upgradeOverlay.style.display !== 'flex') paused = !paused;
     });
     window.addEventListener('keyup', e => {
       keys[e.key.toLowerCase()] = false;
