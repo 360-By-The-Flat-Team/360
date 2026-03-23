@@ -31,7 +31,7 @@
     }
     /* Light mode page background */
     body {
-      background: #f3f4f7;
+      background: #e8eaf0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -48,7 +48,8 @@
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 0 40px #000a;
-      background: #000;
+      /* Slight transparency so page bg tints through the edges */
+      background: rgba(0, 0, 0, 0.88);
     }
     #game {
       width: 100%;
@@ -192,6 +193,67 @@
       .bar {
         width: 120px;
       }
+    }
+
+    /* ── LIGHT MODE OVERRIDES ── */
+    /* Page bg already handled above. Now fix all in-game UI text/panels */
+
+    /* Light mode: nicer shadow for the game canvas card */
+    body:not(.dark) #game-wrapper {
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* HUD pills: dark bg + light text in dark, light bg + dark text in light */
+    body:not(.dark) .pill {
+      background: rgba(255, 255, 255, 0.82);
+      border-color: rgba(0, 0, 0, 0.12);
+      color: #1a1f36;
+    }
+    body:not(.dark) .bar {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    body:not(.dark) #start-hint {
+      color: #3d4a7a;
+    }
+
+    /* "PRESS ENTER TO LAUNCH" and mid-game messages */
+    body:not(.dark) #center-message {
+      color: #ffffffee;
+      text-shadow: 0 0 10px #000, 0 0 4px #000;
+    }
+
+    /* Upgrade overlay backdrop */
+    body:not(.dark) #upgrade-overlay {
+      background: rgba(200, 210, 230, 0.88);
+    }
+
+    /* Upgrade panel card */
+    body:not(.dark) #upgrade-panel {
+      background: rgba(255, 255, 255, 0.97);
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.18);
+    }
+    body:not(.dark) #upgrade-title {
+      color: #2563eb;
+    }
+    body:not(.dark) #upgrade-sub {
+      color: #4b5563;
+    }
+
+    /* Upgrade option cards */
+    body:not(.dark) .upgrade-option {
+      background: #f0f4ff;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    body:not(.dark) .upgrade-option:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+    }
+    body:not(.dark) .upgrade-name {
+      color: #be185d;
+    }
+    body:not(.dark) .upgrade-desc {
+      color: #374151;
     }
   </style>
 </head>
