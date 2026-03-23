@@ -1,11 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-89NN1P6CEV');
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — News</title>
+  <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="stylesheet" href="../main.css" />
+  <link rel="stylesheet" href="../responsive.css" />
+  <link rel="stylesheet" href="../cursor.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .news-page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 20px 40px;
+    }
 
-<!-- News -->
-<link src="/styles.css" type="css/text" rel="stylesheet">
-<section class="page" id="page-news">
-  <button class="back-btn top-right">← Back</button>
-  <br><br>
-  <h2>360 News</h2>
-  <div id="news-feed" class="news-widget"></div>
-  <br><br>
-</section>
-<script scr="/script.js"/>
+    .news-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .news-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Category pills */
+    .news-cats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .news-cat {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--br);
+      background: transparent;
+      color: var(--txt);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+    }
+    body.dark .news-cat { color: var(--txtd); }
+    .news-cat:hover { border-color: var(--a); color: var(--a); transform: none; box-shadow: none; }
+    .news-cat.active {
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816;
+      border-color: transparent;
+    }
+
+    /* Search bar */
+    .news-search {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #news-search-input {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--br);
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(6px);
+      color: var(--txt);
+      font-size: 14px;
+      outline: none;
+    }
+    body.dark #news-search-input { color: var(--txtd); }
+    #news-search-input:focus { border-color: var(--a); }
+
+    /* News grid */
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    /* News card */
+    .news-card {
+      background: rgba(255,255,255,.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--br);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: .2s;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    body.dark .news-card { background: rgba(15,23,42,.7); }
+    .news-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      border-color: var(--a);
+    }
+
+    .news-card-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      flex-shrink: 0;
+    }
+    .news-card-img-placeholder {
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      flex-shrink: 0;
+    }
+
+    .news-card-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .news-card-source {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--a);
+    }
+
+    .news-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--txt);
+    }
+    body.dark .news-card-title { color: var(--txtd); }
+
+    .news-card-desc {
+      font-size: 13px;
+      color: var(--mut);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    body.dark .news-card-desc { color: var(--mutd); }
+
+    .news-card-date {
+      font-size: 11px;
+      color: var(--mut);
+      margin-top: auto;
+    }
+    body.dark .news-card-date { color: var(--mutd); }
+
+    /* Loading / error states */
+    .news-status {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--mut);
+      font-size: 15px;
+      grid-column: 1 / -1;
+    }
+    body.dark .news-status { color: var(--mutd); }
+    .news-status .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--br);
+      border-top-color: var(--a);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Refresh btn */
+    .refresh-btn {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--br);
+      background: transparent;
+      color: var(--txt);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+    }
+    body.dark .refresh-btn { color: var(--txtd); }
+    .refresh-btn:hover { border-color: var(--a); color: var(--a); transform: none; box-shadow: none; }
+
+    @media (max-width: 600px) {
+      .news-grid { grid-template-columns: 1fr; }
+      .news-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <button class="back-btn" onclick="window.location.href='../'">← Back</button>
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="../">Home</div>
+      <div class="nav-item" data-href="../ai.html">AI</div>
+      <div class="nav-item" data-href="../weather.html">Weather</div>
+      <div class="nav-item" data-href="../translator.html">Translator</div>
+      <div class="nav-item" data-href="../stocks.html">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener.html">URL Shortener</div>
+      <div class="nav-item" data-href="../chat.html">Chat</div>
+      <div class="nav-item active" data-href="../news.html">News</div>
+      <div class="nav-item" data-href="../games.html">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+  </div>
+
+  <div id="auth-popup" class="auth-popup hidden">
+    <div class="auth-box">
+      <h2>Account</h2>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+      <button id="auth-login-btn">Log In</button>
+      <button id="auth-signup-btn">Sign Up</button>
+      <button id="github-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>Sign in with GitHub</span>
+      </button>
+      <button id="google-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-close-btn" class="close-btn">Close</button>
+    </div>
+  </div>
+
+  <div class="news-page">
+    <div class="news-header">
+      <h2>📰 360 News</h2>
+      <button class="refresh-btn" onclick="loadNews()">↻ Refresh</button>
+    </div>
+
+    <!-- Category pills -->
+    <div class="news-cats">
+      <button class="news-cat active" data-feed="https://feeds.bbci.co.uk/news/rss.xml" onclick="switchCat(this)">🌍 Top Stories</button>
+      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/technology/rss.xml" onclick="switchCat(this)">💻 Tech</button>
+      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/science_and_environment/rss.xml" onclick="switchCat(this)">🔬 Science</button>
+      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/business/rss.xml" onclick="switchCat(this)">📈 Business</button>
+      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml" onclick="switchCat(this)">🎬 Entertainment</button>
+      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/sport/rss.xml" onclick="switchCat(this)">⚽ Sports</button>
+    </div>
+
+    <!-- Search -->
+    <div class="news-search">
+      <input type="text" id="news-search-input" placeholder="Search articles..." oninput="filterNews()" />
+    </div>
+
+    <!-- Grid -->
+    <div class="news-grid" id="news-grid">
+      <div class="news-status">
+        <div class="spinner"></div>
+        Loading news...
+      </div>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
+  <script src="../main.js"></script>
+  <script src="../cookie.js"></script>
+  <script src="../cursor.js"></script>
+  <script>
+    const API = "https://api.rss2json.com/v1/api.json?count=20&rss_url=";
+    let allArticles = [];
+    let currentFeed = "https://feeds.bbci.co.uk/news/rss.xml";
+
+    const EMOJIS = { tech:"💻", science:"🔬", business:"📈", sport:"⚽", entertainment:"🎬", default:"📰" };
+
+    function getEmoji(cat) {
+      if (!cat) return EMOJIS.default;
+      const c = cat.toLowerCase();
+      for (const [k, v] of Object.entries(EMOJIS)) { if (c.includes(k)) return v; }
+      return EMOJIS.default;
+    }
+
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const m = Math.floor(diff / 60000);
+      const h = Math.floor(m / 60);
+      const d = Math.floor(h / 24);
+      if (m < 1)  return "Just now";
+      if (m < 60) return `${m}m ago`;
+      if (h < 24) return `${h}h ago`;
+      return `${d}d ago`;
+    }
+
+    function renderCards(articles) {
+      const grid = document.getElementById("news-grid");
+      if (!articles.length) {
+        grid.innerHTML = `<div class="news-status">No articles found.</div>`;
+        return;
+      }
+
+      grid.innerHTML = articles.map(a => {
+        const img   = a.enclosure?.link || a.thumbnail || "";
+        const imgEl = img
+          ? `<img class="news-card-img" src="${img}" alt="" onerror="this.outerHTML='<div class=\\'news-card-img-placeholder\\'>${getEmoji(a.category)}</div>'">`
+          : `<div class="news-card-img-placeholder">${getEmoji(a.category)}</div>`;
+
+        const desc = (a.description || "").replace(/<[^>]*>/g, "").trim();
+        const source = a.author || "BBC News";
+        const date = a.pubDate ? timeAgo(a.pubDate) : "";
+
+        return `
+          <a class="news-card" href="${a.link}" target="_blank" rel="noopener noreferrer">
+            ${imgEl}
+            <div class="news-card-body">
+              <div class="news-card-source">${source}</div>
+              <div class="news-card-title">${a.title}</div>
+              ${desc ? `<div class="news-card-desc">${desc}</div>` : ""}
+              <div class="news-card-date">${date}</div>
+            </div>
+          </a>`;
+      }).join("");
+    }
+
+    async function loadNews() {
+      const grid = document.getElementById("news-grid");
+      grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading news...</div>`;
+      document.getElementById("news-search-input").value = "";
+
+      try {
+        const res  = await fetch(API + encodeURIComponent(currentFeed));
+        const data = await res.json();
+
+        if (!data.items || !data.items.length) throw new Error("No items");
+
+        allArticles = data.items;
+        renderCards(allArticles);
+      } catch (err) {
+        grid.innerHTML = `<div class="news-status">❌ Failed to load news. Check your connection and try again.</div>`;
+      }
+    }
+
+    function switchCat(btn) {
+      document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFeed = btn.dataset.feed;
+      loadNews();
+    }
+
+    function filterNews() {
+      const q = document.getElementById("news-search-input").value.toLowerCase().trim();
+      if (!q) { renderCards(allArticles); return; }
+      const filtered = allArticles.filter(a =>
+        (a.title || "").toLowerCase().includes(q) ||
+        (a.description || "").toLowerCase().includes(q)
+      );
+      renderCards(filtered);
+    }
+
+    loadNews();
+  </script>
+</body>
+</html>
