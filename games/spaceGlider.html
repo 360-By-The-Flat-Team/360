@@ -110,7 +110,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(6px);
     }
     #upgrade-panel {
       background: #0b1024f2;
@@ -351,7 +350,7 @@
       </div>
       <div id="hud-bottom">
         <div class="pill" id="start-hint">
-          Move: WASD / Arrows · Shoot: J / Z · Dash: K / X · Pause: P
+          Move: WASD / Arrows · Shoot: J / Z · Dash: K / X · Pause: P · Save: S · Load: L
         </div>
         <div class="pill">
           <span>Core:</span><span id="core-name">Baseline Frame</span>
@@ -387,6 +386,8 @@
       keys[e.key.toLowerCase()] = true;
       if (e.key === 'Enter' && !running) startGame();
       if (e.key.toLowerCase() === 'p') paused = !paused;
+      if (e.key.toLowerCase() === 's' && running && !paused) saveState();
+      if (e.key.toLowerCase() === 'l' && !running) loadState();
     });
     window.addEventListener('keyup', e => {
       keys[e.key.toLowerCase()] = false;
@@ -509,6 +510,42 @@
       running = true;
       paused = false;
       centerMessage.classList.remove('show');
+    }
+
+    function saveState() {
+      const snapshot = {
+        player: JSON.parse(JSON.stringify(player)),
+        score,
+        savedAt: Date.now()
+      };
+      localStorage.setItem('spaceGliderSave', JSON.stringify(snapshot));
+      showCenterMessage('STATE SAVED · Press L to load', 1.5);
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem('spaceGliderSave');
+      if (!raw) {
+        showCenterMessage('NO SAVE FOUND', 1.5);
+        return;
+      }
+      const snapshot = JSON.parse(raw);
+      resetState();
+      // Restore player stats and progress, but reset position/timers for safety
+      Object.assign(player, snapshot.player, {
+        x: VIRTUAL_W * 0.2,
+        y: VIRTUAL_H * 0.5,
+        vx: 0, vy: 0,
+        fireCooldown: 0,
+        dashTimer: 0,
+        dashCooldownTimer: 0,
+        invuln: 0
+      });
+      score = snapshot.score;
+      running = true;
+      paused = false;
+      centerMessage.classList.remove('show');
+      updateHud();
+      showCenterMessage('STATE LOADED', 1.2);
     }
 
     function showCenterMessage(text, duration = 1.5) {
