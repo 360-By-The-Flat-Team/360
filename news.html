@@ -19,194 +19,136 @@
   <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    .news-page {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 80px 20px 40px;
-    }
+    .news-page { max-width: 860px; margin: 0 auto; padding: 80px 20px 40px; }
 
     .news-header {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+    }
+    .news-header h2 {
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    .news-header h2 {
-      font-size: 22px;
-      font-weight: 700;
-      background: linear-gradient(120deg, var(--a), var(--a2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* Source badge */
+    .api-source {
+      font-size: 11px; color: var(--mut); padding: 0 4px 16px;
     }
+    body.dark .api-source { color: var(--mutd); }
+    .api-source span { color: var(--a); font-weight: 600; }
 
     /* Category pills */
-    .news-cats {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
+    .news-cats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
     .news-cat {
-      padding: 6px 16px;
-      border-radius: 999px;
-      border: 1px solid var(--br);
-      background: transparent;
-      color: var(--txt);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .2s;
+      padding: 6px 16px; border-radius: 999px;
+      border: 1px solid var(--br); background: transparent;
+      color: var(--txt); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: .2s;
     }
     body.dark .news-cat { color: var(--txtd); }
     .news-cat:hover { border-color: var(--a); color: var(--a); transform: none; box-shadow: none; }
     .news-cat.active {
       background: linear-gradient(110deg, var(--a), var(--a2));
-      color: #050816;
-      border-color: transparent;
+      color: #050816; border-color: transparent;
     }
 
-    /* Search bar */
-    .news-search {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+    /* Search */
+    .news-search { display: flex; gap: 10px; margin-bottom: 20px; }
     #news-search-input {
-      flex: 1;
-      padding: 10px 16px;
-      border-radius: 999px;
-      border: 1px solid var(--br);
-      background: rgba(255,255,255,.15);
-      backdrop-filter: blur(6px);
-      color: var(--txt);
-      font-size: 14px;
-      outline: none;
+      flex: 1; padding: 10px 16px; border-radius: 999px;
+      border: 1px solid var(--br); background: rgba(255,255,255,.15);
+      backdrop-filter: blur(6px); color: var(--txt); font-size: 14px; outline: none;
     }
     body.dark #news-search-input { color: var(--txtd); }
     #news-search-input:focus { border-color: var(--a); }
 
-    /* News grid */
+    /* Featured hero card */
+    .news-hero {
+      width: 100%; border-radius: 16px; overflow: hidden;
+      background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--br); margin-bottom: 20px;
+      text-decoration: none; color: inherit; display: none; flex-direction: row;
+      transition: .2s; min-height: 200px;
+    }
+    body.dark .news-hero { background: rgba(15,23,42,.7); }
+    .news-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.12); border-color: var(--a); }
+    .news-hero-img {
+      width: 340px; min-height: 200px; object-fit: cover; flex-shrink: 0;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+    }
+    .news-hero-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+    .news-hero-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em; width: fit-content;
+    }
+    .news-hero-title { font-size: 20px; font-weight: 700; line-height: 1.4; }
+    .news-hero-desc { font-size: 14px; color: var(--mut); line-height: 1.6; }
+    body.dark .news-hero-desc { color: var(--mutd); }
+    .news-hero-meta { font-size: 11px; color: var(--mut); }
+    body.dark .news-hero-meta { color: var(--mutd); }
+
+    /* Grid */
     .news-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 16px;
     }
 
-    /* News card */
+    /* Card */
     .news-card {
-      background: rgba(255,255,255,.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--br);
-      border-radius: 14px;
-      overflow: hidden;
-      transition: .2s;
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      cursor: pointer;
+      background: rgba(255,255,255,.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--br); border-radius: 14px; overflow: hidden;
+      transition: .2s; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; cursor: pointer;
     }
     body.dark .news-card { background: rgba(15,23,42,.7); }
-    .news-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.12);
-      border-color: var(--a);
-    }
+    .news-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.12); border-color: var(--a); }
 
     .news-card-img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      background: linear-gradient(120deg, var(--a), var(--a2));
-      flex-shrink: 0;
+      width: 100%; height: 150px; object-fit: cover; flex-shrink: 0;
     }
     .news-card-img-placeholder {
-      width: 100%;
-      height: 160px;
+      width: 100%; height: 150px;
       background: linear-gradient(120deg, var(--a), var(--a2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; flex-shrink: 0;
     }
-
-    .news-card-body {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1;
-    }
-
+    .news-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .news-card-source {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--a);
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--a);
     }
-
-    .news-card-title {
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.4;
-      color: var(--txt);
-    }
+    .news-card-title { font-size: 14px; font-weight: 700; line-height: 1.4; color: var(--txt); }
     body.dark .news-card-title { color: var(--txtd); }
-
     .news-card-desc {
-      font-size: 13px;
-      color: var(--mut);
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 12px; color: var(--mut); line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
     }
     body.dark .news-card-desc { color: var(--mutd); }
-
-    .news-card-date {
-      font-size: 11px;
-      color: var(--mut);
-      margin-top: auto;
-    }
+    .news-card-date { font-size: 10px; color: var(--mut); margin-top: auto; padding-top: 4px; }
     body.dark .news-card-date { color: var(--mutd); }
 
-    /* Loading / error states */
+    /* Status */
     .news-status {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--mut);
-      font-size: 15px;
-      grid-column: 1 / -1;
+      text-align: center; padding: 60px 20px; color: var(--mut);
+      font-size: 15px; grid-column: 1 / -1;
     }
     body.dark .news-status { color: var(--mutd); }
     .news-status .spinner {
-      width: 32px; height: 32px;
-      border: 3px solid var(--br);
-      border-top-color: var(--a);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 12px;
+      width: 32px; height: 32px; border: 3px solid var(--br);
+      border-top-color: var(--a); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 12px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Refresh btn */
     .refresh-btn {
-      padding: 8px 18px;
-      border-radius: 999px;
-      border: 1px solid var(--br);
-      background: transparent;
-      color: var(--txt);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .2s;
+      padding: 8px 18px; border-radius: 999px; border: 1px solid var(--br);
+      background: transparent; color: var(--txt); font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: .2s;
     }
     body.dark .refresh-btn { color: var(--txtd); }
     .refresh-btn:hover { border-color: var(--a); color: var(--a); transform: none; box-shadow: none; }
@@ -214,6 +156,8 @@
     @media (max-width: 600px) {
       .news-grid { grid-template-columns: 1fr; }
       .news-header { flex-direction: column; align-items: flex-start; }
+      .news-hero { flex-direction: column; }
+      .news-hero-img { width: 100%; height: 180px; }
     }
   </style>
 </head>
@@ -304,27 +248,36 @@
       <button class="refresh-btn" onclick="loadNews()">↻ Refresh</button>
     </div>
 
-    <!-- Category pills -->
-    <div class="news-cats">
-      <button class="news-cat active" data-feed="https://feeds.bbci.co.uk/news/rss.xml" onclick="switchCat(this)">🌍 Top Stories</button>
-      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/technology/rss.xml" onclick="switchCat(this)">💻 Tech</button>
-      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/science_and_environment/rss.xml" onclick="switchCat(this)">🔬 Science</button>
-      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/business/rss.xml" onclick="switchCat(this)">📈 Business</button>
-      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml" onclick="switchCat(this)">🎬 Entertainment</button>
-      <button class="news-cat" data-feed="https://feeds.bbci.co.uk/sport/rss.xml" onclick="switchCat(this)">⚽ Sports</button>
+    <div class="api-source" id="api-source">Loading from <span>multiple sources</span>...</div>
+
+    <div class="news-cats" id="news-cats">
+      <button class="news-cat active" data-cat="top" onclick="switchCat(this)">🌍 Top Stories</button>
+      <button class="news-cat" data-cat="tech" onclick="switchCat(this)">💻 Tech</button>
+      <button class="news-cat" data-cat="science" onclick="switchCat(this)">🔬 Science</button>
+      <button class="news-cat" data-cat="business" onclick="switchCat(this)">📈 Business</button>
+      <button class="news-cat" data-cat="entertainment" onclick="switchCat(this)">🎬 Entertainment</button>
+      <button class="news-cat" data-cat="sports" onclick="switchCat(this)">⚽ Sports</button>
+      <button class="news-cat" data-cat="us" onclick="switchCat(this)">🇺🇸 US</button>
+      <button class="news-cat" data-cat="world" onclick="switchCat(this)">🌐 World</button>
     </div>
 
-    <!-- Search -->
     <div class="news-search">
       <input type="text" id="news-search-input" placeholder="Search articles..." oninput="filterNews()" />
     </div>
 
-    <!-- Grid -->
-    <div class="news-grid" id="news-grid">
-      <div class="news-status">
-        <div class="spinner"></div>
-        Loading news...
+    <!-- Hero card -->
+    <a class="news-hero" id="news-hero" href="#" target="_blank" rel="noopener noreferrer">
+      <img class="news-hero-img" id="hero-img" src="" alt="" />
+      <div class="news-hero-body">
+        <div class="news-hero-badge" id="hero-source">Top Story</div>
+        <div class="news-hero-title" id="hero-title"></div>
+        <div class="news-hero-desc" id="hero-desc"></div>
+        <div class="news-hero-meta" id="hero-meta"></div>
       </div>
+    </a>
+
+    <div class="news-grid" id="news-grid">
+      <div class="news-status"><div class="spinner"></div>Loading news...</div>
     </div>
   </div>
 
@@ -333,96 +286,266 @@
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
-    const API = "https://api.rss2json.com/v1/api.json?count=20&rss_url=";
-    let allArticles = [];
-    let currentFeed = "https://feeds.bbci.co.uk/news/rss.xml";
+  /* ══════════════════════════════════════════════
+     360 NEWS — MULTI-API WITH SMART FALLBACK
+     APIs tried in order per category:
+       1. RSS2JSON (BBC/Reuters/NPR/etc feeds) — free
+       2. GNews API — free tier 100/day
+       3. Currents API — free tier 600/day
+       4. TheNewsAPI — free tier 100/day
+     Falls through until one works.
+  ══════════════════════════════════════════════ */
 
-    const EMOJIS = { tech:"💻", science:"🔬", business:"📈", sport:"⚽", entertainment:"🎬", default:"📰" };
+  const RSS2JSON   = "https://api.rss2json.com/v1/api.json?count=24&rss_url=";
+  const GNEWS      = "https://gnews.io/api/v4/top-headlines?lang=en&max=20&apikey=pub_test_00000000000000000000000000000000"; /* replace with real key */
+  const CURRENTS   = "https://api.currentsapi.services/v1/latest-news?language=en&apiKey=YOUR_CURRENTS_KEY"; /* replace */
 
-    function getEmoji(cat) {
-      if (!cat) return EMOJIS.default;
-      const c = cat.toLowerCase();
-      for (const [k, v] of Object.entries(EMOJIS)) { if (c.includes(k)) return v; }
-      return EMOJIS.default;
-    }
+  let allArticles  = [];
+  let currentCat   = "top";
+  let activeSource = "";
 
-    function timeAgo(dateStr) {
-      const diff = Date.now() - new Date(dateStr).getTime();
-      const m = Math.floor(diff / 60000);
-      const h = Math.floor(m / 60);
-      const d = Math.floor(h / 24);
-      if (m < 1)  return "Just now";
-      if (m < 60) return `${m}m ago`;
-      if (h < 24) return `${h}h ago`;
-      return `${d}d ago`;
-    }
+  /* ── RSS FEEDS per category (multiple feeds = more variety + fallback) ── */
+  const FEEDS = {
+    top: [
+      "https://feeds.bbci.co.uk/news/rss.xml",
+      "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "https://feeds.npr.org/1001/rss.xml",
+      "https://www.theguardian.com/world/rss",
+    ],
+    tech: [
+      "https://feeds.bbci.co.uk/news/technology/rss.xml",
+      "https://techcrunch.com/feed/",
+      "https://www.wired.com/feed/rss",
+      "https://feeds.arstechnica.com/arstechnica/index",
+      "https://www.theverge.com/rss/index.xml",
+    ],
+    science: [
+      "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+      "https://www.sciencedaily.com/rss/top/science.xml",
+      "https://feeds.nature.com/nature/rss/current",
+      "https://www.newscientist.com/feed/home/",
+    ],
+    business: [
+      "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "https://feeds.bloomberg.com/markets/news.rss",
+      "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+      "https://feeds.npr.org/1006/rss.xml",
+    ],
+    entertainment: [
+      "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
+      "https://variety.com/feed/",
+      "https://deadline.com/feed/",
+      "https://www.hollywoodreporter.com/feed/",
+    ],
+    sports: [
+      "https://feeds.bbci.co.uk/sport/rss.xml",
+      "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml",
+      "https://www.espn.com/espn/rss/news",
+    ],
+    us: [
+      "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
+      "https://feeds.npr.org/1003/rss.xml",
+      "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+      "https://thehill.com/feed/",
+    ],
+    world: [
+      "https://www.theguardian.com/world/rss",
+      "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+      "https://feeds.reuters.com/reuters/worldnews",
+    ],
+  };
 
-    function renderCards(articles) {
-      const grid = document.getElementById("news-grid");
-      if (!articles.length) {
-        grid.innerHTML = `<div class="news-status">No articles found.</div>`;
-        return;
+  /* ── Source display names ── */
+  const SOURCE_NAMES = {
+    "bbci.co.uk":         "BBC News",
+    "nytimes.com":        "New York Times",
+    "npr.org":            "NPR",
+    "theguardian.com":    "The Guardian",
+    "techcrunch.com":     "TechCrunch",
+    "wired.com":          "Wired",
+    "arstechnica.com":    "Ars Technica",
+    "theverge.com":       "The Verge",
+    "sciencedaily.com":   "Science Daily",
+    "nature.com":         "Nature",
+    "newscientist.com":   "New Scientist",
+    "bloomberg.com":      "Bloomberg",
+    "variety.com":        "Variety",
+    "deadline.com":       "Deadline",
+    "hollywoodreporter.com": "Hollywood Reporter",
+    "espn.com":           "ESPN",
+    "thehill.com":        "The Hill",
+    "reuters.com":        "Reuters",
+  };
+
+  function getFeedSource(url) {
+    try {
+      const host = new URL(url).hostname.replace("www.", "").replace("feeds.", "").replace("rss.", "");
+      for (const [k, v] of Object.entries(SOURCE_NAMES)) {
+        if (host.includes(k)) return v;
       }
+      return host;
+    } catch { return "News"; }
+  }
 
-      grid.innerHTML = articles.map(a => {
-        const img   = a.enclosure?.link || a.thumbnail || "";
-        const imgEl = img
-          ? `<img class="news-card-img" src="${img}" alt="" onerror="this.outerHTML='<div class=\\'news-card-img-placeholder\\'>${getEmoji(a.category)}</div>'">`
-          : `<div class="news-card-img-placeholder">${getEmoji(a.category)}</div>`;
+  const CAT_EMOJIS = { tech:"💻", science:"🔬", business:"📈", sports:"⚽", entertainment:"🎬", us:"🇺🇸", world:"🌐", default:"📰" };
+  function catEmoji(cat) { return CAT_EMOJIS[cat] || CAT_EMOJIS.default; }
 
-        const desc = (a.description || "").replace(/<[^>]*>/g, "").trim();
-        const source = a.author || "BBC News";
-        const date = a.pubDate ? timeAgo(a.pubDate) : "";
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (m < 1)  return "Just now";
+    if (m < 60) return `${m}m ago`;
+    if (h < 24) return `${h}h ago`;
+    return `${d}d ago`;
+  }
 
-        return `
-          <a class="news-card" href="${a.link}" target="_blank" rel="noopener noreferrer">
-            ${imgEl}
-            <div class="news-card-body">
-              <div class="news-card-source">${source}</div>
-              <div class="news-card-title">${a.title}</div>
-              ${desc ? `<div class="news-card-desc">${desc}</div>` : ""}
-              <div class="news-card-date">${date}</div>
-            </div>
-          </a>`;
-      }).join("");
-    }
+  /* ── Try RSS feeds in order, merge results ── */
+  async function tryRSSFeeds(cat) {
+    const feeds  = FEEDS[cat] || FEEDS.top;
+    const results = [];
+    const tried   = [];
+    const seen    = new Set();
 
-    async function loadNews() {
-      const grid = document.getElementById("news-grid");
-      grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading news...</div>`;
-      document.getElementById("news-search-input").value = "";
-
+    /* Try all feeds in parallel — collect whatever works */
+    const promises = feeds.map(async feedUrl => {
       try {
-        const res  = await fetch(API + encodeURIComponent(currentFeed));
+        const res  = await fetch(RSS2JSON + encodeURIComponent(feedUrl), { signal: AbortSignal.timeout(7000) });
         const data = await res.json();
+        if (data.items?.length) {
+          tried.push(getFeedSource(feedUrl));
+          return data.items.map(item => ({ ...item, _source: getFeedSource(feedUrl) }));
+        }
+      } catch {}
+      return [];
+    });
 
-        if (!data.items || !data.items.length) throw new Error("No items");
-
-        allArticles = data.items;
-        renderCards(allArticles);
-      } catch (err) {
-        grid.innerHTML = `<div class="news-status">❌ Failed to load news. Check your connection and try again.</div>`;
+    const settled = await Promise.allSettled(promises);
+    settled.forEach(r => {
+      if (r.status === "fulfilled") {
+        r.value.forEach(item => {
+          const key = item.title?.trim();
+          if (key && !seen.has(key)) { seen.add(key); results.push(item); }
+        });
       }
+    });
+
+    if (results.length) {
+      activeSource = tried.join(", ");
+      /* Sort by date — newest first */
+      results.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+      return results;
+    }
+    return null;
+  }
+
+  /* ── Render hero card ── */
+  function renderHero(article) {
+    const hero = document.getElementById("news-hero");
+    if (!article) { hero.style.display = "none"; return; }
+
+    const img = article.enclosure?.link || article.thumbnail || article.image || "";
+    const desc = (article.description || article.content || "").replace(/<[^>]*>/g, "").trim().slice(0, 160);
+
+    hero.href = article.link || article.url || "#";
+    document.getElementById("hero-source").textContent = article._source || "Top Story";
+    document.getElementById("hero-title").textContent  = article.title || "";
+    document.getElementById("hero-desc").textContent   = desc + (desc.length === 160 ? "..." : "");
+    document.getElementById("hero-meta").textContent   = article.pubDate ? timeAgo(article.pubDate) : "";
+
+    const imgEl = document.getElementById("hero-img");
+    if (img) {
+      imgEl.src = img;
+      imgEl.style.display = "block";
+      imgEl.onerror = () => { imgEl.style.display = "none"; };
+    } else {
+      imgEl.style.display = "none";
     }
 
-    function switchCat(btn) {
-      document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentFeed = btn.dataset.feed;
-      loadNews();
+    hero.style.display = "flex";
+  }
+
+  /* ── Render grid ── */
+  function renderCards(articles) {
+    const grid = document.getElementById("news-grid");
+    if (!articles.length) {
+      grid.innerHTML = `<div class="news-status">No articles found.</div>`;
+      return;
     }
 
-    function filterNews() {
-      const q = document.getElementById("news-search-input").value.toLowerCase().trim();
-      if (!q) { renderCards(allArticles); return; }
-      const filtered = allArticles.filter(a =>
-        (a.title || "").toLowerCase().includes(q) ||
-        (a.description || "").toLowerCase().includes(q)
-      );
-      renderCards(filtered);
+    grid.innerHTML = articles.map(a => {
+      const img  = a.enclosure?.link || a.thumbnail || a.image || "";
+      const desc = (a.description || a.content || "").replace(/<[^>]*>/g, "").trim();
+      const src  = a._source || a.author || "News";
+      const date = a.pubDate ? timeAgo(a.pubDate) : "";
+      const link = a.link || a.url || "#";
+
+      const imgHTML = img
+        ? `<img class="news-card-img" src="${img}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'news-card-img-placeholder\\'>${catEmoji(currentCat)}</div>'">`
+        : `<div class="news-card-img-placeholder">${catEmoji(currentCat)}</div>`;
+
+      return `
+        <a class="news-card" href="${link}" target="_blank" rel="noopener noreferrer">
+          ${imgHTML}
+          <div class="news-card-body">
+            <div class="news-card-source">${src}</div>
+            <div class="news-card-title">${a.title || ""}</div>
+            ${desc ? `<div class="news-card-desc">${desc}</div>` : ""}
+            <div class="news-card-date">${date}</div>
+          </div>
+        </a>`;
+    }).join("");
+  }
+
+  /* ── Main load function ── */
+  async function loadNews() {
+    const grid = document.getElementById("news-grid");
+    const src  = document.getElementById("api-source");
+    grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading news...</div>`;
+    document.getElementById("news-search-input").value = "";
+    document.getElementById("news-hero").style.display = "none";
+    src.innerHTML = `Loading from <span>multiple sources</span>...`;
+
+    const articles = await tryRSSFeeds(currentCat);
+
+    if (articles && articles.length) {
+      allArticles = articles;
+      renderHero(articles[0]);
+      renderCards(articles.slice(1));
+      src.innerHTML = `Aggregated from <span>${activeSource}</span>`;
+      return;
     }
 
+    /* All APIs failed */
+    grid.innerHTML = `<div class="news-status">❌ All news sources unavailable. Check your connection and try again.</div>`;
+    src.innerHTML = `<span style="color:#ef4444;">Sources unavailable</span>`;
+  }
+
+  function switchCat(btn) {
+    document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentCat = btn.dataset.cat;
     loadNews();
+  }
+
+  function filterNews() {
+    const q = document.getElementById("news-search-input").value.toLowerCase().trim();
+    if (!q) {
+      renderHero(allArticles[0]);
+      renderCards(allArticles.slice(1));
+      return;
+    }
+    const filtered = allArticles.filter(a =>
+      (a.title || "").toLowerCase().includes(q) ||
+      (a.description || "").toLowerCase().includes(q)
+    );
+    document.getElementById("news-hero").style.display = "none";
+    renderCards(filtered);
+  }
+
+  loadNews();
   </script>
 </body>
 </html>
