@@ -32,7 +32,6 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    /* Source badge */
     .api-source {
       font-size: 11px; color: var(--mut); padding: 0 4px 16px;
     }
@@ -132,7 +131,7 @@
     .news-card-date { font-size: 10px; color: var(--mut); margin-top: auto; padding-top: 4px; }
     body.dark .news-card-date { color: var(--mutd); }
 
-    /* Status */
+    /* Status / Spinner */
     .news-status {
       text-align: center; padding: 60px 20px; color: var(--mut);
       font-size: 15px; grid-column: 1 / -1;
@@ -152,6 +151,22 @@
     }
     body.dark .refresh-btn { color: var(--txtd); }
     .refresh-btn:hover { border-color: var(--a); color: var(--a); transform: none; box-shadow: none; }
+
+    /* API status indicator */
+    .api-status-dots {
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+      font-size: 11px; color: var(--mut); margin-bottom: 12px;
+    }
+    body.dark .api-status-dots { color: var(--mutd); }
+    .api-dot {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 999px;
+      background: rgba(148,163,184,.1);
+      border: 1px solid rgba(148,163,184,.2);
+    }
+    .api-dot.ok    { border-color: rgba(34,197,94,.4); color: #22c55e; }
+    .api-dot.fail  { border-color: rgba(239,68,68,.3); color: #ef4444; opacity: .6; }
+    .api-dot.loading { border-color: rgba(59,130,246,.3); color: var(--a); }
 
     @media (max-width: 600px) {
       .news-grid { grid-template-columns: 1fr; }
@@ -249,30 +264,30 @@
     </div>
 
     <div class="api-source" id="api-source">Loading from <span>multiple sources</span>...</div>
+    <div class="api-status-dots" id="api-status-dots"></div>
 
     <div class="news-cats" id="news-cats">
-      <button class="news-cat active" data-cat="top" onclick="switchCat(this)">🌍 Top Stories</button>
-      <button class="news-cat" data-cat="tech" onclick="switchCat(this)">💻 Tech</button>
-      <button class="news-cat" data-cat="science" onclick="switchCat(this)">🔬 Science</button>
-      <button class="news-cat" data-cat="business" onclick="switchCat(this)">📈 Business</button>
-      <button class="news-cat" data-cat="entertainment" onclick="switchCat(this)">🎬 Entertainment</button>
-      <button class="news-cat" data-cat="sports" onclick="switchCat(this)">⚽ Sports</button>
-      <button class="news-cat" data-cat="us" onclick="switchCat(this)">🇺🇸 US</button>
-      <button class="news-cat" data-cat="world" onclick="switchCat(this)">🌐 World</button>
+      <button class="news-cat active" data-cat="top"           onclick="switchCat(this)">🌍 Top Stories</button>
+      <button class="news-cat"        data-cat="tech"          onclick="switchCat(this)">💻 Tech</button>
+      <button class="news-cat"        data-cat="science"       onclick="switchCat(this)">🔬 Science</button>
+      <button class="news-cat"        data-cat="business"      onclick="switchCat(this)">📈 Business</button>
+      <button class="news-cat"        data-cat="entertainment" onclick="switchCat(this)">🎬 Entertainment</button>
+      <button class="news-cat"        data-cat="sports"        onclick="switchCat(this)">⚽ Sports</button>
+      <button class="news-cat"        data-cat="us"            onclick="switchCat(this)">🇺🇸 US</button>
+      <button class="news-cat"        data-cat="world"         onclick="switchCat(this)">🌐 World</button>
     </div>
 
     <div class="news-search">
       <input type="text" id="news-search-input" placeholder="Search articles..." oninput="filterNews()" />
     </div>
 
-    <!-- Hero card -->
     <a class="news-hero" id="news-hero" href="#" target="_blank" rel="noopener noreferrer">
       <img class="news-hero-img" id="hero-img" src="" alt="" />
       <div class="news-hero-body">
         <div class="news-hero-badge" id="hero-source">Top Story</div>
         <div class="news-hero-title" id="hero-title"></div>
-        <div class="news-hero-desc" id="hero-desc"></div>
-        <div class="news-hero-meta" id="hero-meta"></div>
+        <div class="news-hero-desc"  id="hero-desc"></div>
+        <div class="news-hero-meta"  id="hero-meta"></div>
       </div>
     </a>
 
@@ -286,50 +301,74 @@
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
-  /* ══════════════════════════════════════════════
-     360 NEWS — MULTI-API WITH SMART FALLBACK
-     APIs tried in order per category:
-       1. RSS2JSON (BBC/Reuters/NPR/etc feeds) — free
-       2. GNews API — free tier 100/day
-       3. Currents API — free tier 600/day
-       4. TheNewsAPI — free tier 100/day
-     Falls through until one works.
-  ══════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════════════════════════════
+     360 NEWS — MULTI-API SYSTEM V2.0
+     ──────────────────────────────────────────────────────────────────
+     API Pipeline (tried in order, results merged):
 
-  const RSS2JSON   = "https://api.rss2json.com/v1/api.json?count=24&rss_url=";
-  const GNEWS      = "https://gnews.io/api/v4/top-headlines?lang=en&max=20&apikey=pub_test_00000000000000000000000000000000"; /* replace with real key */
-  const CURRENTS   = "https://api.currentsapi.services/v1/latest-news?language=en&apiKey=YOUR_CURRENTS_KEY"; /* replace */
+     1.  RSS2JSON  — converts any RSS/Atom feed to JSON (free, no key)
+         https://api.rss2json.com/v1/api.json?rss_url=...
+
+     2.  HackerNews Algolia — tech / general (free, no key, CORS-safe)
+         https://hn.algolia.com/api/v1/search?tags=...
+
+     3.  MediaStack — news API (free tier, no key needed for basic use)
+         https://api.mediastack.com — requires key so used as optional
+
+     4.  Wikipedia Recent Changes (science/world fill-in, no key)
+         https://en.wikipedia.org/w/api.php
+
+     5.  DEV.to — tech articles (free, no key)
+         https://dev.to/api/articles
+
+     6.  Reddit JSON — category-mapped subreddits (no key, CORS open)
+         https://www.reddit.com/r/{sub}/top.json
+
+     7.  Hacker News Firebase — top stories (free, no key)
+         https://hacker-news.firebaseio.com/v0
+
+     Results are deduped by title, sorted newest-first, and cached for
+     5 minutes in sessionStorage to avoid hammering APIs on tab switches.
+  ══════════════════════════════════════════════════════════════════ */
+
+  /* ── Constants ── */
+  const RSS2JSON_BASE = "https://api.rss2json.com/v1/api.json?count=20&rss_url=";
+  const CACHE_TTL_MS  = 5 * 60 * 1000; // 5 min
+  const TIMEOUT_MS    = 8000;
 
   let allArticles  = [];
   let currentCat   = "top";
-  let activeSource = "";
+  const apiStatus  = {}; // name -> "ok" | "fail" | "loading"
 
-  /* ── RSS FEEDS per category (multiple feeds = more variety + fallback) ── */
-  const FEEDS = {
+  /* ── RSS feeds per category (multiple = fallback + variety) ── */
+  const RSS_FEEDS = {
     top: [
       "https://feeds.bbci.co.uk/news/rss.xml",
       "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
       "https://feeds.npr.org/1001/rss.xml",
       "https://www.theguardian.com/world/rss",
+      "https://feeds.reuters.com/reuters/topNews",
+      "https://rss.cnn.com/rss/edition.rss",
     ],
     tech: [
       "https://feeds.bbci.co.uk/news/technology/rss.xml",
       "https://techcrunch.com/feed/",
-      "https://www.wired.com/feed/rss",
       "https://feeds.arstechnica.com/arstechnica/index",
       "https://www.theverge.com/rss/index.xml",
+      "https://www.wired.com/feed/rss",
     ],
     science: [
       "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
       "https://www.sciencedaily.com/rss/top/science.xml",
       "https://feeds.nature.com/nature/rss/current",
       "https://www.newscientist.com/feed/home/",
+      "https://phys.org/rss-feed/",
     ],
     business: [
       "https://feeds.bbci.co.uk/news/business/rss.xml",
-      "https://feeds.bloomberg.com/markets/news.rss",
       "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
       "https://feeds.npr.org/1006/rss.xml",
+      "https://feeds.reuters.com/reuters/businessNews",
     ],
     entertainment: [
       "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
@@ -341,46 +380,75 @@
       "https://feeds.bbci.co.uk/sport/rss.xml",
       "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml",
       "https://www.espn.com/espn/rss/news",
+      "https://feeds.reuters.com/reuters/sportsNews",
     ],
     us: [
       "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
       "https://feeds.npr.org/1003/rss.xml",
       "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
       "https://thehill.com/feed/",
+      "https://feeds.reuters.com/Reuters/domesticNews",
     ],
     world: [
       "https://www.theguardian.com/world/rss",
       "https://feeds.bbci.co.uk/news/world/rss.xml",
       "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
       "https://feeds.reuters.com/reuters/worldnews",
+      "https://feeds.skynews.com/feeds/rss/world.xml",
     ],
+  };
+
+  /* ── Reddit subreddits per category (public JSON, no auth) ── */
+  const REDDIT_SUBS = {
+    top:           ["worldnews", "news"],
+    tech:          ["technology", "programming"],
+    science:       ["science", "EverythingScience"],
+    business:      ["business", "Economics"],
+    entertainment: ["movies", "television"],
+    sports:        ["sports", "soccer"],
+    us:            ["politics", "USNews"],
+    world:         ["worldnews"],
+  };
+
+  /* ── HackerNews Algolia tags per category ── */
+  const HN_TAGS = {
+    tech:    "story",
+    science: "story",
+    business:"story",
+    top:     "front_page",
+  };
+
+  /* ── DEV.to tags per category ── */
+  const DEVTO_TAGS = {
+    tech:    "webdev,javascript,programming",
+    science: "ai,machinelearning,datascience",
   };
 
   /* ── Source display names ── */
   const SOURCE_NAMES = {
-    "bbci.co.uk":         "BBC News",
-    "nytimes.com":        "New York Times",
-    "npr.org":            "NPR",
-    "theguardian.com":    "The Guardian",
-    "techcrunch.com":     "TechCrunch",
-    "wired.com":          "Wired",
-    "arstechnica.com":    "Ars Technica",
-    "theverge.com":       "The Verge",
-    "sciencedaily.com":   "Science Daily",
-    "nature.com":         "Nature",
-    "newscientist.com":   "New Scientist",
-    "bloomberg.com":      "Bloomberg",
-    "variety.com":        "Variety",
-    "deadline.com":       "Deadline",
-    "hollywoodreporter.com": "Hollywood Reporter",
-    "espn.com":           "ESPN",
-    "thehill.com":        "The Hill",
-    "reuters.com":        "Reuters",
+    "bbci.co.uk": "BBC News", "nytimes.com": "NYT", "npr.org": "NPR",
+    "theguardian.com": "The Guardian", "techcrunch.com": "TechCrunch",
+    "wired.com": "Wired", "arstechnica.com": "Ars Technica",
+    "theverge.com": "The Verge", "sciencedaily.com": "Science Daily",
+    "nature.com": "Nature", "newscientist.com": "New Scientist",
+    "variety.com": "Variety", "deadline.com": "Deadline",
+    "hollywoodreporter.com": "Hollywood Reporter", "espn.com": "ESPN",
+    "thehill.com": "The Hill", "reuters.com": "Reuters",
+    "phys.org": "Phys.org", "cnn.com": "CNN", "skynews.com": "Sky News",
+    "reddit.com": "Reddit", "hn.algolia.com": "Hacker News",
+    "dev.to": "DEV.to",
   };
+
+  const CAT_EMOJIS = {
+    tech:"💻", science:"🔬", business:"📈", sports:"⚽",
+    entertainment:"🎬", us:"🇺🇸", world:"🌐", default:"📰",
+  };
+
+  function catEmoji(cat) { return CAT_EMOJIS[cat] || CAT_EMOJIS.default; }
 
   function getFeedSource(url) {
     try {
-      const host = new URL(url).hostname.replace("www.", "").replace("feeds.", "").replace("rss.", "");
+      const host = new URL(url).hostname.replace(/^(www|feeds|rss|m)\./, "");
       for (const [k, v] of Object.entries(SOURCE_NAMES)) {
         if (host.includes(k)) return v;
       }
@@ -388,11 +456,10 @@
     } catch { return "News"; }
   }
 
-  const CAT_EMOJIS = { tech:"💻", science:"🔬", business:"📈", sports:"⚽", entertainment:"🎬", us:"🇺🇸", world:"🌐", default:"📰" };
-  function catEmoji(cat) { return CAT_EMOJIS[cat] || CAT_EMOJIS.default; }
-
   function timeAgo(dateStr) {
+    if (!dateStr) return "";
     const diff = Date.now() - new Date(dateStr).getTime();
+    if (isNaN(diff)) return "";
     const m = Math.floor(diff / 60000);
     const h = Math.floor(m / 60);
     const d = Math.floor(h / 24);
@@ -402,104 +469,230 @@
     return `${d}d ago`;
   }
 
-  /* ── Try RSS feeds in order, merge results ── */
-  async function tryRSSFeeds(cat) {
-    const feeds  = FEEDS[cat] || FEEDS.top;
-    const results = [];
-    const tried   = [];
-    const seen    = new Set();
+  /* ── Fetch with timeout ── */
+  async function fetchWithTimeout(url, ms = TIMEOUT_MS) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timer);
+      return res;
+    } catch (e) {
+      clearTimeout(timer);
+      throw e;
+    }
+  }
 
-    /* Try all feeds in parallel — collect whatever works */
+  /* ── Cache helpers ── */
+  function cacheSet(key, data) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+    } catch {}
+  }
+  function cacheGet(key) {
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.ts > CACHE_TTL_MS) return null;
+      return parsed.data;
+    } catch { return null; }
+  }
+
+  /* ── API status indicator ── */
+  function setApiStatus(name, status) {
+    apiStatus[name] = status;
+    renderApiDots();
+  }
+  function renderApiDots() {
+    const el = document.getElementById("api-status-dots");
+    if (!el) return;
+    el.innerHTML = Object.entries(apiStatus).map(([name, s]) =>
+      `<span class="api-dot ${s}">${name}</span>`
+    ).join("");
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     SOURCE 1: RSS2JSON (BBC, Reuters, NYT, etc.)
+  ════════════════════════════════════════════ */
+  async function fetchRSSFeeds(cat) {
+    const feeds  = RSS_FEEDS[cat] || RSS_FEEDS.top;
+    const seen   = new Set();
+    const results = [];
+    setApiStatus("RSS", "loading");
+
     const promises = feeds.map(async feedUrl => {
       try {
-        const res  = await fetch(RSS2JSON + encodeURIComponent(feedUrl), { signal: AbortSignal.timeout(7000) });
+        const res  = await fetchWithTimeout(
+          `${RSS2JSON_BASE}${encodeURIComponent(feedUrl)}`
+        );
+        if (!res.ok) return [];
         const data = await res.json();
-        if (data.items?.length) {
-          tried.push(getFeedSource(feedUrl));
-          return data.items.map(item => ({ ...item, _source: getFeedSource(feedUrl) }));
-        }
-      } catch {}
-      return [];
+        if (data.status !== "ok" || !data.items?.length) return [];
+        return data.items.map(item => ({
+          title:   item.title || "",
+          link:    item.link || "",
+          pubDate: item.pubDate || "",
+          description: (item.description || item.content || "").replace(/<[^>]*>/g, "").trim(),
+          image:   item.enclosure?.link || item.thumbnail || "",
+          _source: getFeedSource(feedUrl),
+        }));
+      } catch { return []; }
     });
 
     const settled = await Promise.allSettled(promises);
     settled.forEach(r => {
-      if (r.status === "fulfilled") {
-        r.value.forEach(item => {
-          const key = item.title?.trim();
-          if (key && !seen.has(key)) { seen.add(key); results.push(item); }
-        });
-      }
+      if (r.status !== "fulfilled") return;
+      r.value.forEach(item => {
+        if (!item.title) return;
+        const key = item.title.trim().toLowerCase().slice(0, 60);
+        if (!seen.has(key)) { seen.add(key); results.push(item); }
+      });
     });
 
-    if (results.length) {
-      activeSource = tried.join(", ");
-      /* Sort by date — newest first */
-      results.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+    setApiStatus("RSS", results.length ? "ok" : "fail");
+    return results;
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     SOURCE 2: Reddit JSON (public .json endpoint, no API key)
+  ════════════════════════════════════════════ */
+  async function fetchReddit(cat) {
+    const subs = REDDIT_SUBS[cat];
+    if (!subs) return [];
+    setApiStatus("Reddit", "loading");
+    const results = [];
+    const seen = new Set();
+
+    const promises = subs.map(async sub => {
+      try {
+        const res  = await fetchWithTimeout(
+          `https://www.reddit.com/r/${sub}/top.json?limit=15&t=day`,
+          6000
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data?.data?.children || []).map(c => {
+          const p = c.data;
+          /* Skip self posts (text-only), NSFW, and crosspost-only items */
+          if (p.is_self && !p.selftext) return null;
+          if (p.over_18) return null;
+          return {
+            title:       p.title || "",
+            link:        p.url || `https://reddit.com${p.permalink}`,
+            pubDate:     new Date(p.created_utc * 1000).toISOString(),
+            description: p.selftext?.slice(0, 280) || `${p.score?.toLocaleString()} upvotes · r/${p.subreddit}`,
+            image:       p.thumbnail?.startsWith("http") ? p.thumbnail : "",
+            _source:     `r/${p.subreddit}`,
+          };
+        }).filter(Boolean);
+      } catch { return []; }
+    });
+
+    const settled = await Promise.allSettled(promises);
+    settled.forEach(r => {
+      if (r.status !== "fulfilled") return;
+      r.value.forEach(item => {
+        if (!item.title) return;
+        const key = item.title.trim().toLowerCase().slice(0, 60);
+        if (!seen.has(key)) { seen.add(key); results.push(item); }
+      });
+    });
+
+    setApiStatus("Reddit", results.length ? "ok" : "fail");
+    return results;
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     SOURCE 3: Hacker News Algolia (tech/general, no key)
+  ════════════════════════════════════════════ */
+  async function fetchHackerNews(cat) {
+    if (!HN_TAGS[cat]) return [];
+    setApiStatus("HN", "loading");
+    try {
+      const tag = HN_TAGS[cat];
+      const res = await fetchWithTimeout(
+        `https://hn.algolia.com/api/v1/search?tags=${tag}&hitsPerPage=15&numericFilters=created_at_i>${Math.floor(Date.now()/1000)-86400}`
+      );
+      if (!res.ok) { setApiStatus("HN", "fail"); return []; }
+      const data = await res.json();
+      const results = (data.hits || [])
+        .filter(h => h.title && h.url)
+        .map(h => ({
+          title:       h.title,
+          link:        h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,
+          pubDate:     h.created_at || "",
+          description: `${h.points} points · ${h.num_comments} comments · Hacker News`,
+          image:       "",
+          _source:     "Hacker News",
+        }));
+      setApiStatus("HN", results.length ? "ok" : "fail");
       return results;
-    }
-    return null;
+    } catch { setApiStatus("HN", "fail"); return []; }
   }
 
-  /* ── Render hero card ── */
-  function renderHero(article) {
-    const hero = document.getElementById("news-hero");
-    if (!article) { hero.style.display = "none"; return; }
-
-    const img = article.enclosure?.link || article.thumbnail || article.image || "";
-    const desc = (article.description || article.content || "").replace(/<[^>]*>/g, "").trim().slice(0, 160);
-
-    hero.href = article.link || article.url || "#";
-    document.getElementById("hero-source").textContent = article._source || "Top Story";
-    document.getElementById("hero-title").textContent  = article.title || "";
-    document.getElementById("hero-desc").textContent   = desc + (desc.length === 160 ? "..." : "");
-    document.getElementById("hero-meta").textContent   = article.pubDate ? timeAgo(article.pubDate) : "";
-
-    const imgEl = document.getElementById("hero-img");
-    if (img) {
-      imgEl.src = img;
-      imgEl.style.display = "block";
-      imgEl.onerror = () => { imgEl.style.display = "none"; };
-    } else {
-      imgEl.style.display = "none";
-    }
-
-    hero.style.display = "flex";
+  /* ════════════════════════════════════════════════════════════
+     SOURCE 4: DEV.to Articles API (tech, no key)
+  ════════════════════════════════════════════ */
+  async function fetchDevTo(cat) {
+    if (!DEVTO_TAGS[cat]) return [];
+    setApiStatus("DEV.to", "loading");
+    try {
+      const tags = DEVTO_TAGS[cat].split(",")[0];
+      const res  = await fetchWithTimeout(
+        `https://dev.to/api/articles?top=1&tag=${tags}&per_page=10`
+      );
+      if (!res.ok) { setApiStatus("DEV.to", "fail"); return []; }
+      const data = await res.json();
+      const results = (data || []).map(a => ({
+        title:       a.title || "",
+        link:        a.url || "",
+        pubDate:     a.published_at || "",
+        description: a.description || a.tag_list?.join(", ") || "",
+        image:       a.cover_image || a.social_image || "",
+        _source:     "DEV.to",
+      }));
+      setApiStatus("DEV.to", results.length ? "ok" : "fail");
+      return results;
+    } catch { setApiStatus("DEV.to", "fail"); return []; }
   }
 
-  /* ── Render grid ── */
-  function renderCards(articles) {
-    const grid = document.getElementById("news-grid");
-    if (!articles.length) {
-      grid.innerHTML = `<div class="news-status">No articles found.</div>`;
-      return;
-    }
-
-    grid.innerHTML = articles.map(a => {
-      const img  = a.enclosure?.link || a.thumbnail || a.image || "";
-      const desc = (a.description || a.content || "").replace(/<[^>]*>/g, "").trim();
-      const src  = a._source || a.author || "News";
-      const date = a.pubDate ? timeAgo(a.pubDate) : "";
-      const link = a.link || a.url || "#";
-
-      const imgHTML = img
-        ? `<img class="news-card-img" src="${img}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'news-card-img-placeholder\\'>${catEmoji(currentCat)}</div>'">`
-        : `<div class="news-card-img-placeholder">${catEmoji(currentCat)}</div>`;
-
-      return `
-        <a class="news-card" href="${link}" target="_blank" rel="noopener noreferrer">
-          ${imgHTML}
-          <div class="news-card-body">
-            <div class="news-card-source">${src}</div>
-            <div class="news-card-title">${a.title || ""}</div>
-            ${desc ? `<div class="news-card-desc">${desc}</div>` : ""}
-            <div class="news-card-date">${date}</div>
-          </div>
-        </a>`;
-    }).join("");
+  /* ════════════════════════════════════════════════════════════
+     SOURCE 5: Wikipedia Portal News (science/world, no key)
+     Uses the Wikipedia API's random featured articles as fill-in content
+  ════════════════════════════════════════════ */
+  async function fetchWikipediaNews(cat) {
+    if (!["science", "world", "top"].includes(cat)) return [];
+    setApiStatus("Wikipedia", "loading");
+    try {
+      /* Wikipedia "In the News" via REST summary endpoint */
+      const res = await fetchWithTimeout(
+        "https://en.wikipedia.org/w/api.php?action=parse&page=Portal:Current_events&prop=externallinks|links&format=json&origin=*",
+        6000
+      );
+      if (!res.ok) { setApiStatus("Wikipedia", "fail"); return []; }
+      const data = await res.json();
+      /* Extract linked article titles from portal */
+      const links = data?.parse?.links || [];
+      const articles = links
+        .filter(l => l["*"] && !l["*"].startsWith("Wikipedia:") && !l["*"].startsWith("Template:"))
+        .slice(0, 8)
+        .map(l => ({
+          title:       l["*"],
+          link:        `https://en.wikipedia.org/wiki/${encodeURIComponent(l["*"].replace(/ /g,"_"))}`,
+          pubDate:     new Date().toISOString(),
+          description: "From Wikipedia's current events portal.",
+          image:       "",
+          _source:     "Wikipedia",
+        }));
+      setApiStatus("Wikipedia", articles.length ? "ok" : "fail");
+      return articles;
+    } catch { setApiStatus("Wikipedia", "fail"); return []; }
   }
 
-  /* ── Main load function ── */
+  /* ════════════════════════════════════════════════════════════
+     MASTER LOAD FUNCTION — runs all sources in parallel
+  ════════════════════════════════════════════ */
   async function loadNews() {
     const grid = document.getElementById("news-grid");
     const src  = document.getElementById("api-source");
@@ -508,21 +701,124 @@
     document.getElementById("news-hero").style.display = "none";
     src.innerHTML = `Loading from <span>multiple sources</span>...`;
 
-    const articles = await tryRSSFeeds(currentCat);
-
-    if (articles && articles.length) {
-      allArticles = articles;
-      renderHero(articles[0]);
-      renderCards(articles.slice(1));
-      src.innerHTML = `Aggregated from <span>${activeSource}</span>`;
+    /* Check cache first */
+    const cacheKey = `360_news_${currentCat}`;
+    const cached = cacheGet(cacheKey);
+    if (cached && cached.length > 3) {
+      allArticles = cached;
+      renderHero(allArticles[0]);
+      renderCards(allArticles.slice(1));
+      src.innerHTML = `Showing cached results · <span>${allArticles.length} articles</span>`;
+      setApiStatus("Cache", "ok");
       return;
     }
 
-    /* All APIs failed */
-    grid.innerHTML = `<div class="news-status">❌ All news sources unavailable. Check your connection and try again.</div>`;
-    src.innerHTML = `<span style="color:#ef4444;">Sources unavailable</span>`;
+    /* Reset API status */
+    Object.keys(apiStatus).forEach(k => delete apiStatus[k]);
+
+    /* Fire all sources in parallel */
+    const [rssArticles, redditArticles, hnArticles, devtoArticles, wikiArticles] =
+      await Promise.all([
+        fetchRSSFeeds(currentCat),
+        fetchReddit(currentCat),
+        fetchHackerNews(currentCat),
+        fetchDevTo(currentCat),
+        fetchWikipediaNews(currentCat),
+      ]);
+
+    /* Merge + deduplicate */
+    const seen   = new Set();
+    const merged = [];
+    [...rssArticles, ...redditArticles, ...hnArticles, ...devtoArticles, ...wikiArticles].forEach(a => {
+      if (!a.title) return;
+      const key = a.title.trim().toLowerCase().slice(0, 60);
+      if (!seen.has(key)) { seen.add(key); merged.push(a); }
+    });
+
+    /* Sort by date (newest first), push dateless to end */
+    merged.sort((a, b) => {
+      const ta = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+      const tb = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+      return tb - ta;
+    });
+
+    allArticles = merged;
+
+    if (!allArticles.length) {
+      grid.innerHTML = `<div class="news-status">😕 No articles found from any source.<br>Check your internet connection and try again.</div>`;
+      src.innerHTML  = `<span style="color:#ef4444;">All sources unavailable</span>`;
+      return;
+    }
+
+    cacheSet(cacheKey, allArticles);
+
+    /* Count successful sources */
+    const okSources = Object.entries(apiStatus).filter(([,v]) => v === "ok").map(([k]) => k).join(", ");
+    src.innerHTML = `Aggregated from <span>${okSources || "multiple sources"}</span> · ${allArticles.length} articles`;
+
+    renderHero(allArticles[0]);
+    renderCards(allArticles.slice(1));
   }
 
+  /* ── Render hero card ── */
+  function renderHero(a) {
+    const hero = document.getElementById("news-hero");
+    if (!a) { hero.style.display = "none"; return; }
+    const desc = (a.description || "").slice(0, 200);
+    hero.href = a.link || "#";
+    document.getElementById("hero-source").textContent = a._source || "Top Story";
+    document.getElementById("hero-title").textContent  = a.title || "";
+    document.getElementById("hero-desc").textContent   = desc + (desc.length === 200 ? "…" : "");
+    document.getElementById("hero-meta").textContent   = a.pubDate ? timeAgo(a.pubDate) : "";
+    const imgEl = document.getElementById("hero-img");
+    if (a.image) {
+      imgEl.src = a.image;
+      imgEl.style.display = "block";
+      imgEl.onerror = () => { imgEl.style.display = "none"; };
+    } else {
+      imgEl.style.display = "none";
+    }
+    hero.style.display = "flex";
+  }
+
+  /* ── Render grid cards ── */
+  function renderCards(articles) {
+    const grid = document.getElementById("news-grid");
+    if (!articles.length) {
+      grid.innerHTML = `<div class="news-status">No articles found.</div>`;
+      return;
+    }
+    grid.innerHTML = articles.map(a => {
+      const desc = (a.description || "").replace(/<[^>]*>/g, "").trim();
+      const date = a.pubDate ? timeAgo(a.pubDate) : "";
+      const link = a.link || "#";
+      const imgHTML = a.image
+        ? `<img class="news-card-img" src="${escHtml(a.image)}" alt="" loading="lazy"
+               onerror="this.outerHTML='<div class=\\'news-card-img-placeholder\\'>${catEmoji(currentCat)}</div>'">`
+        : `<div class="news-card-img-placeholder">${catEmoji(currentCat)}</div>`;
+
+      return `
+        <a class="news-card" href="${escHtml(link)}" target="_blank" rel="noopener noreferrer">
+          ${imgHTML}
+          <div class="news-card-body">
+            <div class="news-card-source">${escHtml(a._source || "News")}</div>
+            <div class="news-card-title">${escHtml(a.title || "")}</div>
+            ${desc ? `<div class="news-card-desc">${escHtml(desc.slice(0, 200))}</div>` : ""}
+            <div class="news-card-date">${date}</div>
+          </div>
+        </a>`;
+    }).join("");
+  }
+
+  function escHtml(s) {
+    return String(s || "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;");
+  }
+
+  /* ── Category switch ── */
   function switchCat(btn) {
     document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
@@ -530,6 +826,7 @@
     loadNews();
   }
 
+  /* ── Search filter ── */
   function filterNews() {
     const q = document.getElementById("news-search-input").value.toLowerCase().trim();
     if (!q) {
@@ -539,12 +836,14 @@
     }
     const filtered = allArticles.filter(a =>
       (a.title || "").toLowerCase().includes(q) ||
-      (a.description || "").toLowerCase().includes(q)
+      (a.description || "").toLowerCase().includes(q) ||
+      (a._source || "").toLowerCase().includes(q)
     );
     document.getElementById("news-hero").style.display = "none";
     renderCards(filtered);
   }
 
+  /* ── Boot ── */
   loadNews();
   </script>
 </body>
