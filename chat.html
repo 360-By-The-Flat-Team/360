@@ -26,6 +26,22 @@
   <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="chat.css">
+  <style>
+    /* Unread badge */
+    .unread-badge {
+      min-width: 18px; height: 18px; border-radius: 999px;
+      background: var(--a); color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px; margin-left: auto; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(59,130,246,.4);
+      animation: badgePop .2s ease;
+    }
+    @keyframes badgePop {
+      from { transform: scale(0); }
+      to   { transform: scale(1); }
+    }
+  </style>
 </head>
 <body>
   <div class="cursor-dot"></div>
@@ -103,10 +119,6 @@
       <button id="auth-close-btn" class="close-btn">Close</button>
     </div>
   </div>
-<label style="display:flex;gap:8px;align-items:center;">
-  <input type="checkbox" id="notif-toggle" />
-  Enable Notifications
-</label>
 
   <div class="auth-top-right">
     <button id="signInBtn" class="auth-btn">Sign In</button>
@@ -200,6 +212,7 @@
         <span class="chat-header-icon" id="hdr-icon">🌐</span>
         <span class="chat-header-name" id="hdr-name">General</span>
         <span class="chat-header-desc" id="hdr-desc">Public chat · everyone is here</span>
+        <button id="notif-btn" title="Enable notifications" onclick="requestNotifications()" style="margin-left:auto;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">🔔 Notify</button>
       </div>
       <div id="chat-window"></div>
       <div class="chat-input-wrap">
@@ -1772,6 +1785,260 @@
     });
     } catch(e) { console.error("Init error:", e); }
   })();
+
+  /* ════════════════════════════════════════
+     WEB PUSH NOTIFICATIONS
+  ════════════════════════════════════════ */
+  let notificationsEnabled = false;
+
+  async function requestNotifications() {
+    const btn = document.getElementById("notif-btn");
+    if (!("Notification" in window)) {
+      btn.textContent = "❌ Unsupported";
+      return;
+    }
+    if (Notification.permission === "granted") {
+      notificationsEnabled = true;
+      btn.innerHTML = "🔔 On";
+      btn.style.color = "#22c55e";
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      notificationsEnabled = true;
+      btn.innerHTML = "🔔 On";
+      btn.style.color = "#22c55e";
+      new Notification("360 Chat", {
+        body: "You'll be notified of new messages and @mentions!",
+        icon: "../favicon-32x32.png"
+      });
+    } else {
+      btn.innerHTML = "🔕 Blocked";
+      btn.style.opacity = ".5";
+    }
+  }
+
+  function maybePushNotif(msg) {
+    if (!notificationsEnabled) return;
+    if (Notification.permission !== "granted") return;
+    if (document.hasFocus()) return;
+    const isMention = currentProfile && new RegExp("@" + currentProfile.username + "\\b", "i").test(msg.text || "");
+    const isDM = activeRoom.type === "dm";
+    if (!isMention && !isDM) return; /* Only notify for mentions + DMs */
+    const title = isDM ? `DM from ${msg.username}` : `${msg.username} mentioned you`;
+    const body  = (msg.text || "📎 file").slice(0, 100);
+    const notif = new Notification(title, {
+      body,
+      icon: msg.avatar_url || "../favicon-32x32.png",
+      badge: "../favicon-32x32.png",
+      tag: "360-chat-" + (msg.dm_id || msg.channel_id || "public"),
+      renotify: true
+    });
+    notif.onclick = () => { window.focus(); notif.close(); };
+  }
+
+  /* Init notification button state */
+  window.addEventListener("load", () => {
+    const btn = document.getElementById("notif-btn");
+    if (!btn) return;
+    if (Notification.permission === "granted") {
+      notificationsEnabled = true;
+      btn.innerHTML = "🔔 On";
+      btn.style.color = "#22c55e";
+    } else if (Notification.permission === "denied") {
+      btn.innerHTML = "🔕 Blocked";
+      btn.style.opacity = ".5";
+    }
+  });
+
+  /* ════════════════════════════════════════
+     UNREAD BADGE SYSTEM
+  ════════════════════════════════════════ */
+  const unreadCounts = {}; /* roomKey → count */
+
+  function roomKey(room) {
+    return `${room.type}:${room.id}`;
+  }
+
+  async function markRead(room) {
+    if (!currentUserId) return;
+    const key = roomKey(room);
+    unreadCounts[key] = 0;
+    renderUnreadBadge(room, 0);
+    await sb.from("last_read").upsert({
+      user_id: currentUserId,
+      room_type: room.type,
+      room_id: String(room.id),
+      last_read_at: new Date().toISOString()
+    }, { onConflict: "user_id,room_type,room_id" });
+  }
+
+  async function loadUnreadCounts() {
+    if (!currentUserId) return;
+    /* Get last-read timestamps */
+    const { data: reads } = await sb.from("last_read")
+      .select("room_type,room_id,last_read_at")
+      .eq("user_id", currentUserId);
+    const readMap = {};
+    (reads || []).forEach(r => { readMap[`${r.room_type}:${r.room_id}`] = r.last_read_at; });
+
+    /* Count unread public messages */
+    const pubKey = "public:public";
+    const pubReadAt = readMap[pubKey] || new Date(0).toISOString();
+    const { count: pubCount } = await sb.from("messages")
+      .select("*", { count: "exact", head: true })
+      .is("channel_id", null).is("dm_id", null).is("server_id", null)
+      .is("deleted_at", null)
+      .neq("user_id", currentUserId)
+      .gt("created_at", pubReadAt);
+    if (pubCount) {
+      unreadCounts[pubKey] = pubCount;
+      renderUnreadBadge({ type: "public", id: "public" }, pubCount);
+    }
+
+    /* Count unread DMs */
+    const { data: dms } = await sb.from("direct_messages")
+      .select("id").or(`user_a.eq.${currentUserId},user_b.eq.${currentUserId}`);
+    if (dms) {
+      for (const dm of dms) {
+        const dmKey = `dm:${dm.id}`;
+        const dmReadAt = readMap[dmKey] || new Date(0).toISOString();
+        const { count } = await sb.from("dm_messages")
+          .select("*", { count: "exact", head: true })
+          .eq("dm_id", dm.id)
+          .neq("user_id", currentUserId)
+          .gt("created_at", dmReadAt);
+        if (count) {
+          unreadCounts[dmKey] = count;
+          renderUnreadBadge({ type: "dm", id: dm.id }, count);
+        }
+      }
+    }
+
+    /* Count unread community messages */
+    const { data: memberships } = await sb.from("server_members")
+      .select("server_id").eq("user_id", currentUserId);
+    if (memberships) {
+      for (const m of memberships) {
+        const sKey = `server:${m.server_id}`;
+        const sReadAt = readMap[sKey] || new Date(0).toISOString();
+        const { count } = await sb.from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("server_id", m.server_id)
+          .is("deleted_at", null)
+          .neq("user_id", currentUserId)
+          .gt("created_at", sReadAt);
+        if (count) {
+          unreadCounts[sKey] = count;
+          renderUnreadBadge({ type: "server", id: m.server_id }, count);
+        }
+      }
+    }
+  }
+
+  function renderUnreadBadge(room, count) {
+    let el = null;
+    if (room.type === "public") {
+      el = document.getElementById("publicRoomItem");
+    } else if (room.type === "dm") {
+      el = document.querySelector(`[data-dm-id="${room.id}"]`);
+    } else if (room.type === "server" || room.type === "channel") {
+      el = document.querySelector(`[data-server-id="${room.id}"]`);
+    }
+    if (!el) return;
+    /* Remove existing badge */
+    el.querySelector(".unread-badge")?.remove();
+    if (count > 0) {
+      const badge = document.createElement("div");
+      badge.className = "unread-badge";
+      badge.textContent = count > 99 ? "99+" : count;
+      el.appendChild(badge);
+    }
+  }
+
+  /* Hook into switchRoom to mark as read */
+  const _origSwitchRoom = switchRoom;
+  // Wrap markRead into the realtime new message handler
+  // by patching renderMessage to also update badge + push notif
+  const _origRenderMsg = renderMessage;
+  function renderMessage(msg, loadRxn = true) {
+    _origRenderMsg.call(this, msg, loadRxn);
+    if (loadRxn) {
+      /* Push notification */
+      maybePushNotif(msg);
+      /* If message is in a room we're NOT viewing, increment unread */
+      const msgRoom = msg.channel_id ? `channel:${msg.channel_id}`
+                    : msg.server_id  ? `server:${msg.server_id}`
+                    : msg.dm_id      ? `dm:${msg.dm_id}`
+                    : "public:public";
+      const curRoom = roomKey(activeRoom);
+      if (msgRoom !== curRoom && msg.user_id !== currentUserId) {
+        unreadCounts[msgRoom] = (unreadCounts[msgRoom] || 0) + 1;
+        const parts = msgRoom.split(":");
+        renderUnreadBadge({ type: parts[0], id: parts[1] }, unreadCounts[msgRoom]);
+        /* Flash tab title */
+        if (!document.hasFocus()) {
+          const orig = document.title;
+          let f = 0;
+          const fi = setInterval(() => {
+            document.title = f++ % 2 === 0 ? "💬 New message!" : orig;
+            if (f > 6) { clearInterval(fi); document.title = orig; }
+          }, 600);
+        }
+      }
+    }
+  }
+
+  /* Mark room as read on switch */
+  function switchRoom(room) {
+    /* call original */
+    activeRoom = room;
+    lastMsgUserId = null; lastMsgDate = null; replyingTo = null;
+    document.getElementById("reply-bar").classList.remove("show");
+    document.getElementById("hdr-icon").textContent = room.icon;
+    document.getElementById("hdr-name").textContent = room.name;
+    document.getElementById("hdr-desc").textContent =
+      room.type === "public"  ? "Public chat · everyone is here" :
+      room.type === "dm"      ? "Direct Message" :
+      room.serverName ? `Community · ${room.serverName}` : "Community";
+    document.getElementById("message-input").placeholder = `Message ${room.name}...`;
+    document.querySelectorAll(".room-item,.dm-item").forEach(el => el.classList.remove("active"));
+    if (room.type === "public") document.getElementById("publicRoomItem").classList.add("active");
+    else if (room.type === "dm") document.querySelector(`[data-dm-id="${room.id}"]`)?.classList.add("active");
+
+    if (realtimeChannel) sb.removeChannel(realtimeChannel);
+    if (typingChannel)   sb.removeChannel(typingChannel);
+    typingUsers = {}; renderTyping();
+    loadHistory();
+
+    const rtKey = `rt-${room.type}-${String(room.id).replace(/-/g,"")}-${Date.now()}`;
+    const rtChan = sb.channel(rtKey);
+    if (room.type === "channel") {
+      rtChan.on("postgres_changes", { event:"INSERT", schema:"public", table:"messages", filter:`channel_id=eq.${room.id}` }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else if (room.type === "server") {
+      rtChan.on("postgres_changes", { event:"INSERT", schema:"public", table:"messages", filter:`server_id=eq.${room.id}` }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else if (room.type === "dm") {
+      rtChan.on("postgres_changes", { event:"INSERT", schema:"public", table:"dm_messages", filter:`dm_id=eq.${room.id}` }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else {
+      rtChan.on("postgres_changes", { event:"INSERT", schema:"public", table:"messages" }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    }
+    realtimeChannel = rtChan.subscribe();
+    typingChannel = sb.channel(`typing-${room.type}-${room.id}`)
+      .on("broadcast",{event:"typing"}, payload => {
+        const{username,avatar_url,uid}=payload.payload;
+        if(uid===currentUserId) return;
+        typingUsers[uid]={username,avatar_url}; renderTyping();
+        clearTimeout(typingTimeouts[uid]);
+        typingTimeouts[uid]=setTimeout(()=>{delete typingUsers[uid];renderTyping();},2500);
+      }).subscribe();
+
+    document.getElementById("chatLeft").classList.remove("mobile-open");
+    /* Mark this room as read */
+    markRead(room);
+  }
+
+  /* Load unread counts after init */
+  setTimeout(() => { if (currentUserId) loadUnreadCounts(); }, 1500);
   </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e0f1c953e1fa02c',t:'MTc3NDI4NjQ3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"ff0a2d9a55154fa7bec0287a68d6f56f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
