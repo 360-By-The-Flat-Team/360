@@ -529,27 +529,39 @@
 
   /* ════════════════ COMMUNITIES ════════════════ */
   async function loadCommunities() {
-    const { data, error } = await sb.from("servers").select("*").order("name");
-    const list = document.getElementById("communities-list");
-    list.innerHTML = "";
-    if (error) {
-      console.error("loadCommunities error:", error.message, error.code);
-      list.innerHTML = `<div style="font-size:11px;color:#ef4444;padding:6px 10px;">Error loading: ${error.message}</div>`;
-      return;
-    }
-    if (!data || !data.length) {
-      list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`;
-      return;
-    }
-    data.forEach(s => {
-      const div = document.createElement("div");
-      div.className = "room-item";
-      div.dataset.serverId = s.id;
-      div.innerHTML = `<span class="room-icon">${s.passcode?"🔒":"🌐"}</span><span class="room-name">${s.name}</span>`;
-      div.addEventListener("click", () => handleCommunityClick(s));
-      list.appendChild(div);
-    });
-  }
+	  const { data: allServers, error } = await sb.from("servers").select("*").order("name");
+	  const list = document.getElementById("communities-list");
+	  list.innerHTML = "";
+	  if (error) { list.innerHTML = `<div style="font-size:11px;color:#ef4444;padding:6px 10px;">Error: ${error.message}</div>`; return; }
+	  if (!allServers || !allServers.length) { list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`; return; }
+	
+	  /* Filter: show public ones + ones the user has joined */
+	  let visible = allServers;
+	  if (currentUserId) {
+		const { data: memberships } = await sb.from("server_members").select("server_id").eq("user_id", currentUserId);
+		const joinedIds = new Set((memberships || []).map(m => m.server_id));
+		visible = allServers.filter(s => !s.passcode || joinedIds.has(s.id));
+	  } else {
+		visible = allServers.filter(s => !s.passcode);
+	  }
+	
+	  /* Sort: locked first (alphabetical), then unlocked (alphabetical) */
+	  visible.sort((a, b) => {
+		if (!!a.passcode !== !!b.passcode) return a.passcode ? -1 : 1;
+		return a.name.localeCompare(b.name);
+	  });
+	
+	  if (!visible.length) { list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`; return; }
+	
+	  visible.forEach(s => {
+		const div = document.createElement("div");
+		div.className = "room-item";
+		div.dataset.serverId = s.id;
+		div.innerHTML = `<span class="room-icon">${s.passcode ? "🔒" : "🌐"}</span><span class="room-name">${s.name}</span>`;
+		div.addEventListener("click", () => handleCommunityClick(s));
+		list.appendChild(div);
+	  });
+	}
 
   async function handleCommunityClick(server) {
     if (!currentUserId) { openAuth(); return; }
@@ -1103,6 +1115,7 @@
         const pingAudio = new Audio("../click-sound.mp3");
         pingAudio.volume = 0.6;
         pingAudio.play().catch(()=>{});
+		sendNotification(`@${msg.username} mentioned you`, msg.text, msg.avatar_url || null);
         /* Flash tab title */
         const origTitle = document.title;
         let flash = 0;
@@ -1112,6 +1125,9 @@
     /* Auto-translate if enabled */
     if (msg.text) maybeTranslateMessage(el, msg.text);
     if(loadRxn) {
+	  if (loadRxn && activeRoom.type === "dm" && msg.user_id !== currentUserId) {
+		sendNotification(`💬 ${msg.username}`, msg.text || "Sent a file", msg.avatar_url || null);
+	  }
       loadReactionsSingle(msg.id);
       /* Auto-scroll — only if user is near the bottom */
       const w=document.getElementById("chat-window");
@@ -1570,15 +1586,20 @@
     await enterCommunity(server);
   });
 
-  document.getElementById("browseCommunityBtn").addEventListener("click",async()=>{
-    if(!currentUserId){openAuth();return;}
-    const{data}=await sb.from("servers").select("*").order("name");
-    if(!data||!data.length){alert("No communities yet!");return;}
-    const names=data.map((s,i)=>`${i+1}. ${s.name}${s.passcode?" 🔒":""}`).join("\n");
-    const pick=prompt(`Communities:\n${names}\n\nEnter number:`);
-    const idx=parseInt(pick)-1;
-    if(isNaN(idx)||!data[idx]) return;
-    await handleCommunityClick(data[idx]);
+  document.getElementById("browseCommunityBtn").addEventListener("click", async () => {
+	  if (!currentUserId) { openAuth(); return; }
+	  const { data } = await sb.from("servers").select("*").order("name");
+	  if (!data || !data.length) { alert("No communities yet!"); return; }
+	  /* Sort: locked first, then unlocked, both alphabetical */
+	  data.sort((a, b) => {
+	    if (!!a.passcode !== !!b.passcode) return a.passcode ? -1 : 1;
+	    return a.name.localeCompare(b.name);
+	  });
+	  const names = data.map((s, i) => `${i + 1}. ${s.passcode ? "🔒" : "🌐"} ${s.name}`).join("\n");
+	  const pick = prompt(`All Communities:\n${names}\n\nEnter number to join:`);
+	  const idx = parseInt(pick) - 1;
+	  if (isNaN(idx) || !data[idx]) return;
+	  await handleCommunityClick(data[idx]);
   });
 
   document.getElementById("jc-cancel").addEventListener("click",()=>{document.getElementById("joinCommunityModal").classList.remove("open");joinPending=null;});
@@ -1796,6 +1817,26 @@
     });
     } catch(e) { console.error("Init error:", e); }
   })();
+
+	//REQUEST NOTIFICATIONS
+	function requestNotifications() {
+	  if (!("Notification" in window)) { showToast("❌ Notifications not supported in this browser."); return; }
+	  if (Notification.permission === "granted") { showToast("✅ Notifications already enabled!"); return; }
+	  Notification.requestPermission().then(permission => {
+	    if (permission === "granted") {
+	      showToast("✅ Notifications enabled!");
+	      document.getElementById("notif-btn").textContent = "🔔 On";
+	    } else {
+	      showToast("❌ Notifications blocked.");
+	    }
+	  });
+	}
+	
+	function sendNotification(title, body, icon) {
+	  if (Notification.permission !== "granted") return;
+	  if (document.visibilityState === "visible") return; /* only notify when tab is hidden */
+	  new Notification(title, { body, icon: icon || "../favicon-32x32.png" });
+	}
   </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e0f1c953e1fa02c',t:'MTc3NDI4NjQ3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"ff0a2d9a55154fa7bec0287a68d6f56f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
