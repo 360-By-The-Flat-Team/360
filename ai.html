@@ -626,7 +626,7 @@
   /* ── New chat ── */
   function startNewChat() {
     currentConvId = null;
-    history = [{ role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. Today's date is ${currentDate}.` }];
+    history = [{ role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine. Today's date is ${currentDate}.` }];
     aiOutput.innerHTML = "";
     loadConversations();
   }
