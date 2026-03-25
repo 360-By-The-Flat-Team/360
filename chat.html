@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head><script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push(i)})
@@ -1117,6 +1116,17 @@
       /* Auto-scroll — only if user is near the bottom */
       const w=document.getElementById("chat-window");
       if(w.scrollHeight - w.scrollTop - w.clientHeight < 300) scrollBottom();
+	  // Update sidebar unread dot if not active room
+	  const activeKey = window._activeRoomForNotif
+	    ? `${window._activeRoomForNotif.type}:${window._activeRoomForNotif.id}`
+	    : null;
+	  const thisKey = `${activeRoom.type}:${activeRoom.id}`;
+	  if (loadRxn && activeKey && thisKey !== activeKey) {
+	    // mark room item as having unread
+	    const roomEl = document.querySelector(`[data-server-id="${activeRoom.id}"]`)
+		  || document.querySelector(`[data-dm-id="${activeRoom.id}"]`);
+	    if (roomEl) roomEl.classList.add("has-unread");
+	  }
     }
   }
 
@@ -1748,8 +1758,21 @@
     const{data:{session}}=await sb.auth.getSession();
     currentUserId=session?.user?.id||null;
     if(currentUserId) currentProfile=await getProfile(currentUserId);
+	window._currentUserIdForNotif  = currentUserId;
+    window._currentProfileForNotif = currentProfile;
     await loadCommunities();
     await loadDMs();
+	// ── Notification bridge: expose room/user state to notifications.js ──
+	const _origSwitchRoom = switchRoom;
+	window.switchRoom = function(room, ...args) {
+	  _origSwitchRoom(room, ...args);
+	  window._activeRoomForNotif  = room;
+	  if (window.clearRoomUnread) clearRoomUnread(room);
+	  // mark unread dots on sidebar items
+	  document.querySelectorAll(".room-item,.dm-item").forEach(el => {
+		el.classList.remove("has-unread");
+	  });
+	};
     /* Wire General room click */
     document.getElementById("publicRoomItem").addEventListener("click", () => {
       switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
@@ -1766,6 +1789,8 @@
     sb.auth.onAuthStateChange(async(_,session)=>{
       currentUserId=session?.user?.id||null;
       currentProfile=currentUserId?await getProfile(currentUserId):null;
+	  window._currentUserIdForNotif  = currentUserId;
+      window._currentProfileForNotif = currentProfile;
       loadDMs();
       startPresence();
     });
