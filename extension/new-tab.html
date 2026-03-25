@@ -1,620 +1,237 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/new-tab.html b/new-tab.html
-index 84420fa89ad866fc45bbb87dc3d7e0dc8b6cd3c6..23c292e2959494b1a692defee24662ac0ad46b0f 100644
---- a/new-tab.html
-+++ b/new-tab.html
-@@ -237,114 +237,166 @@
-     .ql-add:hover { opacity: 1; }
- 
-     /* ══════════════════════════════════════════
-        DAILY QUOTE
-     ══════════════════════════════════════════ */
-     #quote-widget {
-       text-align: center;
-       max-width: 500px;
-     }
-     #quote-text {
-       font-size: 15px;
-       font-style: italic;
-       opacity: .75;
-       line-height: 1.6;
-     }
-     #quote-author {
-       font-size: 12px;
-       opacity: .5;
-       margin-top: 6px;
-     }
- 
-     /* ══════════════════════════════════════════
-        WIDGETS ROW
-     ══════════════════════════════════════════ */
-     .widgets-row {
--      display: flex;
-+      display: grid;
-+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-       gap: 12px;
-       width: 100%;
--      flex-wrap: wrap;
--      justify-content: center;
-+      align-items: start;
-     }
-     .widget-card {
--      flex: 1;
--      min-width: 200px;
--      max-width: 280px;
-+      width: 100%;
-+      min-height: 100%;
-     }
- 
-     /* ── TODO ── */
-     #todo-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
-     #todo-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; }
-     #todo-list li {
-       display: flex;
-       align-items: center;
-       gap: 8px;
-       font-size: 13px;
-     }
-     #todo-list li input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
-     #todo-list li span { flex: 1; }
-     #todo-list li.done span { text-decoration: line-through; opacity: .4; }
-     #todo-list li button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; padding: 0 4px; box-shadow: none; transform: none; }
-     #todo-list li button:hover { transform: none; box-shadow: none; }
-     #todo-input-row { display: flex; gap: 6px; margin-top: 8px; }
-     #todo-input {
-       flex: 1;
-       padding: 7px 10px;
-       border-radius: 8px;
-       border: 1px solid rgba(255,255,255,.15);
-       background: rgba(255,255,255,.06);
-       color: inherit;
-       font-size: 13px;
-       outline: none;
-       font-family: var(--font);
-     }
-     body.light #todo-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.15); }
-     #todo-add-btn {
-       padding: 7px 12px;
-       border-radius: 8px;
-       border: none;
-       background: linear-gradient(110deg, var(--accent), var(--accent2));
-       color: #050816;
-       font-weight: 700;
-       font-size: 12px;
-       cursor: pointer;
-       font-family: var(--font);
-     }
- 
-+    /* ── NOTEPAD ── */
-+    #notes-widget {
-+      display: flex;
-+      flex-direction: column;
-+      gap: 10px;
-+    }
-+    #notes-widget h4 { font-size: 13px; font-weight: 600; opacity: .7; }
-+    .notes-meta {
-+      display: flex;
-+      justify-content: space-between;
-+      align-items: center;
-+      gap: 8px;
-+      font-size: 11px;
-+      opacity: .55;
-+    }
-+    #notes-status.saved { color: #22c55e; opacity: .85; }
-+    #notes-clear-btn {
-+      border: 1px solid rgba(255,255,255,.12);
-+      background: transparent;
-+      color: inherit;
-+      border-radius: 8px;
-+      padding: 5px 8px;
-+      font-size: 11px;
-+      cursor: pointer;
-+      font-family: var(--font);
-+    }
-+    body.light #notes-clear-btn { border-color: rgba(0,0,0,.12); }
-+    #notes-clear-btn:hover { background: rgba(255,255,255,.08); }
-+    #notes-input {
-+      width: 100%;
-+      min-height: 170px;
-+      resize: vertical;
-+      border-radius: 12px;
-+      border: 1px solid rgba(255,255,255,.12);
-+      background: rgba(255,255,255,.06);
-+      color: inherit;
-+      padding: 12px;
-+      font-size: 13px;
-+      line-height: 1.55;
-+      outline: none;
-+      font-family: var(--font);
-+    }
-+    body.light #notes-input { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); }
-+    #notes-input:focus { border-color: var(--accent); }
-+
-     /* ── CALCULATOR ── */
-     #calc-widget h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; opacity: .7; }
-     #calc-display {
-       background: rgba(0,0,0,.3);
-       border-radius: 8px;
-       padding: 10px 12px;
-       text-align: right;
-       font-size: 20px;
-       font-weight: 700;
--      margin-bottom: 8px;
-+      margin-bottom: 6px;
-       min-height: 44px;
-       word-break: break-all;
-     }
-+    #calc-expression {
-+      min-height: 18px;
-+      margin-bottom: 8px;
-+      text-align: right;
-+      font-size: 11px;
-+      letter-spacing: .03em;
-+      opacity: .5;
-+    }
-     body.light #calc-display { background: rgba(0,0,0,.06); color: #111; }
-     .calc-grid {
-       display: grid;
-       grid-template-columns: repeat(4, 1fr);
-       gap: 5px;
-     }
-     .calc-btn {
-       padding: 9px 4px;
-       border-radius: 7px;
-       border: none;
-       background: rgba(255,255,255,.08);
-       color: inherit;
-       font-size: 13px;
-       font-weight: 600;
-       cursor: pointer;
-       font-family: var(--font);
-       transition: .15s;
-     }
-     body.light .calc-btn { background: rgba(0,0,0,.06); color: #111; }
-     .calc-btn:hover { background: rgba(255,255,255,.18); transform: none; box-shadow: none; }
-     .calc-btn.op { color: var(--accent); }
-     .calc-btn.eq { background: linear-gradient(110deg, var(--accent), var(--accent2)); color: #050816; grid-column: span 2; }
-     .calc-btn.eq:hover { opacity: .85; background: linear-gradient(110deg, var(--accent), var(--accent2)); }
-     .calc-btn.clr { color: #ef4444; }
- 
-@@ -800,53 +852,64 @@
-       <button id="search-btn">Search</button>
-     </div>
- 
-     <!-- Quick links -->
-     <div id="quicklinks" class="widget-el"></div>
- 
-     <!-- Daily quote -->
-     <div id="quote-widget" class="widget-el">
-       <div id="quote-text">Loading quote...</div>
-       <div id="quote-author"></div>
-     </div>
- 
-     <!-- Widgets row -->
-     <div class="widgets-row">
- 
-       <!-- Todo -->
-       <div class="card widget-card widget-el" id="todo-widget">
-         <h4>📝 To-do</h4>
-         <ul id="todo-list"></ul>
-         <div id="todo-input-row">
-           <input type="text" id="todo-input" placeholder="Add task..." />
-           <button id="todo-add-btn">Add</button>
-         </div>
-       </div>
- 
-+      <!-- Notepad -->
-+      <div class="card widget-card widget-el" id="notes-widget">
-+        <h4>📒 Notepad</h4>
-+        <div class="notes-meta">
-+          <span id="notes-status">Saved locally</span>
-+          <button id="notes-clear-btn">Clear</button>
-+        </div>
-+        <textarea id="notes-input" placeholder="Jot down ideas, reminders, or snippets..."></textarea>
-+      </div>
-+
-       <!-- Calculator -->
-       <div class="card widget-card widget-el" id="calc-widget">
-         <h4>🧮 Calculator</h4>
-+        <div id="calc-expression"></div>
-         <div id="calc-display">0</div>
-         <div class="calc-grid">
-           <button class="calc-btn clr" data-val="C">C</button>
-           <button class="calc-btn op" data-val="±">±</button>
-           <button class="calc-btn op" data-val="%">%</button>
-           <button class="calc-btn op" data-val="/">÷</button>
-           <button class="calc-btn" data-val="7">7</button>
-           <button class="calc-btn" data-val="8">8</button>
-           <button class="calc-btn" data-val="9">9</button>
-           <button class="calc-btn op" data-val="*">×</button>
-           <button class="calc-btn" data-val="4">4</button>
-           <button class="calc-btn" data-val="5">5</button>
-           <button class="calc-btn" data-val="6">6</button>
-           <button class="calc-btn op" data-val="-">−</button>
-           <button class="calc-btn" data-val="1">1</button>
-           <button class="calc-btn" data-val="2">2</button>
-           <button class="calc-btn" data-val="3">3</button>
-           <button class="calc-btn op" data-val="+">+</button>
-           <button class="calc-btn" data-val="0" style="grid-column:span 2">0</button>
-           <button class="calc-btn" data-val=".">.</button>
-           <button class="calc-btn eq" data-val="=">=</button>
-         </div>
-       </div>
- 
-       <!-- AI Chat -->
-@@ -1023,91 +1086,93 @@
-   };
- 
-   /* ════════════════════════════════════════════
-      WALLPAPERS
-   ════════════════════════════════════════════ */
-   const WALLPAPERS = [
-     { label:"🌌 Space",   url:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80" },
-     { label:"🌊 Ocean",   url:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80" },
-     { label:"🏔️ Mountain",url:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80" },
-     { label:"🌸 Bloom",   url:"https://images.unsplash.com/photo-1490750967868-88df5691cc04?w=1920&q=80" },
-     { label:"🌆 City",    url:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=80" },
-     { label:"⬛ Dark",    url:"" },
-   ];
- 
-   /* ════════════════════════════════════════════
-      WIDGET CONFIG
-   ════════════════════════════════════════════ */
-   const WIDGETS = [
-     { id:"greeting",    label:"Greeting" },
-     { id:"clock-wrap",  label:"Clock" },
-     { id:"weather-chip",label:"Weather" },
-     { id:"search-wrap", label:"Search" },
-     { id:"quicklinks",  label:"Quick links" },
-     { id:"quote-widget",label:"Daily quote" },
-     { id:"todo-widget", label:"To-do" },
-+    { id:"notes-widget", label:"Notepad" },
-     { id:"calc-widget", label:"Calculator" },
-     { id:"ai-widget",   label:"360 AI" },
-     { id:"news-widget", label:"News" },
-     { id:"spotify-widget",label:"Music" },
-   ];
- 
-   /* ════════════════════════════════════════════
-      DEFAULT LINKS
-   ════════════════════════════════════════════ */
-   const DEFAULT_LINKS = [
-     { name:"360",     url:"https://360-search.com",         icon:"🔍" },
-     { name:"AI",      url:"https://360-search.com/ai.html", icon:"🤖" },
-     { name:"YouTube", url:"https://youtube.com",            icon:"📺" },
-     { name:"GitHub",  url:"https://github.com",             icon:"🐙" },
-   ];
- 
-   /* ════════════════════════════════════════════
-      DAILY QUOTES
-   ════════════════════════════════════════════ */
-   const QUOTES = [
-     { text:"The best way to predict the future is to create it.", author:"Peter Drucker" },
-     { text:"Code is like humor. When you have to explain it, it's bad.", author:"Cory House" },
-     { text:"First, solve the problem. Then, write the code.", author:"John Johnson" },
-     { text:"Simplicity is the soul of efficiency.", author:"Austin Freeman" },
-     { text:"Make it work, make it right, make it fast.", author:"Kent Beck" },
-     { text:"The only way to do great work is to love what you do.", author:"Steve Jobs" },
-     { text:"In the middle of every difficulty lies opportunity.", author:"Albert Einstein" },
-   ];
- 
-   /* ════════════════════════════════════════════
-      INIT
-   ════════════════════════════════════════════ */
-   function init() {
-     loadSettings();
-     startClock();
-     loadWeather();
-     renderLinks();
-     renderQuote();
-     renderWidgetToggles();
-     buildWpGrid();
-     initTodo();
-+    initNotes();
-     initCalc();
-     initAI();
-     loadNews();
-     initSpotify();
-     wirePanel();
-     wireSearch();
-   }
- 
-   /* ════════════════════════════════════════════
-      LOAD ALL SETTINGS
-   ════════════════════════════════════════════ */
-   function loadSettings() {
-     // Accent
-     const a1 = S.get("accent")  || "#3b82f6";
-     const a2 = S.get("accent2") || "#06b6d4";
-     document.documentElement.style.setProperty("--accent",  a1);
-     document.documentElement.style.setProperty("--accent2", a2);
-     document.getElementById("accent-picker").value  = a1;
-     document.getElementById("accent2-picker").value = a2;
- 
-     // Blur
-     const blur = S.get("blur") ?? 8;
-     document.documentElement.style.setProperty("--blur", blur+"px");
-     document.getElementById("blur-range").value = blur;
-     document.getElementById("blur-label").textContent = blur+"px";
-@@ -1280,72 +1345,212 @@
-         const arr = getTodos(); arr[i].done = !arr[i].done; S.set("todos",arr); renderTodos();
-       });
-       li.querySelector("button").addEventListener("click", () => {
-         const arr = getTodos(); arr.splice(i,1); S.set("todos",arr); renderTodos();
-       });
-       list.appendChild(li);
-     });
-   }
- 
-   function initTodo() {
-     renderTodos();
-     const add = () => {
-       const val = document.getElementById("todo-input").value.trim();
-       if (!val) return;
-       const arr = getTodos(); arr.push({ text:val, done:false }); S.set("todos",arr);
-       document.getElementById("todo-input").value = "";
-       renderTodos();
-     };
-     document.getElementById("todo-add-btn").addEventListener("click", add);
-     document.getElementById("todo-input").addEventListener("keydown", e => { if (e.key==="Enter") add(); });
-   }
- 
-   /* ════════════════════════════════════════════
-      CALCULATOR
-   ════════════════════════════════════════════ */
-+  function initNotes() {
-+    const input = document.getElementById("notes-input");
-+    const status = document.getElementById("notes-status");
-+    const clearBtn = document.getElementById("notes-clear-btn");
-+    let saveTimer;
-+
-+    function updateStatus(text, saved = false) {
-+      status.textContent = text;
-+      status.classList.toggle("saved", saved);
-+    }
-+
-+    function saveNotes() {
-+      S.set("notes", input.value);
-+      const lines = input.value ? input.value.split(/\n/).length : 0;
-+      updateStatus(lines ? `Saved locally · ${lines} line${lines === 1 ? "" : "s"}` : "Saved locally", true);
-+    }
-+
-+    input.value = S.get("notes") || "";
-+    saveNotes();
-+
-+    input.addEventListener("input", () => {
-+      updateStatus("Saving…");
-+      clearTimeout(saveTimer);
-+      saveTimer = setTimeout(saveNotes, 200);
-+    });
-+
-+    clearBtn.addEventListener("click", () => {
-+      input.value = "";
-+      saveNotes();
-+      input.focus();
-+    });
-+  }
-+
-   function initCalc() {
--    let expr = "";
-     const display = document.getElementById("calc-display");
-+    const expression = document.getElementById("calc-expression");
-+    let current = "0";
-+    let previous = null;
-+    let operator = null;
-+    let resetOnNextDigit = false;
-+
-+    function formatNumber(value) {
-+      if (!Number.isFinite(value)) return "Error";
-+      const normalized = Math.abs(value) < 1e-10 ? 0 : value;
-+      return Number.isInteger(normalized)
-+        ? String(normalized)
-+        : parseFloat(normalized.toFixed(10)).toString();
-+    }
-+
-+    function updateCalcUI() {
-+      display.textContent = current || "0";
-+      expression.textContent = operator && previous !== null ? `${previous} ${operator}` : previous !== null ? String(previous) : "";
-+    }
-+
-+    function clearCalc() {
-+      current = "0";
-+      previous = null;
-+      operator = null;
-+      resetOnNextDigit = false;
-+      updateCalcUI();
-+    }
-+
-+    function inputDigit(value) {
-+      if (resetOnNextDigit) {
-+        current = value === "." ? "0." : value;
-+        resetOnNextDigit = false;
-+        updateCalcUI();
-+        return;
-+      }
-+      if (value === ".") {
-+        if (!current.includes(".")) current += ".";
-+      } else {
-+        current = current === "0" ? value : current + value;
-+      }
-+      updateCalcUI();
-+    }
-+
-+    function applyOperator(nextOperator) {
-+      const currentValue = Number(current);
-+      if (!Number.isFinite(currentValue)) {
-+        clearCalc();
-+        display.textContent = "Error";
-+        return;
-+      }
-+
-+      if (operator && previous !== null && !resetOnNextDigit) {
-+        const result = calculate(previous, currentValue, operator);
-+        if (result === null) {
-+          display.textContent = "Error";
-+          current = "0";
-+          previous = null;
-+          operator = null;
-+          resetOnNextDigit = true;
-+          expression.textContent = "";
-+          return;
-+        }
-+        previous = result;
-+        current = formatNumber(result);
-+      } else if (previous === null || !operator) {
-+        previous = currentValue;
-+      }
-+
-+      operator = nextOperator;
-+      resetOnNextDigit = true;
-+      updateCalcUI();
-+    }
-+
-+    function calculate(a, b, op) {
-+      if (op === "+") return a + b;
-+      if (op === "-") return a - b;
-+      if (op === "*") return a * b;
-+      if (op === "/") return b === 0 ? null : a / b;
-+      return b;
-+    }
-+
-+    function evaluate() {
-+      if (!operator || previous === null) return;
-+      const result = calculate(previous, Number(current), operator);
-+      if (result === null) {
-+        display.textContent = "Error";
-+        current = "0";
-+        previous = null;
-+        operator = null;
-+        resetOnNextDigit = true;
-+        expression.textContent = "";
-+        return;
-+      }
-+      expression.textContent = `${previous} ${operator} ${current} =`;
-+      current = formatNumber(result);
-+      previous = null;
-+      operator = null;
-+      resetOnNextDigit = true;
-+      display.textContent = current;
-+    }
-+
-+    function applyPercent() {
-+      const numeric = Number(current);
-+      if (!Number.isFinite(numeric)) return;
-+      current = formatNumber((previous !== null && operator) ? previous * (numeric / 100) : numeric / 100);
-+      updateCalcUI();
-+    }
-+
-+    function toggleSign() {
-+      const numeric = Number(current);
-+      if (!Number.isFinite(numeric)) return;
-+      current = formatNumber(numeric * -1);
-+      updateCalcUI();
-+    }
- 
-     document.querySelectorAll(".calc-btn").forEach(btn => {
-       btn.addEventListener("click", () => {
-         const v = btn.dataset.val;
--        if (v === "C")  { expr = ""; display.textContent = "0"; return; }
--        if (v === "±")  { expr = expr ? String(-parseFloat(expr)) : "0"; display.textContent = expr; return; }
--        if (v === "=")  {
--          try {
--            const result = Function('"use strict"; return (' + expr.replace(/÷/g,"/").replace(/×/g,"*") + ')')();
--            display.textContent = parseFloat(result.toFixed(8));
--            expr = String(result);
--          } catch { display.textContent = "Error"; expr = ""; }
--          return;
--        }
--        if (v === "%") { expr = String(parseFloat(expr||0)/100); display.textContent = expr; return; }
--        expr += v;
--        display.textContent = expr;
-+        if (/^[0-9.]$/.test(v)) return inputDigit(v);
-+        if (v === "C") return clearCalc();
-+        if (v === "±") return toggleSign();
-+        if (v === "%") return applyPercent();
-+        if (v === "=") return evaluate();
-+        if (["+", "-", "*", "/"].includes(v)) return applyOperator(v);
-       });
-     });
-+
-+    clearCalc();
-   }
- 
-   /* ════════════════════════════════════════════
-      360 AI WIDGET
-   ════════════════════════════════════════════ */
-   function initAI() {
-     const messages = document.getElementById("ai-messages");
-     const input    = document.getElementById("ai-widget-input");
-     const send     = document.getElementById("ai-widget-send");
-     const history  = [{ role:"system", content:"You are 360 AI. Be concise and helpful. Keep responses short." }];
-     const PROXY    = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/groq-proxy";
- 
-     function addMsg(text, role) {
-       const div = document.createElement("div");
-       div.className = `ai-msg ${role}`;
-       div.textContent = text;
-       messages.appendChild(div);
-       messages.scrollTop = messages.scrollHeight;
-       return div;
-     }
- 
-     async function askAI() {
-       const q = input.value.trim();
-       if (!q) return;
-       input.value = "";
-@@ -1415,50 +1620,51 @@
-     iframe.src    = `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
-     iframe.height = match[1]==="track" ? "80" : "352";
-     iframe.style.display = "block";
-   }
- 
-   function initSpotify() {
-     document.getElementById("spotify-embed-btn").addEventListener("click", () => {
-       const url = document.getElementById("spotify-url-input").value.trim();
-       S.set("spotify", url);
-       loadSpotify(url);
-     });
-   }
- 
-   /* ════════════════════════════════════════════
-      BACKGROUND
-   ════════════════════════════════════════════ */
-   function applyBg(url) {
-     document.getElementById("bg").style.backgroundImage = url ? `url('${url}')` : "";
-     document.getElementById("bg").style.opacity         = url ? "0.45" : "0";
-     S.set("bg", url||"");
-   }
- 
-   function buildWpGrid() {
-     const grid = document.getElementById("wp-grid");
-     const cur  = S.get("bg") || "";
-+    grid.innerHTML = "";
-     WALLPAPERS.forEach(wp => {
-       const div = document.createElement("div");
-       div.className = "wp-thumb" + (cur===wp.url?" active":"");
-       div.textContent = wp.label;
-       if (wp.url) div.style.backgroundImage = `url('${wp.url}')`;
-       else div.style.background = "#0a0f1e";
-       div.addEventListener("click", () => {
-         document.querySelectorAll(".wp-thumb").forEach(t=>t.classList.remove("active"));
-         div.classList.add("active");
-         applyBg(wp.url);
-       });
-       grid.appendChild(div);
-     });
-   }
- 
-   /* ════════════════════════════════════════════
-      FONT
-   ════════════════════════════════════════════ */
-   function applyFont(font) {
-     document.getElementById("font-link").href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;600;700;800&display=swap`;
-     document.documentElement.style.setProperty("--font", `'${font}', system-ui, sans-serif`);
-   }
- 
-   /* ════════════════════════════════════════════
-      LAYOUT
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — New Tab</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../chat.css">
+  <link rel="stylesheet" href="../cursor.css">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #0f1117;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+
+    .search-box {
+      display: flex;
+      background: #1a1d25;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 18px;
+      outline: none;
+      padding: 10px;
+    }
+
+    .search-box button {
+      background: #4f8cff;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tools {
+      margin-top: 40px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tool {
+      background: #1a1d25;
+      padding: 20px;
+      border-radius: 12px;
+      width: 150px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .tool:hover {
+      background: #232734;
+    }
+
+    .tool h3 {
+      margin: 0 0 10px;
+    }
+
+    .todo-list {
+      margin-top: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .todo-list div {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
+    .todo-input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 5px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+
+    .quote {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>360</h1>
+
+    <!-- SEARCH -->
+    <form id="search-form" class="search-box">
+      <input id="search-input" type="text" placeholder="Search 360..." />
+      <button type="submit">Search</button>
+    </form>
+
+    <!-- TOOLS -->
+    <div class="tools">
+      
+      <!-- TODO -->
+      <div class="tool">
+        <h3>Todo</h3>
+        <div id="todo-list" class="todo-list"></div>
+        <input id="todo-input" class="todo-input" placeholder="Add task..." />
+      </div>
+
+      <!-- CLOCK -->
+      <div class="tool">
+        <h3>Time</h3>
+        <div id="clock"></div>
+      </div>
+
+      <!-- QUOTE -->
+      <div class="tool">
+        <h3>Quote</h3>
+        <div id="quote" class="quote"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // SEARCH ENGINE
+    // =========================
+    document.getElementById("search-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const q = document.getElementById("search-input").value.trim();
+      if (!q) return;
+      window.location.href = `https://360-search.com/?q=${encodeURIComponent(q)}`;
+    });
+
+    // =========================
+    // CLOCK
+    // =========================
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").textContent =
+        now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // =========================
+    // QUOTES
+    // =========================
+    const quotes = [
+      "Stay focused.",
+      "Build. Break. Repeat.",
+      "Small steps every day.",
+      "You got this.",
+      "Consistency wins."
+    ];
+
+    document.getElementById("quote").textContent =
+      quotes[Math.floor(Math.random() * quotes.length)];
+
+    // =========================
+    // TODO LIST (WORKING)
+    // =========================
+    const todoInput = document.getElementById("todo-input");
+    const todoList = document.getElementById("todo-list");
+
+    function loadTodos() {
+      const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+      todoList.innerHTML = "";
+      todos.forEach((t, i) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <span>${t}</span>
+          <button data-i="${i}">x</button>
+        `;
+        todoList.appendChild(div);
+      });
+    }
+
+    function saveTodos(todos) {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+
+    todoInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        const val = todoInput.value.trim();
+        if (!val) return;
+
+        const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+        todos.push(val);
+        saveTodos(todos);
+        todoInput.value = "";
+        loadTodos();
+      }
+    });
+
+    todoList.addEventListener("click", e => {
+      if (e.target.tagName === "BUTTON") {
+        const i = e.target.getAttribute("data-i");
+        const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+        todos.splice(i, 1);
+        saveTodos(todos);
+        loadTodos();
+      }
+    });
+
+    loadTodos();
+  </script>
+</body>
+</html>
