@@ -196,7 +196,7 @@
         <span class="chat-header-icon" id="hdr-icon">🌐</span>
         <span class="chat-header-name" id="hdr-name">General</span>
         <span class="chat-header-desc" id="hdr-desc">Public chat · everyone is here</span>
-		   <button id="notif-btn" title="Enable notifications" onclick="requestNotifications()" style="margin-left:auto;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">🔔 Notify</button>
+		<button id="notif-btn" title="Enable notifications" onclick="requestNotifications()" style="margin-left:auto;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">🔔 Notify</button>
 
       </div>
       <div id="chat-window"></div>
@@ -1820,7 +1820,29 @@
 
 	//REQUEST NOTIFICATIONS
 	function requestNotifications() {
-	  if (!("Notification" in window)) { showToast("❌ Notifications not supported in this browser."); return; }
+	  if (!("Notification" in window)) {
+		  // 1. Check if the browser supports notifications
+	      if (!("Notification" in window)) {
+			  showToast("❌ Notifications not supported in this browser."); 
+	          console.log("This browser does not support notifications.");
+	          return;
+	      }
+	
+	      // 2. Request permission from the user
+	      Notification.requestPermission().then((permission) => {
+	          // If the user grants permission, proceed to create a notification
+	          if (permission === "granted") {
+	              showToast("✅ Notifications enabled!");
+				  document.getElementById("notif-btn").textContent = "🔔 On";
+	          } else {
+	              console.log("Notification permission denied or ignored.");
+	          }
+	      }).catch((error) => {
+	          console.error("Error requesting permission: ", error);
+			  showToast("❌ Notifications not supported in this browser."); 
+	      });
+		  return; 
+	  }
 	  if (Notification.permission === "granted") { showToast("✅ Notifications already enabled!"); return; }
 	  Notification.requestPermission().then(permission => {
 	    if (permission === "granted") {
