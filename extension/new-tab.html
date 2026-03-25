@@ -1,186 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>360</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — New Tab</title>
 
-<style>
-*{box-sizing:border-box} body{
-margin:0;font-family:system-ui;color:#fff;height:100vh;
-display:flex;flex-direction:column;align-items:center;justify-content:center;
-background-size:cover;background-position:center;transition:.5s}
+  <!-- Styles -->
+  <link rel="stylesheet" href="../chat.css">
+  <link rel="stylesheet" href="../cursor.css">
 
-/* GLASS */
-.glass{backdrop-filter:blur(20px);background:rgba(20,20,30,.6);
-border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #0f1117;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
 
-/* SEARCH */
-.search{width:600px;display:flex;padding:10px}
-.search input{flex:1;background:transparent;border:none;color:white;font-size:18px;outline:none}
-.search button{background:#4f8cff;border:none;padding:10px 15px;border-radius:10px;color:white}
+    .container {
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+    }
 
-/* GRID */
-.grid{margin-top:30px;display:grid;grid-template-columns:repeat(4,180px);gap:20px}
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
 
-/* CARD */
-.card{padding:15px;height:180px;overflow:hidden;cursor:grab}
+    .search-box {
+      display: flex;
+      background: #1a1d25;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
 
-/* SETTINGS PANEL */
-.settings{
-position:fixed;top:20px;right:20px;padding:15px;width:250px;display:none}
-.settings input{width:100%}
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 18px;
+      outline: none;
+      padding: 10px;
+    }
 
-/* CHAT PANEL */
-.chat{
-position:fixed;bottom:0;right:0;width:300px;height:400px;
-display:none;flex-direction:column}
-.chat textarea{flex:1;background:#111;color:white;border:none}
-.chat button{background:#4f8cff;border:none;color:white}
-</style>
+    .search-box button {
+      background: #4f8cff;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tools {
+      margin-top: 40px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tool {
+      background: #1a1d25;
+      padding: 20px;
+      border-radius: 12px;
+      width: 150px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .tool:hover {
+      background: #232734;
+    }
+
+    .tool h3 {
+      margin: 0 0 10px;
+    }
+
+    .todo-list {
+      margin-top: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .todo-list div {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
+    .todo-input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 5px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+
+    .quote {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <h1>360</h1>
 
-<h1>360</h1>
+    <!-- SEARCH -->
+    <form id="search-form" class="search-box">
+      <input id="search-input" type="text" placeholder="Search 360..." />
+      <button type="submit">Search</button>
+    </form>
 
-<form id="search" class="search glass">
-<input id="q" placeholder="Search 360...">
-<button>Go</button>
-</form>
+    <!-- TOOLS -->
+    <div class="tools">
+      
+      <!-- TODO -->
+      <div class="tool">
+        <h3>Todo</h3>
+        <div id="todo-list" class="todo-list"></div>
+        <input id="todo-input" class="todo-input" placeholder="Add task..." />
+      </div>
 
-<div class="grid" id="grid">
+      <!-- CLOCK -->
+      <div class="tool">
+        <h3>Time</h3>
+        <div id="clock"></div>
+      </div>
 
-<div class="card glass" draggable="true" id="clock"></div>
+      <!-- QUOTE -->
+      <div class="tool">
+        <h3>Quote</h3>
+        <div id="quote" class="quote"></div>
+      </div>
 
-<div class="card glass" draggable="true">
-<b>Todo</b>
-<div id="todos"></div>
-<input id="todoInput">
-</div>
+    </div>
+  </div>
 
-<div class="card glass" draggable="true">
-<b>Calc</b>
-<input id="calcDisplay" readonly>
-<div id="calcBtns"></div>
-</div>
+  <script>
+    // =========================
+    // SEARCH ENGINE
+    // =========================
+    document.getElementById("search-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const q = document.getElementById("search-input").value.trim();
+      if (!q) return;
+      window.location.href = `https://360-search.com/?q=${encodeURIComponent(q)}`;
+    });
 
-<div class="card glass" draggable="true">
-<b>Spotify</b>
-<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" width="100%" height="80"></iframe>
-</div>
+    // =========================
+    // CLOCK
+    // =========================
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").textContent =
+        now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-</div>
+    // =========================
+    // QUOTES
+    // =========================
+    const quotes = [
+      "Stay focused.",
+      "Build. Break. Repeat.",
+      "Small steps every day.",
+      "You got this.",
+      "Consistency wins."
+    ];
 
-<!-- SETTINGS -->
-<div class="settings glass" id="settings">
-<b>Settings</b>
-<br>Background URL:
-<input id="bgInput">
-<button onclick="saveSettings()">Save</button>
-</div>
+    document.getElementById("quote").textContent =
+      quotes[Math.floor(Math.random() * quotes.length)];
 
-<!-- CHAT -->
-<div class="chat glass" id="chat">
-<textarea id="chatBox" placeholder="Ask AI..."></textarea>
-<button onclick="sendChat()">Send</button>
-</div>
+    // =========================
+    // TODO LIST (WORKING)
+    // =========================
+    const todoInput = document.getElementById("todo-input");
+    const todoList = document.getElementById("todo-list");
 
-<script>
-/* SEARCH */
-search.onsubmit=e=>{
-e.preventDefault();
-location.href="https://360-search.com/?q="+encodeURIComponent(q.value);
-};
+    function loadTodos() {
+      const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+      todoList.innerHTML = "";
+      todos.forEach((t, i) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <span>${t}</span>
+          <button data-i="${i}">x</button>
+        `;
+        todoList.appendChild(div);
+      });
+    }
 
-/* CLOCK */
-setInterval(()=>clock.textContent=new Date().toLocaleTimeString(),1000);
+    function saveTodos(todos) {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
 
-/* BACKGROUND */
-const defaultBG=[
-"https://source.unsplash.com/random/1920x1080?nature",
-"https://source.unsplash.com/random/1920x1080?space"
-];
+    todoInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        const val = todoInput.value.trim();
+        if (!val) return;
 
-function loadBG(){
-let s=JSON.parse(localStorage.getItem("settings")||"{}");
-document.body.style.backgroundImage="url("+(s.bg||defaultBG[Math.floor(Math.random()*2)])+")";
-}
-loadBG();
+        const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+        todos.push(val);
+        saveTodos(todos);
+        todoInput.value = "";
+        loadTodos();
+      }
+    });
 
-/* SETTINGS */
-function saveSettings(){
-let s={bg:bgInput.value};
-localStorage.setItem("settings",JSON.stringify(s));
-loadBG();
-}
+    todoList.addEventListener("click", e => {
+      if (e.target.tagName === "BUTTON") {
+        const i = e.target.getAttribute("data-i");
+        const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+        todos.splice(i, 1);
+        saveTodos(todos);
+        loadTodos();
+      }
+    });
 
-/* TODO */
-function loadTodos(){
-let t=JSON.parse(localStorage.getItem("todos")||"[]");
-todos.innerHTML="";
-t.forEach((x,i)=>{
-let d=document.createElement("div");
-d.innerHTML=x+" <button onclick='del("+i+")'>x</button>";
-todos.appendChild(d);
-});
-}
-function del(i){
-let t=JSON.parse(localStorage.getItem("todos"));
-t.splice(i,1);
-localStorage.setItem("todos",JSON.stringify(t));
-loadTodos();
-}
-todoInput.onkeypress=e=>{
-if(e.key==="Enter"){
-let t=JSON.parse(localStorage.getItem("todos")||"[]");
-t.push(todoInput.value);
-localStorage.setItem("todos",JSON.stringify(t));
-todoInput.value="";
-loadTodos();
-}};
-loadTodos();
-
-/* SAFE CALC */
-const btns=["7","8","9","/","4","5","6","*","1","2","3","-","0",".","=","+"];
-btns.forEach(b=>{
-let btn=document.createElement("button");
-btn.textContent=b;
-btn.onclick=()=>{
-if(b==="="){
-try{calcDisplay.value=Function("return "+calcDisplay.value)();}
-catch{calcDisplay.value="err";}
-}else calcDisplay.value+=b;
-};
-calcBtns.appendChild(btn);
-});
-
-/* DRAGGABLE GRID */
-let drag;
-document.querySelectorAll(".card").forEach(c=>{
-c.ondragstart=()=>drag=c;
-c.ondragover=e=>e.preventDefault();
-c.ondrop=e=>{
-e.preventDefault();
-grid.insertBefore(drag,c);
-};
-});
-
-/* SHORTCUTS */
-document.onkeydown=e=>{
-if(e.key==="s") settings.style.display="block";
-if(e.key==="c") chat.style.display="flex";
-};
-
-/* CHAT (HOOK YOUR API HERE) */
-function sendChat(){
-let msg=chatBox.value;
-chatBox.value="Thinking...";
-setTimeout(()=>{
-chatBox.value="(Hook your AI API here)";
-},1000);
-}
-</script>
-
+    loadTodos();
+  </script>
 </body>
 </html>
