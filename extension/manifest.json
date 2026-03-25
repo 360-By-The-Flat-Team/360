@@ -2,29 +2,14 @@
   "manifest_version": 3,
   "name": "360",
   "short_name": "360",
-  "version": "2.0",
-  "description": "With 360 as your default search engine you'll re-experience browsing the right way. With many tools to conveniently work with everything in one spot. Includes: — Weather and Maps, A Translator, An AI Bot and more!",
-
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
+  "version": "2.0.3",
+  "description": "360 New Tab",
 
   "chrome_url_overrides": {
     "newtab": "new-tab.html"
   },
 
-  "omnibox": {
-    "keyword": "360"
-  },
-
   "permissions": [
-    "search"
-  ],
-
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "360"
-  }
+    "storage"
+  ]
 }
