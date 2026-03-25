@@ -1819,6 +1819,9 @@
   })();
 
 	//REQUEST NOTIFICATIONS
+	if (permission === "granted") {
+	  document.getElementById("notif-btn").textContent = "🔔 On";
+	}
 	function requestNotifications() {
 	  if (!("Notification" in window)) {
 		  // 1. Check if the browser supports notifications
@@ -1843,7 +1846,7 @@
 	      });
 		  return; 
 	  }
-	  if (Notification.permission === "granted") { showToast("✅ Notifications already enabled!"); return; }
+	  if (Notification.permission === "granted") { document.getElementById("notif-btn").textContent = "🔔 On"; showToast("✅ Notifications already enabled!"); return; }
 	  Notification.requestPermission().then(permission => {
 	    if (permission === "granted") {
 	      showToast("✅ Notifications enabled!");
