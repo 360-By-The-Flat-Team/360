@@ -366,548 +366,313 @@
     </div>
   </div>
 
-  <script>
-    // --- Setup ---
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    const VIRTUAL_W = 320;
-    const VIRTUAL_H = 180;
+ <script>
+/* =========================
+   CORE SETUP
+========================= */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
-    let lastTime = 0;
-    const FIXED_DT = 1 / 60;
-    let accumulator = 0;
+const VIRTUAL_W = 320;
+const VIRTUAL_H = 180;
 
-    let running = false;
-    let paused = false;
+let lastTime = 0;
+const FIXED_DT = 1 / 60;
+let accumulator = 0;
 
-    const keys = {};
-    window.addEventListener('keydown', e => {
-      keys[e.key.toLowerCase()] = true;
-      if (e.key === 'Enter' && !running) startGame();
-      if (e.key.toLowerCase() === 'p' && upgradeOverlay.style.display !== 'flex') paused = !paused;
+let running = false;
+let paused = false;
+
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === 'Enter' && !running) startGame();
+  if (e.key.toLowerCase() === 'p' && upgradeOverlay.style.display !== 'flex') paused = !paused;
+});
+window.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+function resize() {
+  canvas.width = VIRTUAL_W;
+  canvas.height = VIRTUAL_H;
+  ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* =========================
+   STATE
+========================= */
+const hpBar = document.getElementById('hp-bar');
+const xpBar = document.getElementById('xp-bar');
+const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const coreNameEl = document.getElementById('core-name');
+const centerMessage = document.getElementById('center-message');
+const upgradeOverlay = document.getElementById('upgrade-overlay');
+const upgradeOptionsEl = document.getElementById('upgrade-options');
+
+const playerBase = {
+  maxHp: 5,
+  speed: 80,
+  dashSpeed: 220,
+  dashDuration: 0.16,
+  dashCooldown: 0.7,
+  fireRate: 7,
+  bulletSpeed: 220,
+  spread: 0,
+  multi: 1,
+  xp: 0,
+  xpToLevel: 30,
+  level: 1
+};
+
+let player;
+let bullets = [];
+let enemyBullets = [];
+let enemies = [];
+let particles = [];
+let spawnTimer = 0;
+let score = 0;
+
+/* =========================
+   RESET
+========================= */
+function resetState() {
+  player = {
+    x: VIRTUAL_W * 0.2,
+    y: VIRTUAL_H * 0.5,
+    vx: 0,
+    vy: 0,
+    ...JSON.parse(JSON.stringify(playerBase)),
+    hp: playerBase.maxHp,
+
+    // 🔥 NEW SYSTEM
+    fireCooldown: 0,
+    fireRamp: 0,
+    shootBuffer: 0,
+
+    dashTimer: 0,
+    dashCooldownTimer: 0,
+    invuln: 0
+  };
+
+  bullets = [];
+  enemyBullets = [];
+  enemies = [];
+  particles = [];
+  spawnTimer = 0;
+  score = 0;
+
+  updateHud();
+}
+
+function startGame() {
+  resetState();
+  running = true;
+  paused = false;
+  centerMessage.classList.remove('show');
+}
+
+/* =========================
+   HELPERS
+========================= */
+function randRange(a, b) {
+  return a + Math.random() * (b - a);
+}
+
+function spawnParticle(x, y, color, life = 0.4) {
+  particles.push({
+    x, y,
+    vx: randRange(-20, 20),
+    vy: randRange(-20, 20),
+    life,
+    maxLife: life,
+    color
+  });
+}
+
+/* =========================
+   UPDATE
+========================= */
+function update(dt) {
+
+  /* MOVEMENT */
+  let inputX = 0, inputY = 0;
+  if (keys['a'] || keys['arrowleft']) inputX -= 1;
+  if (keys['d'] || keys['arrowright']) inputX += 1;
+  if (keys['w'] || keys['arrowup']) inputY -= 1;
+  if (keys['s'] || keys['arrowdown']) inputY += 1;
+
+  const len = Math.hypot(inputX, inputY) || 1;
+  inputX /= len; inputY /= len;
+
+  player.vx = inputX * player.speed;
+  player.vy = inputY * player.speed;
+
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+
+  /* =========================
+     🔥 SHOOTING SYSTEM (NEW)
+  ========================= */
+
+  player.fireCooldown -= dt;
+
+  const shooting = keys['j'] || keys['z'] || keys[' '];
+
+  // Buffer
+  if (shooting) player.shootBuffer = 0.1;
+  player.shootBuffer -= dt;
+
+  // Ramp
+  if (shooting) {
+    player.fireRamp = Math.min(player.fireRamp + dt * 3, 1);
+  } else {
+    player.fireRamp = 0;
+  }
+
+  const effectiveFireRate = player.fireRate * (1 + player.fireRamp * 0.4);
+  const interval = 1 / effectiveFireRate;
+
+  if (player.shootBuffer > 0) {
+    while (player.fireCooldown <= 0) {
+      player.fireCooldown += interval;
+      player.shootBuffer = 0;
+
+      const spreadTotal = player.spread * (player.multi - 1);
+
+      for (let i = 0; i < player.multi; i++) {
+        const t = player.multi === 1 ? 0 : (i / (player.multi - 1) - 0.5);
+
+        const jitter = (Math.random() - 0.5) * 0.04;
+        const angle = t * spreadTotal + jitter;
+
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        bullets.push({
+          x: player.x + 6,
+          y: player.y,
+          vx: cos * player.bulletSpeed,
+          vy: sin * player.bulletSpeed,
+          life: 1.5
+        });
+      }
+
+      // recoil
+      player.vx -= 10;
+
+      spawnParticle(player.x, player.y, '#6af7ff', 0.2);
+    }
+  }
+
+  /* =========================
+     BULLETS
+  ========================= */
+  bullets.forEach(b => {
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+  });
+
+  bullets = bullets.filter(b => b.life > 0);
+
+  /* =========================
+     ENEMIES (simple)
+  ========================= */
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    enemies.push({
+      x: VIRTUAL_W + 10,
+      y: randRange(20, VIRTUAL_H - 20),
+      vx: -60,
+      hp: 2
     });
-    window.addEventListener('keyup', e => {
-      keys[e.key.toLowerCase()] = false;
+    spawnTimer = 1;
+  }
+
+  enemies.forEach(e => {
+    e.x += e.vx * dt;
+  });
+
+  /* =========================
+     COLLISION
+  ========================= */
+  bullets.forEach(b => {
+    enemies.forEach(e => {
+      const dx = e.x - b.x;
+      const dy = e.y - b.y;
+
+      if (dx * dx + dy * dy < 40) {
+        e.hp--;
+        b.life = 0;
+
+        if (e.hp <= 0) {
+          score += 10;
+        }
+      }
     });
+  });
 
-    function resize() {
-      const wrapper = document.getElementById('game-wrapper');
-      const rect = wrapper.getBoundingClientRect();
-      canvas.width = VIRTUAL_W;
-      canvas.height = VIRTUAL_H;
-      ctx.imageSmoothingEnabled = false;
+  enemies = enemies.filter(e => e.hp > 0);
+
+  updateHud();
+}
+
+/* =========================
+   HUD
+========================= */
+function updateHud() {
+  hpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
+  xpBar.style.width = `${(player.xp / player.xpToLevel) * 100}%`;
+  scoreEl.textContent = score;
+  levelEl.textContent = player.level;
+}
+
+/* =========================
+   RENDER
+========================= */
+function render() {
+  ctx.clearRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+
+  // Player
+  ctx.fillStyle = '#6af7ff';
+  ctx.fillRect(player.x - 4, player.y - 4, 8, 8);
+
+  // Bullets
+  ctx.fillStyle = '#ffef9a';
+  bullets.forEach(b => ctx.fillRect(b.x, b.y, 2, 2));
+
+  // Enemies
+  ctx.fillStyle = '#ff6ad5';
+  enemies.forEach(e => ctx.fillRect(e.x, e.y, 6, 6));
+}
+
+/* =========================
+   LOOP
+========================= */
+function loop(timestamp) {
+  const delta = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+
+  accumulator += delta;
+
+  if (running && !paused) {
+    while (accumulator >= FIXED_DT) {
+      update(FIXED_DT);
+      accumulator -= FIXED_DT;
     }
-    window.addEventListener('resize', resize);
-    resize();
+  }
 
-    // --- Game state ---
-    const hpBar = document.getElementById('hp-bar');
-    const xpBar = document.getElementById('xp-bar');
-    const scoreEl = document.getElementById('score');
-    const levelEl = document.getElementById('level');
-    const coreNameEl = document.getElementById('core-name');
-    const centerMessage = document.getElementById('center-message');
-    const upgradeOverlay = document.getElementById('upgrade-overlay');
-    const upgradeOptionsEl = document.getElementById('upgrade-options');
+  render();
+  requestAnimationFrame(loop);
+}
 
-    const playerBase = {
-      maxHp: 5,
-      speed: 80,
-      dashSpeed: 220,
-      dashDuration: 0.16,
-      dashCooldown: 0.7,
-      fireRate: 7, // bullets per second
-      bulletSpeed: 220,
-      spread: 0,
-      multi: 1,
-      xp: 0,
-      xpToLevel: 30,
-      level: 1
-    };
-
-    const upgradesPool = [
-      {
-        id: 'firerate1',
-        name: 'Overclocked Cannons',
-        desc: '+25% fire rate.',
-        apply(p) { p.fireRate *= 1.25; }
-      },
-      {
-        id: 'speed1',
-        name: 'Vector Thrusters',
-        desc: '+20% move speed.',
-        apply(p) { p.speed *= 1.2; }
-      },
-      {
-        id: 'multi1',
-        name: 'Twin Shot',
-        desc: '+1 projectile per volley.',
-        apply(p) { p.multi += 1; }
-      },
-      {
-        id: 'spread1',
-        name: 'Wide Spread',
-        desc: 'Bullets fan out slightly.',
-        apply(p) { p.spread += 6 * Math.PI / 180; }
-      },
-      {
-        id: 'hp1',
-        name: 'Reinforced Hull',
-        desc: '+1 max HP and heal 1.',
-        apply(p) { p.maxHp += 1; p.hp = Math.min(p.maxHp, p.hp + 1); }
-      },
-      {
-        id: 'dash1',
-        name: 'Flux Dash',
-        desc: 'Dash cooldown -25%.',
-        apply(p) { p.dashCooldown *= 0.75; }
-      }
-    ];
-
-    let player;
-    let bullets = [];
-    let enemyBullets = [];
-    let enemies = [];
-    let particles = [];
-    let spawnTimer = 0;
-    let score = 0;
-    let timeScale = 1;
-    let timeScaleTarget = 1;
-    let shakeMag = 0;
-    let shakeTime = 0;
-
-    function resetState() {
-      player = {
-        x: VIRTUAL_W * 0.2,
-        y: VIRTUAL_H * 0.5,
-        vx: 0,
-        vy: 0,
-        ...JSON.parse(JSON.stringify(playerBase)),
-        hp: playerBase.maxHp,
-        fireCooldown: 0,
-        dashTimer: 0,
-        dashCooldownTimer: 0,
-        invuln: 0
-      };
-      bullets = [];
-      enemyBullets = [];
-      enemies = [];
-      particles = [];
-      spawnTimer = 0;
-      score = 0;
-      timeScale = 1;
-      timeScaleTarget = 1;
-      shakeMag = 0;
-      shakeTime = 0;
-      updateHud();
-    }
-
-    function startGame() {
-      resetState();
-      running = true;
-      paused = false;
-      centerMessage.classList.remove('show');
-    }
-
-    function showCenterMessage(text, duration = 1.5) {
-      centerMessage.textContent = text;
-      centerMessage.classList.add('show');
-      setTimeout(() => centerMessage.classList.remove('show'), duration * 1000);
-    }
-
-    // --- Helpers ---
-    function randRange(a, b) {
-      return a + Math.random() * (b - a);
-    }
-    function spawnParticle(x, y, color, life = 0.4, size = 1) {
-      particles.push({
-        x, y,
-        vx: randRange(-20, 20),
-        vy: randRange(-20, 20),
-        life,
-        maxLife: life,
-        size,
-        color
-      });
-    }
-    function spawnBurst(x, y, color, count = 8) {
-      for (let i = 0; i < count; i++) {
-        spawnParticle(x, y, color, randRange(0.25, 0.5), randRange(1, 2));
-      }
-    }
-    function screenShake(mag, time) {
-      shakeMag = Math.max(shakeMag, mag);
-      shakeTime = Math.max(shakeTime, time);
-    }
-    function lerp(a, b, t) {
-      return a + (b - a) * t;
-    }
-
-    // --- Spawning ---
-    function spawnEnemy() {
-      const type = Math.random() < 0.7 ? 'drone' : 'sweeper';
-      if (type === 'drone') {
-        enemies.push({
-          type,
-          x: VIRTUAL_W + 10,
-          y: randRange(20, VIRTUAL_H - 20),
-          vx: -40 - Math.random() * 20,
-          vy: 0,
-          hp: 2,
-          fireCooldown: randRange(0.5, 1.2)
-        });
-      } else {
-        const dir = Math.random() < 0.5 ? 1 : -1;
-        enemies.push({
-          type,
-          x: VIRTUAL_W + 10,
-          y: dir === 1 ? 20 : VIRTUAL_H - 20,
-          vx: -30,
-          vy: 30 * dir,
-          hp: 3,
-          fireCooldown: randRange(0.8, 1.4)
-        });
-      }
-    }
-
-    // --- Upgrades ---
-    function levelUp() {
-      player.level++;
-      player.xp -= player.xpToLevel;
-      player.xpToLevel = Math.floor(player.xpToLevel * 1.25);
-      showUpgradeChoices();
-      updateHud();
-    }
-
-    function showUpgradeChoices() {
-      paused = true;
-      upgradeOverlay.style.display = 'flex';
-      upgradeOptionsEl.innerHTML = '';
-      const choices = [];
-      const poolCopy = upgradesPool.slice();
-      for (let i = 0; i < 3 && poolCopy.length > 0; i++) {
-        const idx = Math.floor(Math.random() * poolCopy.length);
-        choices.push(poolCopy.splice(idx, 1)[0]);
-      }
-      choices.forEach(up => {
-        const div = document.createElement('div');
-        div.className = 'upgrade-option';
-        div.innerHTML = `
-          <div class="upgrade-name">${up.name}</div>
-          <div class="upgrade-desc">${up.desc}</div>
-        `;
-        div.addEventListener('click', () => {
-          up.apply(player);
-          upgradeOverlay.style.display = 'none';
-          paused = false;
-          showCenterMessage(`UPGRADE: ${up.name}`, 1.2);
-        });
-        upgradeOptionsEl.appendChild(div);
-      });
-    }
-
-    // --- Update ---
-    function update(dt) {
-      dt *= timeScale;
-
-      // Smooth time scale back to 1
-      timeScale = lerp(timeScale, timeScaleTarget, 4 * dt);
-
-      // Player movement
-      let inputX = 0, inputY = 0;
-      if (keys['arrowleft'] || keys['a']) inputX -= 1;
-      if (keys['arrowright'] || keys['d']) inputX += 1;
-      if (keys['arrowup'] || keys['w']) inputY -= 1;
-      if (keys['arrowdown'] || keys['s']) inputY += 1;
-      const len = Math.hypot(inputX, inputY) || 1;
-      inputX /= len; inputY /= len;
-
-      const isDashing = player.dashTimer > 0;
-      if (!isDashing) {
-        const targetVx = inputX * player.speed;
-        const targetVy = inputY * player.speed;
-        player.vx = lerp(player.vx, targetVx, 10 * dt);
-        player.vy = lerp(player.vy, targetVy, 10 * dt);
-      }
-
-      // Dash
-      player.dashCooldownTimer -= dt;
-      player.dashTimer -= dt;
-      if ((keys['k'] || keys['x']) && player.dashCooldownTimer <= 0 && (inputX !== 0 || inputY !== 0)) {
-        player.dashTimer = player.dashDuration;
-        player.dashCooldownTimer = player.dashCooldown;
-        const dashLen = Math.hypot(inputX, inputY) || 1;
-        player.vx = (inputX / dashLen) * player.dashSpeed;
-        player.vy = (inputY / dashLen) * player.dashSpeed;
-        player.invuln = Math.max(player.invuln, player.dashDuration * 0.8);
-        screenShake(2, 0.15);
-      }
-
-      player.x += player.vx * dt;
-      player.y += player.vy * dt;
-      player.x = Math.max(10, Math.min(VIRTUAL_W - 10, player.x));
-      player.y = Math.max(10, Math.min(VIRTUAL_H - 10, player.y));
-      player.invuln -= dt;
-
-      // Shooting
-      player.fireCooldown -= dt;
-      const shooting = keys['j'] || keys['z'] || keys[' '];
-      if (shooting && player.fireCooldown <= 0) {
-        const interval = 1 / player.fireRate;
-        player.fireCooldown = interval;
-        const baseAngle = 0;
-        const spreadTotal = player.spread * (player.multi - 1);
-        for (let i = 0; i < player.multi; i++) {
-          const t = player.multi === 1 ? 0 : (i / (player.multi - 1) - 0.5);
-          const angle = baseAngle + t * spreadTotal;
-          const cos = Math.cos(angle), sin = Math.sin(angle);
-          bullets.push({
-            x: player.x + 6,
-            y: player.y,
-            vx: cos * player.bulletSpeed,
-            vy: sin * player.bulletSpeed,
-            life: 1.5
-          });
-        }
-        spawnParticle(player.x + 4, player.y, '#6af7ff', 0.2, 1);
-      }
-
-      // Enemies
-      spawnTimer -= dt;
-      if (spawnTimer <= 0) {
-        spawnEnemy();
-        spawnTimer = randRange(0.6, 1.2);
-      }
-
-      enemies.forEach(e => {
-        e.x += e.vx * dt;
-        e.y += e.vy * dt;
-        if (e.type === 'sweeper') {
-          if (e.y < 20) { e.y = 20; e.vy = Math.abs(e.vy); }
-          if (e.y > VIRTUAL_H - 20) { e.y = VIRTUAL_H - 20; e.vy = -Math.abs(e.vy); }
-        }
-        e.fireCooldown -= dt;
-        if (e.fireCooldown <= 0 && e.x > 0 && e.x < VIRTUAL_W + 20) {
-          e.fireCooldown = randRange(1.0, 1.6);
-          const dx = player.x - e.x;
-          const dy = player.y - e.y;
-          const ang = Math.atan2(dy, dx);
-          const speed = 80;
-          enemyBullets.push({
-            x: e.x - 6,
-            y: e.y,
-            vx: Math.cos(ang) * speed,
-            vy: Math.sin(ang) * speed,
-            life: 3
-          });
-        }
-      });
-      enemies = enemies.filter(e => e.x > -30 && e.x < VIRTUAL_W + 40 && e.y > -40 && e.y < VIRTUAL_H + 40 && e.hp > 0);
-
-      // Bullets
-      bullets.forEach(b => {
-        b.x += b.vx * dt;
-        b.y += b.vy * dt;
-        b.life -= dt;
-      });
-      bullets = bullets.filter(b => b.life > 0 && b.x < VIRTUAL_W + 20 && b.x > -20 && b.y > -20 && b.y < VIRTUAL_H + 20);
-
-      enemyBullets.forEach(b => {
-        b.x += b.vx * dt;
-        b.y += b.vy * dt;
-        b.life -= dt;
-      });
-      enemyBullets = enemyBullets.filter(b => b.life > 0 && b.x < VIRTUAL_W + 20 && b.x > -20 && b.y > -20 && b.y < VIRTUAL_H + 20);
-
-      // Particles
-      particles.forEach(p => {
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.life -= dt;
-      });
-      particles = particles.filter(p => p.life > 0);
-
-      // Collisions
-      const hitRadiusEnemy = 7;
-      const hitRadiusBullet = 4;
-      bullets.forEach(b => {
-        enemies.forEach(e => {
-          const dx = e.x - b.x;
-          const dy = e.y - b.y;
-          if (dx * dx + dy * dy < (hitRadiusEnemy + hitRadiusBullet) ** 2) {
-            e.hp -= 1;
-            b.life = 0;
-            spawnParticle(b.x, b.y, '#ffef9a', 0.25, 1.5);
-            if (e.hp <= 0) {
-              spawnBurst(e.x, e.y, '#ff6ad5', 12);
-              screenShake(3, 0.2);
-              score += 10;
-              player.xp += 8;
-              if (player.xp >= player.xpToLevel) {
-                levelUp();
-              }
-            }
-          }
-        });
-      });
-
-      if (player.invuln <= 0) {
-        enemyBullets.forEach(b => {
-          const dx = player.x - b.x;
-          const dy = player.y - b.y;
-          if (dx * dx + dy * dy < (6 + 3) ** 2) {
-            b.life = 0;
-            player.hp -= 1;
-            player.invuln = 1.0;
-            spawnBurst(player.x, player.y, '#6af7ff', 10);
-            screenShake(4, 0.25);
-            timeScaleTarget = 0.6;
-            setTimeout(() => { timeScaleTarget = 1; }, 120);
-            if (player.hp <= 0) {
-              running = false;
-              showCenterMessage('CORE LOST · PRESS ENTER TO REBOOT', 3);
-            }
-          }
-        });
-      }
-
-      // Shake timer
-      shakeTime -= dt;
-      if (shakeTime <= 0) shakeMag = 0;
-
-      updateHud();
-    }
-
-    function updateHud() {
-      hpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
-      xpBar.style.width = `${(player.xp / player.xpToLevel) * 100}%`;
-      scoreEl.textContent = score;
-      levelEl.textContent = player.level;
-    }
-
-    // --- Render ---
-    function render() {
-      ctx.save();
-      ctx.clearRect(0, 0, VIRTUAL_W, VIRTUAL_H);
-
-      // Background gradient + parallax
-      const t = performance.now() * 0.00005;
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, VIRTUAL_H);
-      bgGrad.addColorStop(0, '#050814');
-      bgGrad.addColorStop(1, '#0b1024');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
-
-      // Parallax stars
-      ctx.fillStyle = '#1b2344';
-      for (let i = 0; i < 40; i++) {
-        const x = (i * 37 + t * 120) % (VIRTUAL_W + 40) - 20;
-        const y = (i * 19) % VIRTUAL_H;
-        ctx.fillRect(x, y, 1, 1);
-      }
-      ctx.fillStyle = '#2f3c7a';
-      for (let i = 0; i < 24; i++) {
-        const x = (i * 71 + t * 60) % (VIRTUAL_W + 40) - 20;
-        const y = (i * 53) % VIRTUAL_H;
-        ctx.fillRect(x, y, 1, 1);
-      }
-
-      // Screen shake
-      if (shakeMag > 0) {
-        const sx = (Math.random() - 0.5) * shakeMag;
-        const sy = (Math.random() - 0.5) * shakeMag;
-        ctx.translate(sx, sy);
-      }
-
-      // Player
-      if (player && player.hp > 0) {
-        const flicker = player.invuln > 0 && Math.floor(performance.now() * 0.02) % 2 === 0;
-        if (!flicker) {
-          // Ship body
-          ctx.fillStyle = '#6af7ff';
-          ctx.beginPath();
-          ctx.moveTo(player.x - 6, player.y - 4);
-          ctx.lineTo(player.x - 6, player.y + 4);
-          ctx.lineTo(player.x + 6, player.y);
-          ctx.closePath();
-          ctx.fill();
-
-          // Core glow
-          const grad = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, 10);
-          grad.addColorStop(0, 'rgba(255,255,255,0.8)');
-          grad.addColorStop(1, 'rgba(106,247,255,0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(player.x, player.y, 10, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // Bullets
-      bullets.forEach(b => {
-        ctx.fillStyle = '#ffef9a';
-        ctx.fillRect(b.x - 2, b.y - 1, 4, 2);
-      });
-
-      // Enemy bullets
-      enemyBullets.forEach(b => {
-        ctx.fillStyle = '#ff6ad5';
-        ctx.fillRect(b.x - 2, b.y - 2, 4, 4);
-      });
-
-      // Enemies
-      enemies.forEach(e => {
-        ctx.fillStyle = '#ff6ad5';
-        ctx.beginPath();
-        ctx.moveTo(e.x + 6, e.y - 5);
-        ctx.lineTo(e.x + 6, e.y + 5);
-        ctx.lineTo(e.x - 6, e.y);
-        ctx.closePath();
-        ctx.fill();
-
-        // Tiny HP indicator
-        ctx.fillStyle = '#000000aa';
-        ctx.fillRect(e.x - 6, e.y - 8, 12, 2);
-        ctx.fillStyle = '#ffef9a';
-        ctx.fillRect(e.x - 6, e.y - 8, 12 * (e.hp / 3), 2);
-      });
-
-      // Particles
-      particles.forEach(p => {
-        const alpha = p.life / p.maxLife;
-        ctx.fillStyle = p.color.replace(')', `,${alpha})`).replace('rgb', 'rgba');
-        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      });
-
-      ctx.restore();
-    }
-
-    // --- Loop ---
-    function loop(timestamp) {
-      const delta = (timestamp - lastTime) / 1000 || 0;
-      lastTime = timestamp;
-      accumulator += delta;
-      const maxFrame = 0.25;
-      if (accumulator > maxFrame) accumulator = maxFrame;
-
-      if (running && !paused) {
-        while (accumulator >= FIXED_DT) {
-          update(FIXED_DT);
-          accumulator -= FIXED_DT;
-        }
-      } else {
-        accumulator = 0;
-      }
-
-      render();
-      requestAnimationFrame(loop);
-    }
-
-    // Init
-    showCenterMessage('PRESS ENTER TO LAUNCH', 999);
-    requestAnimationFrame(loop);
-  </script>
-  <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
+/* INIT */
+requestAnimationFrame(loop);
+</script>  <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
   <script src="../main.js"></script>
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
