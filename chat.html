@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head><script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push(i)})
@@ -25,7 +26,18 @@
   <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="chat.css">
-	<link rel="script" href="../notifications.js"/>
+  <style>
+    .unread-badge {
+      min-width: 18px; height: 18px; border-radius: 999px;
+      background: var(--a); color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px; margin-left: auto; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(59,130,246,.4);
+      animation: badgePop .2s ease;
+    }
+    @keyframes badgePop { from{transform:scale(0)} to{transform:scale(1)} }
+  </style>
 </head>
 <body>
   <div class="cursor-dot"></div>
@@ -38,14 +50,14 @@
     <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
     <nav class="nav-list">
       <div class="nav-item" data-href="../">Home</div>
-      <div class="nav-item" data-href="../ai">AI</div>
-      <div class="nav-item" data-href="../weather">Weather</div>
-      <div class="nav-item" data-href="../translator">Translator</div>
-      <div class="nav-item" data-href="../stocks">Stocks</div>
-      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
-      <div class="nav-item active" data-href="../chat">Chat</div>
-	  <div class="nav-item" data-href="../news">News</div>
-      <div class="nav-item" data-href="../games">Games</div>
+      <div class="nav-item" data-href="../ai.html">AI</div>
+      <div class="nav-item" data-href="../weather.html">Weather</div>
+      <div class="nav-item" data-href="../translator.html">Translator</div>
+      <div class="nav-item" data-href="../stocks.html">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener.html">URL Shortener</div>
+      <div class="nav-item active" data-href="../chat.html">Chat</div>
+	  <div class="nav-item" data-href="../news.html">News</div>
+      <div class="nav-item" data-href="../games.html">Games</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
   </aside>
@@ -196,8 +208,7 @@
         <span class="chat-header-icon" id="hdr-icon">🌐</span>
         <span class="chat-header-name" id="hdr-name">General</span>
         <span class="chat-header-desc" id="hdr-desc">Public chat · everyone is here</span>
-		<button id="notif-btn" title="Enable notifications" onclick="requestNotifications()" style="margin-left:auto;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">🔔 Notify</button>
-
+        <button id="notif-btn" title="Enable notifications" style="margin-left:auto;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:inherit;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">🔔 Notify</button>
       </div>
       <div id="chat-window"></div>
       <div class="chat-input-wrap">
@@ -529,39 +540,27 @@
 
   /* ════════════════ COMMUNITIES ════════════════ */
   async function loadCommunities() {
-	  const { data: allServers, error } = await sb.from("servers").select("*").order("name");
-	  const list = document.getElementById("communities-list");
-	  list.innerHTML = "";
-	  if (error) { list.innerHTML = `<div style="font-size:11px;color:#ef4444;padding:6px 10px;">Error: ${error.message}</div>`; return; }
-	  if (!allServers || !allServers.length) { list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`; return; }
-	
-	  /* Filter: show public ones + ones the user has joined */
-	  let visible = allServers;
-	  if (currentUserId) {
-		const { data: memberships } = await sb.from("server_members").select("server_id").eq("user_id", currentUserId);
-		const joinedIds = new Set((memberships || []).map(m => m.server_id));
-		visible = allServers.filter(s => !s.passcode || joinedIds.has(s.id));
-	  } else {
-		visible = allServers.filter(s => !s.passcode);
-	  }
-	
-	  /* Sort: locked first (alphabetical), then unlocked (alphabetical) */
-	  visible.sort((a, b) => {
-		if (!!a.passcode !== !!b.passcode) return a.passcode ? -1 : 1;
-		return a.name.localeCompare(b.name);
-	  });
-	
-	  if (!visible.length) { list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`; return; }
-	
-	  visible.forEach(s => {
-		const div = document.createElement("div");
-		div.className = "room-item";
-		div.dataset.serverId = s.id;
-		div.innerHTML = `<span class="room-icon">${s.passcode ? "🔒" : "🌐"}</span><span class="room-name">${s.name}</span>`;
-		div.addEventListener("click", () => handleCommunityClick(s));
-		list.appendChild(div);
-	  });
-	}
+    const { data, error } = await sb.from("servers").select("*").order("name");
+    const list = document.getElementById("communities-list");
+    list.innerHTML = "";
+    if (error) {
+      console.error("loadCommunities error:", error.message, error.code);
+      list.innerHTML = `<div style="font-size:11px;color:#ef4444;padding:6px 10px;">Error loading: ${error.message}</div>`;
+      return;
+    }
+    if (!data || !data.length) {
+      list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`;
+      return;
+    }
+    data.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "room-item";
+      div.dataset.serverId = s.id;
+      div.innerHTML = `<span class="room-icon">${s.passcode?"🔒":"🌐"}</span><span class="room-name">${s.name}</span>`;
+      div.addEventListener("click", () => handleCommunityClick(s));
+      list.appendChild(div);
+    });
+  }
 
   async function handleCommunityClick(server) {
     if (!currentUserId) { openAuth(); return; }
@@ -1115,7 +1114,6 @@
         const pingAudio = new Audio("../click-sound.mp3");
         pingAudio.volume = 0.6;
         pingAudio.play().catch(()=>{});
-		sendNotification(`@${msg.username} mentioned you`, msg.text, msg.avatar_url || null);
         /* Flash tab title */
         const origTitle = document.title;
         let flash = 0;
@@ -1125,24 +1123,10 @@
     /* Auto-translate if enabled */
     if (msg.text) maybeTranslateMessage(el, msg.text);
     if(loadRxn) {
-	  if (loadRxn && activeRoom.type === "dm" && msg.user_id !== currentUserId) {
-		sendNotification(`💬 ${msg.username}`, msg.text || "Sent a file", msg.avatar_url || null);
-	  }
       loadReactionsSingle(msg.id);
       /* Auto-scroll — only if user is near the bottom */
       const w=document.getElementById("chat-window");
       if(w.scrollHeight - w.scrollTop - w.clientHeight < 300) scrollBottom();
-	  // Update sidebar unread dot if not active room
-	  const activeKey = window._activeRoomForNotif
-	    ? `${window._activeRoomForNotif.type}:${window._activeRoomForNotif.id}`
-	    : null;
-	  const thisKey = `${activeRoom.type}:${activeRoom.id}`;
-	  if (loadRxn && activeKey && thisKey !== activeKey) {
-	    // mark room item as having unread
-	    const roomEl = document.querySelector(`[data-server-id="${activeRoom.id}"]`)
-		  || document.querySelector(`[data-dm-id="${activeRoom.id}"]`);
-	    if (roomEl) roomEl.classList.add("has-unread");
-	  }
     }
   }
 
@@ -1586,20 +1570,15 @@
     await enterCommunity(server);
   });
 
-  document.getElementById("browseCommunityBtn").addEventListener("click", async () => {
-	  if (!currentUserId) { openAuth(); return; }
-	  const { data } = await sb.from("servers").select("*").order("name");
-	  if (!data || !data.length) { alert("No communities yet!"); return; }
-	  /* Sort: locked first, then unlocked, both alphabetical */
-	  data.sort((a, b) => {
-	    if (!!a.passcode !== !!b.passcode) return a.passcode ? -1 : 1;
-	    return a.name.localeCompare(b.name);
-	  });
-	  const names = data.map((s, i) => `${i + 1}. ${s.passcode ? "🔒" : "🌐"} ${s.name}`).join("\n");
-	  const pick = prompt(`All Communities:\n${names}\n\nEnter number to join:`);
-	  const idx = parseInt(pick) - 1;
-	  if (isNaN(idx) || !data[idx]) return;
-	  await handleCommunityClick(data[idx]);
+  document.getElementById("browseCommunityBtn").addEventListener("click",async()=>{
+    if(!currentUserId){openAuth();return;}
+    const{data}=await sb.from("servers").select("*").order("name");
+    if(!data||!data.length){alert("No communities yet!");return;}
+    const names=data.map((s,i)=>`${i+1}. ${s.name}${s.passcode?" 🔒":""}`).join("\n");
+    const pick=prompt(`Communities:\n${names}\n\nEnter number:`);
+    const idx=parseInt(pick)-1;
+    if(isNaN(idx)||!data[idx]) return;
+    await handleCommunityClick(data[idx]);
   });
 
   document.getElementById("jc-cancel").addEventListener("click",()=>{document.getElementById("joinCommunityModal").classList.remove("open");joinPending=null;});
@@ -1779,21 +1758,8 @@
     const{data:{session}}=await sb.auth.getSession();
     currentUserId=session?.user?.id||null;
     if(currentUserId) currentProfile=await getProfile(currentUserId);
-	window._currentUserIdForNotif  = currentUserId;
-    window._currentProfileForNotif = currentProfile;
     await loadCommunities();
     await loadDMs();
-	// ── Notification bridge: expose room/user state to notifications.js ──
-	const _origSwitchRoom = switchRoom;
-	window.switchRoom = function(room, ...args) {
-	  _origSwitchRoom(room, ...args);
-	  window._activeRoomForNotif  = room;
-	  if (window.clearRoomUnread) clearRoomUnread(room);
-	  // mark unread dots on sidebar items
-	  document.querySelectorAll(".room-item,.dm-item").forEach(el => {
-		el.classList.remove("has-unread");
-	  });
-	};
     /* Wire General room click */
     document.getElementById("publicRoomItem").addEventListener("click", () => {
       switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
@@ -1810,58 +1776,155 @@
     sb.auth.onAuthStateChange(async(_,session)=>{
       currentUserId=session?.user?.id||null;
       currentProfile=currentUserId?await getProfile(currentUserId):null;
-	  window._currentUserIdForNotif  = currentUserId;
-      window._currentProfileForNotif = currentProfile;
       loadDMs();
       startPresence();
     });
     } catch(e) { console.error("Init error:", e); }
   })();
 
-	//REQUEST NOTIFICATIONS
-	if (("Notification" in window)) {
-	  document.getElementById("notif-btn").textContent = "🔔 On";
-	}
-	function requestNotifications() {
-	  if (!("Notification" in window)) {
-		  // 1. Check if the browser supports notifications
-	      if (!("Notification" in window)) {
-			  showToast("❌ Notifications not supported in this browser."); 
-	          console.log("This browser does not support notifications.");
-	          return;
-	      }
-	
-	      // 2. Request permission from the user
-	      Notification.requestPermission().then((permission) => {
-	          // If the user grants permission, proceed to create a notification
-	          if (permission === "granted") {
-	              showToast("✅ Notifications enabled!");
-				  document.getElementById("notif-btn").textContent = "🔔 On";
-	          } else {
-	              console.log("Notification permission denied or ignored.");
-	          }
-	      }).catch((error) => {
-	          console.error("Error requesting permission: ", error);
-			  showToast("❌ Notifications not supported in this browser."); 
-	      });
-		  return; 
-	  }
-	  if (Notification.permission === "granted") { document.getElementById("notif-btn").textContent = "🔔 On"; showToast("✅ Notifications already enabled!"); return; }
-	  Notification.requestPermission().then(permission => {
-	    if (permission === "granted") {
-	      showToast("✅ Notifications enabled!");
-	      document.getElementById("notif-btn").textContent = "🔔 On";
-	    } else {
-	      showToast("❌ Notifications blocked.");
-	    }
-	  });
-	}
-	
-	function sendNotification(title, body, icon) {
-	  if (Notification.permission !== "granted") return;
-	  if (document.visibilityState === "visible") return; /* only notify when tab is hidden */
-	  new Notification(title, { body, icon: icon || "../favicon-32x32.png" });
-	}
+  /* ══════════════════════════════════════════
+     BROWSER NOTIFICATIONS
+  ══════════════════════════════════════════ */
+  let notificationsEnabled = Notification?.permission === "granted";
+
+  document.getElementById("notif-btn")?.addEventListener("click", async () => {
+    const btn = document.getElementById("notif-btn");
+    if (!("Notification" in window)) { btn.textContent = "❌ N/A"; return; }
+    if (Notification.permission === "granted") {
+      notificationsEnabled = true;
+      btn.textContent = "🔔 On"; btn.style.color = "#22c55e"; return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      notificationsEnabled = true;
+      btn.textContent = "🔔 On"; btn.style.color = "#22c55e";
+      new Notification("360 Chat", { body: "Notifications on! You'll get pinged for @mentions & DMs.", icon: "../favicon-32x32.png" });
+    } else {
+      btn.textContent = "🔕 Off"; btn.style.opacity = ".5";
+    }
+  });
+
+  // Init notif button state
+  (function() {
+    const btn = document.getElementById("notif-btn");
+    if (!btn) return;
+    if (Notification?.permission === "granted") { notificationsEnabled = true; btn.textContent = "🔔 On"; btn.style.color = "#22c55e"; }
+    else if (Notification?.permission === "denied") { btn.textContent = "🔕 Off"; btn.style.opacity = ".5"; }
+  })();
+
+  function maybePushNotif(msg) {
+    if (!notificationsEnabled || Notification?.permission !== "granted") return;
+    if (document.hasFocus()) return;
+    const isMention = currentProfile && new RegExp("@" + currentProfile.username + "\\b", "i").test(msg.text || "");
+    const isDM = activeRoom.type === "dm";
+    if (!isMention && !isDM) return;
+    const n = new Notification(isDM ? `DM from ${msg.username}` : `${msg.username} mentioned you`, {
+      body: (msg.text || "📎 file").slice(0, 100),
+      icon: msg.avatar_url || "../favicon-32x32.png",
+      tag: "360-chat-" + (msg.dm_id || msg.channel_id || "public"),
+      renotify: true
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+  }
+
+  /* ══════════════════════════════════════════
+     UNREAD BADGE SYSTEM
+  ══════════════════════════════════════════ */
+  const unreadCounts = {};
+
+  function getRoomKey(room) { return `${room.type}:${room.id}`; }
+
+  function renderUnreadBadge(room, count) {
+    let el = null;
+    if (room.type === "public")  el = document.getElementById("publicRoomItem");
+    else if (room.type === "dm") el = document.querySelector(`[data-dm-id="${room.id}"]`);
+    else                         el = document.querySelector(`[data-server-id="${room.id}"]`);
+    if (!el) return;
+    el.querySelector(".unread-badge")?.remove();
+    if (count > 0) {
+      const badge = document.createElement("div");
+      badge.className = "unread-badge";
+      badge.textContent = count > 99 ? "99+" : String(count);
+      el.appendChild(badge);
+    }
+  }
+
+  async function markRoomRead(room) {
+    if (!currentUserId) return;
+    const key = getRoomKey(room);
+    unreadCounts[key] = 0;
+    renderUnreadBadge(room, 0);
+    try {
+      await sb.from("last_read").upsert({
+        user_id: currentUserId, room_type: room.type, room_id: String(room.id),
+        last_read_at: new Date().toISOString()
+      }, { onConflict: "user_id,room_type,room_id" });
+    } catch(e) { /* non-critical */ }
+  }
+
+  async function loadUnreadCounts() {
+    if (!currentUserId) return;
+    try {
+      const { data: reads } = await sb.from("last_read").select("room_type,room_id,last_read_at").eq("user_id", currentUserId);
+      const readMap = {};
+      (reads || []).forEach(r => { readMap[`${r.room_type}:${r.room_id}`] = r.last_read_at; });
+
+      // Public
+      const pubReadAt = readMap["public:public"] || new Date(0).toISOString();
+      const { count: pc } = await sb.from("messages")
+        .select("*", { count:"exact", head:true })
+        .is("channel_id", null).is("dm_id", null).is("server_id", null)
+        .is("deleted_at", null).neq("user_id", currentUserId).gt("created_at", pubReadAt);
+      if (pc) { unreadCounts["public:public"] = pc; renderUnreadBadge({type:"public",id:"public"}, pc); }
+
+      // DMs
+      const { data: dms } = await sb.from("direct_messages").select("id").or(`user_a.eq.${currentUserId},user_b.eq.${currentUserId}`);
+      for (const dm of (dms || [])) {
+        const at = readMap[`dm:${dm.id}`] || new Date(0).toISOString();
+        const { count } = await sb.from("dm_messages").select("*",{count:"exact",head:true}).eq("dm_id",dm.id).neq("user_id",currentUserId).gt("created_at",at);
+        if (count) { unreadCounts[`dm:${dm.id}`] = count; renderUnreadBadge({type:"dm",id:dm.id}, count); }
+      }
+
+      // Servers
+      const { data: mems } = await sb.from("server_members").select("server_id").eq("user_id", currentUserId);
+      for (const m of (mems || [])) {
+        const at = readMap[`server:${m.server_id}`] || new Date(0).toISOString();
+        const { count } = await sb.from("messages").select("*",{count:"exact",head:true}).eq("server_id",m.server_id).is("deleted_at",null).neq("user_id",currentUserId).gt("created_at",at);
+        if (count) { unreadCounts[`server:${m.server_id}`] = count; renderUnreadBadge({type:"server",id:m.server_id}, count); }
+      }
+    } catch(e) { console.warn("loadUnreadCounts:", e); }
+  }
+
+  /* Hook: track incoming messages for unread + push notif */
+  const _origHandleIncoming = (msg, isRealtime) => {
+    if (!isRealtime) return;
+    maybePushNotif(msg);
+    // Track unread for rooms we're not in
+    const msgRoomType = msg.channel_id ? "channel" : msg.server_id ? "server" : msg.dm_id ? "dm" : "public";
+    const msgRoomId   = msg.channel_id || msg.server_id || msg.dm_id || "public";
+    const msgKey = `${msgRoomType}:${msgRoomId}`;
+    const curKey = getRoomKey(activeRoom);
+    if (msgKey !== curKey && msg.user_id !== currentUserId) {
+      unreadCounts[msgKey] = (unreadCounts[msgKey] || 0) + 1;
+      renderUnreadBadge({ type: msgRoomType, id: msgRoomId }, unreadCounts[msgKey]);
+      if (!document.hasFocus()) {
+        const orig = document.title; let f = 0;
+        const fi = setInterval(() => { document.title = f++%2===0?"💬 New message!":orig; if(f>6){clearInterval(fi);document.title=orig;} }, 600);
+      }
+    }
+  };
+
+  /* Patch the realtime subscriptions to call _origHandleIncoming */
+  /* We do this by wrapping switchRoom to inject our hook into the channel callbacks */
+  const _baseSwitchRoom = switchRoom;
+  switchRoom = function(room) {
+    _baseSwitchRoom(room);
+    markRoomRead(room);
+  };
+
+  /* Load counts 1.5s after init so auth is settled */
+  setTimeout(() => { if (currentUserId) loadUnreadCounts(); }, 1500);
+
   </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e0f1c953e1fa02c',t:'MTc3NDI4NjQ3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"ff0a2d9a55154fa7bec0287a68d6f56f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
