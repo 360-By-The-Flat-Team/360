@@ -1819,7 +1819,7 @@
   })();
 
 	//REQUEST NOTIFICATIONS
-	if (permission === "granted") {
+	if (("Notification" in window)) {
 	  document.getElementById("notif-btn").textContent = "🔔 On";
 	}
 	function requestNotifications() {
