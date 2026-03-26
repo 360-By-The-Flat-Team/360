@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — New Tab</title>
+  <style>
+    /* ── Variables ── */
+    :root {
+      --bg:       #0b0f1a;
+      --bg2:      #111827;
+      --card:     rgba(255,255,255,.05);
+      --cardhov:  rgba(255,255,255,.09);
+      --border:   rgba(255,255,255,.09);
+      --txt:      #e7e9f0;
+      --mut:      #7b8599;
+      --a:        #4f8cff;
+      --a2:       #06d6c8;
+      --grad:     linear-gradient(120deg, #4f8cff, #06d6c8);
+      --radius:   14px;
+      --shadow:   0 8px 32px rgba(0,0,0,.45);
+    }
+    body.light {
+      --bg:       #f0f2f8;
+      --bg2:      #e4e7f0;
+      --card:     rgba(255,255,255,.72);
+      --cardhov:  rgba(255,255,255,.92);
+      --border:   rgba(0,0,0,.09);
+      --txt:      #111827;
+      --mut:      #6b7280;
+      --shadow:   0 4px 20px rgba(0,0,0,.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background .3s, color .3s;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 20%, rgba(79,140,255,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 70% at 80% 80%, rgba(6,214,200,.10) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body.light::before {
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 10%, rgba(79,140,255,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 60% at 80% 80%, rgba(6,214,200,.06) 0%, transparent 60%);
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      grid-template-rows: auto auto 1fr;
+      gap: 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+      min-height: 100vh;
+    }
+    @media (max-width: 780px) {
+      .page {
+        grid-template-columns: 1fr;
+        padding: 16px 12px 32px;
+      }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      transition: background .2s;
+    }
+    .card:hover { background: var(--cardhov); }
+
+    /* ── Top bar ── */
+    .top-bar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: .06em;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      flex-shrink: 0;
+    }
+
+    /* ── Search ── */
+    .search-wrap {
+      flex: 1;
+      max-width: 520px;
+      position: relative;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 11px 48px 11px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      color: var(--txt);
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+    }
+    .search-wrap input:focus {
+      border-color: var(--a);
+      box-shadow: 0 0 0 3px rgba(79,140,255,.18);
+    }
+    .search-wrap input::placeholder { color: var(--mut); }
+    .search-btn {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: var(--grad);
+      border: none;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      transition: opacity .2s;
+    }
+    .search-btn:hover { opacity: .85; }
+
+    .top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .icon-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--txt);
+      transition: background .2s, border-color .2s;
+      display: flex; align-items: center; gap: 5px;
+      font-family: inherit;
+      backdrop-filter: blur(8px);
+    }
+    .icon-btn:hover { background: var(--cardhov); border-color: var(--a); }
+
+    /* ── Left column ── */
+    .left { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Clock ── */
+    .clock-card { text-align: center; padding: 22px 18px; }
+    .time {
+      font-size: 3.8rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .date-str { font-size: .9rem; color: var(--mut); margin-top: 6px; }
+    .greeting { font-size: 1.05rem; font-weight: 600; margin-top: 10px; }
+
+    /* ── Weather ── */
+    .weather-card { display: flex; align-items: center; gap: 16px; padding: 14px 18px; }
+    .weather-icon { font-size: 2.8rem; flex-shrink: 0; }
+    .weather-info .temp {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .weather-info .wdesc { font-size: .85rem; color: var(--mut); margin-top: 2px; }
+    .weather-info .wloc { font-size: .8rem; color: var(--mut); }
+    .weather-extra { margin-left: auto; text-align: right; font-size: .8rem; color: var(--mut); }
+    .weather-extra div { margin-top: 2px; }
+
+    /* ── Quick links ── */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .link-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--txt);
+      font-size: .75rem;
+      font-weight: 600;
+      transition: background .18s, border-color .18s, transform .18s;
+      backdrop-filter: blur(8px);
+    }
+    .link-item:hover { background: var(--cardhov); border-color: var(--a); transform: translateY(-2px); }
+    .link-item .li-icon { font-size: 1.5rem; }
+
+    /* ── Right column ── */
+    .right { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Calculator ── */
+    .calc-card { padding: 16px; }
+    .calc-card h3 { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--mut); margin-bottom: 12px; }
+
+    .calc-display {
+      background: rgba(0,0,0,.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      text-align: right;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+    }
+    body.light .calc-display { background: rgba(0,0,0,.06); }
+    .calc-expr { font-size: .8rem; color: var(--mut); min-height: 18px; word-break: break-all; }
+    .calc-val  { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; word-break: break-all; }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .calc-btn {
+      padding: 12px 0;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--txt);
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s, border-color .15s;
+      font-family: inherit;
+    }
+    .calc-btn:hover { background: var(--cardhov); border-color: var(--a); transform: scale(1.04); }
+    .calc-btn:active { transform: scale(.97); }
+    .calc-btn.op  { color: var(--a); }
+    .calc-btn.eq  { background: var(--grad); color: #050816; border-color: transparent; font-size: 1.1rem; }
+    .calc-btn.eq:hover { opacity: .85; background: var(--grad); }
+    .calc-btn.clr { color: #ef4444; }
+    .calc-btn.span2 { grid-column: span 2; }
+
+    /* ── Todo ── */
+    .todo-card h3 { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--mut); margin-bottom: 12px; }
+
+    .todo-input-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .todo-input-row input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--txt);
+      font-size: .9rem;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+    .todo-input-row input:focus { border-color: var(--a); }
+    .todo-input-row input::placeholder { color: var(--mut); }
+    .todo-add-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: var(--grad);
+      color: #050816;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: .9rem;
+      font-family: inherit;
+      transition: opacity .2s;
+    }
+    .todo-add-btn:hover { opacity: .85; }
+
+    .todo-list { display: flex; flex-direction: column; gap: 5px; max-height: 210px; overflow-y: auto; }
+    .todo-list::-webkit-scrollbar { width: 3px; }
+    .todo-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      font-size: .87rem;
+      transition: background .15s;
+    }
+    .todo-item:hover { background: var(--cardhov); }
+    .todo-item input[type="checkbox"] { accent-color: var(--a); width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+    .todo-item .todo-text { flex: 1; cursor: pointer; transition: opacity .2s; }
+    .todo-item.done .todo-text { text-decoration: line-through; opacity: .45; }
+    .todo-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mut);
+      font-size: 14px;
+      padding: 0 3px;
+      line-height: 1;
+      opacity: .5;
+      transition: opacity .15s, color .15s;
+    }
+    .todo-del:hover { opacity: 1; color: #ef4444; }
+    .todo-empty { font-size: .85rem; color: var(--mut); text-align: center; padding: 14px 0; }
+
+    /* ── Quote ── */
+    .quote-card { padding: 16px 18px; }
+    .quote-text { font-size: .9rem; font-style: italic; line-height: 1.6; color: var(--txt); }
+    .quote-author { font-size: .78rem; color: var(--mut); margin-top: 8px; font-weight: 600; }
+
+    /* ── Apps row ── */
+    .apps-card { padding: 14px 18px; }
+    .apps-card h3 { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--mut); margin-bottom: 10px; }
+    .apps-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .app-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--txt);
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .app-pill:hover { background: var(--cardhov); border-color: var(--a); transform: translateY(-1px); }
+
+    /* ── Scrollbar global ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="logo">360</div>
+    <div class="search-wrap">
+      <input id="searchInput" type="text" placeholder="Search 360..." autocomplete="off" />
+      <button class="search-btn" id="searchBtn">🔍</button>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="themeBtn">🌙</button>
+      <button class="icon-btn" onclick="window.open('https://360-search.com','_blank')">🏠 Home</button>
+    </div>
+  </div>
+
+  <!-- LEFT COLUMN -->
+  <div class="left">
+
+    <!-- Clock -->
+    <div class="card clock-card">
+      <div class="time" id="clock">00:00:00</div>
+      <div class="date-str" id="dateStr">Loading...</div>
+      <div class="greeting" id="greeting">Welcome back!</div>
+    </div>
+
+    <!-- Weather -->
+    <div class="card weather-card" id="weatherCard">
+      <div class="weather-icon" id="weatherIcon">🌤️</div>
+      <div class="weather-info">
+        <div class="temp" id="weatherTemp">--°C</div>
+        <div class="wdesc" id="weatherDesc">Fetching weather...</div>
+        <div class="wloc" id="weatherLoc">📍 Locating...</div>
+      </div>
+      <div class="weather-extra" id="weatherExtra"></div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="card" style="padding:16px;">
+      <div class="links-grid" id="quickLinks"></div>
+    </div>
+
+    <!-- Apps row -->
+    <div class="card apps-card">
+      <h3>360 Apps</h3>
+      <div class="apps-row" id="appsRow"></div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="right">
+
+    <!-- Calculator -->
+    <div class="card calc-card">
+      <h3>Calculator</h3>
+      <div class="calc-display">
+        <div class="calc-expr" id="calcExpr"></div>
+        <div class="calc-val"  id="calcVal">0</div>
+      </div>
+      <div class="calc-grid" id="calcGrid"></div>
+    </div>
+
+    <!-- Todo -->
+    <div class="card todo-card">
+      <h3>To-Do</h3>
+      <div class="todo-input-row">
+        <input id="todoInput" placeholder="Add a task..." maxlength="80" />
+        <button class="todo-add-btn" id="todoAdd">＋</button>
+      </div>
+      <div class="todo-list" id="todoList"></div>
+    </div>
+
+    <!-- Quote -->
+    <div class="card quote-card">
+      <div class="quote-text" id="quoteText">Loading quote...</div>
+      <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+  </div><!-- /right -->
+
+</div>
+
+<script>
+/* ══════════════════════
+   THEME
+══════════════════════ */
+const themeBtn = document.getElementById("themeBtn");
+let isDark = localStorage.getItem("360nt_dark") !== "false";
+
+function applyTheme() {
+  document.body.classList.toggle("light", !isDark);
+  themeBtn.textContent = isDark ? "🌙" : "☀️";
+}
+applyTheme();
+
+themeBtn.addEventListener("click", () => {
+  isDark = !isDark;
+  localStorage.setItem("360nt_dark", isDark);
+  applyTheme();
+});
+
+/* ══════════════════════
+   CLOCK
+══════════════════════ */
+const DAYS   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function pad(n) { return String(n).padStart(2,"0"); }
+
+function updateClock() {
+  const now = new Date();
+  const h = pad(now.getHours()), m = pad(now.getMinutes()), s = pad(now.getSeconds());
+  document.getElementById("clock").textContent = `${h}:${m}:${s}`;
+  document.getElementById("dateStr").textContent =
+    `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  const hr = now.getHours();
+  const g = hr < 12 ? "Good morning ☀️" : hr < 17 ? "Good afternoon 🌤️" : hr < 21 ? "Good evening 🌆" : "Good night 🌙";
+  document.getElementById("greeting").textContent = g;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ══════════════════════
+   SEARCH
+══════════════════════ */
+function doSearch() {
+  const q = document.getElementById("searchInput").value.trim();
+  if (!q) return;
+  window.location.href = `https://360-search.com/?q=${encodeURIComponent(q)}`;
+}
+document.getElementById("searchBtn").addEventListener("click", doSearch);
+document.getElementById("searchInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") doSearch();
+});
+
+/* ══════════════════════
+   WEATHER
+══════════════════════ */
+const WMO_ICONS = {
+  0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",
+  51:"🌦️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",
+  71:"❄️",73:"❄️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",
+  95:"⛈️",96:"⛈️",99:"⛈️"
+};
+const WMO_DESC = {
+  0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",
+  45:"Foggy",48:"Icy fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",
+  61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",
+  80:"Rain showers",81:"Heavy showers",82:"Violent showers",
+  95:"Thunderstorm",96:"Thunderstorm w/ hail",99:"Thunderstorm w/ heavy hail"
+};
+
+async function loadWeather() {
+  if (!navigator.geolocation) { document.getElementById("weatherDesc").textContent = "Geolocation not available"; return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    try {
+      const [wRes, gRes] = await Promise.all([
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weathercode,windspeed_10m,apparent_temperature&wind_speed_unit=mph`),
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+      ]);
+      const w = await wRes.json();
+      const g = await gRes.json();
+      const cur = w.current;
+      const useFahrenheit = localStorage.getItem("360nt_unit") === "F";
+      const tempC = cur.temperature_2m;
+      const feelsC = cur.apparent_temperature;
+      const displayTemp = useFahrenheit ? `${Math.round(tempC * 9/5 + 32)}°F` : `${Math.round(tempC)}°C`;
+      const displayFeels = useFahrenheit ? `${Math.round(feelsC * 9/5 + 32)}°F` : `${Math.round(feelsC)}°C`;
+      const code = cur.weathercode;
+      const city = g.address?.city || g.address?.town || g.address?.village || "Your location";
+      document.getElementById("weatherIcon").textContent = WMO_ICONS[code] || "🌡️";
+      document.getElementById("weatherTemp").textContent = displayTemp;
+      document.getElementById("weatherDesc").textContent = WMO_DESC[code] || "Unknown";
+      document.getElementById("weatherLoc").textContent = `📍 ${city}`;
+      document.getElementById("weatherExtra").innerHTML =
+        `<div>💧 ${cur.relative_humidity_2m}%</div>
+         <div>💨 ${Math.round(cur.windspeed_10m)} mph</div>
+         <div>Feels ${displayFeels}</div>`;
+      // click to toggle unit
+      document.getElementById("weatherCard").style.cursor = "pointer";
+      document.getElementById("weatherCard").addEventListener("click", () => {
+        const u = localStorage.getItem("360nt_unit") === "F" ? "C" : "F";
+        localStorage.setItem("360nt_unit", u);
+        loadWeather();
+      });
+    } catch { document.getElementById("weatherDesc").textContent = "Weather unavailable"; }
+  }, () => { document.getElementById("weatherDesc").textContent = "Location denied"; document.getElementById("weatherLoc").textContent = ""; });
+}
+loadWeather();
+
+/* ══════════════════════
+   QUICK LINKS
+══════════════════════ */
+const LINKS = [
+  { icon:"🤖", label:"AI",         href:"https://360-search.com/ai.html" },
+  { icon:"💬", label:"Chat",       href:"https://360-search.com/chat.html" },
+  { icon:"📰", label:"News",       href:"https://360-search.com/news.html" },
+  { icon:"🌦️", label:"Weather",    href:"https://360-search.com/weather.html" },
+  { icon:"📈", label:"Stocks",     href:"https://360-search.com/stocks.html" },
+  { icon:"🌍", label:"Translator", href:"https://360-search.com/translator.html" },
+  { icon:"🔗", label:"Shorten",    href:"https://360-search.com/url-shortener.html" },
+  { icon:"🎮", label:"Games",      href:"https://360-search.com/games.html" },
+];
+
+const linksGrid = document.getElementById("quickLinks");
+LINKS.forEach(l => {
+  const a = document.createElement("a");
+  a.className = "link-item";
+  a.href = l.href;
+  a.innerHTML = `<div class="li-icon">${l.icon}</div><div>${l.label}</div>`;
+  linksGrid.appendChild(a);
+});
+
+/* ══════════════════════
+   APPS ROW
+══════════════════════ */
+const APPS = [
+  { icon:"🔍", label:"Google",     href:"https://google.com" },
+  { icon:"📺", label:"YouTube",    href:"https://youtube.com" },
+  { icon:"📧", label:"Gmail",      href:"https://mail.google.com" },
+  { icon:"📅", label:"Calendar",   href:"https://calendar.google.com" },
+  { icon:"📁", label:"Drive",      href:"https://drive.google.com" },
+  { icon:"𝕏",  label:"Twitter/X",  href:"https://x.com" },
+  { icon:"📸", label:"Instagram",  href:"https://instagram.com" },
+  { icon:"🎵", label:"Spotify",    href:"https://open.spotify.com" },
+];
+
+const appsRow = document.getElementById("appsRow");
+APPS.forEach(a => {
+  const el = document.createElement("a");
+  el.className = "app-pill";
+  el.href = a.href;
+  el.innerHTML = `${a.icon} ${a.label}`;
+  appsRow.appendChild(el);
+});
+
+/* ══════════════════════
+   CALCULATOR
+══════════════════════ */
+let calcExprStr = "";
+let calcCurrentVal = "0";
+let calcJustEvaled = false;
+
+const calcButtons = [
+  { label:"C",   cls:"clr",   val:"C"   },
+  { label:"±",   cls:"op",    val:"±"   },
+  { label:"%",   cls:"op",    val:"%"   },
+  { label:"÷",   cls:"op",    val:"/"   },
+  { label:"7",   cls:"",      val:"7"   },
+  { label:"8",   cls:"",      val:"8"   },
+  { label:"9",   cls:"",      val:"9"   },
+  { label:"×",   cls:"op",    val:"*"   },
+  { label:"4",   cls:"",      val:"4"   },
+  { label:"5",   cls:"",      val:"5"   },
+  { label:"6",   cls:"",      val:"6"   },
+  { label:"−",   cls:"op",    val:"-"   },
+  { label:"1",   cls:"",      val:"1"   },
+  { label:"2",   cls:"",      val:"2"   },
+  { label:"3",   cls:"",      val:"3"   },
+  { label:"+",   cls:"op",    val:"+"   },
+  { label:"0",   cls:"span2", val:"0"   },
+  { label:".",   cls:"",      val:"."   },
+  { label:"=",   cls:"eq",    val:"="   },
+];
+
+function calcRender() {
+  document.getElementById("calcExpr").textContent = calcExprStr;
+  document.getElementById("calcVal").textContent  = calcCurrentVal;
+}
+
+function calcPress(val) {
+  if (val === "C") {
+    calcExprStr = "";
+    calcCurrentVal = "0";
+    calcJustEvaled = false;
+    calcRender();
+    return;
+  }
+  if (val === "±") {
+    if (calcCurrentVal !== "0") calcCurrentVal = calcCurrentVal.startsWith("-") ? calcCurrentVal.slice(1) : "-" + calcCurrentVal;
+    calcRender();
+    return;
+  }
+  if (val === "%") {
+    try { calcCurrentVal = String(parseFloat(calcCurrentVal) / 100); } catch{}
+    calcRender();
+    return;
+  }
+  if (val === "=") {
+    const expr = calcExprStr + calcCurrentVal;
+    calcExprStr = expr + " =";
+    try {
+      const result = Function('"use strict"; return (' + expr + ')')();
+      calcCurrentVal = String(parseFloat(result.toFixed(10)));
+    } catch { calcCurrentVal = "Error"; }
+    calcJustEvaled = true;
+    calcRender();
+    return;
+  }
+  const isOp = ["+","-","*","/"].includes(val);
+  if (isOp) {
+    if (calcJustEvaled) { calcExprStr = calcCurrentVal; }
+    else { calcExprStr += calcCurrentVal; }
+    calcExprStr += " " + val + " ";
+    calcCurrentVal = "0";
+    calcJustEvaled = false;
+  } else {
+    if (calcJustEvaled) { calcCurrentVal = "0"; calcJustEvaled = false; }
+    if (val === "." && calcCurrentVal.includes(".")) { calcRender(); return; }
+    calcCurrentVal = calcCurrentVal === "0" && val !== "." ? val : calcCurrentVal + val;
+  }
+  calcRender();
+}
+
+const calcGrid = document.getElementById("calcGrid");
+calcButtons.forEach(b => {
+  const btn = document.createElement("button");
+  btn.className = "calc-btn " + b.cls;
+  btn.textContent = b.label;
+  btn.addEventListener("click", () => calcPress(b.val));
+  calcGrid.appendChild(btn);
+});
+
+/* Keyboard support */
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  const map = {"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9",
+               "+":"+","-":"-","*":"*","/":"/",".":".","%":"%","Enter":"=","=":"=","Escape":"C","Backspace":"DEL"};
+  if (e.key === "Backspace") {
+    if (calcCurrentVal.length > 1) calcCurrentVal = calcCurrentVal.slice(0,-1);
+    else calcCurrentVal = "0";
+    calcRender();
+    return;
+  }
+  if (map[e.key]) { e.preventDefault(); calcPress(map[e.key]); }
+});
+
+/* ══════════════════════
+   TODO
+══════════════════════ */
+let todos = JSON.parse(localStorage.getItem("360nt_todos") || "[]");
+
+function saveTodos() { localStorage.setItem("360nt_todos", JSON.stringify(todos)); }
+
+function renderTodos() {
+  const list = document.getElementById("todoList");
+  list.innerHTML = "";
+  if (!todos.length) {
+    list.innerHTML = `<div class="todo-empty">Nothing here yet — add a task!</div>`;
+    return;
+  }
+  todos.forEach((t, i) => {
+    const item = document.createElement("div");
+    item.className = "todo-item" + (t.done ? " done" : "");
+    item.innerHTML = `
+      <input type="checkbox" ${t.done ? "checked" : ""} data-i="${i}" />
+      <span class="todo-text">${t.text}</span>
+      <button class="todo-del" data-i="${i}">✕</button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+document.getElementById("todoList").addEventListener("click", e => {
+  const i = parseInt(e.target.dataset.i);
+  if (e.target.type === "checkbox") { todos[i].done = e.target.checked; saveTodos(); renderTodos(); }
+  if (e.target.classList.contains("todo-del")) { todos.splice(i,1); saveTodos(); renderTodos(); }
+});
+
+function addTodo() {
+  const inp = document.getElementById("todoInput");
+  const text = inp.value.trim();
+  if (!text) return;
+  todos.unshift({ text, done: false });
+  saveTodos();
+  renderTodos();
+  inp.value = "";
+}
+
+document.getElementById("todoAdd").addEventListener("click", addTodo);
+document.getElementById("todoInput").addEventListener("keydown", e => { if (e.key === "Enter") addTodo(); });
+
+renderTodos();
+
+/* ══════════════════════
+   QUOTES
+══════════════════════ */
+const QUOTES = [
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+  { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+  { text: "Build. Break. Learn. Repeat.", author: "Unknown" },
+  { text: "Code is like humor. When you have to explain it, it's bad.", author: "Cory House" },
+  { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
+  { text: "Make it work, make it right, make it fast.", author: "Kent Beck" },
+  { text: "Programs must be written for people to read.", author: "Harold Abelson" },
+  { text: "Stay focused and never stop.", author: "360 Digital" },
+  { text: "Every expert was once a beginner.", author: "Helen Hayes" },
+  { text: "Dream big. Start small. Act now.", author: "Robin Sharma" },
+];
+
+(function loadQuote() {
+  const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  document.getElementById("quoteText").textContent = `"${q.text}"`;
+  document.getElementById("quoteAuthor").textContent = `— ${q.author}`;
+})();
+</script>
+</body>
+</html>
