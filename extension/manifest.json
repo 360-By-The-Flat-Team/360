@@ -4,12 +4,52 @@
   "short_name": "360",
   "version": "2.0.3",
   "description": "360 New Tab",
-
   "chrome_url_overrides": {
     "newtab": "new-tab.html"
   },
-
   "permissions": [
-    "storage"
-  ]
+    "storage",
+    "activeTab",
+    "tabs",
+    "history",
+    "bookmarks",
+    "downloads",
+    "notifications",
+    "contextMenus",
+    "cookies",
+    "identity",
+    "idle",
+    "management",
+    "nativeMessaging",
+    "offscreen",
+    "scripting",
+    "search",
+    "sessions",
+    "sidePanel",
+    "system.cpu",
+    "system.memory",
+    "system.network",
+    "system.display",
+    "topSites",
+    "webNavigation",
+    "webRequest",
+    "alarms",
+    "background",
+    "clipboardRead",
+    "clipboardWrite",
+    "geolocation",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
 }
