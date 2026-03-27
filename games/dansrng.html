@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Dan's RNG</title>
+<style>
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+  color: #f9fafb;
+  overflow: hidden;
+}
+
+/* Particle canvas */
+#particles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Main card */
+.game {
+  position: relative;
+  z-index: 1;
+  background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.18), transparent 55%),
+              linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
+  border-radius: 20px;
+  padding: 24px 26px;
+  width: 460px;
+  max-width: 95vw;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(18px);
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  text-align: center;
+  color: #9ca3af;
+  margin-top: 4px;
+  margin-bottom: 18px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: #d1d5db;
+}
+
+.stat-label {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-value {
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+/* Current roll */
+.current-roll {
+  margin: 18px 0;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+}
+
+.current-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.current-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.current-extra {
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  margin-top: 4px;
+}
+
+.rarity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  margin-top: 8px;
+}
+
+.rarity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+/* Rarity colors */
+.rarity-common   { color: #9ca3af; }
+.rarity-uncommon { color: #22c55e; }
+.rarity-rare     { color: #38bdf8; }
+.rarity-epic     { color: #a855f7; }
+.rarity-legend   { color: #facc15; }
+.rarity-mythic   { color: #fb7185; }
+.rarity-godly    { color: #ff6bff; }
+.rarity-other    { color: #00f0ff; }
+.rarity-hidden   { color: #ffffff; }
+
+.dot-common   { background: #9ca3af; }
+.dot-uncommon { background: #22c55e; }
+.dot-rare     { background: #38bdf8; }
+.dot-epic     { background: #a855f7; }
+.dot-legend   { background: #facc15; }
+.dot-mythic   { background: #fb7185; }
+.dot-godly    { background: #ff6bff; }
+.dot-other    { background: #00f0ff; }
+.dot-hidden   { background: #ffffff; }
+
+/* Roll button */
+.roll-btn {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #041007;
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.55);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+
+.roll-btn:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 18px 40px rgba(22, 163, 74, 0.7);
+}
+
+.roll-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.5);
+}
+
+.roll-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+/* History */
+.history {
+  margin-top: 18px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 4px;
+  font-size: 0.85rem;
+}
+
+.history-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-time {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.history-name {
+  font-weight: 500;
+}
+
+.history-rarity {
+  font-size: 0.8rem;
+}
+
+/* Probabilities */
+.prob-table {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+  padding-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.prob-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prob-label {
+  min-width: 80px;
+}
+
+.prob-value {
+  color: #e5e7eb;
+}
+
+/* Spin + glow */
+.spin {
+  animation: spin 0.8s ease-out;
+}
+
+@keyframes spin {
+  0% { transform: rotateX(0deg) scale(1); opacity: 0.2; }
+  50% { transform: rotateX(360deg) scale(1.2); opacity: 1; }
+  100% { transform: rotateX(720deg) scale(1); opacity: 1; }
+}
+
+.glow {
+  animation: glowPulse 1.2s ease-out forwards;
+}
+
+@keyframes glowPulse {
+  0% { text-shadow: 0 0 0px white; transform: scale(1); }
+  50% { text-shadow: 0 0 25px white; transform: scale(1.12); }
+  100% { text-shadow: 0 0 0px white; transform: scale(1); }
+}
+
+/* Screen shake for hidden aura */
+.shake {
+  animation: shake 0.6s ease-in-out;
+}
+
+@keyframes shake {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-8px, 6px); }
+  40% { transform: translate(8px, -6px); }
+  60% { transform: translate(-6px, 4px); }
+  80% { transform: translate(6px, -4px); }
+  100% { transform: translate(0, 0); }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="game" id="game-card">
+  <div class="title">Dan's RNG</div>
+  <div class="subtitle">Reality fractures for only the luckiest.</div>
+
+  <div class="stats">
+    <div>
+      <div class="stat-label">Total Rolls</div>
+      <div class="stat-value" id="total-rolls">0</div>
+    </div>
+    <div>
+      <div class="stat-label">Best Rarity</div>
+      <div class="stat-value" id="best-rarity">None</div>
+    </div>
+    <div>
+      <div class="stat-label">Last Roll</div>
+      <div class="stat-value" id="last-roll-time">—</div>
+    </div>
+  </div>
+
+  <div class="current-roll" id="current-roll">
+    <div class="current-label">Current Roll</div>
+    <div class="current-name rarity-common" id="current-name">No roll yet</div>
+    <div class="current-extra" id="current-extra">Press "Roll" to begin.</div>
+    <div class="rarity-chip">
+      <span class="rarity-dot dot-common" id="current-dot"></span>
+      <span id="current-rarity-label">—</span>
+    </div>
+  </div>
+
+  <button class="roll-btn" id="roll-btn">Roll</button>
+
+  <div class="history">
+    <div class="history-title">History</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div class="prob-table">
+    <div class="prob-row"><span class="rarity-dot dot-common"></span><span class="prob-label rarity-common">Common</span><span class="prob-value">80%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-uncommon"></span><span class="prob-label rarity-uncommon">Uncommon</span><span class="prob-value">15%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-rare"></span><span class="prob-label rarity-rare">Rare</span><span class="prob-value">4%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-epic"></span><span class="prob-label rarity-epic">Epic</span><span class="prob-value">0.8%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-legend"></span><span class="prob-label rarity-legend">Legendary</span><span class="prob-value">0.18%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-mythic"></span><span class="prob-label rarity-mythic">Mythic</span><span class="prob-value">0.02%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-godly"></span><span class="prob-label rarity-godly">Godly</span><span class="prob-value">0.005%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-other"></span><span class="prob-label rarity-other">Otherworldly</span><span class="prob-value">0.001%</span></div>
+    <div class="prob-row"><span class="rarity-dot dot-hidden"></span><span class="prob-label rarity-hidden">???</span><span class="prob-value">0.0001%</span></div>
+  </div>
+</div>
+
+<script>
+/* Hidden aura persistence */
+let hiddenUnlocked = localStorage.getItem("hiddenAuraUnlocked") === "true";
+
+/* Rarities */
+const rarities = [
+  { id:"common", name:"Faded Glow", rarityLabel:"Common", chance:0.80, className:"rarity-common", dotClass:"dot-common", weight:1, color:"#9ca3af" },
+  { id:"uncommon", name:"Soft Radiance", rarityLabel:"Uncommon", chance:0.15, className:"rarity-uncommon", dotClass:"dot-uncommon", weight:2, color:"#22c55e" },
+  { id:"rare", name:"Crystal Pulse", rarityLabel:"Rare", chance:0.04, className:"rarity-rare", dotClass:"dot-rare", weight:3, color:"#38bdf8" },
+  { id:"epic", name:"Nebula Surge", rarityLabel:"Epic", chance:0.008, className:"rarity-epic", dotClass:"dot-epic", weight:4, color:"#a855f7" },
+  { id:"legendary", name:"Solar Flare", rarityLabel:"Legendary", chance:0.0018, className:"rarity-legend", dotClass:"dot-legend", weight:5, color:"#facc15" },
+  { id:"mythic", name:"Eternal Singularity", rarityLabel:"Mythic", chance:0.0002, className:"rarity-mythic", dotClass:"dot-mythic", weight:6, color:"#fb7185" },
+  { id:"godly", name:"Divine Ascension", rarityLabel:"Godly", chance:0.00005, className:"rarity-godly", dotClass:"dot-godly", weight:7, color:"#ff6bff" },
+  { id:"other", name:"Otherworldly Rift", rarityLabel:"Otherworldly", chance:0.00001, className:"rarity-other", dotClass:"dot-other", weight:8, color:"#00f0ff" },
+  { id:"hidden", name:"???", rarityLabel:"???", chance:hiddenUnlocked ? 0 : 0.000001, className:"rarity-hidden", dotClass:"dot-hidden", weight:999, color:"#ffffff" }
+];
+
+/* Sounds */
+const sClick  = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3");
+const sRoll   = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-arcade-slot-machine-1930.mp3");
+const sRare   = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-magical-coin-win-1936.mp3");
+const sCosmic = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-distorted-arcade-echo-3130.mp3");
+
+/* Particles */
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+let particles = [];
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.size = Math.random() * 6 + 3;
+    this.speedX = (Math.random() - 0.5) * 8;
+    this.speedY = (Math.random() - 0.5) * 8;
+    this.alpha = 1;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.alpha -= 0.02;
+  }
+  draw() {
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function spawnParticles(color, count = 40) {
+  const rect = document.querySelector(".game").getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle(cx, cy, color));
+  }
+}
+
+function spawnRainbowBurst(count = 80) {
+  const rect = document.querySelector(".game").getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ["#ff6bff", "#00f0ff", "#facc15", "#fb7185", "#38bdf8", "#ffffff"];
+  for (let i = 0; i < count; i++) {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    particles.push(new Particle(cx, cy, color));
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.alpha > 0);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* DOM */
+const rollBtn = document.getElementById("roll-btn");
+const totalRollsEl = document.getElementById("total-rolls");
+const bestRarityEl = document.getElementById("best-rarity");
+const lastRollTimeEl = document.getElementById("last-roll-time");
+
+const currentNameEl = document.getElementById("current-name");
+const currentExtraEl = document.getElementById("current-extra");
+const currentRarityLabelEl = document.getElementById("current-rarity-label");
+const currentDotEl = document.getElementById("current-dot");
+const gameCard = document.getElementById("game-card");
+
+const historyListEl = document.getElementById("history-list");
+
+let totalRolls = 0;
+let bestWeight = 0;
+
+/* Helpers */
+function pickRarity() {
+  const totalChance = rarities.reduce((sum, r) => sum + r.chance, 0);
+  let r = Math.random() * totalChance;
+  for (const rarity of rarities) {
+    if (r <= rarity.chance) return rarity;
+    r -= rarity.chance;
+  }
+  return rarities[0];
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function updateBest(rarity) {
+  if (rarity.weight > bestWeight) {
+    bestWeight = rarity.weight;
+    bestRarityEl.textContent = rarity.rarityLabel;
+    bestRarityEl.className = "stat-value " + rarity.className;
+  }
+}
+
+function addToHistory(rarity, time) {
+  const item = document.createElement("div");
+  item.className = "history-item";
+
+  const left = document.createElement("div");
+  left.className = "history-left";
+
+  const dot = document.createElement("span");
+  dot.className = "rarity-dot " + rarity.dotClass;
+
+  const name = document.createElement("span");
+  name.className = "history-name " + rarity.className;
+  name.textContent = rarity.name;
+
+  left.appendChild(dot);
+  left.appendChild(name);
+
+  const right = document.createElement("div");
+  const raritySpan = document.createElement("span");
+  raritySpan.className = "history-rarity " + rarity.className;
+  raritySpan.textContent = rarity.rarityLabel + " • ";
+
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "history-time";
+  timeSpan.textContent = time;
+
+  right.appendChild(raritySpan);
+  right.appendChild(timeSpan);
+
+  item.appendChild(left);
+  item.appendChild(right);
+
+  historyListEl.insertBefore(item, historyListEl.firstChild);
+}
+
+/* Roll animation */
+function animateRoll(callback) {
+  rollBtn.disabled = true;
+  rollBtn.textContent = "Rolling...";
+  sClick.currentTime = 0;
+  sClick.play();
+
+  setTimeout(() => {
+    sRoll.currentTime = 0;
+    sRoll.play();
+  }, 120);
+
+  let ticks = 18;
+  let interval = 40;
+  let count = 0;
+
+  const tempInterval = setInterval(() => {
+    const tempRarity = rarities[Math.floor(Math.random() * rarities.length)];
+    currentNameEl.textContent = tempRarity.name;
+    currentNameEl.className = "current-name " + tempRarity.className;
+    currentRarityLabelEl.textContent = tempRarity.rarityLabel;
+    currentRarityLabelEl.className = tempRarity.className;
+    currentDotEl.className = "rarity-dot " + tempRarity.dotClass;
+    currentExtraEl.textContent = "Rolling...";
+
+    count++;
+    if (count >= ticks) {
+      clearInterval(tempInterval);
+      callback();
+    }
+  }, interval);
+}
+
+/* Main roll handler */
+rollBtn.addEventListener("click", () => {
+  currentNameEl.classList.remove("spin", "glow");
+  gameCard.classList.remove("shake");
+
+  animateRoll(() => {
+    const rarity = pickRarity();
+    const now = new Date();
+    const timeStr = formatTime(now);
+
+    totalRolls++;
+    totalRollsEl.textContent = totalRolls;
+    lastRollTimeEl.textContent = timeStr;
+
+    currentNameEl.textContent = rarity.name;
+    currentNameEl.className = "current-name " + rarity.className + " spin glow";
+    currentRarityLabelEl.textContent = rarity.rarityLabel;
+    currentRarityLabelEl.className = rarity.className;
+    currentDotEl.className = "rarity-dot " + rarity.dotClass;
+
+    let message = "";
+    if (rarity.id === "hidden") {
+      hiddenUnlocked = true;
+      localStorage.setItem("hiddenAuraUnlocked", "true");
+      // Set its chance to 0 from now on
+      const hidden = rarities.find(r => r.id === "hidden");
+      if (hidden) hidden.chance = 0;
+
+      message = "Reality fractures… You found the impossible.";
+      currentExtraEl.textContent = message;
+
+      // Cosmic reveal: rainbow burst + shake + distortion
+      spawnRainbowBurst(120);
+      sCosmic.currentTime = 0;
+      sCosmic.play();
+      gameCard.classList.add("shake");
+    } else if (rarity.weight >= 8) {
+      message = "Beyond comprehension. An Otherworldly aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(rarity.color, 70);
+      sRare.currentTime = 0;
+      sRare.play();
+    } else if (rarity.weight >= 7) {
+      message = "Divine luck. You hit a Godly aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(rarity.color, 60);
+      sRare.currentTime = 0;
+      sRare.play();
+    } else if (rarity.weight >= 4) {
+      message = "Insane roll! You hit a " + rarity.rarityLabel + " aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(rarity.color, 50);
+      sRare.currentTime = 0;
+      sRare.play();
+    } else if (rarity.weight === 3) {
+      message = "Nice! A solid rare aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(rarity.color, 30);
+    } else if (rarity.weight === 2) {
+      message = "Not bad. A small upgrade.";
+      currentExtraEl.textContent = message;
+    } else {
+      message = "Just a common… keep rolling.";
+      currentExtraEl.textContent = message;
+    }
+
+    updateBest(rarity);
+    addToHistory(rarity, timeStr);
+
+    rollBtn.disabled = false;
+    rollBtn.textContent = "Roll";
+  });
+});
+</script>
+</body>
+</html>
