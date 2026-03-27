@@ -1,5 +1,4 @@
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -32,7 +31,7 @@ body {
               linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
   border-radius: 20px;
   padding: 24px 26px;
-  width: 520px;
+  width: 560px;
   max-width: 95vw;
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.8),
@@ -75,6 +74,23 @@ body {
 .currency-value {
   font-weight: 600;
 }
+.shop-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
+}
+.shop-btn:hover {
+  background: rgba(30, 64, 175, 0.8);
+  box-shadow: 0 10px 24px rgba(30, 64, 175, 0.6);
+}
+.shop-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
 .stats {
   display: flex;
   justify-content: space-between;
@@ -95,22 +111,22 @@ body {
 .xp-bar-container {
   margin-bottom: 10px;
 }
-.xp-label-row {
+.xp-top {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: #9ca3af;
+  font-size: 0.8rem;
+  color: #e5e7eb;
   margin-bottom: 4px;
 }
-.xp-bar {
+.xp-bar-outer {
   width: 100%;
-  height: 8px;
+  height: 10px;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.9);
-  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.6);
+  overflow: hidden;
 }
-.xp-fill {
+.xp-bar-inner {
   height: 100%;
   width: 0%;
   border-radius: 999px;
@@ -292,8 +308,8 @@ body {
   100% { transform: translate(0, 0); }
 }
 
-/* Upgrade modal */
-.upgrade-modal-backdrop {
+/* Shop modal */
+.shop-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.8);
@@ -302,32 +318,32 @@ body {
   justify-content: center;
   z-index: 20;
 }
-.upgrade-modal {
+.shop-modal {
   background: rgba(15, 23, 42, 0.98);
   border-radius: 16px;
   padding: 18px 20px;
-  width: 360px;
+  width: 380px;
   max-width: 90vw;
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.9),
     0 0 0 1px rgba(148, 163, 184, 0.4);
 }
-.upgrade-title {
+.shop-title {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 4px;
 }
-.upgrade-subtitle {
+.shop-subtitle {
   font-size: 0.85rem;
   color: #9ca3af;
   margin-bottom: 12px;
 }
-.upgrade-options {
+.shop-items {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.upgrade-option {
+.shop-item {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.6);
@@ -335,20 +351,32 @@ body {
   cursor: pointer;
   transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
 }
-.upgrade-option:hover {
+.shop-item:hover {
   background: rgba(30, 64, 175, 0.7);
   box-shadow: 0 10px 24px rgba(30, 64, 175, 0.6);
 }
-.upgrade-option:active {
+.shop-item:active {
   transform: translateY(1px) scale(0.99);
 }
-.upgrade-name {
+.shop-name {
   font-size: 0.95rem;
   font-weight: 600;
 }
-.upgrade-desc {
+.shop-desc {
   font-size: 0.8rem;
   color: #d1d5db;
+}
+.shop-cost {
+  font-size: 0.8rem;
+  color: #facc15;
+  margin-top: 2px;
+}
+.shop-close {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: right;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -356,30 +384,44 @@ body {
 
 <canvas id="particles"></canvas>
 
-<div class="upgrade-modal-backdrop" id="upgrade-backdrop">
-  <div class="upgrade-modal">
-    <div class="upgrade-title">Upgrade Unlocked</div>
-    <div class="upgrade-subtitle">Choose one bonus to bend the odds in your favor.</div>
-    <div class="upgrade-options">
-      <div class="upgrade-option" data-upgrade="betterOdds">
-        <div class="upgrade-name">Better Odds</div>
-        <div class="upgrade-desc">Increase chance of Rare+ auras.</div>
+<div class="shop-backdrop" id="shop-backdrop">
+  <div class="shop-modal">
+    <div class="shop-title">Starfall Shop</div>
+    <div class="shop-subtitle">Spend coins to bend the odds.</div>
+    <div class="shop-items">
+      <div class="shop-item" data-upgrade="xpBoost">
+        <div class="shop-name">XP Booster</div>
+        <div class="shop-desc">Gain +50% XP per roll.</div>
+        <div class="shop-cost">Cost: 150 coins</div>
       </div>
-      <div class="upgrade-option" data-upgrade="moreCoins">
-        <div class="upgrade-name">Coin Surge</div>
-        <div class="upgrade-desc">Gain more coins per roll.</div>
+      <div class="shop-item" data-upgrade="luckBoost">
+        <div class="shop-name">Luck Charm</div>
+        <div class="shop-desc">Slightly increases Rare+ chances.</div>
+        <div class="shop-cost">Cost: 200 coins</div>
       </div>
-      <div class="upgrade-option" data-upgrade="moreXP">
-        <div class="upgrade-name">XP Boost</div>
-        <div class="upgrade-desc">Gain more XP per roll.</div>
+      <div class="shop-item" data-upgrade="coinBoost">
+        <div class="shop-name">Coin Magnet</div>
+        <div class="shop-desc">+50% coins from every roll.</div>
+        <div class="shop-cost">Cost: 120 coins</div>
+      </div>
+      <div class="shop-item" data-upgrade="particleBoost">
+        <div class="shop-name">Particle Storm</div>
+        <div class="shop-desc">More particles on good rolls.</div>
+        <div class="shop-cost">Cost: 90 coins</div>
+      </div>
+      <div class="shop-item" data-upgrade="cosmeticAura">
+        <div class="shop-name">Cosmic Trail</div>
+        <div class="shop-desc">Pure flex. No stats, just style.</div>
+        <div class="shop-cost">Cost: 250 coins</div>
       </div>
     </div>
+    <div class="shop-close" id="shop-close">Close</div>
   </div>
 </div>
 
 <div class="game" id="game-card">
   <div class="title">Starfall RNG</div>
-  <div class="subtitle">Roll, level up, and bend reality.</div>
+  <div class="subtitle">Roll, level up, and bend the odds.</div>
 
   <div class="top-bar">
     <div class="currency">
@@ -392,15 +434,16 @@ body {
         <span class="currency-value" id="level">1</span>
       </div>
     </div>
+    <button class="shop-btn" id="shop-btn">Shop</button>
   </div>
 
   <div class="xp-bar-container">
-    <div class="xp-label-row">
-      <span>XP</span>
-      <span id="xp-text">0 / 100</span>
+    <div class="xp-top">
+      <span id="xp-label">XP: 0 / 50</span>
+      <span id="xp-bonus-label">No XP bonus</span>
     </div>
-    <div class="xp-bar">
-      <div class="xp-fill" id="xp-fill"></div>
+    <div class="xp-bar-outer">
+      <div class="xp-bar-inner" id="xp-bar-inner"></div>
     </div>
   </div>
 
@@ -436,119 +479,280 @@ body {
     <div id="history-list"></div>
   </div>
 
-  <div class="prob-table" id="prob-table">
-    <!-- Filled dynamically from rarities -->
-  </div>
+  <div class="prob-table" id="prob-table"></div>
 </div>
 
-<script>
-/* Persistence */
-let hiddenUnlocked = localStorage.getItem("hiddenAuraUnlocked") === "true";
-let coins = Number(localStorage.getItem("coins") || 0);
-let xp = Number(localStorage.getItem("xp") || 0);
-let level = Number(localStorage.getItem("level") || 1);
-let betterOddsLevel = Number(localStorage.getItem("betterOddsLevel") || 0);
-let moreCoinsLevel = Number(localStorage.getItem("moreCoinsLevel") || 0);
-let moreXPLevel = Number(localStorage.getItem("moreXPLevel") || 0);
-
-/* Base XP per level */
-function xpNeededForLevel(lv) {
-  return 100 + (lv - 1) * 25;
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module">
+/* ---------- Safe Supabase init ---------- */
+let client = null;
+try {
+  const { createClient } = supabase;
+  client = createClient(
+    "https://zppnwbmrbrzcepkrpgiq.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwcG53Ym1yYnJ6Y2Vwa3JwZ2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDE3NjYsImV4cCI6MjA5MDIxNzc2Nn0.RibU8nF5GjJIcY5TOMA6TRQQoSpxonx6JjcsG2GHRD4"
+  );
+} catch (e) {
+  console.warn("Supabase failed to load, running offline mode.");
+  client = null;
 }
 
-/* Rarities with multiple auras each */
-const rarities = [
+/* Anonymous user id (local only) */
+let userId = localStorage.getItem("userId");
+if (!userId) {
+  userId = crypto.randomUUID();
+  localStorage.setItem("userId", userId);
+}
+
+/* Safe load/save player */
+async function loadPlayer() {
+  if (!client) {
+    return {
+      user_id: userId,
+      best_rarity: "None",
+      hidden_unlocked: false,
+      total_rolls: 0,
+      history: [],
+      xp: 0,
+      level: 1,
+      coins: 0,
+      shop_upgrades: {}
+    };
+  }
+
+  const { data, error } = await client
+    .from("players")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (data) {
+    return {
+      user_id: data.user_id,
+      best_rarity: data.best_rarity ?? "None",
+      hidden_unlocked: data.hidden_unlocked ?? false,
+      total_rolls: data.total_rolls ?? 0,
+      history: data.history ?? [],
+      xp: data.xp ?? 0,
+      level: data.level ?? 1,
+      coins: data.coins ?? 0,
+      shop_upgrades: data.shop_upgrades ?? {}
+    };
+  }
+
+  const newPlayer = {
+    user_id: userId,
+    best_rarity: "None",
+    hidden_unlocked: false,
+    total_rolls: 0,
+    history: [],
+    xp: 0,
+    level: 1,
+    coins: 0,
+    shop_upgrades: {}
+  };
+
+  if (client) {
+    await client.from("players").insert(newPlayer);
+  }
+
+  return newPlayer;
+}
+
+async function savePlayer(player) {
+  if (!client) return;
+  await client
+    .from("players")
+    .update(player)
+    .eq("user_id", player.user_id);
+}
+
+/* ---------- Load player ---------- */
+let player = await loadPlayer();
+
+/* ---------- Game state ---------- */
+let hiddenUnlocked = !!player.hidden_unlocked;
+let totalRolls = Number(player.total_rolls || 0);
+let historyArray = Array.isArray(player.history) ? player.history : [];
+let bestRarityName = player.best_rarity || "None";
+let xp = Number(player.xp || 0);
+let level = Number(player.level || 1);
+let coins = Number(player.coins || 0);
+let shopUpgrades = player.shop_upgrades || {};
+
+/* Shop upgrade levels */
+let xpBoostLevel = shopUpgrades.xpBoost || 0;
+let luckBoostLevel = shopUpgrades.luckBoost || 0;
+let coinBoostLevel = shopUpgrades.coinBoost || 0;
+let particleBoostLevel = shopUpgrades.particleBoost || 0;
+let cosmeticAuraOwned = !!shopUpgrades.cosmeticAura;
+
+/* ---------- Rarities with multiple auras ---------- */
+/* Tier chances sum to 1.0; Otherworldly = 0.01 */
+const rarityTiers = [
   {
-    id:"common",
-    rarityLabel:"Common",
-    baseChance:0.80,
-    className:"rarity-common",
-    dotClass:"dot-common",
-    weight:1,
-    color:"#9ca3af",
-    auras:["Faded Glow","Dim Spark","Dusty Halo","Worn Shine"]
+    id: "common",
+    label: "Common",
+    chance: 0.50,
+    className: "rarity-common",
+    dotClass: "dot-common",
+    weight: 1,
+    color: "#9ca3af",
+    auras: [
+      "Faded Glow",
+      "Dusty Spark",
+      "Dim Ember",
+      "Soft Flicker",
+      "Muted Halo"
+    ]
   },
   {
-    id:"uncommon",
-    rarityLabel:"Uncommon",
-    baseChance:0.15,
-    className:"rarity-uncommon",
-    dotClass:"dot-uncommon",
-    weight:2,
-    color:"#22c55e",
-    auras:["Soft Radiance","Fresh Gleam","Emerald Flicker"]
+    id: "uncommon",
+    label: "Uncommon",
+    chance: 0.25,
+    className: "rarity-uncommon",
+    dotClass: "dot-uncommon",
+    weight: 2,
+    color: "#22c55e",
+    auras: [
+      "Soft Radiance",
+      "Verdant Pulse",
+      "Gentle Bloom",
+      "Emerald Drift",
+      "Forest Whisper"
+    ]
   },
   {
-    id:"rare",
-    rarityLabel:"Rare",
-    baseChance:0.04,
-    className:"rarity-rare",
-    dotClass:"dot-rare",
-    weight:3,
-    color:"#38bdf8",
-    auras:["Crystal Pulse","Azure Shard","Frozen Echo"]
+    id: "rare",
+    label: "Rare",
+    chance: 0.12,
+    className: "rarity-rare",
+    dotClass: "dot-rare",
+    weight: 3,
+    color: "#38bdf8",
+    auras: [
+      "Crystal Pulse",
+      "Azure Shard",
+      "Frozen Echo",
+      "Tidal Prism",
+      "Skyline Fracture"
+    ]
   },
   {
-    id:"epic",
-    rarityLabel:"Epic",
-    baseChance:0.008,
-    className:"rarity-epic",
-    dotClass:"dot-epic",
-    weight:4,
-    color:"#a855f7",
-    auras:["Nebula Surge","Violet Storm","Starborn Veil"]
+    id: "epic",
+    label: "Epic",
+    chance: 0.06,
+    className: "rarity-epic",
+    dotClass: "dot-epic",
+    weight: 4,
+    color: "#a855f7",
+    auras: [
+      "Nebula Surge",
+      "Violet Collapse",
+      "Stellar Bloom",
+      "Arcane Spiral"
+    ]
   },
   {
-    id:"legendary",
-    rarityLabel:"Legendary",
-    baseChance:0.0018,
-    className:"rarity-legend",
-    dotClass:"dot-legend",
-    weight:5,
-    color:"#facc15",
-    auras:["Solar Flare","Golden Eclipse","Crowned Horizon"]
+    id: "legendary",
+    label: "Legendary",
+    chance: 0.03,
+    className: "rarity-legend",
+    dotClass: "dot-legend",
+    weight: 5,
+    color: "#facc15",
+    auras: [
+      "Solar Flare",
+      "Crown of Dawn",
+      "Golden Horizon"
+    ]
   },
   {
-    id:"mythic",
-    rarityLabel:"Mythic",
-    baseChance:0.0002,
-    className:"rarity-mythic",
-    dotClass:"dot-mythic",
-    weight:6,
-    color:"#fb7185",
-    auras:["Eternal Singularity","Crimson Rift","Fatebreaker"]
+    id: "mythic",
+    label: "Mythic",
+    chance: 0.015,
+    className: "rarity-mythic",
+    dotClass: "dot-mythic",
+    weight: 6,
+    color: "#fb7185",
+    auras: [
+      "Eternal Singularity",
+      "Crimson Eclipse"
+    ]
   },
   {
-    id:"godly",
-    rarityLabel:"Godly",
-    baseChance:0.00005,
-    className:"rarity-godly",
-    dotClass:"dot-godly",
-    weight:7,
-    color:"#ff6bff",
-    auras:["Divine Ascension","Halo of Judgement","Celestial Crown"]
+    id: "godly",
+    label: "Godly",
+    chance: 0.01,
+    className: "rarity-godly",
+    dotClass: "dot-godly",
+    weight: 7,
+    color: "#ff6bff",
+    auras: [
+      "Divine Ascension",
+      "Halo of Infinity"
+    ]
   },
   {
-    id:"other",
-    rarityLabel:"Otherworldly",
-    baseChance:0.00001,
-    className:"rarity-other",
-    dotClass:"dot-other",
-    weight:8,
-    color:"#00f0ff",
-    auras:["Otherworldly Rift","Voidwalker","Echo of Elsewhere"]
+    id: "other",
+    label: "Otherworldly",
+    chance: 0.01, // your request
+    className: "rarity-other",
+    dotClass: "dot-other",
+    weight: 8,
+    color: "#00f0ff",
+    auras: [
+      "Otherworldly Rift"
+    ]
   },
   {
-    id:"hidden",
-    rarityLabel:"???",
-    baseChance:hiddenUnlocked ? 0 : 0.001, // 0.1% if not unlocked
-    className:"rarity-hidden",
-    dotClass:"dot-hidden",
-    weight:999,
-    color:"#ffffff",
-    auras:["???"]
+    id: "hidden",
+    label: "???",
+    chance: hiddenUnlocked ? 0 : 0.005,
+    className: "rarity-hidden",
+    dotClass: "dot-hidden",
+    weight: 999,
+    color: "#ffffff",
+    auras: [
+      "???"
+    ]
   }
 ];
+
+
+function getTierByLabel(label) {
+  return rarityTiers.find(t => t.label === label) || null;
+}
+
+/* XP + level helpers */
+function xpNeededForLevel(lvl) {
+  return Math.floor(50 * Math.pow(lvl, 1.5));
+}
+function getXpReward(tierId) {
+  switch (tierId) {
+    case "common": return 1;
+    case "uncommon": return 2;
+    case "rare": return 5;
+    case "epic": return 10;
+    case "legendary": return 20;
+    case "mythic": return 35;
+    case "godly": return 50;
+    case "other": return 75;
+    case "hidden": return 100;
+    default: return 1;
+  }
+}
+function getCoinReward(weight, tierId) {
+  if (tierId === "hidden") return 500;
+  if (weight >= 8) return 200;
+  if (weight >= 7) return 120;
+  if (weight === 6) return 60;
+  if (weight === 5) return 30;
+  if (weight === 4) return 15;
+  if (weight === 3) return 8;
+  if (weight === 2) return 3;
+  return 1;
+}
 
 /* Sounds */
 const sClick  = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3");
@@ -591,19 +795,21 @@ class Particle {
     ctx.globalAlpha = 1;
   }
 }
-function spawnParticles(color, count = 40) {
+function spawnParticles(color, baseCount = 40) {
   const rect = document.querySelector(".game").getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
+  const count = baseCount + particleBoostLevel * 15;
   for (let i = 0; i < count; i++) {
     particles.push(new Particle(cx, cy, color));
   }
 }
-function spawnRainbowBurst(count = 80) {
+function spawnRainbowBurst(baseCount = 80) {
   const rect = document.querySelector(".game").getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
   const colors = ["#ff6bff", "#00f0ff", "#facc15", "#fb7185", "#38bdf8", "#ffffff"];
+  const count = baseCount + particleBoostLevel * 20;
   for (let i = 0; i < count; i++) {
     const color = colors[Math.floor(Math.random() * colors.length)];
     particles.push(new Particle(cx, cy, color));
@@ -628,108 +834,133 @@ const currentRarityLabelEl = document.getElementById("current-rarity-label");
 const currentDotEl = document.getElementById("current-dot");
 const gameCard = document.getElementById("game-card");
 const historyListEl = document.getElementById("history-list");
+const probTableEl = document.getElementById("prob-table");
 const coinsEl = document.getElementById("coins");
 const levelEl = document.getElementById("level");
-const xpFillEl = document.getElementById("xp-fill");
-const xpTextEl = document.getElementById("xp-text");
-const probTableEl = document.getElementById("prob-table");
-const upgradeBackdrop = document.getElementById("upgrade-backdrop");
-const upgradeOptions = document.querySelectorAll(".upgrade-option");
+const xpLabelEl = document.getElementById("xp-label");
+const xpBarInnerEl = document.getElementById("xp-bar-inner");
+const xpBonusLabelEl = document.getElementById("xp-bonus-label");
+const shopBtn = document.getElementById("shop-btn");
+const shopBackdrop = document.getElementById("shop-backdrop");
+const shopClose = document.getElementById("shop-close");
+const shopItems = document.querySelectorAll(".shop-item");
 
-let totalRolls = 0;
+/* Derived best weight */
 let bestWeight = 0;
+if (bestRarityName && bestRarityName !== "None") {
+  const tier = getTierByLabel(bestRarityName);
+  if (tier) bestWeight = tier.weight;
+}
 
-/* UI updates */
-function updateCurrencyUI() {
+/* Helpers */
+function updateCoinsUI() {
   coinsEl.textContent = coins;
+}
+function updateLevelUI() {
   levelEl.textContent = level;
-  const need = xpNeededForLevel(level);
-  xpTextEl.textContent = `${xp} / ${need}`;
-  xpFillEl.style.width = `${Math.min(100, (xp / need) * 100)}%`;
+  const needed = xpNeededForLevel(level);
+  const pct = Math.min(100, (xp / needed) * 100);
+  xpBarInnerEl.style.width = pct + "%";
+  xpLabelEl.textContent = `XP: ${xp} / ${needed}`;
+}
+function updateXpBonusUI() {
+  if (xpBoostLevel > 0) {
+    xpBonusLabelEl.textContent = `XP Boost x${1 + 0.5 * xpBoostLevel}`;
+  } else {
+    xpBonusLabelEl.textContent = "No XP bonus";
+  }
+}
+function saveShopUpgrades() {
+  shopUpgrades = {
+    xpBoost: xpBoostLevel,
+    luckBoost: luckBoostLevel,
+    coinBoost: coinBoostLevel,
+    particleBoost: particleBoostLevel,
+    cosmeticAura: cosmeticAuraOwned
+  };
 }
 function updateProbTable() {
   probTableEl.innerHTML = "";
-  const totalChance = rarities.reduce((sum, r) => sum + r.baseChance, 0);
-  rarities.forEach(r => {
-    if (r.baseChance <= 0) return;
+  const adjusted = rarityTiers.map(t => {
+    let chance = t.chance;
+    if (luckBoostLevel > 0 && t.weight >= 3 && t.id !== "hidden") {
+      chance *= (1 + 0.15 * luckBoostLevel);
+    }
+    if (t.id === "hidden" && hiddenUnlocked) chance = 0;
+    return { ...t, chance };
+  });
+  const totalChance = adjusted.reduce((sum, t) => sum + t.chance, 0);
+  adjusted.forEach(t => {
+    if (t.chance <= 0) return;
     const row = document.createElement("div");
     row.className = "prob-row";
     const dot = document.createElement("span");
-    dot.className = "rarity-dot " + r.dotClass;
+    dot.className = "rarity-dot " + t.dotClass;
     const label = document.createElement("span");
-    label.className = "prob-label " + r.className;
-    label.textContent = r.rarityLabel;
+    label.className = "prob-label " + t.className;
+    label.textContent = t.label;
     const value = document.createElement("span");
     value.className = "prob-value";
-    const pct = (r.baseChance / totalChance) * 100;
-    value.textContent = `${pct.toFixed(4)}%`;
+    const pct = (t.chance / totalChance) * 100;
+    value.textContent = `${pct.toFixed(2)}%`;
     row.appendChild(dot);
     row.appendChild(label);
     row.appendChild(value);
     probTableEl.appendChild(row);
   });
 }
-
-/* Save */
-function saveState() {
-  localStorage.setItem("hiddenAuraUnlocked", hiddenUnlocked ? "true" : "false");
-  localStorage.setItem("coins", coins.toString());
-  localStorage.setItem("xp", xp.toString());
-  localStorage.setItem("level", level.toString());
-  localStorage.setItem("betterOddsLevel", betterOddsLevel.toString());
-  localStorage.setItem("moreCoinsLevel", moreCoinsLevel.toString());
-  localStorage.setItem("moreXPLevel", moreXPLevel.toString());
-}
-
-/* RNG */
-function pickRarity() {
-  // Apply betterOdds: boost Rare+ baseChance
-  const adjusted = rarities.map(r => {
-    let chance = r.baseChance;
-    if (betterOddsLevel > 0 && r.weight >= 3) {
-      chance *= (1 + 0.25 * betterOddsLevel);
+function pickTier() {
+  const adjusted = rarityTiers.map(t => {
+    let chance = t.chance;
+    if (luckBoostLevel > 0 && t.weight >= 3 && t.id !== "hidden") {
+      chance *= (1 + 0.15 * luckBoostLevel);
     }
-    if (r.id === "hidden" && hiddenUnlocked) chance = 0;
-    return { ...r, chance };
+    if (t.id === "hidden" && hiddenUnlocked) chance = 0;
+    return { ...t, chance };
   });
-  const totalChance = adjusted.reduce((sum, r) => sum + r.chance, 0);
+  const totalChance = adjusted.reduce((sum, t) => sum + t.chance, 0);
   let roll = Math.random() * totalChance;
-  for (const r of adjusted) {
-    if (roll <= r.chance) return r;
-    roll -= r.chance;
+  for (const t of adjusted) {
+    if (roll <= t.chance) return t;
+    roll -= t.chance;
   }
   return adjusted[0];
 }
-function pickAuraName(rarity) {
-  const list = rarity.auras;
-  return list[Math.floor(Math.random() * list.length)];
+function pickAuraFromTier(tier) {
+  const list = tier.auras;
+  const name = list[Math.floor(Math.random() * list.length)];
+  return name;
 }
 function formatTime(date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
-function updateBest(rarity) {
-  if (rarity.weight > bestWeight) {
-    bestWeight = rarity.weight;
-    bestRarityEl.textContent = rarity.rarityLabel;
-    bestRarityEl.className = "stat-value " + rarity.className;
+function updateBest(tier) {
+  if (tier.weight > bestWeight) {
+    bestWeight = tier.weight;
+    bestRarityName = tier.label;
+    bestRarityEl.textContent = tier.label;
+    bestRarityEl.className = "stat-value " + tier.className;
   }
 }
-function addToHistory(rarity, auraName, time) {
+function addToHistory(auraName, tier, time) {
+  const entry = { name: auraName, rarity: tier.label, time };
+  historyArray.unshift(entry);
+
   const item = document.createElement("div");
   item.className = "history-item";
   const left = document.createElement("div");
   left.className = "history-left";
   const dot = document.createElement("span");
-  dot.className = "rarity-dot " + rarity.dotClass;
+  dot.className = "rarity-dot " + tier.dotClass;
   const name = document.createElement("span");
-  name.className = "history-name " + rarity.className;
+  name.className = "history-name " + tier.className;
   name.textContent = auraName;
   left.appendChild(dot);
   left.appendChild(name);
   const right = document.createElement("div");
   const raritySpan = document.createElement("span");
-  raritySpan.className = "history-rarity " + rarity.className;
-  raritySpan.textContent = rarity.rarityLabel + " • ";
+  raritySpan.className = "history-rarity " + tier.className;
+  raritySpan.textContent = tier.label + " • ";
   const timeSpan = document.createElement("span");
   timeSpan.className = "history-time";
   timeSpan.textContent = time;
@@ -740,60 +971,64 @@ function addToHistory(rarity, auraName, time) {
   historyListEl.insertBefore(item, historyListEl.firstChild);
 }
 
-/* Rewards */
-function getRewards(rarity) {
-  // base rewards
-  let baseCoins = 1;
-  let baseXP = 5;
-  if (rarity.weight === 1) { baseCoins = 1; baseXP = 5; }
-  else if (rarity.weight === 2) { baseCoins = 2; baseXP = 8; }
-  else if (rarity.weight === 3) { baseCoins = 4; baseXP = 12; }
-  else if (rarity.weight === 4) { baseCoins = 8; baseXP = 18; }
-  else if (rarity.weight === 5) { baseCoins = 15; baseXP = 25; }
-  else if (rarity.weight === 6) { baseCoins = 30; baseXP = 35; }
-  else if (rarity.weight === 7) { baseCoins = 60; baseXP = 50; }
-  else if (rarity.weight === 8) { baseCoins = 120; baseXP = 70; }
-  else if (rarity.id === "hidden") { baseCoins = 500; baseXP = 150; }
-
-  baseCoins *= (1 + 0.3 * moreCoinsLevel);
-  baseXP *= (1 + 0.3 * moreXPLevel);
-
-  return {
-    coins: Math.round(baseCoins),
-    xp: Math.round(baseXP)
-  };
+/* Shop logic */
+function openShop() {
+  shopBackdrop.style.display = "flex";
 }
+function closeShop() {
+  shopBackdrop.style.display = "none";
+}
+shopBtn.addEventListener("click", openShop);
+shopClose.addEventListener("click", closeShop);
+shopBackdrop.addEventListener("click", (e) => {
+  if (e.target === shopBackdrop) closeShop();
+});
+shopItems.forEach(item => {
+  item.addEventListener("click", async () => {
+    const type = item.getAttribute("data-upgrade");
+    let cost = 0;
+    if (type === "xpBoost") cost = 150;
+    if (type === "luckBoost") cost = 200;
+    if (type === "coinBoost") cost = 120;
+    if (type === "particleBoost") cost = 90;
+    if (type === "cosmeticAura") cost = 250;
 
-/* XP + Level */
-function gainXP(amount) {
-  xp += amount;
-  let need = xpNeededForLevel(level);
-  while (xp >= need) {
-    xp -= need;
-    level++;
-    openUpgradeModal();
-    need = xpNeededForLevel(level);
-  }
-  updateCurrencyUI();
-  saveState();
-}
+    if (coins < cost) {
+      currentExtraEl.textContent = "Not enough coins.";
+      return;
+    }
 
-/* Upgrade modal */
-function openUpgradeModal() {
-  upgradeBackdrop.style.display = "flex";
-}
-function closeUpgradeModal() {
-  upgradeBackdrop.style.display = "none";
-}
-upgradeOptions.forEach(opt => {
-  opt.addEventListener("click", () => {
-    const type = opt.getAttribute("data-upgrade");
-    if (type === "betterOdds") betterOddsLevel++;
-    if (type === "moreCoins") moreCoinsLevel++;
-    if (type === "moreXP") moreXPLevel++;
-    saveState();
+    coins -= cost;
+
+    if (type === "xpBoost") {
+      xpBoostLevel++;
+      currentExtraEl.textContent = "XP Booster upgraded to level " + xpBoostLevel + ".";
+    }
+    if (type === "luckBoost") {
+      luckBoostLevel++;
+      currentExtraEl.textContent = "Luck Charm upgraded to level " + luckBoostLevel + ".";
+    }
+    if (type === "coinBoost") {
+      coinBoostLevel++;
+      currentExtraEl.textContent = "Coin Magnet upgraded to level " + coinBoostLevel + ".";
+    }
+    if (type === "particleBoost") {
+      particleBoostLevel++;
+      currentExtraEl.textContent = "Particle Storm upgraded to level " + particleBoostLevel + ".";
+    }
+    if (type === "cosmeticAura") {
+      cosmeticAuraOwned = true;
+      currentExtraEl.textContent = "Cosmic Trail unlocked.";
+    }
+
+    saveShopUpgrades();
+    updateCoinsUI();
+    updateXpBonusUI();
     updateProbTable();
-    closeUpgradeModal();
+
+    player.coins = coins;
+    player.shop_upgrades = shopUpgrades;
+    await savePlayer(player);
   });
 });
 
@@ -811,13 +1046,13 @@ function animateRoll(callback) {
   let interval = 40;
   let count = 0;
   const tempInterval = setInterval(() => {
-    const tempRarity = pickRarity();
-    const tempName = pickAuraName(tempRarity);
-    currentNameEl.textContent = tempName;
-    currentNameEl.className = "current-name " + tempRarity.className;
-    currentRarityLabelEl.textContent = tempRarity.rarityLabel;
-    currentRarityLabelEl.className = tempRarity.className;
-    currentDotEl.className = "rarity-dot " + tempRarity.dotClass;
+    const tempTier = pickTier();
+    const tempAura = pickAuraFromTier(tempTier);
+    currentNameEl.textContent = tempAura;
+    currentNameEl.className = "current-name " + tempTier.className;
+    currentRarityLabelEl.textContent = tempTier.label;
+    currentRarityLabelEl.className = tempTier.className;
+    currentDotEl.className = "rarity-dot " + tempTier.dotClass;
     currentExtraEl.textContent = "Rolling...";
     count++;
     if (count >= ticks) {
@@ -828,12 +1063,12 @@ function animateRoll(callback) {
 }
 
 /* Main roll */
-rollBtn.addEventListener("click", () => {
+rollBtn.addEventListener("click", async () => {
   currentNameEl.classList.remove("spin", "glow");
   gameCard.classList.remove("shake");
-  animateRoll(() => {
-    const rarity = pickRarity();
-    const auraName = pickAuraName(rarity);
+  animateRoll(async () => {
+    const tier = pickTier();
+    const auraName = pickAuraFromTier(tier);
     const now = new Date();
     const timeStr = formatTime(now);
 
@@ -842,50 +1077,56 @@ rollBtn.addEventListener("click", () => {
     lastRollTimeEl.textContent = timeStr;
 
     currentNameEl.textContent = auraName;
-    currentNameEl.className = "current-name " + rarity.className + " spin glow";
-    currentRarityLabelEl.textContent = rarity.rarityLabel;
-    currentRarityLabelEl.className = rarity.className;
-    currentDotEl.className = "rarity-dot " + rarity.dotClass;
+    currentNameEl.className = "current-name " + tier.className + " spin glow";
+    currentRarityLabelEl.textContent = tier.label;
+    currentRarityLabelEl.className = tier.className;
+    currentDotEl.className = "rarity-dot " + tier.dotClass;
 
-    const rewards = getRewards(rarity);
-    coins += rewards.coins;
-    gainXP(rewards.xp);
+    let baseCoins = getCoinReward(tier.weight, tier.id);
+    let coinMult = 1 + 0.5 * coinBoostLevel;
+    let gainedCoins = Math.floor(baseCoins * coinMult);
+    coins += gainedCoins;
 
-    let message = `+${rewards.coins} coins, +${rewards.xp} XP. `;
-    if (rarity.id === "hidden") {
+    let baseXp = getXpReward(tier.id);
+    let xpMult = 1 + 0.5 * xpBoostLevel;
+    let gainedXp = Math.floor(baseXp * xpMult);
+    xp += gainedXp;
+
+    let message = `+${gainedCoins} coins, +${gainedXp} XP. `;
+
+    if (tier.id === "hidden") {
       hiddenUnlocked = true;
-      localStorage.setItem("hiddenAuraUnlocked", "true");
-      const hidden = rarities.find(r => r.id === "hidden");
-      if (hidden) hidden.baseChance = 0;
+      const hiddenTier = rarityTiers.find(t => t.id === "hidden");
+      if (hiddenTier) hiddenTier.chance = 0;
       message += "Reality fractures… You found the impossible.";
       currentExtraEl.textContent = message;
       spawnRainbowBurst(140);
       sCosmic.currentTime = 0;
       sCosmic.play();
       gameCard.classList.add("shake");
-    } else if (rarity.weight >= 8) {
+    } else if (tier.weight >= 8) {
       message += "Beyond comprehension. An Otherworldly aura.";
       currentExtraEl.textContent = message;
-      spawnParticles(rarity.color, 70);
+      spawnParticles(tier.color, 70);
       sRare.currentTime = 0;
       sRare.play();
-    } else if (rarity.weight >= 7) {
+    } else if (tier.weight >= 7) {
       message += "Divine luck. You hit a Godly aura.";
       currentExtraEl.textContent = message;
-      spawnParticles(rarity.color, 60);
+      spawnParticles(tier.color, 60);
       sRare.currentTime = 0;
       sRare.play();
-    } else if (rarity.weight >= 4) {
-      message += "Insane roll! You hit a " + rarity.rarityLabel + " aura.";
+    } else if (tier.weight >= 4) {
+      message += "Insane roll! You hit a " + tier.label + " aura.";
       currentExtraEl.textContent = message;
-      spawnParticles(rarity.color, 50);
+      spawnParticles(tier.color, 50);
       sRare.currentTime = 0;
       sRare.play();
-    } else if (rarity.weight === 3) {
+    } else if (tier.weight === 3) {
       message += "Nice! A solid rare aura.";
       currentExtraEl.textContent = message;
-      spawnParticles(rarity.color, 30);
-    } else if (rarity.weight === 2) {
+      spawnParticles(tier.color, 30);
+    } else if (tier.weight === 2) {
       message += "Not bad. A small upgrade.";
       currentExtraEl.textContent = message;
     } else {
@@ -893,18 +1134,89 @@ rollBtn.addEventListener("click", () => {
       currentExtraEl.textContent = message;
     }
 
-    updateBest(rarity);
-    addToHistory(rarity, auraName, timeStr);
-    saveState();
-    updateCurrencyUI();
+    /* Level up check */
+    let leveledUp = false;
+    while (xp >= xpNeededForLevel(level)) {
+      xp -= xpNeededForLevel(level);
+      level++;
+      leveledUp = true;
+    }
+    if (leveledUp) {
+      spawnRainbowBurst(100);
+      currentExtraEl.textContent += ` Level up! You reached level ${level}.`;
+    }
+
+    updateBest(tier);
+    addToHistory(auraName, tier, timeStr);
+    updateCoinsUI();
+    updateLevelUI();
+    updateXpBonusUI();
+    updateProbTable();
+
+    /* Save to Supabase */
+    player.total_rolls = totalRolls;
+    player.best_rarity = bestRarityName;
+    player.hidden_unlocked = hiddenUnlocked;
+    player.history = historyArray;
+    player.xp = xp;
+    player.level = level;
+    player.coins = coins;
+    saveShopUpgrades();
+    player.shop_upgrades = shopUpgrades;
+    await savePlayer(player);
+
     rollBtn.disabled = false;
     rollBtn.textContent = "Roll";
   });
 });
 
-/* Init */
-updateCurrencyUI();
+/* ---------- Initial UI from loaded player ---------- */
+totalRollsEl.textContent = totalRolls;
+updateCoinsUI();
+updateLevelUI();
+updateXpBonusUI();
 updateProbTable();
+
+/* Best rarity label */
+if (bestRarityName && bestRarityName !== "None") {
+  const tier = getTierByLabel(bestRarityName);
+  if (tier) {
+    bestRarityEl.textContent = tier.label;
+    bestRarityEl.className = "stat-value " + tier.className;
+  } else {
+    bestRarityEl.textContent = "None";
+  }
+} else {
+  bestRarityEl.textContent = "None";
+}
+
+/* Render history from Supabase */
+historyArray.forEach(entry => {
+  const tier = getTierByLabel(entry.rarity) || rarityTiers[0];
+  const item = document.createElement("div");
+  item.className = "history-item";
+  const left = document.createElement("div");
+  left.className = "history-left";
+  const dot = document.createElement("span");
+  dot.className = "rarity-dot " + tier.dotClass;
+  const name = document.createElement("span");
+  name.className = "history-name " + tier.className;
+  name.textContent = entry.name;
+  left.appendChild(dot);
+  left.appendChild(name);
+  const right = document.createElement("div");
+  const raritySpan = document.createElement("span");
+  raritySpan.className = "history-rarity " + tier.className;
+  raritySpan.textContent = tier.label + " • ";
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "history-time";
+  timeSpan.textContent = entry.time;
+  right.appendChild(raritySpan);
+  right.appendChild(timeSpan);
+  item.appendChild(left);
+  item.appendChild(right);
+  historyListEl.appendChild(item);
+});
 </script>
 </body>
 </html>
