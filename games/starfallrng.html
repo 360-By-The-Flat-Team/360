@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Dan's RNG</title>
+<title>Starfall RNG</title>
 <style>
 * {
   box-sizing: border-box;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-
 body {
   margin: 0;
   min-height: 100vh;
@@ -19,16 +19,12 @@ body {
   color: #f9fafb;
   overflow: hidden;
 }
-
-/* Particle canvas */
 #particles {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
 }
-
-/* Main card */
 .game {
   position: relative;
   z-index: 1;
@@ -36,60 +32,99 @@ body {
               linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
   border-radius: 20px;
   padding: 24px 26px;
-  width: 460px;
+  width: 520px;
   max-width: 95vw;
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.8),
     0 0 0 1px rgba(148, 163, 184, 0.25);
   backdrop-filter: blur(18px);
 }
-
 .title {
   font-size: 1.6rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.06em;
 }
-
 .subtitle {
   font-size: 0.9rem;
   text-align: center;
   color: #9ca3af;
   margin-top: 4px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
-
-/* Stats */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.currency {
+  display: flex;
+  gap: 12px;
+}
+.currency-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.currency-label {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+.currency-value {
+  font-weight: 600;
+}
 .stats {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
   color: #d1d5db;
 }
-
 .stat-label {
   color: #9ca3af;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-
 .stat-value {
   font-weight: 600;
   margin-top: 3px;
 }
-
-/* Current roll */
+.xp-bar-container {
+  margin-bottom: 10px;
+}
+.xp-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+.xp-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+}
+.xp-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #38bdf8, #a855f7);
+  transition: width 0.25s ease-out;
+}
 .current-roll {
-  margin: 18px 0;
+  margin: 12px 0;
   padding: 16px 18px;
   border-radius: 16px;
   background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
   border: 1px solid rgba(148, 163, 184, 0.5);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
 }
-
 .current-label {
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -97,18 +132,15 @@ body {
   color: #9ca3af;
   margin-bottom: 6px;
 }
-
 .current-name {
   font-size: 1.5rem;
   font-weight: 700;
 }
-
 .current-extra {
   font-size: 0.85rem;
   color: #e5e7eb;
   margin-top: 4px;
 }
-
 .rarity-chip {
   display: inline-flex;
   align-items: center;
@@ -120,14 +152,11 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.6);
   margin-top: 8px;
 }
-
 .rarity-dot {
   width: 8px;
   height: 8px;
   border-radius: 999px;
 }
-
-/* Rarity colors */
 .rarity-common   { color: #9ca3af; }
 .rarity-uncommon { color: #22c55e; }
 .rarity-rare     { color: #38bdf8; }
@@ -137,7 +166,6 @@ body {
 .rarity-godly    { color: #ff6bff; }
 .rarity-other    { color: #00f0ff; }
 .rarity-hidden   { color: #ffffff; }
-
 .dot-common   { background: #9ca3af; }
 .dot-uncommon { background: #22c55e; }
 .dot-rare     { background: #38bdf8; }
@@ -147,8 +175,6 @@ body {
 .dot-godly    { background: #ff6bff; }
 .dot-other    { background: #00f0ff; }
 .dot-hidden   { background: #ffffff; }
-
-/* Roll button */
 .roll-btn {
   width: 100%;
   padding: 13px 16px;
@@ -164,33 +190,27 @@ body {
   box-shadow: 0 14px 30px rgba(22, 163, 74, 0.55);
   transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
 }
-
 .roll-btn:hover {
   filter: brightness(1.06);
   box-shadow: 0 18px 40px rgba(22, 163, 74, 0.7);
 }
-
 .roll-btn:active {
   transform: translateY(1px) scale(0.98);
   box-shadow: 0 10px 24px rgba(22, 163, 74, 0.5);
 }
-
 .roll-btn:disabled {
   opacity: 0.6;
   cursor: default;
   transform: none;
   box-shadow: none;
 }
-
-/* History */
 .history {
-  margin-top: 18px;
+  margin-top: 14px;
   max-height: 150px;
   overflow-y: auto;
   padding-right: 4px;
   font-size: 0.85rem;
 }
-
 .history-title {
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -198,7 +218,6 @@ body {
   color: #9ca3af;
   margin-bottom: 6px;
 }
-
 .history-item {
   display: flex;
   justify-content: space-between;
@@ -206,82 +225,64 @@ body {
   padding: 4px 0;
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
-
 .history-item:last-child {
   border-bottom: none;
 }
-
 .history-left {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 .history-time {
   color: #6b7280;
   font-size: 0.75rem;
 }
-
 .history-name {
   font-weight: 500;
 }
-
 .history-rarity {
   font-size: 0.8rem;
 }
-
-/* Probabilities */
 .prob-table {
-  margin-top: 14px;
+  margin-top: 10px;
   font-size: 0.8rem;
   color: #9ca3af;
   border-top: 1px dashed rgba(148, 163, 184, 0.4);
-  padding-top: 10px;
+  padding-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
 }
-
 .prob-row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 .prob-label {
   min-width: 80px;
 }
-
 .prob-value {
   color: #e5e7eb;
 }
-
-/* Spin + glow */
 .spin {
   animation: spin 0.8s ease-out;
 }
-
 @keyframes spin {
   0% { transform: rotateX(0deg) scale(1); opacity: 0.2; }
   50% { transform: rotateX(360deg) scale(1.2); opacity: 1; }
   100% { transform: rotateX(720deg) scale(1); opacity: 1; }
 }
-
 .glow {
   animation: glowPulse 1.2s ease-out forwards;
 }
-
 @keyframes glowPulse {
   0% { text-shadow: 0 0 0px white; transform: scale(1); }
   50% { text-shadow: 0 0 25px white; transform: scale(1.12); }
   100% { text-shadow: 0 0 0px white; transform: scale(1); }
 }
-
-/* Screen shake for hidden aura */
 .shake {
   animation: shake 0.6s ease-in-out;
 }
-
 @keyframes shake {
   0% { transform: translate(0, 0); }
   20% { transform: translate(-8px, 6px); }
@@ -290,15 +291,118 @@ body {
   80% { transform: translate(6px, -4px); }
   100% { transform: translate(0, 0); }
 }
+
+/* Upgrade modal */
+.upgrade-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+.upgrade-modal {
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 16px;
+  padding: 18px 20px;
+  width: 360px;
+  max-width: 90vw;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(148, 163, 184, 0.4);
+}
+.upgrade-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.upgrade-subtitle {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+.upgrade-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.upgrade-option {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
+}
+.upgrade-option:hover {
+  background: rgba(30, 64, 175, 0.7);
+  box-shadow: 0 10px 24px rgba(30, 64, 175, 0.6);
+}
+.upgrade-option:active {
+  transform: translateY(1px) scale(0.99);
+}
+.upgrade-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.upgrade-desc {
+  font-size: 0.8rem;
+  color: #d1d5db;
+}
 </style>
 </head>
 <body>
 
 <canvas id="particles"></canvas>
 
+<div class="upgrade-modal-backdrop" id="upgrade-backdrop">
+  <div class="upgrade-modal">
+    <div class="upgrade-title">Upgrade Unlocked</div>
+    <div class="upgrade-subtitle">Choose one bonus to bend the odds in your favor.</div>
+    <div class="upgrade-options">
+      <div class="upgrade-option" data-upgrade="betterOdds">
+        <div class="upgrade-name">Better Odds</div>
+        <div class="upgrade-desc">Increase chance of Rare+ auras.</div>
+      </div>
+      <div class="upgrade-option" data-upgrade="moreCoins">
+        <div class="upgrade-name">Coin Surge</div>
+        <div class="upgrade-desc">Gain more coins per roll.</div>
+      </div>
+      <div class="upgrade-option" data-upgrade="moreXP">
+        <div class="upgrade-name">XP Boost</div>
+        <div class="upgrade-desc">Gain more XP per roll.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="game" id="game-card">
-  <div class="title">Dan's RNG</div>
-  <div class="subtitle">Reality fractures for only the luckiest.</div>
+  <div class="title">Starfall RNG</div>
+  <div class="subtitle">Roll, level up, and bend reality.</div>
+
+  <div class="top-bar">
+    <div class="currency">
+      <div class="currency-item">
+        <span class="currency-label">Coins</span>
+        <span class="currency-value" id="coins">0</span>
+      </div>
+      <div class="currency-item">
+        <span class="currency-label">Level</span>
+        <span class="currency-value" id="level">1</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="xp-bar-container">
+    <div class="xp-label-row">
+      <span>XP</span>
+      <span id="xp-text">0 / 100</span>
+    </div>
+    <div class="xp-bar">
+      <div class="xp-fill" id="xp-fill"></div>
+    </div>
+  </div>
 
   <div class="stats">
     <div>
@@ -332,34 +436,118 @@ body {
     <div id="history-list"></div>
   </div>
 
-  <div class="prob-table">
-    <div class="prob-row"><span class="rarity-dot dot-common"></span><span class="prob-label rarity-common">Common</span><span class="prob-value">80%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-uncommon"></span><span class="prob-label rarity-uncommon">Uncommon</span><span class="prob-value">15%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-rare"></span><span class="prob-label rarity-rare">Rare</span><span class="prob-value">4%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-epic"></span><span class="prob-label rarity-epic">Epic</span><span class="prob-value">0.8%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-legend"></span><span class="prob-label rarity-legend">Legendary</span><span class="prob-value">0.18%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-mythic"></span><span class="prob-label rarity-mythic">Mythic</span><span class="prob-value">0.02%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-godly"></span><span class="prob-label rarity-godly">Godly</span><span class="prob-value">0.005%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-other"></span><span class="prob-label rarity-other">Otherworldly</span><span class="prob-value">0.001%</span></div>
-    <div class="prob-row"><span class="rarity-dot dot-hidden"></span><span class="prob-label rarity-hidden">???</span><span class="prob-value">0.0001%</span></div>
+  <div class="prob-table" id="prob-table">
+    <!-- Filled dynamically from rarities -->
   </div>
 </div>
 
 <script>
-/* Hidden aura persistence */
+/* Persistence */
 let hiddenUnlocked = localStorage.getItem("hiddenAuraUnlocked") === "true";
+let coins = Number(localStorage.getItem("coins") || 0);
+let xp = Number(localStorage.getItem("xp") || 0);
+let level = Number(localStorage.getItem("level") || 1);
+let betterOddsLevel = Number(localStorage.getItem("betterOddsLevel") || 0);
+let moreCoinsLevel = Number(localStorage.getItem("moreCoinsLevel") || 0);
+let moreXPLevel = Number(localStorage.getItem("moreXPLevel") || 0);
 
-/* Rarities */
+/* Base XP per level */
+function xpNeededForLevel(lv) {
+  return 100 + (lv - 1) * 25;
+}
+
+/* Rarities with multiple auras each */
 const rarities = [
-  { id:"common", name:"Faded Glow", rarityLabel:"Common", chance:0.80, className:"rarity-common", dotClass:"dot-common", weight:1, color:"#9ca3af" },
-  { id:"uncommon", name:"Soft Radiance", rarityLabel:"Uncommon", chance:0.15, className:"rarity-uncommon", dotClass:"dot-uncommon", weight:2, color:"#22c55e" },
-  { id:"rare", name:"Crystal Pulse", rarityLabel:"Rare", chance:0.04, className:"rarity-rare", dotClass:"dot-rare", weight:3, color:"#38bdf8" },
-  { id:"epic", name:"Nebula Surge", rarityLabel:"Epic", chance:0.008, className:"rarity-epic", dotClass:"dot-epic", weight:4, color:"#a855f7" },
-  { id:"legendary", name:"Solar Flare", rarityLabel:"Legendary", chance:0.0018, className:"rarity-legend", dotClass:"dot-legend", weight:5, color:"#facc15" },
-  { id:"mythic", name:"Eternal Singularity", rarityLabel:"Mythic", chance:0.0002, className:"rarity-mythic", dotClass:"dot-mythic", weight:6, color:"#fb7185" },
-  { id:"godly", name:"Divine Ascension", rarityLabel:"Godly", chance:0.00005, className:"rarity-godly", dotClass:"dot-godly", weight:7, color:"#ff6bff" },
-  { id:"other", name:"Otherworldly Rift", rarityLabel:"Otherworldly", chance:0.00001, className:"rarity-other", dotClass:"dot-other", weight:8, color:"#00f0ff" },
-  { id:"hidden", name:"???", rarityLabel:"???", chance:hiddenUnlocked ? 0 : 0.000001, className:"rarity-hidden", dotClass:"dot-hidden", weight:999, color:"#ffffff" }
+  {
+    id:"common",
+    rarityLabel:"Common",
+    baseChance:0.80,
+    className:"rarity-common",
+    dotClass:"dot-common",
+    weight:1,
+    color:"#9ca3af",
+    auras:["Faded Glow","Dim Spark","Dusty Halo","Worn Shine"]
+  },
+  {
+    id:"uncommon",
+    rarityLabel:"Uncommon",
+    baseChance:0.15,
+    className:"rarity-uncommon",
+    dotClass:"dot-uncommon",
+    weight:2,
+    color:"#22c55e",
+    auras:["Soft Radiance","Fresh Gleam","Emerald Flicker"]
+  },
+  {
+    id:"rare",
+    rarityLabel:"Rare",
+    baseChance:0.04,
+    className:"rarity-rare",
+    dotClass:"dot-rare",
+    weight:3,
+    color:"#38bdf8",
+    auras:["Crystal Pulse","Azure Shard","Frozen Echo"]
+  },
+  {
+    id:"epic",
+    rarityLabel:"Epic",
+    baseChance:0.008,
+    className:"rarity-epic",
+    dotClass:"dot-epic",
+    weight:4,
+    color:"#a855f7",
+    auras:["Nebula Surge","Violet Storm","Starborn Veil"]
+  },
+  {
+    id:"legendary",
+    rarityLabel:"Legendary",
+    baseChance:0.0018,
+    className:"rarity-legend",
+    dotClass:"dot-legend",
+    weight:5,
+    color:"#facc15",
+    auras:["Solar Flare","Golden Eclipse","Crowned Horizon"]
+  },
+  {
+    id:"mythic",
+    rarityLabel:"Mythic",
+    baseChance:0.0002,
+    className:"rarity-mythic",
+    dotClass:"dot-mythic",
+    weight:6,
+    color:"#fb7185",
+    auras:["Eternal Singularity","Crimson Rift","Fatebreaker"]
+  },
+  {
+    id:"godly",
+    rarityLabel:"Godly",
+    baseChance:0.00005,
+    className:"rarity-godly",
+    dotClass:"dot-godly",
+    weight:7,
+    color:"#ff6bff",
+    auras:["Divine Ascension","Halo of Judgement","Celestial Crown"]
+  },
+  {
+    id:"other",
+    rarityLabel:"Otherworldly",
+    baseChance:0.00001,
+    className:"rarity-other",
+    dotClass:"dot-other",
+    weight:8,
+    color:"#00f0ff",
+    auras:["Otherworldly Rift","Voidwalker","Echo of Elsewhere"]
+  },
+  {
+    id:"hidden",
+    rarityLabel:"???",
+    baseChance:hiddenUnlocked ? 0 : 0.001, // 0.1% if not unlocked
+    className:"rarity-hidden",
+    dotClass:"dot-hidden",
+    weight:999,
+    color:"#ffffff",
+    auras:["???"]
+  }
 ];
 
 /* Sounds */
@@ -371,7 +559,6 @@ const sCosmic = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-distorted
 /* Particles */
 const canvas = document.getElementById("particles");
 const ctx = canvas.getContext("2d");
-
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -380,7 +567,6 @@ resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 let particles = [];
-
 class Particle {
   constructor(x, y, color) {
     this.x = x;
@@ -405,7 +591,6 @@ class Particle {
     ctx.globalAlpha = 1;
   }
 }
-
 function spawnParticles(color, count = 40) {
   const rect = document.querySelector(".game").getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
@@ -414,7 +599,6 @@ function spawnParticles(color, count = 40) {
     particles.push(new Particle(cx, cy, color));
   }
 }
-
 function spawnRainbowBurst(count = 80) {
   const rect = document.querySelector(".game").getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
@@ -425,7 +609,6 @@ function spawnRainbowBurst(count = 80) {
     particles.push(new Particle(cx, cy, color));
   }
 }
-
 function animateParticles() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   particles = particles.filter(p => p.alpha > 0);
@@ -439,33 +622,91 @@ const rollBtn = document.getElementById("roll-btn");
 const totalRollsEl = document.getElementById("total-rolls");
 const bestRarityEl = document.getElementById("best-rarity");
 const lastRollTimeEl = document.getElementById("last-roll-time");
-
 const currentNameEl = document.getElementById("current-name");
 const currentExtraEl = document.getElementById("current-extra");
 const currentRarityLabelEl = document.getElementById("current-rarity-label");
 const currentDotEl = document.getElementById("current-dot");
 const gameCard = document.getElementById("game-card");
-
 const historyListEl = document.getElementById("history-list");
+const coinsEl = document.getElementById("coins");
+const levelEl = document.getElementById("level");
+const xpFillEl = document.getElementById("xp-fill");
+const xpTextEl = document.getElementById("xp-text");
+const probTableEl = document.getElementById("prob-table");
+const upgradeBackdrop = document.getElementById("upgrade-backdrop");
+const upgradeOptions = document.querySelectorAll(".upgrade-option");
 
 let totalRolls = 0;
 let bestWeight = 0;
 
-/* Helpers */
-function pickRarity() {
-  const totalChance = rarities.reduce((sum, r) => sum + r.chance, 0);
-  let r = Math.random() * totalChance;
-  for (const rarity of rarities) {
-    if (r <= rarity.chance) return rarity;
-    r -= rarity.chance;
-  }
-  return rarities[0];
+/* UI updates */
+function updateCurrencyUI() {
+  coinsEl.textContent = coins;
+  levelEl.textContent = level;
+  const need = xpNeededForLevel(level);
+  xpTextEl.textContent = `${xp} / ${need}`;
+  xpFillEl.style.width = `${Math.min(100, (xp / need) * 100)}%`;
+}
+function updateProbTable() {
+  probTableEl.innerHTML = "";
+  const totalChance = rarities.reduce((sum, r) => sum + r.baseChance, 0);
+  rarities.forEach(r => {
+    if (r.baseChance <= 0) return;
+    const row = document.createElement("div");
+    row.className = "prob-row";
+    const dot = document.createElement("span");
+    dot.className = "rarity-dot " + r.dotClass;
+    const label = document.createElement("span");
+    label.className = "prob-label " + r.className;
+    label.textContent = r.rarityLabel;
+    const value = document.createElement("span");
+    value.className = "prob-value";
+    const pct = (r.baseChance / totalChance) * 100;
+    value.textContent = `${pct.toFixed(4)}%`;
+    row.appendChild(dot);
+    row.appendChild(label);
+    row.appendChild(value);
+    probTableEl.appendChild(row);
+  });
 }
 
+/* Save */
+function saveState() {
+  localStorage.setItem("hiddenAuraUnlocked", hiddenUnlocked ? "true" : "false");
+  localStorage.setItem("coins", coins.toString());
+  localStorage.setItem("xp", xp.toString());
+  localStorage.setItem("level", level.toString());
+  localStorage.setItem("betterOddsLevel", betterOddsLevel.toString());
+  localStorage.setItem("moreCoinsLevel", moreCoinsLevel.toString());
+  localStorage.setItem("moreXPLevel", moreXPLevel.toString());
+}
+
+/* RNG */
+function pickRarity() {
+  // Apply betterOdds: boost Rare+ baseChance
+  const adjusted = rarities.map(r => {
+    let chance = r.baseChance;
+    if (betterOddsLevel > 0 && r.weight >= 3) {
+      chance *= (1 + 0.25 * betterOddsLevel);
+    }
+    if (r.id === "hidden" && hiddenUnlocked) chance = 0;
+    return { ...r, chance };
+  });
+  const totalChance = adjusted.reduce((sum, r) => sum + r.chance, 0);
+  let roll = Math.random() * totalChance;
+  for (const r of adjusted) {
+    if (roll <= r.chance) return r;
+    roll -= r.chance;
+  }
+  return adjusted[0];
+}
+function pickAuraName(rarity) {
+  const list = rarity.auras;
+  return list[Math.floor(Math.random() * list.length)];
+}
 function formatTime(date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
-
 function updateBest(rarity) {
   if (rarity.weight > bestWeight) {
     bestWeight = rarity.weight;
@@ -473,41 +714,88 @@ function updateBest(rarity) {
     bestRarityEl.className = "stat-value " + rarity.className;
   }
 }
-
-function addToHistory(rarity, time) {
+function addToHistory(rarity, auraName, time) {
   const item = document.createElement("div");
   item.className = "history-item";
-
   const left = document.createElement("div");
   left.className = "history-left";
-
   const dot = document.createElement("span");
   dot.className = "rarity-dot " + rarity.dotClass;
-
   const name = document.createElement("span");
   name.className = "history-name " + rarity.className;
-  name.textContent = rarity.name;
-
+  name.textContent = auraName;
   left.appendChild(dot);
   left.appendChild(name);
-
   const right = document.createElement("div");
   const raritySpan = document.createElement("span");
   raritySpan.className = "history-rarity " + rarity.className;
   raritySpan.textContent = rarity.rarityLabel + " • ";
-
   const timeSpan = document.createElement("span");
   timeSpan.className = "history-time";
   timeSpan.textContent = time;
-
   right.appendChild(raritySpan);
   right.appendChild(timeSpan);
-
   item.appendChild(left);
   item.appendChild(right);
-
   historyListEl.insertBefore(item, historyListEl.firstChild);
 }
+
+/* Rewards */
+function getRewards(rarity) {
+  // base rewards
+  let baseCoins = 1;
+  let baseXP = 5;
+  if (rarity.weight === 1) { baseCoins = 1; baseXP = 5; }
+  else if (rarity.weight === 2) { baseCoins = 2; baseXP = 8; }
+  else if (rarity.weight === 3) { baseCoins = 4; baseXP = 12; }
+  else if (rarity.weight === 4) { baseCoins = 8; baseXP = 18; }
+  else if (rarity.weight === 5) { baseCoins = 15; baseXP = 25; }
+  else if (rarity.weight === 6) { baseCoins = 30; baseXP = 35; }
+  else if (rarity.weight === 7) { baseCoins = 60; baseXP = 50; }
+  else if (rarity.weight === 8) { baseCoins = 120; baseXP = 70; }
+  else if (rarity.id === "hidden") { baseCoins = 500; baseXP = 150; }
+
+  baseCoins *= (1 + 0.3 * moreCoinsLevel);
+  baseXP *= (1 + 0.3 * moreXPLevel);
+
+  return {
+    coins: Math.round(baseCoins),
+    xp: Math.round(baseXP)
+  };
+}
+
+/* XP + Level */
+function gainXP(amount) {
+  xp += amount;
+  let need = xpNeededForLevel(level);
+  while (xp >= need) {
+    xp -= need;
+    level++;
+    openUpgradeModal();
+    need = xpNeededForLevel(level);
+  }
+  updateCurrencyUI();
+  saveState();
+}
+
+/* Upgrade modal */
+function openUpgradeModal() {
+  upgradeBackdrop.style.display = "flex";
+}
+function closeUpgradeModal() {
+  upgradeBackdrop.style.display = "none";
+}
+upgradeOptions.forEach(opt => {
+  opt.addEventListener("click", () => {
+    const type = opt.getAttribute("data-upgrade");
+    if (type === "betterOdds") betterOddsLevel++;
+    if (type === "moreCoins") moreCoinsLevel++;
+    if (type === "moreXP") moreXPLevel++;
+    saveState();
+    updateProbTable();
+    closeUpgradeModal();
+  });
+});
 
 /* Roll animation */
 function animateRoll(callback) {
@@ -515,25 +803,22 @@ function animateRoll(callback) {
   rollBtn.textContent = "Rolling...";
   sClick.currentTime = 0;
   sClick.play();
-
   setTimeout(() => {
     sRoll.currentTime = 0;
     sRoll.play();
   }, 120);
-
   let ticks = 18;
   let interval = 40;
   let count = 0;
-
   const tempInterval = setInterval(() => {
-    const tempRarity = rarities[Math.floor(Math.random() * rarities.length)];
-    currentNameEl.textContent = tempRarity.name;
+    const tempRarity = pickRarity();
+    const tempName = pickAuraName(tempRarity);
+    currentNameEl.textContent = tempName;
     currentNameEl.className = "current-name " + tempRarity.className;
     currentRarityLabelEl.textContent = tempRarity.rarityLabel;
     currentRarityLabelEl.className = tempRarity.className;
     currentDotEl.className = "rarity-dot " + tempRarity.dotClass;
     currentExtraEl.textContent = "Rolling...";
-
     count++;
     if (count >= ticks) {
       clearInterval(tempInterval);
@@ -542,13 +827,13 @@ function animateRoll(callback) {
   }, interval);
 }
 
-/* Main roll handler */
+/* Main roll */
 rollBtn.addEventListener("click", () => {
   currentNameEl.classList.remove("spin", "glow");
   gameCard.classList.remove("shake");
-
   animateRoll(() => {
     const rarity = pickRarity();
+    const auraName = pickAuraName(rarity);
     const now = new Date();
     const timeStr = formatTime(now);
 
@@ -556,65 +841,70 @@ rollBtn.addEventListener("click", () => {
     totalRollsEl.textContent = totalRolls;
     lastRollTimeEl.textContent = timeStr;
 
-    currentNameEl.textContent = rarity.name;
+    currentNameEl.textContent = auraName;
     currentNameEl.className = "current-name " + rarity.className + " spin glow";
     currentRarityLabelEl.textContent = rarity.rarityLabel;
     currentRarityLabelEl.className = rarity.className;
     currentDotEl.className = "rarity-dot " + rarity.dotClass;
 
-    let message = "";
+    const rewards = getRewards(rarity);
+    coins += rewards.coins;
+    gainXP(rewards.xp);
+
+    let message = `+${rewards.coins} coins, +${rewards.xp} XP. `;
     if (rarity.id === "hidden") {
       hiddenUnlocked = true;
       localStorage.setItem("hiddenAuraUnlocked", "true");
-      // Set its chance to 0 from now on
       const hidden = rarities.find(r => r.id === "hidden");
-      if (hidden) hidden.chance = 0;
-
-      message = "Reality fractures… You found the impossible.";
+      if (hidden) hidden.baseChance = 0;
+      message += "Reality fractures… You found the impossible.";
       currentExtraEl.textContent = message;
-
-      // Cosmic reveal: rainbow burst + shake + distortion
-      spawnRainbowBurst(120);
+      spawnRainbowBurst(140);
       sCosmic.currentTime = 0;
       sCosmic.play();
       gameCard.classList.add("shake");
     } else if (rarity.weight >= 8) {
-      message = "Beyond comprehension. An Otherworldly aura.";
+      message += "Beyond comprehension. An Otherworldly aura.";
       currentExtraEl.textContent = message;
       spawnParticles(rarity.color, 70);
       sRare.currentTime = 0;
       sRare.play();
     } else if (rarity.weight >= 7) {
-      message = "Divine luck. You hit a Godly aura.";
+      message += "Divine luck. You hit a Godly aura.";
       currentExtraEl.textContent = message;
       spawnParticles(rarity.color, 60);
       sRare.currentTime = 0;
       sRare.play();
     } else if (rarity.weight >= 4) {
-      message = "Insane roll! You hit a " + rarity.rarityLabel + " aura.";
+      message += "Insane roll! You hit a " + rarity.rarityLabel + " aura.";
       currentExtraEl.textContent = message;
       spawnParticles(rarity.color, 50);
       sRare.currentTime = 0;
       sRare.play();
     } else if (rarity.weight === 3) {
-      message = "Nice! A solid rare aura.";
+      message += "Nice! A solid rare aura.";
       currentExtraEl.textContent = message;
       spawnParticles(rarity.color, 30);
     } else if (rarity.weight === 2) {
-      message = "Not bad. A small upgrade.";
+      message += "Not bad. A small upgrade.";
       currentExtraEl.textContent = message;
     } else {
-      message = "Just a common… keep rolling.";
+      message += "Just a common… keep rolling.";
       currentExtraEl.textContent = message;
     }
 
     updateBest(rarity);
-    addToHistory(rarity, timeStr);
-
+    addToHistory(rarity, auraName, timeStr);
+    saveState();
+    updateCurrencyUI();
     rollBtn.disabled = false;
     rollBtn.textContent = "Roll";
   });
 });
+
+/* Init */
+updateCurrencyUI();
+updateProbTable();
 </script>
 </body>
 </html>
