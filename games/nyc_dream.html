@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYC DREAM — The American Hustle</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --yellow: #FFD100;
+  --red: #E8001A;
+  --dark: #0A0A0A;
+  --mid: #1A1A1A;
+  --panel: #141414;
+  --border: #2A2A2A;
+  --text: #E8E8E8;
+  --muted: #666;
+  --green: #00C853;
+  --orange: #FF6B00;
+  --blue: #0066FF;
+  --purple: #8B00FF;
+  --subway-blue: #0039A6;
+  --subway-orange: #FF6319;
+  --subway-green: #00933C;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ── SCREENS ── */
+#screen-intro, #screen-game, #screen-event {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+#screen-intro.active, #screen-game.active, #screen-event.active { display: flex; }
+
+/* ── INTRO ── */
+#screen-intro {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark);
+  overflow: hidden;
+}
+
+.skyline-bg {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 55vh;
+  background: 
+    linear-gradient(to top, #0A0A0A 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400'%3E%3Crect x='0' y='200' width='40' height='200' fill='%23111'/%3E%3Crect x='50' y='150' width='60' height='250' fill='%23131313'/%3E%3Crect x='120' y='80' width='35' height='320' fill='%23111'/%3E%3Crect x='160' y='160' width='50' height='240' fill='%23151515'/%3E%3Crect x='220' y='50' width='80' height='350' fill='%230E0E0E'/%3E%3Crect x='240' y='30' width='20' height='30' fill='%23111'/%3E%3Crect x='310' y='120' width='45' height='280' fill='%23121212'/%3E%3Crect x='365' y='90' width='30' height='310' fill='%23111'/%3E%3Crect x='400' y='180' width='55' height='220' fill='%23131313'/%3E%3Crect x='465' y='60' width='90' height='340' fill='%230F0F0F'/%3E%3Crect x='475' y='40' width='25' height='25' fill='%23FFD100' opacity='0.6'/%3E%3Crect x='565' y='140' width='40' height='260' fill='%23111'/%3E%3Crect x='615' y='100' width='70' height='300' fill='%23131313'/%3E%3Crect x='695' y='170' width='35' height='230' fill='%23111'/%3E%3Crect x='740' y='50' width='100' height='350' fill='%230D0D0D'/%3E%3Crect x='755' y='30' width='15' height='25' fill='%23E8001A' opacity='0.8'/%3E%3Crect x='850' y='130' width='50' height='270' fill='%23121212'/%3E%3Crect x='910' y='80' width='65' height='320' fill='%23111'/%3E%3Crect x='985' y='160' width='40' height='240' fill='%23131313'/%3E%3Crect x='1035' y='110' width='75' height='290' fill='%230E0E0E'/%3E%3Crect x='1120' y='190' width='45' height='210' fill='%23111'/%3E%3Crect x='1175' y='140' width='25' height='260' fill='%23121212'/%3E%3C/svg%3E") bottom/cover no-repeat;
+}
+
+.intro-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.intro-logo {
+  font-family: 'Bebas Neue', cursive;
+  font-size: clamp(60px, 12vw, 140px);
+  color: var(--yellow);
+  letter-spacing: 8px;
+  line-height: 0.9;
+  text-shadow: 4px 4px 0 var(--red), 8px 8px 0 rgba(232,0,26,0.3);
+}
+
+.intro-sub {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 6px;
+  color: var(--muted);
+  margin: 12px 0 40px;
+  text-transform: uppercase;
+}
+
+.intro-tagline {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--text);
+  margin-bottom: 50px;
+  opacity: 0.7;
+}
+
+#name-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+#name-input-wrap label {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--muted);
+}
+
+#player-name {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--yellow);
+  color: var(--yellow);
+  font-family: 'Bebas Neue', cursive;
+  font-size: 32px;
+  letter-spacing: 4px;
+  text-align: center;
+  width: 300px;
+  outline: none;
+  padding: 8px 0;
+}
+
+#player-name::placeholder { color: #333; }
+
+.btn-start {
+  background: var(--yellow);
+  color: var(--dark);
+  border: none;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 24px;
+  letter-spacing: 4px;
+  padding: 14px 60px;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  transition: transform 0.1s, background 0.1s;
+}
+
+.btn-start:hover { background: var(--red); transform: scale(1.03); }
+
+/* ── GAME LAYOUT ── */
+#screen-game {
+  flex-direction: row;
+  height: 100vh;
+}
+
+/* LEFT PANEL */
+#panel-left {
+  width: 260px;
+  min-width: 260px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.player-card {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--mid);
+}
+
+.player-name-display {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 22px;
+  color: var(--yellow);
+  letter-spacing: 2px;
+}
+
+.player-title {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.stat-label { color: var(--muted); letter-spacing: 1px; font-size: 10px; }
+.stat-value { color: var(--yellow); font-weight: 700; font-size: 14px; }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.orange { color: var(--orange); }
+
+.rating-bar-wrap {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rating-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.rating-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.rating-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), var(--orange), var(--yellow), var(--green));
+  background-size: 400%;
+  transition: width 0.5s ease;
+}
+
+.section-title {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  padding: 12px 16px 6px;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+
+.resume-entry {
+  padding: 8px 16px;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 10px;
+}
+
+.resume-entry .job-name { color: var(--text); font-weight: 600; font-size: 11px; }
+.resume-entry .job-rating { 
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 9px;
+  margin-top: 2px;
+}
+.resume-entry .job-rating.good { background: var(--green); color: #000; }
+.resume-entry .job-rating.ok { background: var(--orange); color: #000; }
+.resume-entry .job-rating.bad { background: var(--red); color: #fff; }
+
+#inventory-list {
+  padding: 8px 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.inv-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 16px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.inv-item span:last-child { color: var(--text); }
+
+/* CENTER - MAP */
+#map-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #0D0D0D;
+}
+
+#nyc-map {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.map-canvas-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+#map-canvas {
+  position: absolute;
+  cursor: grab;
+}
+
+#map-canvas:active { cursor: grabbing; }
+
+.map-overlay-ui {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.map-btn {
+  background: rgba(10,10,10,0.9);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 8px 14px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.map-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+
+.location-tooltip {
+  position: absolute;
+  background: rgba(10,10,10,0.95);
+  border: 1px solid var(--yellow);
+  padding: 8px 14px;
+  font-size: 11px;
+  pointer-events: none;
+  display: none;
+  z-index: 20;
+  white-space: nowrap;
+}
+
+.location-tooltip .loc-name { color: var(--yellow); font-weight: 700; letter-spacing: 1px; }
+.location-tooltip .loc-type { color: var(--muted); font-size: 9px; }
+
+.player-marker {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  z-index: 15;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.player-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--yellow);
+  border-radius: 50%;
+  border: 2px solid var(--dark);
+  animation: pulse-player 2s infinite;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes pulse-player {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,209,0,0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(255,209,0,0); }
+}
+
+/* RIGHT PANEL */
+#panel-right {
+  width: 300px;
+  min-width: 300px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#log-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.log-entry {
+  padding: 6px 14px;
+  font-size: 10px;
+  line-height: 1.5;
+  border-bottom: 1px solid #111;
+  animation: fadeInLog 0.3s ease;
+}
+
+@keyframes fadeInLog {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.log-entry .log-time { color: var(--muted); font-size: 9px; margin-bottom: 2px; }
+.log-entry .log-msg { color: var(--text); }
+.log-entry.log-good .log-msg { color: var(--green); }
+.log-entry.log-bad .log-msg { color: var(--red); }
+.log-entry.log-warn .log-msg { color: var(--orange); }
+.log-entry.log-info .log-msg { color: var(--blue); }
+.log-entry.log-money .log-msg { color: var(--yellow); }
+
+#action-panel {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  background: var(--mid);
+}
+
+.action-title {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+#action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.action-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  padding: 8px 6px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.action-btn:hover { border-color: var(--yellow); color: var(--yellow); background: rgba(255,209,0,0.05); }
+.action-btn.primary { border-color: var(--yellow); color: var(--yellow); }
+.action-btn.primary:hover { background: var(--yellow); color: var(--dark); }
+.action-btn.danger { border-color: var(--red); color: var(--red); }
+.action-btn.disabled { opacity: 0.3; pointer-events: none; }
+
+/* TIME BAR */
+#time-bar {
+  background: var(--dark);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 10px;
+}
+
+.time-segment { display: flex; align-items: center; gap: 8px; }
+.time-icon { font-size: 14px; }
+.time-val { color: var(--yellow); font-weight: 700; font-size: 13px; }
+.time-label { color: var(--muted); font-size: 9px; letter-spacing: 1px; }
+
+/* EVENT MODAL */
+#screen-event {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+#event-modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  width: min(560px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.event-header {
+  background: var(--mid);
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.event-type-tag {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.event-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 32px;
+  color: var(--yellow);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.event-location {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.event-body {
+  padding: 20px 24px;
+}
+
+.event-description {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #CCC;
+  margin-bottom: 20px;
+}
+
+.event-character {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--mid);
+  border: 1px solid var(--border);
+  padding: 14px;
+  margin-bottom: 20px;
+}
+
+.char-avatar {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.char-info {}
+.char-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.char-desc { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'IBM Plex Sans', sans-serif; font-style: italic; }
+
+.task-box {
+  background: rgba(255,209,0,0.05);
+  border: 1px solid rgba(255,209,0,0.2);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.task-title { font-size: 10px; letter-spacing: 2px; color: var(--yellow); margin-bottom: 8px; }
+.task-desc { font-size: 12px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text); line-height: 1.5; }
+
+.event-stakes {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stake-item {
+  flex: 1;
+  padding: 10px;
+  background: var(--mid);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stake-val { font-size: 16px; font-weight: 700; }
+.stake-val.pos { color: var(--green); }
+.stake-val.neg { color: var(--red); }
+.stake-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+
+.event-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.choice-btn:hover { border-color: var(--yellow); color: var(--yellow); background: rgba(255,209,0,0.05); }
+.choice-btn .choice-key {
+  font-size: 9px;
+  border: 1px solid currentColor;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* MINIGAME */
+#minigame-wrap {
+  padding: 0 24px 20px;
+}
+
+#minigame-area {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  height: 160px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mg-instruction {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  pointer-events: none;
+}
+
+.mg-target {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  animation: mg-appear 0.2s ease;
+}
+
+@keyframes mg-appear {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.mg-target:hover { background: rgba(255,209,0,0.1); transform: scale(1.1); }
+
+.mg-bar-wrap {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.mg-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+}
+
+.mg-bar-fill {
+  height: 100%;
+  background: var(--yellow);
+  transition: width 0.1s;
+}
+
+/* SHOP */
+.shop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 16px 24px;
+}
+
+.shop-item {
+  background: var(--mid);
+  border: 1px solid var(--border);
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.shop-item:hover { border-color: var(--yellow); }
+.shop-item-icon { font-size: 24px; margin-bottom: 6px; }
+.shop-item-name { font-size: 11px; color: var(--text); margin-bottom: 2px; }
+.shop-item-desc { font-size: 9px; color: var(--muted); margin-bottom: 8px; font-family: 'IBM Plex Sans', sans-serif; }
+.shop-item-price { font-size: 13px; color: var(--yellow); font-weight: 700; }
+.shop-item.cant-afford { opacity: 0.4; pointer-events: none; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* NOTIFICATIONS */
+#notif-area {
+  position: fixed;
+  top: 16px;
+  right: 320px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.notif {
+  background: var(--mid);
+  border-left: 3px solid var(--yellow);
+  padding: 10px 14px;
+  font-size: 11px;
+  animation: notif-in 0.3s ease, notif-out 0.3s ease 2.7s forwards;
+  max-width: 260px;
+}
+
+.notif.green { border-color: var(--green); }
+.notif.red { border-color: var(--red); }
+.notif.orange { border-color: var(--orange); }
+
+@keyframes notif-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes notif-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* TICKER */
+#ticker {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: var(--yellow);
+  color: var(--dark);
+  overflow: hidden;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-inner {
+  display: flex;
+  gap: 60px;
+  animation: ticker-scroll 40s linear infinite;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(100vw); }
+  to { transform: translateX(-100%); }
+}
+
+/* RESUME VIEW */
+#resume-panel {
+  padding: 0;
+  overflow-y: auto;
+}
+
+.job-history-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.job-h-name {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.job-h-meta {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+.job-h-rating {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+}
+
+.stars { color: var(--yellow); }
+
+/* METRO CARD */
+.metro-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+}
+
+.metro-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--subway-blue);
+}
+
+.metro-dot.active { background: var(--green); }
+
+/* PROGRESS STARS */
+.progress-stars {
+  display: flex;
+  gap: 3px;
+  padding: 6px 16px 0;
+}
+
+.star-item {
+  font-size: 10px;
+  color: var(--border);
+}
+
+.star-item.filled { color: var(--yellow); }
+
+/* JOB STATUS BAR */
+#job-status {
+  background: var(--dark);
+  border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.job-timer-bar {
+  height: 3px;
+  background: var(--border);
+  flex: 1;
+  margin: 0 12px;
+}
+
+.job-timer-fill {
+  height: 100%;
+  background: var(--yellow);
+  transition: width 0.5s linear;
+}
+
+/* Subway line indicators on map */
+.subway-line {
+  position: absolute;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- INTRO SCREEN -->
+<div id="screen-intro" class="active">
+  <div class="skyline-bg"></div>
+  <div class="intro-content">
+    <div class="intro-logo">NYC<br>DREAM</div>
+    <div class="intro-sub">The American Hustle — City Life Simulator</div>
+    <div class="intro-tagline">"In New York, every man for himself."</div>
+    <div id="name-input-wrap">
+      <label>YOUR NAME</label>
+      <input id="player-name" type="text" placeholder="ENTER YOUR NAME" maxlength="16" autocomplete="off">
+    </div>
+    <button class="btn-start" onclick="startGame()">ARRIVE IN NEW YORK</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game">
+  <!-- LEFT PANEL -->
+  <div id="panel-left">
+    <div class="player-card">
+      <div class="player-name-display" id="display-name">UNKNOWN</div>
+      <div class="player-title" id="display-title">NEWCOMER • BROKE</div>
+    </div>
+
+    <div class="stat-row">
+      <span class="stat-label">CASH</span>
+      <span class="stat-value green" id="stat-cash">$0</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">SAVINGS</span>
+      <span class="stat-value" id="stat-savings">$0</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">WEEKLY RENT</span>
+      <span class="stat-value red" id="stat-rent">$0</span>
+    </div>
+
+    <div class="rating-bar-wrap">
+      <div class="rating-label">
+        <span>EMPLOYEE RATING</span>
+        <span id="rating-num">50</span>
+      </div>
+      <div class="rating-bar">
+        <div class="rating-fill" id="rating-fill" style="width:50%; background-position: 50% 0;"></div>
+      </div>
+    </div>
+
+    <div class="metro-indicator">
+      <div class="metro-dot" id="metro-dot"></div>
+      <span id="metro-status">No MetroCard</span>
+    </div>
+
+    <div class="section-title">CURRENT JOB</div>
+    <div class="stat-row">
+      <span class="stat-label">POSITION</span>
+      <span class="stat-value orange" id="stat-job">NONE</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">DAILY PAY</span>
+      <span class="stat-value" id="stat-pay">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">DAYS WORKED</span>
+      <span class="stat-value" id="stat-daysworked">0</span>
+    </div>
+
+    <div class="section-title">RESUME</div>
+    <div id="resume-panel">
+      <div style="padding:12px 16px; font-size:10px; color:var(--muted)">No work history yet.</div>
+    </div>
+
+    <div class="section-title">INVENTORY</div>
+    <div id="inventory-list">
+      <div class="inv-item"><span>Nothing yet</span></div>
+    </div>
+  </div>
+
+  <!-- CENTER MAP -->
+  <div id="map-area">
+    <!-- TIME BAR -->
+    <div id="time-bar">
+      <div class="time-segment">
+        <span class="time-icon">📅</span>
+        <div>
+          <div class="time-val" id="t-day">Day 1</div>
+          <div class="time-label">NEW YORK</div>
+        </div>
+      </div>
+      <div class="time-segment">
+        <span class="time-icon">🕐</span>
+        <div>
+          <div class="time-val" id="t-time">8:00 AM</div>
+          <div class="time-label">TIME</div>
+        </div>
+      </div>
+      <div class="time-segment">
+        <span class="time-icon">🌡️</span>
+        <div>
+          <div class="time-val" id="t-weather">72°F</div>
+          <div class="time-label">WEATHER</div>
+        </div>
+      </div>
+      <div class="time-segment" style="margin-left:auto">
+        <div class="time-val" id="t-location" style="font-size:11px; color:var(--muted)">📍 Penn Station</div>
+      </div>
+    </div>
+
+    <!-- MAP CANVAS -->
+    <div class="map-canvas-wrap">
+      <canvas id="map-canvas"></canvas>
+      <div id="player-marker" class="player-marker">
+        <div class="player-dot"></div>
+      </div>
+      <div id="location-tooltip" class="location-tooltip">
+        <div class="loc-name" id="tt-name"></div>
+        <div class="loc-type" id="tt-type"></div>
+      </div>
+    </div>
+
+    <!-- MAP BUTTONS -->
+    <div class="map-overlay-ui">
+      <button class="map-btn" onclick="openShop()">🛒 SHOP / SPEND</button>
+      <button class="map-btn" onclick="openJobBoard()">💼 JOB BOARD</button>
+      <button class="map-btn" onclick="doWorkDay()" id="btn-work">⚡ WORK SHIFT</button>
+      <button class="map-btn" onclick="advanceDay()">⏭ NEXT DAY</button>
+    </div>
+
+    <!-- TICKER -->
+    <div id="ticker">
+      <div class="ticker-inner" id="ticker-text">
+        🗽 WELCOME TO NEW YORK CITY &nbsp;•&nbsp; SUBWAY DELAYS ON THE A LINE &nbsp;•&nbsp; RENT IN MANHATTAN UP 8% &nbsp;•&nbsp; WALL STREET CLOSING HIGHER &nbsp;•&nbsp; HOT DOG CART PERMIT LOTTERY OPEN &nbsp;•&nbsp; NYC HIRING FAIR AT JAVITS CENTER &nbsp;•&nbsp; BODEGA CAT SIGHTING IN ASTORIA &nbsp;•&nbsp; 🗽 WELCOME TO NEW YORK CITY &nbsp;•&nbsp; SUBWAY DELAYS ON THE A LINE &nbsp;•&nbsp; RENT IN MANHATTAN UP 8%
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="panel-right">
+    <div class="section-title">CITY LOG</div>
+    <div id="log-area"></div>
+
+    <div id="job-status" style="display:none">
+      <span id="job-status-text" style="color:var(--muted)">SHIFT PROGRESS</span>
+      <div class="job-timer-bar">
+        <div class="job-timer-fill" id="job-timer-fill" style="width:0%"></div>
+      </div>
+      <span id="job-timer-label" style="color:var(--yellow)">0%</span>
+    </div>
+
+    <div id="action-panel">
+      <div class="action-title">QUICK ACTIONS</div>
+      <div id="action-buttons">
+        <button class="action-btn primary" onclick="openJobBoard()">💼 FIND JOB</button>
+        <button class="action-btn" onclick="openShop()">🏪 SPEND $$</button>
+        <button class="action-btn" onclick="travelSubway()">🚇 SUBWAY</button>
+        <button class="action-btn" onclick="doWorkDay()" id="qa-work">⚡ WORK</button>
+        <button class="action-btn" onclick="saveToBank()">🏦 SAVE CASH</button>
+        <button class="action-btn" onclick="withdrawBank()">💳 WITHDRAW</button>
+        <button class="action-btn" onclick="talkToNPC()">👤 NETWORK</button>
+        <button class="action-btn danger" onclick="quitJob()">🚪 QUIT JOB</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT SCREEN -->
+<div id="screen-event"></div>
+
+<!-- NOTIFICATIONS -->
+<div id="notif-area"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let G = {
+  name: 'PLAYER',
+  cash: 120,
+  savings: 0,
+  day: 1,
+  hour: 8,
+  rating: 50,
+  job: null,
+  jobDays: 0,
+  jobProgress: 0,
+  resume: [],
+  inventory: [],
+  hasMetroCard: false,
+  hasMonthlyMetro: false,
+  housing: 'shelter',
+  rentPerWeek: 0,
+  location: 'Penn Station',
+  playerX: 0,
+  playerY: 0,
+  mapOffsetX: 0,
+  mapOffsetY: 0,
+  weather: '72°F ☀️',
+  daysRentDue: 7,
+};
+
+// ═══════════════════════════════════════════════════════════
+// NYC MAP DATA
+// ═══════════════════════════════════════════════════════════
+const NYC_LOCATIONS = [
+  // Midtown
+  { name: "Penn Station", x: 480, y: 520, type: "TRANSIT HUB", icon: "🚂", color: "#0039A6" },
+  { name: "Times Square", x: 510, y: 480, type: "ENTERTAINMENT", icon: "🎭", color: "#FF6319" },
+  { name: "Grand Central", x: 570, y: 490, type: "TRANSIT HUB", icon: "🚆", color: "#0039A6" },
+  { name: "Rockefeller Center", x: 555, y: 450, type: "OFFICE / MEDIA", icon: "🏢", color: "#333" },
+  { name: "5th Avenue", x: 580, y: 430, type: "LUXURY SHOPPING", icon: "🛍️", color: "#C4A35A" },
+  { name: "Madison Square Garden", x: 480, y: 510, type: "ARENA / EVENTS", icon: "🏟️", color: "#FF6319" },
+  { name: "Bryant Park", x: 535, y: 487, type: "PUBLIC PARK", icon: "🌳", color: "#00933C" },
+  // Upper Manhattan
+  { name: "Central Park", x: 560, y: 370, type: "PUBLIC PARK", icon: "🌲", color: "#00933C" },
+  { name: "Upper East Side", x: 620, y: 360, type: "LUXURY RESIDENTIAL", icon: "🏰", color: "#C4A35A" },
+  { name: "Upper West Side", x: 500, y: 360, type: "RESIDENTIAL", icon: "🏘️", color: "#666" },
+  { name: "Harlem", x: 560, y: 290, type: "RESIDENTIAL / CULTURE", icon: "🎷", color: "#8B4513" },
+  { name: "Washington Heights", x: 530, y: 220, type: "RESIDENTIAL", icon: "🏠", color: "#666" },
+  { name: "Columbia University", x: 520, y: 270, type: "EDUCATION", icon: "🎓", color: "#004F9E" },
+  // Lower Manhattan
+  { name: "Wall Street", x: 540, y: 660, type: "FINANCE DISTRICT", icon: "📈", color: "#C4A35A" },
+  { name: "Fulton Center", x: 545, y: 650, type: "TRANSIT HUB", icon: "🚇", color: "#0039A6" },
+  { name: "World Trade Center", x: 515, y: 660, type: "LANDMARK", icon: "🗽", color: "#333" },
+  { name: "Brooklyn Bridge", x: 580, y: 670, type: "LANDMARK", icon: "🌉", color: "#8B4513" },
+  { name: "South Street Seaport", x: 570, y: 680, type: "TOURIST / MARKET", icon: "⚓", color: "#0039A6" },
+  { name: "Battery Park", x: 520, y: 700, type: "PUBLIC PARK", icon: "🌿", color: "#00933C" },
+  { name: "Chinatown", x: 560, y: 635, type: "FOOD / CULTURE", icon: "🏮", color: "#E8001A" },
+  { name: "Little Italy", x: 555, y: 625, type: "FOOD / CULTURE", icon: "🍕", color: "#009246" },
+  { name: "SoHo", x: 540, y: 605, type: "SHOPPING / ART", icon: "🎨", color: "#8B00FF" },
+  { name: "Greenwich Village", x: 515, y: 585, type: "BOHEMIAN / FOOD", icon: "🎸", color: "#8B4513" },
+  { name: "Chelsea", x: 480, y: 560, type: "ARTS / RESIDENTIAL", icon: "🖼️", color: "#8B00FF" },
+  { name: "Gramercy Park", x: 555, y: 540, type: "RESIDENTIAL", icon: "🌺", color: "#00933C" },
+  { name: "Flatiron Building", x: 537, y: 522, type: "LANDMARK / OFFICE", icon: "🏗️", color: "#333" },
+  // Brooklyn
+  { name: "Williamsburg", x: 660, y: 580, type: "HIPSTER / FOOD", icon: "🍺", color: "#8B4513" },
+  { name: "DUMBO", x: 620, y: 640, type: "TECH / ARTS", icon: "💻", color: "#0066FF" },
+  { name: "Downtown Brooklyn", x: 630, y: 670, type: "BUSINESS", icon: "🏢", color: "#333" },
+  { name: "Coney Island", x: 640, y: 800, type: "BEACH / AMUSEMENT", icon: "🎡", color: "#FF6319" },
+  { name: "Park Slope", x: 600, y: 700, type: "FAMILY / RESIDENTIAL", icon: "🏡", color: "#666" },
+  { name: "Crown Heights", x: 640, y: 720, type: "RESIDENTIAL", icon: "🏘️", color: "#666" },
+  { name: "Flatbush", x: 650, y: 750, type: "RESIDENTIAL", icon: "🏠", color: "#666" },
+  // Queens
+  { name: "Astoria", x: 640, y: 440, type: "FOOD / RESIDENTIAL", icon: "🍽️", color: "#8B4513" },
+  { name: "Jackson Heights", x: 700, y: 500, type: "DIVERSE / FOOD", icon: "🌶️", color: "#E8001A" },
+  { name: "Flushing", x: 780, y: 460, type: "ASIAN CULTURE", icon: "🥟", color: "#E8001A" },
+  { name: "JFK Airport", x: 780, y: 620, type: "AIRPORT", icon: "✈️", color: "#0066FF" },
+  { name: "LaGuardia Airport", x: 680, y: 420, type: "AIRPORT", icon: "✈️", color: "#0066FF" },
+  // Bronx
+  { name: "The Bronx", x: 620, y: 240, type: "BOROUGH", icon: "🏙️", color: "#333" },
+  { name: "Yankee Stadium", x: 600, y: 270, type: "SPORTS ARENA", icon: "⚾", color: "#003087" },
+  // Staten Island
+  { name: "Staten Island Ferry", x: 490, y: 720, type: "TRANSIT / LANDMARK", icon: "⛴️", color: "#0039A6" },
+];
+
+const SUBWAY_LINES = [
+  { color: "#0039A6", points: [[520,700],[530,670],[545,650],[555,620],[535,580],[490,540],[480,520],[480,490],[510,460],[520,380],[520,270],[530,220]] }, // A/C/E
+  { color: "#FF6319", points: [[640,800],[640,720],[630,670],[620,640],[580,670],[570,655],[560,635],[540,605],[515,585],[480,560],[480,520]] }, // B/D/F/M
+  { color: "#00933C", points: [[570,490],[560,490],[545,490],[535,490],[520,490],[500,490],[490,490],[490,520],[490,560]] }, // 4/5/6 segment
+  { color: "#EE352E", points: [[600,270],[590,300],[570,340],[560,370],[555,400],[555,440],[555,480],[555,510],[540,540],[540,560],[540,600],[540,640],[540,660],[540,680],[520,700]] }, // 1/2/3
+  { color: "#FCCC0A", points: [[780,460],[740,470],[700,480],[680,490],[660,490],[640,490],[620,490],[590,490],[570,490],[555,480]] }, // N/Q/R/W
+  { color: "#6CBE45", points: [[540,500],[555,490],[570,490],[600,470],[640,440],[680,420]] }, // G line area
+];
+
+// ═══════════════════════════════════════════════════════════
+// JOBS DATABASE
+// ═══════════════════════════════════════════════════════════
+const JOBS = [
+  { id: 'dishwasher', title: 'DISHWASHER', location: "Little Italy", pay: 80, minRating: 0, maxRating: 100, icon: '🍽️', task: 'washDishes', taskDesc: 'Keep up with the dinner rush. Click plates as they appear before they pile up!' },
+  { id: 'delivery', title: 'DELIVERY CYCLIST', location: "Greenwich Village", pay: 95, minRating: 0, maxRating: 100, icon: '🚴', task: 'deliverFood', taskDesc: 'Make deliveries across the village. Hit all the packages before time runs out!' },
+  { id: 'hotdog', title: 'HOT DOG VENDOR', location: "Central Park", pay: 110, minRating: 10, maxRating: 100, icon: '🌭', task: 'serveHotdogs', taskDesc: 'Serve Central Park tourists. Click customers before they walk away!' },
+  { id: 'barista', title: 'BARISTA', location: "SoHo", pay: 130, minRating: 20, maxRating: 100, icon: '☕', task: 'makeOrders', taskDesc: 'Brew coffee for the SoHo crowd. Match drink orders quickly!' },
+  { id: 'bodyguard', title: 'CLUB BOUNCER', location: "Chelsea", pay: 160, minRating: 25, maxRating: 100, icon: '🛡️', task: 'bounce', taskDesc: 'Keep the line moving. Click troublemakers to remove them!' },
+  { id: 'retail', title: 'RETAIL ASSOCIATE', location: "5th Avenue", pay: 180, minRating: 35, maxRating: 100, icon: '🛍️', task: 'sellClothes', taskDesc: 'Upsell luxury goods. Click customers at the right moment!' },
+  { id: 'mailroom', title: 'MAILROOM CLERK', location: "Rockefeller Center", pay: 200, minRating: 40, maxRating: 100, icon: '📬', task: 'sortMail', taskDesc: 'Sort packages fast. Hit the right destinations before the truck leaves!' },
+  { id: 'driver', title: 'CAB DRIVER', location: "Midtown", pay: 240, minRating: 40, maxRating: 100, icon: '🚕', task: 'driveOrders', taskDesc: 'Pick up fares across the city. React to passenger requests!' },
+  { id: 'cook', title: 'LINE COOK', location: "Astoria", pay: 260, minRating: 45, maxRating: 100, icon: '👨‍🍳', task: 'cook', taskDesc: 'Prep orders for a full house. Keep the timing tight!' },
+  { id: 'stockbroker_jr', title: 'JUNIOR BROKER', location: "Wall Street", pay: 450, minRating: 60, maxRating: 100, icon: '📊', task: 'tradeFast', taskDesc: 'Execute trades in volatile markets. React to buy/sell signals!' },
+  { id: 'manager', title: 'FLOOR MANAGER', location: "Flatiron Building", pay: 550, minRating: 65, maxRating: 100, icon: '📋', task: 'manageStaff', taskDesc: 'Handle customer escalations and staff issues simultaneously!' },
+  { id: 'marketing', title: 'MARKETING EXEC', location: "Rockefeller Center", pay: 700, minRating: 70, maxRating: 100, icon: '📢', task: 'sellClothes', taskDesc: 'Pitch campaigns to demanding clients. Time your presentations well!' },
+  { id: 'realtor', title: 'REAL ESTATE BROKER', location: "Upper East Side", pay: 900, minRating: 75, maxRating: 100, icon: '🏠', task: 'sellHomes', taskDesc: 'Close deals with wealthy clients. Read their interest and move fast!' },
+  { id: 'finance', title: 'FINANCE ANALYST', location: "Wall Street", pay: 1200, minRating: 80, maxRating: 100, icon: '💹', task: 'tradeFast', taskDesc: 'Analyze market movements under pressure. Execute with precision!' },
+  { id: 'exec', title: 'C-SUITE EXECUTIVE', location: "5th Avenue", pay: 2500, minRating: 90, maxRating: 100, icon: '👔', task: 'manageStaff', taskDesc: 'Lead the boardroom. Handle crises and make power moves!' },
+];
+
+const HOUSING = [
+  { id: 'shelter', name: 'Homeless Shelter', location: 'Bronx', weeklyRent: 0, desc: 'Free but rough. Affects morale.' },
+  { id: 'hostel', name: 'Queens Hostel', location: 'Jackson Heights', weeklyRent: 150, desc: 'Shared dorm. Basic amenities.' },
+  { id: 'studio_bronx', name: 'Bronx Studio', location: 'The Bronx', weeklyRent: 280, desc: 'Small studio, own bathroom.' },
+  { id: 'room_brooklyn', name: 'Brooklyn Bedroom', location: 'Flatbush', weeklyRent: 380, desc: 'Room in shared house. Decent area.' },
+  { id: 'apt_brooklyn', name: 'Williamsburg 1BR', location: 'Williamsburg', weeklyRent: 580, desc: 'Trendy neighborhood. Great vibes.' },
+  { id: 'apt_queens', name: 'Astoria 1BR', location: 'Astoria', weeklyRent: 520, desc: 'Nice apartment. Good food nearby.' },
+  { id: 'studio_manhattan', name: 'Harlem Studio', location: 'Harlem', weeklyRent: 650, desc: 'Manhattan! Cultural epicenter.' },
+  { id: 'apt_manhattan', name: 'Upper West Side 1BR', location: 'Upper West Side', weeklyRent: 950, desc: 'Real Manhattan living.' },
+  { id: 'luxury', name: 'Upper East Side Luxury', location: 'Upper East Side', weeklyRent: 2000, desc: 'Doorman building. You made it.' },
+  { id: 'penthouse', name: 'Fifth Avenue Penthouse', location: '5th Avenue', weeklyRent: 5000, desc: 'Top of the city. The dream.' },
+];
+
+const SHOP_ITEMS = [
+  { id: 'metrocard_single', name: 'Single Ride MetroCard', icon: '🎫', price: 2.90, desc: 'One subway or bus ride', category: 'transit' },
+  { id: 'metrocard_30day', name: '30-Day Unlimited Metro', icon: '💳', price: 132, desc: 'Unlimited rides for 30 days', category: 'transit' },
+  { id: 'coffee', name: 'Bodega Coffee', icon: '☕', price: 1.50, desc: '+5 rating for the day', category: 'food' },
+  { id: 'bagel', name: 'Bagel & Lox', icon: '🥯', price: 4, desc: '+3 morale', category: 'food' },
+  { id: 'pizza_slice', name: 'Dollar Pizza Slice', icon: '🍕', price: 2.50, desc: 'Classic NYC fuel', category: 'food' },
+  { id: 'hotdog', name: 'Street Hot Dog', icon: '🌭', price: 3, desc: 'Quick energy boost', category: 'food' },
+  { id: 'suit_basic', name: 'Basic Business Suit', icon: '👔', price: 120, desc: '+10 rating permanently', category: 'clothing' },
+  { id: 'suit_nice', name: 'Brooks Brothers Suit', icon: '🎩', price: 450, desc: '+20 rating permanently', category: 'clothing' },
+  { id: 'sneakers', name: 'Nike Sneakers', icon: '👟', price: 80, desc: 'Comfortable. +2 rating.', category: 'clothing' },
+  { id: 'briefcase', name: 'Leather Briefcase', icon: '💼', price: 200, desc: '+15 rating permanently', category: 'clothing' },
+  { id: 'cell_phone', name: 'Basic Cell Phone', icon: '📱', price: 150, desc: 'Get job alerts. +5 rating.', category: 'gear' },
+  { id: 'laptop', name: 'Laptop', icon: '💻', price: 600, desc: 'Unlocks office jobs. +15 rating.', category: 'gear' },
+  { id: 'cab_ride', name: 'Taxi Ride', icon: '🚕', price: 15, desc: 'Fast travel, no MetroCard needed', category: 'transit' },
+  { id: 'uber', name: 'Rideshare (Uber/Lyft)', icon: '🚗', price: 22, desc: 'Door to door service', category: 'transit' },
+  { id: 'gym', name: 'Gym Membership (NYSC)', icon: '💪', price: 50, desc: '+3 rating/week', category: 'lifestyle' },
+  { id: 'networking_event', name: 'Networking Event Ticket', icon: '🤝', price: 40, desc: '+8 rating, meet contacts', category: 'career' },
+  { id: 'resume_service', name: 'Resume Writing Service', icon: '📄', price: 80, desc: '+12 rating permanently', category: 'career' },
+  { id: 'night_out', name: 'Night Out in the City', icon: '🍾', price: 120, desc: 'Fun! -120 cash, +morale', category: 'lifestyle' },
+  { id: 'book', name: 'Business Book', icon: '📚', price: 18, desc: '+5 rating over time', category: 'career' },
+  { id: 'parking', name: 'Monthly Parking Spot', icon: '🅿️', price: 400, desc: 'Needed if you buy a car', category: 'transit' },
+  { id: 'car', name: 'Used Honda Civic', icon: '🚗', price: 8000, desc: 'Your own wheels in NYC', category: 'transit' },
+];
+
+const NPC_ENCOUNTERS = [
+  { name: "Marcus Chen", type: "WALL STREET WOLF", emoji: "💼", lines: ["Kid, in this city you either eat or get eaten.", "My suit costs more than your rent. Focus.", "I started in the mailroom at 22. Now? Corner office."], ratingBoost: 5 },
+  { name: "Rosa Delgado", type: "BODEGA OWNER", emoji: "🏪", lines: ["I came here with $200 and a dream. Thirty years later, I own three bodegas.", "The city will test you. Don't let it break you.", "You want to get ahead? Show up early, stay late."], ratingBoost: 3 },
+  { name: "Tyler Walsh", type: "HEDGE FUND BRO", emoji: "🍾", lines: ["My Hamptons house is bigger than this whole block.", "Networking is everything. Get a LinkedIn. Seriously.", "Let me tell you about compound interest..."], ratingBoost: 4 },
+  { name: "Maya Patel", type: "COLUMBIA GRAD STUDENT", emoji: "🎓", lines: ["Education is the great equalizer. But so is hustle.", "NYU rejected me too. Now I'm getting a PhD.", "Have you read 'The Defining Decade'? Life-changing."], ratingBoost: 6 },
+  { name: "Darnell Jackson", type: "SANITATION WORKER", emoji: "🗑️", lines: ["This city is built on people like us. Don't forget it.", "I work nights so my kids can go to school days.", "Respect everyone. You never know who knows who."], ratingBoost: 2 },
+  { name: "Victoria Sterling", type: "UPPER EAST SIDE SOCIALITE", emoji: "👑", lines: ["Darling, your shoes... are they from Target?", "My father knows the CEO of Goldman. Do you have contacts?", "Image is everything in this city. Invest in yourself."], ratingBoost: 7 },
+  { name: "Jimmy 'Two-Dogs' Moretti", type: "BRONX HUSTLER", emoji: "🎲", lines: ["Yo, you need anything, you come to Jimmy. Anything.", "Nah, nah, stay legal. The city got cameras everywhere now.", "My cousin knows a guy who's hiring. No, seriously."], ratingBoost: 1 },
+  { name: "Dr. Sarah Kim", type: "HEALTHCARE WORKER", emoji: "👩‍⚕️", lines: ["I work 60-hour weeks and still pay off med school debt.", "Don't let anyone tell you what you can or can't achieve.", "The city is hard. But it makes you harder."], ratingBoost: 5 },
+  { name: "Raj Anand", type: "TECH STARTUP FOUNDER", emoji: "🚀", lines: ["Series A funding just closed. Wild.", "The best time to start was yesterday. Second best? Today.", "Silicon Alley is real. NYC tech is exploding right now."], ratingBoost: 8 },
+  { name: "Old Man Sal", type: "RETIRED LONGSHOREMAN", emoji: "⚓", lines: ["I unloaded ships at Red Hook for 40 years. Honest work.", "New York ain't what it was. But opportunity? Still here.", "Young person, the secret is: never stop moving."], ratingBoost: 3 },
+];
+
+const RANDOM_EVENTS = [
+  { id: 'found_wallet', title: 'FOUND WALLET', desc: 'You found a wallet on the subway platform with $45 inside. What do you do?', choices: [
+    { text: 'Keep the cash', effect: () => { addCash(45); addRating(-3); addLog('Kept the cash. Quick $45. Feels a little wrong...', 'warn'); }},
+    { text: 'Turn it in to MTA Lost & Found', effect: () => { addRating(8); addLog('Turned in the wallet. MTA officer was impressed. +8 rating!', 'good'); }},
+  ]},
+  { id: 'rain', title: 'SUDDEN DOWNPOUR', desc: 'A classic NYC thunderstorm hits with zero warning. The streets flood in minutes.', choices: [
+    { text: 'Buy umbrella from street vendor ($8)', effect: () => { spendCash(8); addLog('Bought a $8 bodega umbrella. Barely survived.', 'normal'); }},
+    { text: 'Get soaked and keep moving', effect: () => { addRating(-4); addLog('Arrived to work SOAKED. Boss was not impressed. -4 rating.', 'bad'); }},
+    { text: 'Duck into a coffee shop and wait it out', effect: () => { spendCash(5); advanceHours(1); addLog('Waited in the coffee shop. Cost an hour but stayed dry.', 'normal'); }},
+  ]},
+  { id: 'landlord', title: 'RENT INCREASE', desc: 'Your landlord slides a note under the door. Rent is going up 15% next month. Classic New York.', choices: [
+    { text: 'Accept it (you need the place)', effect: () => { G.rentPerWeek = Math.floor(G.rentPerWeek * 1.15); updateUI(); addLog('Rent went up. Welcome to NYC.', 'bad'); }},
+    { text: 'Look for a cheaper place', effect: () => { openHousingMenu(); }},
+    { text: 'Negotiate with landlord', effect: () => { if(G.rating >= 60) { addLog('Your confidence impressed him. Rent stays the same!', 'good'); } else { G.rentPerWeek = Math.floor(G.rentPerWeek * 1.15); addLog('He laughed. Raised it anyway.', 'bad'); }}},
+  ]},
+  { id: 'job_offer', title: 'UNEXPECTED OFFER', desc: 'Someone at a networking event hands you a card. "We\'ve heard good things about you. We have an opening."', choices: [
+    { text: 'Accept the meeting', effect: () => { addRating(10); addLog('Took the meeting. Great connections made!', 'good'); }},
+    { text: 'Play it cool, keep your options open', effect: () => { addRating(5); addLog('Stayed professional. Left a good impression.', 'good'); }},
+  ]},
+  { id: 'subway_delay', title: 'SUBWAY NIGHTMARE', desc: 'Signal problems at Jay St-MetroTech. You\'re stuck underground for 45 minutes. You\'ll be late.', choices: [
+    { text: 'Suffer through it (no MetroCard cost)', effect: () => { addRating(-5); addLog('45-minute delay. Arrived late. Boss is not happy. -5 rating.', 'bad'); }},
+    { text: 'Grab a cab immediately', effect: () => { if(G.cash >= 20) { spendCash(20); addLog('Took a $20 cab and made it on time!', 'good'); } else { addLog('Can\'t afford a cab. Stuck in the tunnel.', 'bad'); addRating(-5); }}},
+  ]},
+  { id: 'mugged', title: 'GETTING MUGGED', desc: 'It\'s late in Midtown. Someone demands your wallet. Heart pounding.', choices: [
+    { text: 'Hand over cash (lose $30-80)', effect: () => { const lost = Math.min(G.cash, 30 + Math.floor(Math.random()*50)); spendCash(lost); addLog(`Gave them $${lost}. Staying safe was worth it.`, 'bad'); }},
+    { text: 'Run for it', effect: () => { if(Math.random() > 0.4) { addLog('Sprinted away! Made it!', 'good'); } else { const lost = Math.min(G.cash, 60); spendCash(lost); addLog(`Couldn't outrun them. Lost $${lost}.`, 'bad'); }}},
+  ]},
+  { id: 'overtime', title: 'OVERTIME OFFER', desc: 'Your boss asks if you can stay late tonight. Double pay for 4 extra hours.', choices: [
+    { text: 'Stay for overtime', effect: () => { const bonus = G.job ? G.job.pay : 50; addCash(bonus); addRating(6); addLog(`Worked overtime! +$${bonus} bonus, +6 rating!`, 'good'); }},
+    { text: 'Decline, you need rest', effect: () => { addLog('Went home. Rest is important too.', 'normal'); }},
+  ]},
+  { id: 'invest', title: 'STOCK TIP', desc: 'A guy on the subway is loudly explaining that a penny stock is "guaranteed to 10x." Very convincing. Very suspicious.', choices: [
+    { text: 'Invest $200 (gamble!)', effect: () => { if(G.cash >= 200) { spendCash(200); if(Math.random() > 0.6) { addCash(600); addLog('IT WORKED!! Up 3x! +$600!', 'good'); } else { addLog('Lost everything. That guy scammed you.', 'bad'); } } else { addLog('Not enough cash to invest.', 'warn'); }}},
+    { text: 'Ignore it', effect: () => { addLog('Smart. Probably a scam.', 'normal'); }},
+  ]},
+];
+
+// ═══════════════════════════════════════════════════════════
+// MAP RENDERER
+// ═══════════════════════════════════════════════════════════
+let canvas, ctx, mapScale = 0.9;
+let isDragging = false, lastMouseX, lastMouseY;
+let hoveredLocation = null;
+let mapCenterX = 560, mapCenterY = 500;
+
+function initMap() {
+  canvas = document.getElementById('map-canvas');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight - 28; // minus ticker
+  
+  G.mapOffsetX = canvas.width/2 - mapCenterX * mapScale;
+  G.mapOffsetY = canvas.height/2 - mapCenterY * mapScale;
+  
+  // Find player start location
+  const start = NYC_LOCATIONS.find(l => l.name === G.location);
+  if(start) {
+    G.playerX = start.x;
+    G.playerY = start.y;
+  }
+  
+  canvas.addEventListener('mousemove', onMapMouseMove);
+  canvas.addEventListener('mousedown', (e) => { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; });
+  canvas.addEventListener('mouseup', () => { isDragging = false; });
+  canvas.addEventListener('mouseleave', () => { isDragging = false; hideTooltip(); });
+  canvas.addEventListener('click', onMapClick);
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    mapScale *= e.deltaY < 0 ? 1.1 : 0.9;
+    mapScale = Math.min(Math.max(mapScale, 0.4), 3);
+    drawMap();
+  });
+  
+  drawMap();
+  updatePlayerMarker();
+}
+
+function worldToScreen(wx, wy) {
+  return {
+    x: wx * mapScale + G.mapOffsetX,
+    y: wy * mapScale + G.mapOffsetY
+  };
+}
+
+function screenToWorld(sx, sy) {
+  return {
+    x: (sx - G.mapOffsetX) / mapScale,
+    y: (sy - G.mapOffsetY) / mapScale
+  };
+}
+
+function drawMap() {
+  if(!canvas || !ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Background - water
+  ctx.fillStyle = '#0A1520';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw Manhattan island shape
+  ctx.save();
+  ctx.translate(G.mapOffsetX, G.mapOffsetY);
+  ctx.scale(mapScale, mapScale);
+  
+  // Main Manhattan island
+  ctx.beginPath();
+  ctx.moveTo(490, 705);
+  ctx.lineTo(500, 715);
+  ctx.lineTo(510, 720);
+  ctx.lineTo(520, 700);
+  ctx.lineTo(515, 680);
+  ctx.lineTo(510, 660);
+  ctx.lineTo(515, 640);
+  ctx.lineTo(530, 620);
+  ctx.lineTo(540, 590);
+  ctx.lineTo(520, 570);
+  ctx.lineTo(470, 540);
+  ctx.lineTo(460, 510);
+  ctx.lineTo(465, 490);
+  ctx.lineTo(485, 460);
+  ctx.lineTo(490, 430);
+  ctx.lineTo(495, 400);
+  ctx.lineTo(500, 360);
+  ctx.lineTo(510, 290);
+  ctx.lineTo(525, 230);
+  ctx.lineTo(535, 195);
+  ctx.lineTo(545, 200);
+  ctx.lineTo(565, 200);
+  ctx.lineTo(575, 220);
+  ctx.lineTo(580, 270);
+  ctx.lineTo(590, 330);
+  ctx.lineTo(600, 380);
+  ctx.lineTo(610, 430);
+  ctx.lineTo(615, 460);
+  ctx.lineTo(610, 490);
+  ctx.lineTo(600, 520);
+  ctx.lineTo(585, 540);
+  ctx.lineTo(580, 560);
+  ctx.lineTo(585, 600);
+  ctx.lineTo(590, 630);
+  ctx.lineTo(585, 660);
+  ctx.lineTo(570, 680);
+  ctx.lineTo(560, 700);
+  ctx.lineTo(540, 715);
+  ctx.lineTo(510, 720);
+  ctx.closePath();
+  ctx.fillStyle = '#1A1A18';
+  ctx.fill();
+  ctx.strokeStyle = '#2A2A2A';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Brooklyn
+  ctx.beginPath();
+  ctx.moveTo(580, 670);
+  ctx.lineTo(600, 660);
+  ctx.lineTo(640, 660);
+  ctx.lineTo(690, 680);
+  ctx.lineTo(720, 730);
+  ctx.lineTo(720, 820);
+  ctx.lineTo(580, 820);
+  ctx.lineTo(560, 760);
+  ctx.lineTo(570, 700);
+  ctx.closePath();
+  ctx.fillStyle = '#181818';
+  ctx.fill();
+  ctx.stroke();
+  
+  // Queens
+  ctx.beginPath();
+  ctx.moveTo(620, 490);
+  ctx.lineTo(640, 450);
+  ctx.lineTo(700, 420);
+  ctx.lineTo(820, 400);
+  ctx.lineTo(840, 500);
+  ctx.lineTo(820, 650);
+  ctx.lineTo(700, 680);
+  ctx.lineTo(650, 660);
+  ctx.lineTo(620, 630);
+  ctx.lineTo(620, 580);
+  ctx.lineTo(630, 550);
+  ctx.lineTo(625, 510);
+  ctx.closePath();
+  ctx.fillStyle = '#171717';
+  ctx.fill();
+  ctx.stroke();
+  
+  // Bronx
+  ctx.beginPath();
+  ctx.moveTo(570, 200);
+  ctx.lineTo(590, 180);
+  ctx.lineTo(650, 160);
+  ctx.lineTo(700, 180);
+  ctx.lineTo(720, 240);
+  ctx.lineTo(700, 300);
+  ctx.lineTo(660, 340);
+  ctx.lineTo(620, 360);
+  ctx.lineTo(590, 360);
+  ctx.lineTo(575, 320);
+  ctx.lineTo(565, 260);
+  ctx.closePath();
+  ctx.fillStyle = '#161616';
+  ctx.fill();
+  ctx.stroke();
+
+  // Staten Island
+  ctx.beginPath();
+  ctx.moveTo(380, 700);
+  ctx.lineTo(420, 680);
+  ctx.lineTo(460, 690);
+  ctx.lineTo(490, 720);
+  ctx.lineTo(470, 780);
+  ctx.lineTo(420, 810);
+  ctx.lineTo(370, 790);
+  ctx.lineTo(360, 750);
+  ctx.closePath();
+  ctx.fillStyle = '#151515';
+  ctx.fill();
+  ctx.stroke();
+
+  // Street grid (simplified)
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 0.5;
+  // Horizontal streets in Manhattan
+  for(let y = 210; y <= 700; y += 15) {
+    ctx.beginPath();
+    ctx.moveTo(470, y);
+    ctx.lineTo(620, y);
+    ctx.stroke();
+  }
+  // Avenues
+  for(let x = 480; x <= 615; x += 20) {
+    ctx.beginPath();
+    ctx.moveTo(x, 200);
+    ctx.lineTo(x, 720);
+    ctx.stroke();
+  }
+  
+  // Central Park highlight
+  ctx.fillStyle = '#0F1F0F';
+  ctx.strokeStyle = '#1A3A1A';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.rect(503, 345, 110, 165);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.fillStyle = '#1A3A1A40';
+  ctx.font = '10px IBM Plex Mono';
+  ctx.fillStyle = '#2A4A2A';
+  ctx.fillText('CENTRAL PARK', 510, 430);
+  
+  // Draw subway lines
+  SUBWAY_LINES.forEach(line => {
+    ctx.beginPath();
+    ctx.strokeStyle = line.color + '80';
+    ctx.lineWidth = 2.5;
+    line.points.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+    ctx.stroke();
+  });
+  
+  // Draw bridges
+  ctx.strokeStyle = '#8B451380';
+  ctx.lineWidth = 3;
+  // Brooklyn Bridge
+  ctx.beginPath(); ctx.moveTo(580, 670); ctx.lineTo(635, 660); ctx.stroke();
+  // Manhattan Bridge
+  ctx.beginPath(); ctx.moveTo(575, 645); ctx.lineTo(630, 640); ctx.stroke();
+  // Queensboro Bridge
+  ctx.beginPath(); ctx.moveTo(615, 455); ctx.lineTo(640, 455); ctx.stroke();
+  // George Washington Bridge
+  ctx.beginPath(); ctx.moveTo(465, 210); ctx.lineTo(440, 210); ctx.stroke();
+  
+  // Draw location dots
+  NYC_LOCATIONS.forEach(loc => {
+    const isHovered = hoveredLocation && hoveredLocation.name === loc.name;
+    const isCurrent = loc.name === G.location;
+    
+    ctx.beginPath();
+    const r = isHovered ? 8 : (isCurrent ? 0 : 5);
+    if(r > 0) {
+      ctx.arc(loc.x, loc.y, r, 0, Math.PI*2);
+      ctx.fillStyle = isCurrent ? 'transparent' : (isHovered ? loc.color : loc.color + '99');
+      ctx.fill();
+      if(isHovered) {
+        ctx.strokeStyle = '#FFD100';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+    
+    // Location label
+    if(mapScale > 0.7 || isHovered || isCurrent) {
+      ctx.font = `${isHovered ? 'bold ' : ''}${Math.max(8, 10*mapScale)}px IBM Plex Mono`;
+      ctx.fillStyle = isCurrent ? '#FFD100' : (isHovered ? '#FFD100' : '#999');
+      ctx.fillText(loc.name, loc.x + 8, loc.y + 4);
+    }
+    
+    // Icon
+    ctx.font = `${Math.max(10, 12*mapScale)}px serif`;
+    ctx.fillText(loc.icon, loc.x - 6, loc.y + 5);
+  });
+  
+  // Draw location labels for bridges/areas
+  ctx.fillStyle = '#8B4513';
+  ctx.font = '9px IBM Plex Mono';
+  ctx.fillText('BROOKLYN BRIDGE', 583, 658);
+  ctx.fillText('QUEENS-BORO BRIDGE', 615, 448);
+  ctx.fillStyle = '#333';
+  ctx.font = '11px IBM Plex Mono';
+  ctx.fillText('HUDSON RIVER', 380, 450);
+  ctx.fillText('EAST RIVER', 640, 560);
+  ctx.fillText('UPPER NEW YORK BAY', 400, 700);
+  
+  ctx.restore();
+}
+
+function onMapMouseMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  
+  if(isDragging) {
+    G.mapOffsetX += e.clientX - lastMouseX;
+    G.mapOffsetY += e.clientY - lastMouseY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    drawMap();
+    updatePlayerMarker();
+    return;
+  }
+  
+  const world = screenToWorld(mx, my);
+  let found = null;
+  for(const loc of NYC_LOCATIONS) {
+    const dx = world.x - loc.x, dy = world.y - loc.y;
+    if(Math.sqrt(dx*dx+dy*dy) < 12/mapScale) { found = loc; break; }
+  }
+  
+  if(found !== hoveredLocation) {
+    hoveredLocation = found;
+    drawMap();
+    if(found) {
+      const tt = document.getElementById('location-tooltip');
+      tt.style.display = 'block';
+      tt.style.left = (mx+12) + 'px';
+      tt.style.top = (my-10) + 'px';
+      document.getElementById('tt-name').textContent = found.name;
+      document.getElementById('tt-type').textContent = found.type;
+    } else {
+      hideTooltip();
+    }
+  } else if(found) {
+    const tt = document.getElementById('location-tooltip');
+    tt.style.left = (mx+12) + 'px';
+    tt.style.top = (my-10) + 'px';
+  }
+}
+
+function onMapClick(e) {
+  if(!hoveredLocation) return;
+  const loc = hoveredLocation;
+  travelTo(loc.name, loc.x, loc.y);
+}
+
+function hideTooltip() {
+  document.getElementById('location-tooltip').style.display = 'none';
+}
+
+function updatePlayerMarker() {
+  const screen = worldToScreen(G.playerX, G.playerY);
+  const marker = document.getElementById('player-marker');
+  marker.style.left = screen.x + 'px';
+  marker.style.top = screen.y + 'px';
+}
+
+// ═══════════════════════════════════════════════════════════
+// GAME START
+// ═══════════════════════════════════════════════════════════
+function startGame() {
+  const nameInput = document.getElementById('player-name').value.trim();
+  G.name = nameInput || 'PLAYER';
+  
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-game').classList.add('active');
+  
+  setTimeout(() => {
+    canvas = document.getElementById('map-canvas');
+    ctx = canvas.getContext('2d');
+    initMap();
+    updateUI();
+    
+    addLog(`You step off the train at Penn Station. It's 8AM on a Monday. You have $120 in your pocket and the whole city in front of you.`, 'info');
+    addLog(`New York City doesn't care about your dreams. Prove yourself.`, 'warn');
+    addLog(`Start by finding a job. Tap "FIND JOB" to see what's available.`, 'normal');
+    
+    // Start game loop
+    setInterval(gameLoop, 5000);
+    
+    // Random event timer
+    setInterval(() => {
+      if(Math.random() > 0.7) triggerRandomEvent();
+    }, 45000);
+    
+  }, 100);
+}
+
+let gameLoopTick = 0;
+function gameLoop() {
+  gameLoopTick++;
+  // Advance time
+  G.hour += 1;
+  if(G.hour >= 24) { G.hour = 0; }
+  updateTimeDisplay();
+  
+  // Shelter penalty
+  if(G.housing === 'shelter' && gameLoopTick % 10 === 0) {
+    addRating(-1);
+    addLog('Sleeping at the shelter is affecting your health and morale.', 'warn');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRAVEL
+// ═══════════════════════════════════════════════════════════
+function travelTo(name, wx, wy) {
+  if(!G.hasMetroCard && !G.hasMonthlyMetro) {
+    const dist = Math.sqrt(Math.pow(wx - G.playerX, 2) + Math.pow(wy - G.playerY, 2));
+    if(dist > 80) {
+      showNotif('You need a MetroCard to travel far! Buy one in the SHOP.', 'orange');
+      addLog('Tried to travel but no MetroCard. Buy one at the shop.', 'warn');
+      return;
+    }
+  }
+  
+  G.location = name;
+  G.playerX = wx;
+  G.playerY = wy;
+  
+  // Animate camera to player
+  const targetOffX = canvas.width/2 - wx * mapScale;
+  const targetOffY = canvas.height/2 - wy * mapScale;
+  const steps = 20;
+  let step = 0;
+  const startX = G.mapOffsetX, startY = G.mapOffsetY;
+  const anim = setInterval(() => {
+    step++;
+    G.mapOffsetX = startX + (targetOffX - startX) * (step/steps);
+    G.mapOffsetY = startY + (targetOffY - startY) * (step/steps);
+    drawMap();
+    updatePlayerMarker();
+    if(step >= steps) clearInterval(anim);
+  }, 16);
+  
+  document.getElementById('t-location').textContent = '📍 ' + name;
+  addLog(`Traveled to ${name}.`, 'info');
+  
+  // Use up single ride metro card
+  if(G.hasMetroCard && !G.hasMonthlyMetro) {
+    G.hasMetroCard = false;
+    updateMetroStatus();
+    addLog('Single-ride MetroCard used up.', 'warn');
+  }
+}
+
+function travelSubway() {
+  if(!G.hasMetroCard && !G.hasMonthlyMetro) {
+    showNotif('Buy a MetroCard from the SHOP first!', 'orange');
+    return;
+  }
+  showLocationPicker('🚇 TAKE THE SUBWAY', (loc) => {
+    travelTo(loc.name, loc.x, loc.y);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// JOBS
+// ═══════════════════════════════════════════════════════════
+function openJobBoard() {
+  const available = JOBS.filter(j => G.rating >= j.minRating);
+  
+  let html = `
+    <div class="event-header">
+      <div class="event-type-tag">EMPLOYMENT OPPORTUNITIES</div>
+      <div class="event-title">JOB BOARD</div>
+      <div class="event-location">📍 ${G.location} — Your Rating: ${G.rating}/100</div>
+    </div>
+    <div class="event-body">
+      <p class="event-description">Find work that matches your skill level. Higher employee rating unlocks better-paying jobs.</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+  `;
+  
+  JOBS.forEach(job => {
+    const locked = G.rating < job.minRating;
+    html += `
+      <div style="background:var(--mid); border:1px solid ${locked ? 'var(--border)' : 'var(--border)'}; padding:14px; cursor:${locked ? 'not-allowed' : 'pointer'}; opacity:${locked ? '0.4' : '1'}; transition: border-color 0.2s;"
+        ${!locked ? `onclick="applyForJob('${job.id}')" onmouseover="this.style.borderColor='var(--yellow)'" onmouseout="this.style.borderColor='var(--border)'"` : ''}>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-size:18px; margin-right:8px;">${job.icon}</span>
+            <span style="font-size:13px; font-weight:700; color:${locked ? 'var(--muted)' : 'var(--text)'};">${job.title}</span>
+            ${G.job && G.job.id === job.id ? '<span style="font-size:9px; background:var(--green); color:#000; padding:1px 6px; margin-left:8px;">CURRENT</span>' : ''}
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--yellow); font-size:14px; font-weight:700;">$${job.pay}/day</div>
+            <div style="font-size:9px; color:var(--muted);">Min Rating: ${job.minRating}</div>
+          </div>
+        </div>
+        <div style="font-size:10px; color:var(--muted); margin-top:4px;">📍 ${job.location}</div>
+      </div>
+    `;
+  });
+  
+  html += `</div></div>
+    <div style="padding:16px 24px;">
+      <button class="choice-btn" onclick="closeEvent()">← BACK TO CITY</button>
+    </div>`;
+  
+  showEvent(html);
+}
+
+function applyForJob(jobId) {
+  const job = JOBS.find(j => j.id === jobId);
+  if(!job) return;
+  
+  // Save previous job to resume
+  if(G.job) {
+    G.resume.unshift({
+      title: G.job.title,
+      location: G.job.location,
+      days: G.jobDays,
+      rating: G.rating,
+      endRating: G.rating
+    });
+    updateResumePanel();
+  }
+  
+  G.job = job;
+  G.jobDays = 0;
+  G.jobProgress = 0;
+  
+  document.getElementById('stat-job').textContent = job.title;
+  document.getElementById('stat-pay').textContent = '$' + job.pay + '/day';
+  
+  addLog(`Got hired as ${job.title} at ${job.location}! Pay: $${job.pay}/day.`, 'good');
+  showNotif(`Hired as ${job.title}! 🎉`, 'green');
+  
+  // Travel to job location
+  const loc = NYC_LOCATIONS.find(l => l.name === job.location);
+  if(loc) travelTo(loc.name, loc.x, loc.y);
+  
+  closeEvent();
+  updateUI();
+}
+
+function quitJob() {
+  if(!G.job) { showNotif("You don't have a job!", 'orange'); return; }
+  
+  // Big rating penalty for quitting without notice
+  addRating(-10);
+  
+  G.resume.unshift({
+    title: G.job.title,
+    location: G.job.location,
+    days: G.jobDays,
+    rating: G.rating,
+    endRating: G.rating,
+    quit: true
+  });
+  updateResumePanel();
+  
+  G.job = null;
+  G.jobDays = 0;
+  
+  document.getElementById('stat-job').textContent = 'NONE';
+  document.getElementById('stat-pay').textContent = '—';
+  document.getElementById('stat-daysworked').textContent = '0';
+  document.getElementById('job-status').style.display = 'none';
+  
+  addLog('You quit your job. -10 rating. Employers will notice.', 'bad');
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════════════════
+// WORK MINIGAME
+// ═══════════════════════════════════════════════════════════
+let mgScore = 0, mgTotal = 0, mgActive = false, mgInterval;
+
+function doWorkDay() {
+  if(!G.job) {
+    showNotif('Find a job first! Hit "FIND JOB"', 'orange');
+    return;
+  }
+  
+  const job = G.job;
+  let html = `
+    <div class="event-header">
+      <div class="event-type-tag">WORK SHIFT — DAY ${G.jobDays + 1}</div>
+      <div class="event-title">${job.title}</div>
+      <div class="event-location">📍 ${job.location} • Daily Pay: $${job.pay}</div>
+    </div>
+    <div class="event-body">
+      <div class="event-character">
+        <div class="char-avatar">${job.icon}</div>
+        <div class="char-info">
+          <div class="char-name">TODAY'S SHIFT</div>
+          <div class="char-desc">${job.taskDesc}</div>
+        </div>
+      </div>
+      <div class="task-box">
+        <div class="task-title">⚡ TASK</div>
+        <div class="task-desc" id="mg-task-desc">Click the targets as fast as you can! You have 15 seconds.</div>
+      </div>
+      <div class="event-stakes">
+        <div class="stake-item"><div class="stake-val pos">+$${job.pay}</div><div class="stake-label">BASE PAY</div></div>
+        <div class="stake-item"><div class="stake-val pos" id="mg-bonus-preview">+$0</div><div class="stake-label">PERFORMANCE BONUS</div></div>
+        <div class="stake-item"><div class="stake-val" id="mg-rating-preview" style="color:var(--yellow)">±?</div><div class="stake-label">RATING CHANGE</div></div>
+      </div>
+    </div>
+    <div id="minigame-wrap">
+      <div id="minigame-area">
+        <div class="mg-instruction" id="mg-instruction">CLICK TO START SHIFT</div>
+      </div>
+      <div class="mg-bar-wrap">
+        <span id="mg-timer-label">15s</span>
+        <div class="mg-bar"><div class="mg-bar-fill" id="mg-bar-fill" style="width:100%"></div></div>
+        <span id="mg-score-label">0 / 0</span>
+      </div>
+    </div>
+    <div style="padding:0 24px 20px;">
+      <button class="choice-btn" id="mg-done-btn" style="display:none" onclick="finishWorkDay()">
+        <span class="choice-key">↵</span> COLLECT PAY & FINISH SHIFT
+      </button>
+    </div>
+  `;
+  
+  showEvent(html);
+  
+  mgScore = 0; mgTotal = 0; mgActive = false;
+  let mgTimeLeft = 15;
+  
+  document.getElementById('minigame-area').addEventListener('click', function startMG() {
+    if(mgActive) return;
+    mgActive = true;
+    document.getElementById('mg-instruction').style.display = 'none';
+    
+    // Spawn targets
+    const area = document.getElementById('minigame-area');
+    const emojis = ['📦', '🍽️', '📄', '☕', '📱', '💼', '🔧', '📊'];
+    
+    function spawnTarget() {
+      if(!mgActive) return;
+      mgTotal++;
+      const target = document.createElement('div');
+      target.className = 'mg-target';
+      target.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      const maxX = area.offsetWidth - 50, maxY = area.offsetHeight - 50;
+      target.style.left = (10 + Math.random() * maxX) + 'px';
+      target.style.top = (10 + Math.random() * maxY) + 'px';
+      target.addEventListener('click', (e) => {
+        e.stopPropagation();
+        mgScore++;
+        document.getElementById('mg-score-label').textContent = `${mgScore} / ${mgTotal}`;
+        const bonus = Math.floor(mgScore * (G.job.pay * 0.1));
+        document.getElementById('mg-bonus-preview').textContent = '+$' + bonus;
+        const ratingChange = Math.floor((mgScore/Math.max(mgTotal,1) * 10) - 3);
+        document.getElementById('mg-rating-preview').textContent = (ratingChange >= 0 ? '+' : '') + ratingChange;
+        document.getElementById('mg-rating-preview').style.color = ratingChange >= 0 ? 'var(--green)' : 'var(--red)';
+        target.style.transform = 'scale(0)';
+        setTimeout(() => target.remove(), 200);
+      });
+      area.appendChild(target);
+      setTimeout(() => { if(target.parentNode) target.remove(); }, 2000);
+    }
+    
+    mgInterval = setInterval(spawnTarget, 900);
+    
+    const timerInterval = setInterval(() => {
+      mgTimeLeft--;
+      const fill = document.getElementById('mg-bar-fill');
+      if(fill) fill.style.width = (mgTimeLeft/15*100) + '%';
+      const label = document.getElementById('mg-timer-label');
+      if(label) label.textContent = mgTimeLeft + 's';
+      
+      if(mgTimeLeft <= 0) {
+        clearInterval(timerInterval);
+        clearInterval(mgInterval);
+        mgActive = false;
+        // Clear remaining targets
+        document.querySelectorAll('.mg-target').forEach(t => t.remove());
+        const doneBtn = document.getElementById('mg-done-btn');
+        if(doneBtn) doneBtn.style.display = 'flex';
+        const inst = document.getElementById('mg-instruction');
+        if(inst) {
+          inst.style.display = 'block';
+          const acc = mgTotal > 0 ? Math.round(mgScore/mgTotal*100) : 0;
+          inst.textContent = `SHIFT COMPLETE! ${mgScore}/${mgTotal} tasks (${acc}% efficiency)`;
+        }
+      }
+    }, 1000);
+  });
+}
+
+function finishWorkDay() {
+  const accuracy = mgTotal > 0 ? mgScore/mgTotal : 0;
+  const bonus = Math.floor(mgScore * (G.job.pay * 0.1));
+  const ratingChange = Math.floor(accuracy * 12) - 4;
+  const totalPay = G.job.pay + bonus;
+  
+  addCash(totalPay);
+  addRating(ratingChange);
+  G.jobDays++;
+  document.getElementById('stat-daysworked').textContent = G.jobDays;
+  
+  const acc = Math.round(accuracy * 100);
+  if(acc >= 80) addLog(`🌟 Excellent shift! ${acc}% efficiency. +$${totalPay} (+$${bonus} bonus). ${ratingChange > 0 ? '+' : ''}${ratingChange} rating.`, 'good');
+  else if(acc >= 50) addLog(`Good shift. ${acc}% efficiency. +$${totalPay}. ${ratingChange > 0 ? '+' : ''}${ratingChange} rating.`, 'normal');
+  else addLog(`Rough shift. ${acc}% efficiency. +$${totalPay}. ${ratingChange} rating.`, 'bad');
+  
+  // Check for promotion/demotion events
+  if(G.rating >= 90 && G.jobDays % 5 === 0) {
+    addLog('💫 Your performance is exceptional. Management is taking notice.', 'good');
+  }
+  if(G.rating < 20) {
+    addLog('⚠️ Warning: Your performance is dangerously low. Keep this up and you\'ll be fired.', 'bad');
+  }
+  if(G.rating < 10 && G.job) {
+    addLog('🚨 FIRED! Your employee rating dropped too low. Hit the streets.', 'bad');
+    quitJob();
+  }
+  
+  // Weekly rent
+  if(G.jobDays % 7 === 0 && G.rentPerWeek > 0) {
+    if(G.cash >= G.rentPerWeek) {
+      spendCash(G.rentPerWeek);
+      addLog(`Paid weekly rent: $${G.rentPerWeek}.`, 'money');
+    } else {
+      addLog('⚠️ Can\'t afford rent! Landlord is threatening eviction.', 'bad');
+      addRating(-5);
+    }
+  }
+  
+  advanceDay();
+  closeEvent();
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHOP
+// ═══════════════════════════════════════════════════════════
+function openShop() {
+  const categories = ['transit', 'food', 'clothing', 'gear', 'lifestyle', 'career'];
+  const catNames = { transit: '🚇 TRANSIT', food: '🍕 FOOD', clothing: '👔 CLOTHING', gear: '⚙️ GEAR', lifestyle: '🍸 LIFESTYLE', career: '📈 CAREER' };
+  
+  let html = `
+    <div class="event-header">
+      <div class="event-type-tag">NEW YORK MARKETPLACE</div>
+      <div class="event-title">SPEND YOUR MONEY</div>
+      <div class="event-location">💰 Cash on hand: $${G.cash.toFixed(2)}</div>
+    </div>
+    <div class="event-body" style="padding-bottom:0;">
+      <p class="event-description">Invest in yourself, get around the city, eat, live. Every dollar spent is a choice.</p>
+    </div>
+  `;
+  
+  categories.forEach(cat => {
+    const items = SHOP_ITEMS.filter(i => i.category === cat);
+    if(!items.length) return;
+    html += `<div class="section-title" style="padding:12px 24px 8px; font-size:10px; letter-spacing:3px;">${catNames[cat]}</div>`;
+    html += `<div class="shop-grid">`;
+    items.forEach(item => {
+      const cantAfford = G.cash < item.price;
+      html += `
+        <div class="shop-item ${cantAfford ? 'cant-afford' : ''}" onclick="buyItem('${item.id}')">
+          <div class="shop-item-icon">${item.icon}</div>
+          <div class="shop-item-name">${item.name}</div>
+          <div class="shop-item-desc">${item.desc}</div>
+          <div class="shop-item-price">$${item.price.toFixed(2)}</div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  });
+  
+  html += `
+    <div style="padding:0 24px 20px; margin-top:8px;">
+      <button class="choice-btn" onclick="closeEvent()">← BACK TO CITY</button>
+    </div>
+    <div id="housing-section"></div>
+  `;
+  
+  showEvent(html);
+}
+
+function buyItem(itemId) {
+  const item = SHOP_ITEMS.find(i => i.id === itemId);
+  if(!item || G.cash < item.price) {
+    showNotif("Not enough cash!", 'red');
+    return;
+  }
+  
+  spendCash(item.price);
+  
+  // Effects
+  switch(item.id) {
+    case 'metrocard_single': G.hasMetroCard = true; updateMetroStatus(); break;
+    case 'metrocard_30day': G.hasMonthlyMetro = true; updateMetroStatus(); break;
+    case 'coffee': addRating(5); break;
+    case 'bagel': addRating(3); break;
+    case 'suit_basic': addRating(10); break;
+    case 'suit_nice': addRating(20); break;
+    case 'sneakers': addRating(2); break;
+    case 'briefcase': addRating(15); break;
+    case 'cell_phone': addRating(5); break;
+    case 'laptop': addRating(15); break;
+    case 'gym': addRating(3); break;
+    case 'networking_event': addRating(8); talkToNPC(); break;
+    case 'resume_service': addRating(12); break;
+    case 'book': addRating(5); break;
+    case 'night_out': addLog('Had a wild night in the city! Worth it.', 'good'); break;
+  }
+  
+  // Add to inventory (non-consumables)
+  const keepItems = ['metrocard_30day', 'suit_basic', 'suit_nice', 'briefcase', 'cell_phone', 'laptop', 'sneakers', 'car'];
+  if(keepItems.includes(item.id)) {
+    G.inventory.push({ icon: item.icon, name: item.name });
+    updateInventory();
+  }
+  
+  addLog(`Bought: ${item.name} for $${item.price.toFixed(2)}`, 'money');
+  showNotif(`${item.icon} ${item.name} — purchased!`, 'green');
+  
+  // Refresh shop
+  openShop();
+}
+
+function openHousingMenu() {
+  let html = `
+    <div class="event-header">
+      <div class="event-type-tag">HOUSING MARKET</div>
+      <div class="event-title">FIND A PLACE TO LIVE</div>
+      <div class="event-location">Current: ${HOUSING.find(h=>h.id===G.housing)?.name || 'Homeless Shelter'}</div>
+    </div>
+    <div class="event-body">
+      <p class="event-description">Where you live defines your life in this city. From homeless shelter to penthouse — it's all possible.</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+  `;
+  
+  HOUSING.forEach(h => {
+    const current = h.id === G.housing;
+    const cantAfford = G.cash < h.weeklyRent * 2 && h.weeklyRent > 0;
+    html += `
+      <div style="background:var(--mid); border:1px solid ${current ? 'var(--yellow)' : 'var(--border)'}; padding:14px; cursor:${cantAfford ? 'not-allowed' : 'pointer'}; opacity:${cantAfford ? '0.4' : '1'};" 
+        ${!cantAfford && !current ? `onclick="moveInto('${h.id}')" onmouseover="this.style.borderColor='var(--yellow)'" onmouseout="this.style.borderColor='var(--border)'"` : ''}>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:${current ? 'var(--yellow)' : 'var(--text)'};">${h.name} ${current ? '(CURRENT)' : ''}</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:2px;">📍 ${h.location} — ${h.desc}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--red); font-size:14px; font-weight:700;">${h.weeklyRent === 0 ? 'FREE' : '$' + h.weeklyRent + '/wk'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `</div></div>
+    <div style="padding:16px 24px;">
+      <button class="choice-btn" onclick="closeEvent()">← BACK TO CITY</button>
+    </div>`;
+  
+  showEvent(html);
+}
+
+function moveInto(housingId) {
+  const h = HOUSING.find(hh => hh.id === housingId);
+  if(!h) return;
+  G.housing = housingId;
+  G.rentPerWeek = h.weeklyRent;
+  document.getElementById('stat-rent').textContent = '$' + h.weeklyRent + '/wk';
+  addLog(`Moved into: ${h.name}. Weekly rent: $${h.weeklyRent}.`, 'money');
+  if(housingId !== 'shelter') addRating(5);
+  showNotif(`Moved to ${h.name}! 🏠`, 'green');
+  closeEvent();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NPC NETWORKING
+// ═══════════════════════════════════════════════════════════
+function talkToNPC() {
+  const npc = NPC_ENCOUNTERS[Math.floor(Math.random() * NPC_ENCOUNTERS.length)];
+  const quote = npc.lines[Math.floor(Math.random() * npc.lines.length)];
+  
+  const html = `
+    <div class="event-header">
+      <div class="event-type-tag">STREET ENCOUNTER</div>
+      <div class="event-title">MEETING SOMEONE</div>
+      <div class="event-location">📍 ${G.location}</div>
+    </div>
+    <div class="event-body">
+      <div class="event-character">
+        <div class="char-avatar">${npc.emoji}</div>
+        <div class="char-info">
+          <div class="char-name">${npc.name}</div>
+          <div class="char-desc">${npc.type}</div>
+        </div>
+      </div>
+      <div class="task-box">
+        <div class="task-title">💬 THEY SAY...</div>
+        <div class="task-desc" style="font-style:italic; font-size:14px;">"${quote}"</div>
+      </div>
+      <div class="event-stakes">
+        <div class="stake-item"><div class="stake-val pos">+${npc.ratingBoost}</div><div class="stake-label">RATING BOOST</div></div>
+        <div class="stake-item"><div class="stake-val" style="color:var(--blue)">📇</div><div class="stake-label">NEW CONTACT</div></div>
+      </div>
+    </div>
+    <div class="event-body" style="padding-top:0;">
+      <div class="event-choices">
+        <button class="choice-btn" onclick="npcChat('${npc.name}', ${npc.ratingBoost}, false)">
+          <span class="choice-key">A</span> Engage the conversation. Listen and learn.
+        </button>
+        <button class="choice-btn" onclick="npcChat('${npc.name}', 0, true)">
+          <span class="choice-key">B</span> Keep moving. No time for small talk.
+        </button>
+      </div>
+    </div>
+  `;
+  
+  showEvent(html);
+}
+
+function npcChat(name, boost, skip) {
+  if(!skip) {
+    addRating(boost);
+    addLog(`Talked with ${name}. Gained perspective. +${boost} rating.`, 'good');
+    showNotif(`+${boost} rating from ${name}`, 'green');
+  } else {
+    addLog(`Brushed past ${name}. No time today.`, 'normal');
+  }
+  closeEvent();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RANDOM EVENTS
+// ═══════════════════════════════════════════════════════════
+function triggerRandomEvent() {
+  const event = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
+  
+  let html = `
+    <div class="event-header">
+      <div class="event-type-tag">CITY EVENT</div>
+      <div class="event-title">${event.title}</div>
+      <div class="event-location">📍 ${G.location} — Day ${G.day}</div>
+    </div>
+    <div class="event-body">
+      <p class="event-description">${event.desc}</p>
+      <div class="event-choices">
+  `;
+  
+  event.choices.forEach((choice, i) => {
+    html += `
+      <button class="choice-btn" onclick="resolveRandomEvent(${i})">
+        <span class="choice-key">${String.fromCharCode(65+i)}</span> ${choice.text}
+      </button>
+    `;
+  });
+  
+  html += `</div></div>`;
+  
+  showEvent(html);
+  window._currentEvent = event;
+}
+
+function resolveRandomEvent(choiceIndex) {
+  if(window._currentEvent) {
+    window._currentEvent.choices[choiceIndex].effect();
+  }
+  closeEvent();
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOCATION PICKER
+// ═══════════════════════════════════════════════════════════
+function showLocationPicker(title, callback) {
+  let html = `
+    <div class="event-header">
+      <div class="event-type-tag">TRANSIT</div>
+      <div class="event-title">${title}</div>
+      <div class="event-location">📍 Currently: ${G.location}</div>
+    </div>
+    <div class="event-body">
+      <p class="event-description">Where do you want to go?</p>
+      <div style="display:flex; flex-direction:column; gap:4px; max-height:400px; overflow-y:auto;">
+  `;
+  
+  NYC_LOCATIONS.forEach(loc => {
+    html += `
+      <button class="choice-btn" onclick="pickLocation('${loc.name}', ${loc.x}, ${loc.y})">
+        <span style="font-size:16px;">${loc.icon}</span>
+        <div>
+          <div style="font-size:12px;">${loc.name}</div>
+          <div style="font-size:9px; color:var(--muted);">${loc.type}</div>
+        </div>
+      </button>
+    `;
+  });
+  
+  html += `</div></div>
+    <div style="padding:16px 24px;">
+      <button class="choice-btn" onclick="closeEvent()">← CANCEL</button>
+    </div>`;
+  
+  showEvent(html);
+  window._locationCallback = callback;
+}
+
+function pickLocation(name, x, y) {
+  if(window._locationCallback) window._locationCallback({ name, x, y });
+  closeEvent();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BANK
+// ═══════════════════════════════════════════════════════════
+function saveToBank() {
+  if(G.cash < 10) { showNotif('Not enough cash to deposit.', 'orange'); return; }
+  const amount = Math.floor(G.cash * 0.8);
+  G.savings += amount;
+  G.cash -= amount;
+  addLog(`Deposited $${amount} to savings. (Keep $${G.cash.toFixed(2)} on hand)`, 'money');
+  updateUI();
+  showNotif(`$${amount} saved! 🏦`, 'green');
+}
+
+function withdrawBank() {
+  if(G.savings < 1) { showNotif('No savings to withdraw.', 'orange'); return; }
+  G.cash += G.savings;
+  addLog(`Withdrew $${G.savings.toFixed(2)} from savings.`, 'money');
+  G.savings = 0;
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════
+function addCash(amount) {
+  G.cash += amount;
+  updateUI();
+}
+
+function spendCash(amount) {
+  G.cash = Math.max(0, G.cash - amount);
+  updateUI();
+}
+
+function addRating(change) {
+  G.rating = Math.min(100, Math.max(0, G.rating + change));
+  const fill = document.getElementById('rating-fill');
+  fill.style.width = G.rating + '%';
+  fill.style.backgroundPosition = (G.rating) + '% 0';
+  document.getElementById('rating-num').textContent = Math.round(G.rating);
+  updatePlayerTitle();
+}
+
+function advanceDay() {
+  G.day++;
+  G.hour = 8;
+  document.getElementById('t-day').textContent = 'Day ' + G.day;
+  updateTimeDisplay();
+  
+  // Weather variety
+  const weathers = ['72°F ☀️', '58°F 🌧️', '45°F 🌬️', '81°F 😤', '65°F ⛅', '38°F ❄️'];
+  G.weather = weathers[Math.floor(Math.random() * weathers.length)];
+  document.getElementById('t-weather').textContent = G.weather;
+  
+  updateTicker();
+}
+
+function advanceHours(h) {
+  G.hour = Math.min(23, G.hour + h);
+  updateTimeDisplay();
+}
+
+function updateTimeDisplay() {
+  const h = G.hour;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  document.getElementById('t-time').textContent = h12 + ':00 ' + ampm;
+}
+
+function updateMetroStatus() {
+  const dot = document.getElementById('metro-dot');
+  const status = document.getElementById('metro-status');
+  if(G.hasMonthlyMetro) {
+    dot.className = 'metro-dot active';
+    status.textContent = 'Unlimited MetroCard ✓';
+  } else if(G.hasMetroCard) {
+    dot.className = 'metro-dot';
+    dot.style.background = 'var(--orange)';
+    status.textContent = 'Single Ride MetroCard';
+  } else {
+    dot.className = 'metro-dot';
+    dot.style.background = 'var(--subway-blue)';
+    status.textContent = 'No MetroCard';
+  }
+}
+
+function updatePlayerTitle() {
+  const r = G.rating;
+  let title = 'NEWCOMER';
+  let job = G.job ? G.job.title : 'BROKE';
+  if(r >= 90) title = 'CITY LEGEND';
+  else if(r >= 80) title = 'RISING STAR';
+  else if(r >= 70) title = 'PROFESSIONAL';
+  else if(r >= 60) title = 'RELIABLE';
+  else if(r >= 50) title = 'AVERAGE';
+  else if(r >= 35) title = 'STRUGGLING';
+  else if(r >= 20) title = 'DESPERATE';
+  else title = 'ROCK BOTTOM';
+  
+  document.getElementById('display-title').textContent = title + ' • ' + job;
+}
+
+function updateResumePanel() {
+  const panel = document.getElementById('resume-panel');
+  if(!G.resume.length) { panel.innerHTML = '<div style="padding:12px 16px; font-size:10px; color:var(--muted)">No work history yet.</div>'; return; }
+  panel.innerHTML = G.resume.slice(0, 5).map(j => `
+    <div class="resume-entry">
+      <div class="job-name">${j.title}</div>
+      <div style="font-size:9px; color:var(--muted);">${j.location} • ${j.days} days</div>
+      <span class="job-rating ${j.endRating >= 65 ? 'good' : j.endRating >= 40 ? 'ok' : 'bad'}">
+        Rating: ${j.endRating} ${j.quit ? '(QUIT)' : ''}
+      </span>
+    </div>
+  `).join('');
+}
+
+function updateInventory() {
+  const list = document.getElementById('inventory-list');
+  if(!G.inventory.length) { list.innerHTML = '<div class="inv-item"><span>Nothing yet</span></div>'; return; }
+  list.innerHTML = G.inventory.map(i => `<div class="inv-item"><span>${i.icon} ${i.name}</span></div>`).join('');
+}
+
+function updateTicker() {
+  const headlines = [
+    `DAY ${G.day} IN NEW YORK`,
+    `EMPLOYEE RATING: ${Math.round(G.rating)}/100`,
+    G.job ? `WORKING AS: ${G.job.title}` : 'SEEKING EMPLOYMENT',
+    `CASH: $${G.cash.toFixed(2)}`,
+    `SAVINGS: $${G.savings.toFixed(2)}`,
+    'RENT IN MANHATTAN UP ANOTHER 3%',
+    'MTA ANNOUNCES NEW FARE HIKE',
+    'WALL STREET CLOSES HIGHER',
+    'BODEGA CATS UNIONIZE — DEMANDS INCLUDE PREMIUM TUNA',
+    'CONSTRUCTION ON EVERY BLOCK IN MIDTOWN — FOREVER',
+    'TOURISTS BLOCKING SUBWAY DOORS — AGAIN',
+    'DOLLAR PIZZA STILL UNDER THREAT FROM INFLATION',
+  ];
+  document.getElementById('ticker-text').textContent = headlines.join(' \u00a0•\u00a0 ') + ' \u00a0•\u00a0 ' + headlines.join(' \u00a0•\u00a0 ');
+}
+
+function updateUI() {
+  document.getElementById('display-name').textContent = G.name;
+  document.getElementById('stat-cash').textContent = '$' + G.cash.toFixed(2);
+  document.getElementById('stat-savings').textContent = '$' + G.savings.toFixed(2);
+  document.getElementById('stat-rent').textContent = G.rentPerWeek > 0 ? '$' + G.rentPerWeek + '/wk' : 'NONE';
+  document.getElementById('stat-job').textContent = G.job ? G.job.title : 'NONE';
+  document.getElementById('stat-pay').textContent = G.job ? '$' + G.job.pay + '/day' : '—';
+  document.getElementById('stat-daysworked').textContent = G.jobDays;
+  updatePlayerTitle();
+  updateMetroStatus();
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOGGING
+// ═══════════════════════════════════════════════════════════
+function addLog(msg, type = 'normal') {
+  const log = document.getElementById('log-area');
+  const entry = document.createElement('div');
+  entry.className = `log-entry log-${type}`;
+  const h = G.hour;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  entry.innerHTML = `<div class="log-time">DAY ${G.day} — ${h12}:00 ${ampm}</div><div class="log-msg">${msg}</div>`;
+  log.insertBefore(entry, log.firstChild);
+  // Keep only last 100
+  while(log.children.length > 100) log.removeChild(log.lastChild);
+}
+
+// ═══════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════
+function showNotif(msg, type = 'yellow') {
+  const area = document.getElementById('notif-area');
+  const notif = document.createElement('div');
+  notif.className = `notif ${type}`;
+  notif.textContent = msg;
+  area.appendChild(notif);
+  setTimeout(() => notif.remove(), 3200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EVENT MODAL
+// ═══════════════════════════════════════════════════════════
+function showEvent(html) {
+  const screen = document.getElementById('screen-event');
+  screen.innerHTML = `<div id="event-modal">${html}</div>`;
+  screen.classList.add('active');
+}
+
+function closeEvent() {
+  document.getElementById('screen-event').classList.remove('active');
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeEvent();
+  if(e.key === 'j' || e.key === 'J') openJobBoard();
+  if(e.key === 's' || e.key === 'S') openShop();
+  if(e.key === 'w' || e.key === 'W') doWorkDay();
+  if(e.key === 'n' || e.key === 'N') talkToNPC();
+  if(e.key === 'h' || e.key === 'H') openHousingMenu();
+  if(e.key === 'Enter' && document.getElementById('screen-intro').classList.contains('active')) startGame();
+});
+
+document.getElementById('player-name').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') startGame();
+});
+
+// Keyboard shortcuts hint
+window.onload = () => {
+  document.getElementById('screen-intro').classList.add('active');
+};
+</script>
+</body>
+</html>
