@@ -341,290 +341,193 @@
   <script src="../main.js"></script>
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
-  <script>
-  /* ══════════════════════════════════════════════
-     360 NEWS V2 — MULTI-API WITH VYNTR FALLBACK
-     Priority order per category:
-       1. RSS2JSON (BBC, NYT, TechCrunch, etc.) — free, no limit
-       2. Vyntr Search API — fallback when RSS fails
-  ══════════════════════════════════════════════ */
+<script>
+/* ══════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════ */
 
-  const RSS2JSON  = "https://api.rss2json.com/v1/api.json?count=24&rss_url=";
-  const VYNTR_KEY = "vyntr_dVZQQztzpWQZiKpsuwpCdStcNiyTnSfooWrKPUyFFDqGvSkETpjtpyuuzBJzwQSf";
-  const VYNTR_URL = "https://vyntr.com/api/v1/search";
+const PROXY = "https://api.allorigins.win/raw?url=";
 
-  let allArticles = [];
-  let currentCat  = "top";
-  let activeSource = "";
+const GOOGLE_NEWS = {
+  top: "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en",
+  tech: "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en",
+  business: "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en",
+  sports: "https://news.google.com/rss/headlines/section/topic/SPORTS?hl=en-US&gl=US&ceid=US:en",
+  entertainment: "https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=en-US&gl=US&ceid=US:en",
+  science: "https://news.google.com/rss/headlines/section/topic/SCIENCE?hl=en-US&gl=US&ceid=US:en",
+  world: "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en"
+};
 
-  /* ── RSS feeds per category ── */
-  const FEEDS = {
-    top: [
-      "https://feeds.bbci.co.uk/news/rss.xml",
-      "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-      "https://feeds.npr.org/1001/rss.xml",
-      "https://www.theguardian.com/world/rss",
-    ],
-    tech: [
-      "https://techcrunch.com/feed/",
-      "https://feeds.bbci.co.uk/news/technology/rss.xml",
-      "https://www.theverge.com/rss/index.xml",
-      "https://feeds.arstechnica.com/arstechnica/index",
-      "https://www.wired.com/feed/rss",
-    ],
-    science: [
-      "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-      "https://www.sciencedaily.com/rss/top/science.xml",
-      "https://www.newscientist.com/feed/home/",
-    ],
-    business: [
-      "https://feeds.bbci.co.uk/news/business/rss.xml",
-      "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
-      "https://feeds.npr.org/1006/rss.xml",
-    ],
-    entertainment: [
-      "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
-      "https://variety.com/feed/",
-      "https://deadline.com/feed/",
-    ],
-    sports: [
-      "https://feeds.bbci.co.uk/sport/rss.xml",
-      "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml",
-      "https://www.espn.com/espn/rss/news",
-    ],
-    us: [
-      "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
-      "https://feeds.npr.org/1003/rss.xml",
-      "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
-    ],
-    world: [
-      "https://www.theguardian.com/world/rss",
-      "https://feeds.bbci.co.uk/news/world/rss.xml",
-      "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-    ],
-  };
+let allArticles = [];
+let currentCat = "top";
 
-  const SOURCE_MAP = {
-    "bbci.co.uk": "BBC News", "nytimes.com": "NYT",
-    "npr.org": "NPR", "theguardian.com": "The Guardian",
-    "techcrunch.com": "TechCrunch", "wired.com": "Wired",
-    "arstechnica.com": "Ars Technica", "theverge.com": "The Verge",
-    "sciencedaily.com": "Science Daily", "newscientist.com": "New Scientist",
-    "variety.com": "Variety", "deadline.com": "Deadline",
-    "espn.com": "ESPN",
-  };
+/* ══════════════════════════════════════════════
+   FETCH + PARSE
+══════════════════════════════════════════════ */
 
-  const CAT_EMOJIS = {
-    top:"📰", tech:"💻", science:"🔬", business:"📈",
-    entertainment:"🎬", sports:"⚽", us:"🇺🇸", world:"🌐"
-  };
+async function fetchNews(url) {
+  try {
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    const text = await res.text();
 
-  function getFeedSource(url) {
-    try {
-      const host = new URL(url).hostname.replace(/^(www\.|feeds\.|rss\.)/,"");
-      for (const [k, v] of Object.entries(SOURCE_MAP)) { if (host.includes(k)) return v; }
-      return host;
-    } catch { return "News"; }
-  }
+    const xml = new DOMParser().parseFromString(text, "text/xml");
+    const items = [...xml.querySelectorAll("item")];
 
-  function timeAgo(dateStr) {
-    if (!dateStr) return "";
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const m = Math.floor(diff / 60000), h = Math.floor(m/60), d = Math.floor(h/24);
-    if (m < 1)  return "Just now";
-    if (m < 60) return `${m}m ago`;
-    if (h < 24) return `${h}h ago`;
-    return `${d}d ago`;
-  }
+    return items.map(item => {
+      const title = item.querySelector("title")?.textContent || "";
+      const link = item.querySelector("link")?.textContent || "#";
+      const descRaw = item.querySelector("description")?.textContent || "";
 
-  function getImg(a) {
-    return a.enclosure?.link || a.thumbnail || a.image || a.media_content?.url || "";
-  }
+      // CLEAN DESCRIPTION (removes HTML junk)
+      const desc = descRaw.replace(/<[^>]*>/g, "").slice(0, 140);
 
-  /* ── Try all RSS feeds in parallel ── */
-  async function tryRSS(cat) {
-    const feeds = FEEDS[cat] || FEEDS.top;
-    const seen  = new Set();
-    const out   = [];
-    const tried = new Set();
+      // TRY EXTRACT IMAGE FROM DESCRIPTION
+      const imgMatch = descRaw.match(/<img.*?src="(.*?)"/);
+      const image = imgMatch ? imgMatch[1] : "";
 
-    const settled = await Promise.allSettled(feeds.map(async url => {
-      const res  = await fetch(RSS2JSON + encodeURIComponent(url), { signal: AbortSignal.timeout(7000) });
-      const data = await res.json();
-      if (!data.items?.length) return [];
-      tried.add(getFeedSource(url));
-      return data.items.map(i => ({ ...i, _source: getFeedSource(url) }));
-    }));
-
-    settled.forEach(r => {
-      if (r.status !== "fulfilled") return;
-      r.value.forEach(item => {
-        const key = (item.title || "").trim();
-        if (key && !seen.has(key)) { seen.add(key); out.push(item); }
-      });
+      return {
+        title,
+        link,
+        description: desc,
+        image,
+        time: Date.now()
+      };
     });
 
-    if (!out.length) return null;
-    activeSource = [...tried].join(" · ");
-    out.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
-    return out;
+  } catch (err) {
+    console.error("News fetch failed:", err);
+    return [];
   }
+}
 
-  /* ── Vyntr fallback ── */
-  async function tryVyntr(cat) {
-    const queries = {
-      top:"breaking news today", tech:"technology news today",
-      science:"science news today", business:"business news today",
-      entertainment:"entertainment news today", sports:"sports news today",
-      us:"us news today", world:"world news today"
-    };
-    try {
-      const res  = await fetch(`${VYNTR_URL}?q=${encodeURIComponent(queries[cat]||"news")}&type=news`, {
-        headers: { "Authorization": `Bearer ${VYNTR_KEY}`, "Accept": "application/json" }
-      });
-      if (!res.ok) throw new Error("Vyntr " + res.status);
-      const data = await res.json();
-      const items = (data.results || data.news || data.items || []).map(r => ({
-        title:       r.title || r.headline || "",
-        link:        r.url   || r.link || "#",
-        description: r.snippet || r.description || r.summary || "",
-        thumbnail:   r.image  || r.thumbnail || r.imageUrl || "",
-        pubDate:     r.date   || r.publishedAt || r.published || "",
-        _source:     r.source || "Vyntr News",
-      })).filter(r => r.title);
-      if (!items.length) return null;
-      activeSource = "Vyntr Search";
-      return items;
-    } catch (e) {
-      console.warn("Vyntr failed:", e.message);
-      return null;
+/* ══════════════════════════════════════════════
+   TRENDING SCORE
+══════════════════════════════════════════════ */
+
+function getTrendingScore(article) {
+  const keywords = [
+    "breaking", "major", "alert", "crisis",
+    "war", "election", "ai", "apple", "google",
+    "microsoft", "tesla", "openai"
+  ];
+
+  let score = 0;
+
+  keywords.forEach(k => {
+    if (article.title.toLowerCase().includes(k)) {
+      score += 5;
     }
+  });
+
+  // Slight boost for shorter titles (usually headlines)
+  score += Math.max(0, 100 - article.title.length) / 20;
+
+  return score;
+}
+
+/* ══════════════════════════════════════════════
+   LOAD NEWS
+══════════════════════════════════════════════ */
+
+async function loadNews() {
+  const grid = document.getElementById("news-grid");
+
+  grid.innerHTML = `<div class="news-status">Loading news...</div>`;
+  document.getElementById("news-hero").style.display = "none";
+  document.getElementById("api-name").textContent = "Google News";
+
+  const url = GOOGLE_NEWS[currentCat] || GOOGLE_NEWS.top;
+
+  let articles = await fetchNews(url);
+
+  if (!articles.length) {
+    grid.innerHTML = `<div class="news-status">❌ Failed to load news.</div>`;
+    return;
   }
 
-  /* ── Render hero ── */
-  function renderHero(a) {
-    const hero = document.getElementById("news-hero");
-    if (!a) { hero.style.display = "none"; return; }
-    const img = getImg(a);
-    hero.href = a.link || a.url || "#";
-    document.getElementById("hero-source").textContent = a._source || "Top Story";
-    document.getElementById("hero-title").textContent  = a.title || "";
-    document.getElementById("hero-meta").textContent   = (a._source || "") + (a.pubDate ? " · " + timeAgo(a.pubDate) : "");
-    const imgEl = document.getElementById("hero-img");
-    if (img) {
-      imgEl.src = img; imgEl.style.display = "block";
-      imgEl.onerror = () => {
-        imgEl.style.display = "none";
-        imgEl.closest(".news-hero-img-wrap").innerHTML =
-          `<div class="news-hero-img-placeholder">${CAT_EMOJIS[currentCat]||"📰"}</div>` +
-          `<div class="news-hero-overlay"></div>` +
-          `<div class="news-hero-content">` +
-            `<div class="news-hero-tag">${a._source||"Top Story"}</div>` +
-            `<div class="news-hero-title">${a.title||""}</div>` +
-            `<div class="news-hero-meta">${a._source||""}</div>` +
-          `</div>`;
-      };
-    } else {
-      imgEl.style.display = "none";
-      imgEl.closest(".news-hero-img-wrap").innerHTML =
-        `<div class="news-hero-img-placeholder">${CAT_EMOJIS[currentCat]||"📰"}</div>` +
-        `<div class="news-hero-overlay"></div>` +
-        `<div class="news-hero-content">` +
-          `<div class="news-hero-tag">${a._source||"Top Story"}</div>` +
-          `<div class="news-hero-title">${a.title||""}</div>` +
-          `<div class="news-hero-meta">${a._source||""}</div>` +
-        `</div>`;
-    }
-    hero.style.display = "block";
+  // SORT BY TRENDING
+  articles.sort((a, b) => getTrendingScore(b) - getTrendingScore(a));
+
+  allArticles = articles.slice(0, 25);
+
+  renderHero(allArticles[0]);
+  renderCards(allArticles.slice(1));
+}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+
+function renderHero(a) {
+  const hero = document.getElementById("news-hero");
+
+  if (!a) return;
+
+  hero.style.display = "block";
+  hero.href = a.link;
+
+  hero.innerHTML = `
+    <img src="${a.image || 'https://picsum.photos/800/400'}" class="news-hero-img"/>
+    <div class="news-hero-content">
+      <div class="news-hero-title">${a.title}</div>
+      <div class="news-hero-desc">${a.description}</div>
+    </div>
+  `;
+}
+
+function renderCards(list) {
+  const grid = document.getElementById("news-grid");
+
+  grid.innerHTML = list.map(a => `
+    <a class="news-card" href="${a.link}" target="_blank">
+      <img src="${a.image || 'https://picsum.photos/300/200'}" class="news-card-img"/>
+      <div class="news-card-title">${a.title}</div>
+      <div class="news-card-desc">${a.description}</div>
+    </a>
+  `).join("");
+}
+
+/* ══════════════════════════════════════════════
+   SEARCH (UPGRADED)
+══════════════════════════════════════════════ */
+
+function filterNews() {
+  const q = document.getElementById("news-search-input").value.toLowerCase();
+
+  if (!q) {
+    renderHero(allArticles[0]);
+    renderCards(allArticles.slice(1));
+    return;
   }
 
-  /* ── Render cards ── */
-  function renderCards(articles) {
-    const grid = document.getElementById("news-grid");
-    if (!articles.length) {
-      grid.innerHTML = `<div class="news-status">No articles found.</div>`; return;
-    }
+  const filtered = allArticles.filter(a =>
+    a.title.toLowerCase().includes(q) ||
+    a.description.toLowerCase().includes(q)
+  );
 
-    grid.innerHTML = articles.map(a => {
-      const img  = getImg(a);
-      const desc = (a.description || a.content || "").replace(/<[^>]*>/g,"").trim();
-      const src  = a._source || a.author || "News";
-      const date = timeAgo(a.pubDate);
-      const link = a.link || a.url || "#";
-      const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(link)}&sz=16`;
+  document.getElementById("news-hero").style.display = "none";
+  renderCards(filtered);
+}
 
-      const imgHTML = img
-        ? `<div class="news-card-img-wrap"><img class="news-card-img" src="${img}" alt="" loading="lazy" onerror="this.closest('.news-card-img-wrap').innerHTML='<div class=\\'news-card-img-placeholder\\'>${CAT_EMOJIS[currentCat]||"📰"}</div>'"></div>`
-        : `<div class="news-card-img-placeholder">${CAT_EMOJIS[currentCat]||"📰"}</div>`;
+/* ══════════════════════════════════════════════
+   CATEGORY SWITCH
+══════════════════════════════════════════════ */
 
-      return `
-        <a class="news-card" href="${link}" target="_blank" rel="noopener noreferrer">
-          ${imgHTML}
-          <div class="news-card-body">
-            <div class="news-card-meta">
-              <div class="news-card-source">
-                <img src="${favicon}" alt="" onerror="this.style.display='none'" />
-                ${src}
-              </div>
-              <div class="news-card-date">${date}</div>
-            </div>
-            <div class="news-card-title">${a.title || ""}</div>
-            ${desc ? `<div class="news-card-desc">${desc}</div>` : ""}
-            <div class="news-card-footer">
-              <span class="read-more">Read more →</span>
-            </div>
-          </div>
-        </a>`;
-    }).join("");
-  }
+function switchCat(btn) {
+  document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
 
-  /* ── Main load ── */
-  async function loadNews() {
-    const grid = document.getElementById("news-grid");
-    document.getElementById("api-name").textContent = "loading...";
-    document.getElementById("news-search-input").value = "";
-    document.getElementById("news-hero").style.display = "none";
-    grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading news...</div>`;
-
-    /* Try RSS first */
-    let articles = await tryRSS(currentCat);
-
-    /* Fallback to Vyntr */
-    if (!articles) {
-      document.getElementById("api-name").textContent = "trying Vyntr...";
-      articles = await tryVyntr(currentCat);
-    }
-
-    if (articles?.length) {
-      allArticles = articles;
-      renderHero(articles[0]);
-      renderCards(articles.slice(1));
-      document.getElementById("api-name").textContent = activeSource;
-      return;
-    }
-
-    grid.innerHTML = `<div class="news-status">❌ All news sources unavailable right now. Try refreshing.</div>`;
-    document.getElementById("api-name").textContent = "unavailable";
-  }
-
-  function switchCat(btn) {
-    document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentCat = btn.dataset.cat;
-    loadNews();
-  }
-
-  function filterNews() {
-    const q = document.getElementById("news-search-input").value.toLowerCase().trim();
-    if (!q) { renderHero(allArticles[0]); renderCards(allArticles.slice(1)); return; }
-    document.getElementById("news-hero").style.display = "none";
-    renderCards(allArticles.filter(a =>
-      (a.title||"").toLowerCase().includes(q) ||
-      (a.description||"").toLowerCase().includes(q)
-    ));
-  }
-
+  currentCat = btn.dataset.cat;
   loadNews();
-  </script>
-</body>
+}
+
+/* ══════════════════════════════════════════════
+   AUTO REFRESH (every 5 min)
+══════════════════════════════════════════════ */
+
+setInterval(loadNews, 300000);
+
+/* INIT */
+loadNews();
+</script></body>
 </html>
