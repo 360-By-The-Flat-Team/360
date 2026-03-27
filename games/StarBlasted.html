@@ -1,36 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>OG STARBLAST – Neon CRT</title>
+<title>OG STARBLAST – Neon CRT Edition</title>
 <style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  html, body {
-    width:100%;
-    height:100%;
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
     background:#000;
     overflow:hidden;
-    font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:system-ui, sans-serif;
     color:#0ff;
   }
   canvas {
-    display:block;
-    width:100vw;
-    height:100vh;
-    background:#000;
     cursor:none;
+    display:block;
+    background:#000;
   }
 
-  /* HUD */
   #hud {
     position:absolute;
     top:8px;
     left:8px;
     font-size:14px;
-    z-index:20;
+    z-index:5;
     color:#0ff;
     text-shadow:0 0 8px #0ff;
-    display:none;
   }
   #hud div { margin-bottom:2px; }
 
@@ -45,8 +40,6 @@
     background:rgba(0,0,0,0.4);
     overflow:hidden;
     box-shadow:0 0 12px #0ff;
-    display:none;
-    z-index:20;
   }
   #xpBarFill {
     height:100%;
@@ -64,8 +57,6 @@
     pointer-events:none;
     color:#0ff;
     text-shadow:0 0 8px #0ff;
-    display:none;
-    z-index:21;
   }
 
   #controls {
@@ -77,14 +68,12 @@
     padding:6px 8px;
     border-radius:4px;
     border:1px solid rgba(0,255,255,0.3);
-    z-index:20;
+    z-index:5;
     color:#0ff;
     text-shadow:0 0 6px #0ff;
-    display:none;
   }
   #controls div { margin-bottom:2px; }
 
-  /* Generic UI panel */
   .ui-panel {
     position:absolute;
     top:50%;
@@ -97,7 +86,7 @@
     max-width:480px;
     max-height:80vh;
     overflow-y:auto;
-    z-index:40;
+    z-index:10;
     box-shadow:0 0 20px #0ff;
     border-radius:8px;
     color:#0ff;
@@ -112,7 +101,6 @@
   .ui-panel p {
     font-size:13px;
     color:#9ff;
-    margin-bottom:8px;
   }
   .button {
     display:block;
@@ -144,7 +132,6 @@
     color:#9ff;
   }
 
-  /* Death screen */
   #deathUI {
     position:absolute;
     top:50%;
@@ -157,7 +144,7 @@
     text-align:center;
     border-radius:10px;
     display:none;
-    z-index:50;
+    z-index:20;
     box-shadow:0 0 24px #f0f;
     color:#f0f;
     text-shadow:0 0 8px #f0f;
@@ -184,172 +171,17 @@
   #respawnBtn:hover {
     background:#300;
   }
-
-  /* Boss bar */
-  #bossBarContainer {
-    position:absolute;
-    top:32px;
-    left:50%;
-    transform:translateX(-50%);
-    width:320px;
-    height:16px;
-    border-radius:4px;
-    border:1px solid #f0f;
-    background:rgba(0,0,0,0.5);
-    overflow:hidden;
-    box-shadow:0 0 12px #f0f;
-    display:none;
-    z-index:25;
-  }
-  #bossBarFill {
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,#f0f,#f88);
-    box-shadow:0 0 12px #f0f;
-  }
-  #bossBarLabel {
-    position:absolute;
-    top:32px;
-    left:50%;
-    transform:translateX(-50%);
-    width:320px;
-    text-align:center;
-    font-size:11px;
-    color:#f0f;
-    text-shadow:0 0 8px #f0f;
-    display:none;
-    z-index:26;
-  }
-
-  /* Start screen */
-  #startScreen {
-    position:absolute;
-    inset:0;
-    background:#000;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:30;
-  }
-  #startInner {
-    position:relative;
-    width:600px;
-    max-width:90vw;
-    padding:24px 24px 32px;
-    background:
-      radial-gradient(circle at top,#022,#000 60%),
-      linear-gradient(135deg,rgba(0,255,255,0.08),rgba(0,0,0,0.6));
-    border-radius:18px;
-    box-shadow:0 0 40px #0ff;
-    border:3px solid #0ff;
-  }
-  #startBezel {
-    position:absolute;
-    inset:-18px;
-    border-radius:26px;
-    border:4px solid #044;
-    box-shadow:0 0 40px #0ff inset;
-    pointer-events:none;
-  }
-  #startTitle {
-    text-align:center;
-    font-size:32px;
-    margin-bottom:10px;
-    color:#0ff;
-    text-shadow:0 0 12px #0ff, 0 0 24px #0ff;
-  }
-  #startSubtitle {
-    text-align:center;
-    font-size:13px;
-    color:#9ff;
-    margin-bottom:18px;
-    text-shadow:0 0 8px #0ff;
-  }
-  #startButtons {
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-top:8px;
-  }
-  .start-btn {
-    padding:10px 12px;
-    background:#001;
-    border:1px solid #0ff;
-    color:#0ff;
-    cursor:pointer;
-    border-radius:6px;
-    text-align:left;
-    font-size:14px;
-    text-shadow:0 0 6px #0ff;
-    box-shadow:0 0 10px #0ff inset;
-  }
-  .start-btn:hover {
-    background:#003;
-    border-color:#6ff;
-    box-shadow:0 0 14px #6ff inset;
-  }
-  .start-btn.disabled {
-    opacity:0.4;
-    cursor:default;
-    box-shadow:none;
-  }
-
-  #saveCodeArea {
-    margin-top:12px;
-    font-size:12px;
-    color:#9ff;
-  }
-  #saveCodeArea div {
-    margin-top:4px;
-  }
-  #saveCodeInput,
-  #saveCodeOutput {
-    width:100%;
-    padding:6px;
-    border-radius:4px;
-    border:1px solid #0ff;
-    background:#000;
-    color:#0ff;
-    margin-top:4px;
-    font-size:11px;
-    resize:vertical;
-  }
-
-  /* Save popup */
-  #savePopup {
-    z-index:999;
-  }
-
-  /* CRT overlay */
-  body::after {
-    content:"";
-    pointer-events:none;
-    position:fixed;
-    inset:0;
-    background:
-      repeating-linear-gradient(
-        to bottom,
-        rgba(0,0,0,0.25),
-        rgba(0,0,0,0.25) 1px,
-        rgba(0,0,0,0) 2px
-      );
-    mix-blend-mode:soft-light;
-    opacity:0.4;
-    z-index:5;
-  }
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 
-<!-- HUD -->
 <div id="hud">
   <div>HP: <span id="hp">100</span></div>
   <div>Wave: <span id="wave">1</span></div>
   <div>Level: <span id="level">1</span></div>
   <div>Class: <span id="className">Spread</span></div>
-  <div>Mode: <span id="modeName">Campaign</span></div>
 </div>
 
 <div id="xpBarContainer"><div id="xpBarFill"></div></div>
@@ -363,21 +195,18 @@
   <div>I: Inventory</div>
 </div>
 
-<!-- Upgrade UI -->
 <div id="upgradeUI" class="ui-panel" style="display:none;">
   <h2>Choose an Upgrade</h2>
   <p>Stack the same upgrade three times in a row to trigger a reshuffle. Upgrades persist across all classes.</p>
   <div id="upgradeOptions"></div>
 </div>
 
-<!-- Class UI -->
 <div id="classUI" class="ui-panel" style="display:none;">
   <h2>Class Unlock</h2>
   <p>Every few waves you can unlock a new class.</p>
   <div id="classOptions"></div>
 </div>
 
-<!-- Inventory -->
 <div id="inventoryUI" class="ui-panel" style="display:none;">
   <h2>Inventory – Classes</h2>
   <p>Select which unlocked class you want to use.</p>
@@ -385,7 +214,6 @@
   <button class="button" id="closeInventory"><span class="title">Close</span></button>
 </div>
 
-<!-- Death UI -->
 <div id="deathUI">
   <h1>You Have Fallen</h1>
   <p>You died with honour attempting to defend your cosmos from the other‑worldly invaders.<br><br>
@@ -394,162 +222,68 @@
   <button id="respawnBtn">Respawn</button>
 </div>
 
-<!-- Boss Bar -->
-<div id="bossBarContainer"><div id="bossBarFill"></div></div>
-<div id="bossBarLabel">BOSS</div>
-
-<!-- Start Screen -->
-<div id="startScreen">
-  <div id="startInner">
-    <div id="startBezel"></div>
-    <div id="startTitle">STARBLAST v1.9</div>
-    <div id="startSubtitle">NEW UPDATE!!!</div>
-    <div id="startButtons">
-      <button id="btnStartCampaign" class="start-btn">▶ Start Campaign</button>
-      <button id="btnStartEndless" class="start-btn disabled">∞ Endless Mode (Locked)</button>
-      <button id="btnInventory" class="start-btn">📦 Inventory</button>
-      <button id="btnLoadSave" class="start-btn">⤓ Load Save Code</button>
-      <button id="btnGenerateSave" class="start-btn">⤒ Generate Save Code</button>
-    </div>
-    <div id="saveCodeArea">
-      <div>Save Code Input (for loading):</div>
-      <textarea id="saveCodeInput" rows="2" placeholder="Paste save code here..."></textarea>
-      <div>Generated Save Code:</div>
-      <textarea id="saveCodeOutput" rows="2" readonly></textarea>
-    </div>
-  </div>
-</div>
-
-<!-- Save Popup -->
-<div id="savePopup" class="ui-panel" style="display:none;">
-  <h2>Your Save Code</h2>
-  <textarea id="savePopupOutput" rows="3" style="
-    width:100%;
-    font-size:13px;
-    padding:6px;
-    background:#000;
-    color:#0ff;
-    border:1px solid #0ff;
-    box-shadow:0 0 10px #0ff inset;
-  "></textarea>
-  <button class="button" onclick="closeSavePopup()">
-    <span class="title">Close</span>
-  </button>
-</div>
-
-<!-- SCRIPT WILL BE INSERTED IN PART 2 -->
 <script>
-/* ============================================================
-   CANVAS + RESIZE
-============================================================ */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
 resize();
 window.addEventListener("resize", resize);
 
-/* ============================================================
-   DOM REFERENCES
-============================================================ */
 const hpText = document.getElementById("hp");
 const waveText = document.getElementById("wave");
 const levelText = document.getElementById("level");
 const classText = document.getElementById("className");
-const modeText = document.getElementById("modeName");
-
 const xpBarFill = document.getElementById("xpBarFill");
 const xpLabel = document.getElementById("xpLabel");
-const xpBarContainer = document.getElementById("xpBarContainer");
-
-const hud = document.getElementById("hud");
-const controlsDiv = document.getElementById("controls");
 
 const upgradeUI = document.getElementById("upgradeUI");
 const upgradeOptionsDiv = document.getElementById("upgradeOptions");
-
 const classUI = document.getElementById("classUI");
 const classOptionsDiv = document.getElementById("classOptions");
-
 const inventoryUI = document.getElementById("inventoryUI");
 const inventoryClassesDiv = document.getElementById("inventoryClasses");
 const closeInventoryBtn = document.getElementById("closeInventory");
-
 const deathUI = document.getElementById("deathUI");
 const respawnBtn = document.getElementById("respawnBtn");
 
-const bossBarContainer = document.getElementById("bossBarContainer");
-const bossBarFill = document.getElementById("bossBarFill");
-const bossBarLabel = document.getElementById("bossBarLabel");
-
-const startScreen = document.getElementById("startScreen");
-const btnStartCampaign = document.getElementById("btnStartCampaign");
-const btnStartEndless = document.getElementById("btnStartEndless");
-const btnInventoryMenu = document.getElementById("btnInventory");
-const btnLoadSave = document.getElementById("btnLoadSave");
-const btnGenerateSave = document.getElementById("btnGenerateSave");
-
-const saveCodeInput = document.getElementById("saveCodeInput");
-const saveCodeOutput = document.getElementById("saveCodeOutput");
-
-const savePopup = document.getElementById("savePopup");
-const savePopupOutput = document.getElementById("savePopupOutput");
-
-/* ============================================================
-   INPUT
-============================================================ */
 const keys = {};
 let mouse = {x:0,y:0};
-
 window.addEventListener("keydown", e=>{
   keys[e.code]=true;
   if(e.code==="KeyI") toggleInventory();
 });
 window.addEventListener("keyup", e=> keys[e.code]=false);
-
 canvas.addEventListener("mousemove", e=>{
   mouse.x = e.clientX;
   mouse.y = e.clientY;
 });
 
-/* ============================================================
-   GAME STATE
-============================================================ */
-let gameState = "menu";
-let endlessUnlocked = false;
-
 let player;
 let baseStats;
 let stats;
-let playerUpgrades = {};
+let playerUpgrades;
 
-let bullets = [];
-let enemies = [];
-let drones = [];
-let particles = [];
-let asteroids = [];
-let stars = [];
-let trailParticles = [];
+let bullets;
+let enemies;
+let drones;
+let particles;
+let asteroids;
+let stars;
+let trailParticles;
 
-let wave = 1;
-let inWave = true;
-let lastEnd = 0;
-let paused = false;
-let dead = false;
+let wave;
+let inWave;
+let lastEnd;
+let paused;
+let dead;
 
-let xp = 0;
-let xpToLevel = 100;
-let level = 1;
+let xp;
+let xpToLevel;
+let level;
 
 let streakId = null;
 let streakCount = 0;
 
-let bossActive = false;
-let boss = null;
-let lastClassBeforeBoss = "spread";
-
-/* ============================================================
-   CLASSES
-============================================================ */
 const classes = [
   {id:"spread", name:"Spread", desc:"Triple spread shot."},
   {id:"sniper", name:"Sniper", desc:"High damage, long range shot."},
@@ -560,11 +294,8 @@ const classes = [
   {id:"tank", name:"Tank", desc:"More HP, slower movement."},
   {id:"scout", name:"Scout", desc:"Faster movement, less HP."}
 ];
-let unlockedClasses = new Set(["spread"]);
+let unlockedClasses;
 
-/* ============================================================
-   UPGRADES
-============================================================ */
 const upgradesMeta = [
   {id:"fire_rate", name:"Fire Rate Up", desc:"Shoot faster.", category:"offense"},
   {id:"bullet_damage", name:"Bullet Damage Up", desc:"Bullets deal more damage.", category:"offense"},
@@ -603,9 +334,6 @@ const upgradesMeta = [
 const MAX_UPGRADE_LEVEL = 10;
 const UPGRADE_CHOICES = 5;
 
-/* ============================================================
-   BASE STATS + RECALC
-============================================================ */
 function initBaseStats(){
   baseStats = {
     maxHp:100,
@@ -643,12 +371,10 @@ function initBaseStats(){
 
 function recalcStats(){
   stats = JSON.parse(JSON.stringify(baseStats));
-
   for(const id in playerUpgrades){
     const lvl = playerUpgrades[id] || 0;
     if(lvl<=0) continue;
     const l = Math.min(lvl, MAX_UPGRADE_LEVEL);
-
     switch(id){
       case "fire_rate": stats.fireRate *= (1 - 0.07 * l); break;
       case "bullet_damage": stats.bulletDamage *= (1 + 0.12 * l); break;
@@ -679,7 +405,6 @@ function recalcStats(){
       case "enemy_slow_aura": stats.enemySlowAura += 0.03 * l; break;
       case "explosion_damage": stats.explosionDamageMult *= (1 + 0.08 * l); break;
       case "life_steal": stats.lifeSteal += 0.02 * l; break;
-
       case "overdrive":
         stats.overdriveStacks = l;
         stats.fireRate *= (1 - 0.02 * l);
@@ -688,17 +413,10 @@ function recalcStats(){
         break;
     }
   }
-
   if(stats.fireRate < 40) stats.fireRate = 40;
 }
 
-/* ============================================================
-   RESET GAME
-============================================================ */
-function resetGame(mode="campaign", fromLoad=false){
-  gameState = mode;
-  modeText.textContent = (mode==="campaign") ? "Campaign" : "Endless";
-
+function resetGame(){
   player = {
     x:2000, y:2000,
     hp:100,
@@ -718,25 +436,20 @@ function resetGame(mode="campaign", fromLoad=false){
   stars = [];
   trailParticles = [];
 
-  wave = fromLoad ? wave : 1;
+  wave = 1;
   inWave = true;
   lastEnd = 0;
   paused = false;
   dead = false;
 
-  xp = fromLoad ? xp : 0;
-  xpToLevel = fromLoad ? xpToLevel : 100;
-  level = fromLoad ? level : 1;
+  xp = 0;
+  xpToLevel = 100;
+  level = 1;
 
-  if(!fromLoad){
-    unlockedClasses = new Set(["spread"]);
-    playerUpgrades = {};
-    streakId = null;
-    streakCount = 0;
-  }
-
-  bossActive = false;
-  boss = null;
+  unlockedClasses = new Set(["spread"]);
+  playerUpgrades = {};
+  streakId = null;
+  streakCount = 0;
 
   initBaseStats();
   recalcStats();
@@ -748,6 +461,7 @@ function resetGame(mode="campaign", fromLoad=false){
       r:15+Math.random()*20
     });
   }
+
   for(let i=0;i<400;i++){
     stars.push({
       x:Math.random()*6000-3000,
@@ -758,25 +472,14 @@ function resetGame(mode="campaign", fromLoad=false){
   }
 
   startWave();
-  applyClass(player.class);
+  applyClass("spread");
   updateXPUI();
   hpText.textContent = Math.floor(player.hp);
   waveText.textContent = wave;
   levelText.textContent = level;
   deathUI.style.display = "none";
-
-  hud.style.display = "block";
-  controlsDiv.style.display = "block";
-  xpBarContainer.style.display = "block";
-  xpLabel.style.display = "block";
-
-  /* IMPORTANT: visibility instead of display */
-  startScreen.style.visibility = "hidden";
 }
 
-/* ============================================================
-   ENEMY SPAWNING
-============================================================ */
 function spawnEnemy(){
   const types=["swarm","tank","phantom","sniper"];
   const type=types[(Math.random()*types.length)|0];
@@ -794,450 +497,203 @@ function spawnEnemy(){
 
 function startWave(){
   enemies.length = 0;
-  bossActive = false;
-  boss = null;
-  hideBossBar();
-
-  const isBossWave = (gameState==="campaign" && wave%10===0) ||
-                     (gameState==="endless" && wave>0 && wave%15===0);
-
-  if(isBossWave){
-    lastClassBeforeBoss = player.class;
-    spawnBoss();
-  } else {
-    const baseCount = (gameState==="campaign")
-      ? (3 + Math.floor(wave*1.1))
-      : (6 + Math.floor(wave*1.4));
-    for(let i=0;i<baseCount;i++) spawnEnemy();
-  }
+  const count = 5 + Math.floor(wave*1.2);
+  for(let i=0;i<count;i++) spawnEnemy();
 }
 
-/* ============================================================
-   BOSS LOGIC
-============================================================ */
-function spawnBoss(){
-  bossActive = true;
-  const isFinal = (gameState==="campaign" && wave===100);
-  const hpBase = isFinal ? 4500 : 700 + wave*35;
-
-  boss = {
-    x:player.x+600,
-    y:player.y,
-    hp:hpBase,
-    maxHp:hpBase,
-    class:lastClassBeforeBoss,
-    phase:1,
-    lastAttack:0,
-    radius:40,
-    angle:0
-  };
-
-  showBossBar("BOSS – " + lastClassBeforeBoss.toUpperCase());
-}
-
-function updateBoss(now){
-  if(!boss) return;
-
-  let dx = player.x-boss.x;
-  let dy = player.y-boss.y;
-  let dist = Math.sqrt(dx*dx+dy*dy)||1;
-  let ang = Math.atan2(dy,dx);
-
-  const isFinal = (gameState==="campaign" && wave===100);
-
-  let speed = isFinal ? 1.4 : 1.0;
-  boss.x += Math.cos(ang)*speed;
-  boss.y += Math.sin(ang)*speed;
-
-  boss.angle += 0.01;
-
-  const attackInterval = isFinal ? 400 : 700;
-  if(now - boss.lastAttack > attackInterval){
-    boss.lastAttack = now;
-    bossAttackPattern(isFinal);
-  }
-
-  let dxp = player.x-boss.x;
-  let dyp = player.y-boss.y;
-  if(dxp*dxp + dyp*dyp < (boss.radius+10)*(boss.radius+10)){
-        let dmg = (isFinal ? 1.2 : 0.7) * (1 - stats.damageResist);
-    if (dmg < 0.2) dmg = 0.2;
-    player.hp -= dmg;
-  }
-
-  // Player bullets hitting boss
-  for (let j = bullets.length - 1; j >= 0; j--) {
-    const b = bullets[j];
-    if (!b.fromPlayer) continue;
-
-    let dx2 = boss.x - b.x;
-    let dy2 = boss.y - b.y;
-    if (dx2 * dx2 + dy2 * dy2 < (boss.radius + 6) * (boss.radius + 6)) {
-      boss.hp -= b.dmg;
-
-      // Life steal
-      if (stats.lifeSteal > 0) {
-        player.hp += b.dmg * stats.lifeSteal * 0.05;
-        if (player.hp > stats.maxHp) player.hp = stats.maxHp;
-      }
-
-      if (b.pierce > 0) {
-        b.pierce--;
-      } else {
-        bullets.splice(j, 1);
-      }
-    }
-  }
-
-  // Boss death
-  if (boss.hp <= 0) {
-    explode(boss.x, boss.y);
-    bossActive = false;
-    boss = null;
-    hideBossBar();
-    gainXP(400);
-    inWave = false;
-    lastEnd = now;
-
-    // Unlock endless mode after wave 100
-    if (gameState === "campaign" && wave === 100) {
-      endlessUnlocked = true;
-      btnStartEndless.classList.remove("disabled");
-    }
-  } else {
-    const pct = Math.max(0, Math.min(1, boss.hp / boss.maxHp)) * 100;
-    bossBarFill.style.width = pct + "%";
-  }
-}
-
-function bossAttackPattern(isFinal) {
-  const cls = boss.class;
-  const baseDamage = 18 + wave * 1.4;
-  const baseSpeed = 5 + wave * 0.05;
-
-  // Spread boss
-  if (cls === "spread") {
-    for (let i = -2; i <= 2; i++) {
-      const a = Math.atan2(player.y - boss.y, player.x - boss.x) + i * 0.2;
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed, baseDamage);
-    }
-    for (let k = 0; k < 10; k++) {
-      const a = boss.angle + k * (Math.PI * 2 / 10);
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed * 0.7, baseDamage * 0.7);
-    }
-  }
-
-  // Sniper boss
-  else if (cls === "sniper") {
-    const a = Math.atan2(player.y - boss.y, player.x - boss.x);
-    spawnBossBullet(boss.x, boss.y, a, baseSpeed * 1.6, baseDamage * 2, true);
-  }
-
-  // Machine boss
-  else if (cls === "machine") {
-    for (let i = 0; i < 16; i++) {
-      const a = Math.atan2(player.y - boss.y, player.x - boss.x) + (Math.random() - 0.5) * 0.6;
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed * 1.1, baseDamage * 0.7);
-    }
-  }
-
-  // Drone bosses
-  else if (cls === "overlord" || cls === "mothership") {
-    for (let i = 0; i < 4; i++) {
-      drones.push({
-        x: boss.x + (Math.random() - 0.5) * 80,
-        y: boss.y + (Math.random() - 0.5) * 80,
-        type: "attack"
-      });
-    }
-    for (let k = 0; k < 8; k++) {
-      const a = k * (Math.PI * 2 / 8);
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed * 0.8, baseDamage);
-    }
-  }
-
-  // Assault boss
-  else if (cls === "assault") {
-    for (let i = 0; i < 10; i++) {
-      const a = Math.atan2(player.y - boss.y, player.x - boss.x) + (Math.random() - 0.5) * 0.2;
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed * 1.3, baseDamage * 1.1);
-    }
-  }
-
-  // Tank boss
-  else if (cls === "tank") {
-    for (let k = 0; k < 14; k++) {
-      const a = k * (Math.PI * 2 / 14);
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed * 0.9, baseDamage * 1.3);
-    }
-  }
-
-  // Scout boss
-  else if (cls === "scout") {
-    const a = Math.atan2(player.y - boss.y, player.x - boss.x);
-    boss.x += Math.cos(a) * 60;
-    boss.y += Math.sin(a) * 60;
-
-    for (let k = 0; k < 10; k++) {
-      const aa = k * (Math.PI * 2 / 10);
-      spawnBossBullet(boss.x, boss.y, aa, baseSpeed * 1.2, baseDamage * 0.9);
-    }
-  }
-
-  // Final boss extra ring
-  if (isFinal) {
-    for (let k = 0; k < 24; k++) {
-      const a = boss.angle + k * (Math.PI * 2 / 24);
-      spawnBossBullet(boss.x, boss.y, a, baseSpeed * 1.1, baseDamage * 1.2);
-    }
-  }
-}
-
-function spawnBossBullet(x, y, a, s, d, pierce = false) {
-  bullets.push({
-    x, y,
-    vx: Math.cos(a) * s,
-    vy: Math.sin(a) * s,
-    dmg: d,
-    life: 120,
-    pierce: pierce ? 5 : 0,
-    fromPlayer: false
-  });
-}
-
-/* ============================================================
-   CLASS APPLICATION
-============================================================ */
-function applyClass(id) {
+function applyClass(id){
   player.class = id;
-  const cls = classes.find(c => c.id === id);
+  const cls = classes.find(c=>c.id===id);
   classText.textContent = cls ? cls.name : id;
 
   player.speed = stats.moveSpeed;
   player.damage = stats.bulletDamage;
   player.fireRate = stats.fireRate;
 
-  if (id === "sniper") {
+  if(id==="sniper"){
     player.damage = stats.bulletDamage * 2.5;
     player.fireRate = stats.fireRate * 1.4;
   }
-  if (id === "machine") {
+  if(id==="machine"){
     player.damage = stats.bulletDamage * 0.6;
     player.fireRate = stats.fireRate * 0.5;
   }
-  if (id === "tank") {
+  if(id==="tank"){
     player.hp += 40;
   }
-  if (id === "scout") {
+  if(id==="scout"){
     player.speed = stats.moveSpeed * 1.3;
     player.hp -= 20;
   }
 }
 
-/* ============================================================
-   SHOOTING
-============================================================ */
-function spawnBullet(x, y, a, s, d, fromPlayer = true) {
+function spawnBullet(x,y,a,s,d,fromPlayer=true){
   bullets.push({
-    x, y,
-    vx: Math.cos(a) * s,
-    vy: Math.sin(a) * s,
-    dmg: d,
-    life: 60,
-    pierce: stats.pierce,
+    x,y,
+    vx:Math.cos(a)*s,
+    vy:Math.sin(a)*s,
+    dmg:d,
+    life:60,
+    pierce:stats.pierce,
     fromPlayer
   });
 }
 
-function shoot(now) {
-  let ang = Math.atan2(mouse.y - canvas.height / 2, mouse.x - canvas.width / 2);
+function shoot(now){
+  let ang=Math.atan2(mouse.y-canvas.height/2, mouse.x-canvas.width/2);
   let speed = stats.bulletSpeed;
   let dmg = stats.bulletDamage;
 
   let crit = Math.random() < stats.critChance;
-  if (crit) dmg *= stats.critDamage;
+  if(crit) dmg *= stats.critDamage;
 
   let shots = 1 + stats.multishot;
   let spread = 0.25;
 
-  if (player.class === "spread") {
-    const offsets = [-0.3, 0, 0.3];
-    for (let i = 0; i < offsets.length; i++) {
-      spawnBullet(player.x, player.y, ang + offsets[i], speed, dmg);
+  if(player.class==="spread"){
+    const offsets = [-0.3,0,0.3];
+    for(let i=0;i<offsets.length;i++){
+      spawnBullet(player.x,player.y,ang+offsets[i], speed, dmg);
     }
-  }
-
-  else if (player.class === "sniper") {
-    spawnBullet(player.x, player.y, ang, speed * 1.4, dmg * 1.8);
-  }
-
-  else if (player.class === "machine") {
-    for (let i = 0; i < shots; i++) {
-      spawnBullet(player.x, player.y, ang + (Math.random() - 0.5) * 0.3, speed * 0.9, dmg * 0.7);
+  } else if(player.class==="sniper"){
+    spawnBullet(player.x,player.y,ang, speed*1.4, dmg*1.8);
+  } else if(player.class==="machine"){
+    for(let i=0;i<shots;i++){
+      spawnBullet(player.x,player.y,ang+(Math.random()-0.5)*0.3, speed*0.9, dmg*0.7);
     }
-  }
-
-  else if (player.class === "overlord" || player.class === "mothership") {
-    let maxDronesBase = (player.class === "overlord") ? 6 : 15;
+  } else if(player.class==="overlord" || player.class==="mothership"){
+    let maxDronesBase = (player.class==="overlord") ? 6 : 15;
     let maxDrones = maxDronesBase + stats.droneCountBonus;
-
-    if (drones.length < maxDrones) {
+    if(drones.length<maxDrones){
       let t = "attack";
-      if (player.class === "mothership") {
-        const arr = ["attack", "rapid", "sniper"];
-        t = arr[(Math.random() * 3) | 0];
+      if(player.class==="mothership"){
+        const arr=["attack","rapid","sniper"];
+        t=arr[(Math.random()*3)|0];
       }
-      drones.push({ x: player.x, y: player.y, type: t });
+      drones.push({x:player.x,y:player.y,type:t});
     }
-  }
-
-  else if (player.class === "assault") {
-    for (let i = 0; i < shots; i++) {
-      spawnBullet(player.x, player.y, ang + (Math.random() - 0.5) * 0.1, speed * 1.1, dmg * 1.1);
+  } else if(player.class==="assault"){
+    for(let i=0;i<shots;i++){
+      spawnBullet(player.x,player.y,ang+(Math.random()-0.5)*0.1, speed*1.1, dmg*1.1);
     }
-  }
-
-  else {
-    for (let i = 0; i < shots; i++) {
-      spawnBullet(player.x, player.y, ang + (Math.random() - 0.5) * spread, speed, dmg);
+  } else {
+    for(let i=0;i<shots;i++){
+      spawnBullet(player.x,player.y,ang+(Math.random()-0.5)*spread, speed, dmg);
     }
   }
 }
 
-/* ============================================================
-   EXPLOSIONS
-============================================================ */
-function explode(x, y) {
-  for (let i = 0; i < 14; i++) {
+function explode(x,y){
+  for(let i=0;i<8;i++){
     particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 6,
-      life: 24
+      x,y,
+      vx:(Math.random()-0.5)*5,
+      vy:(Math.random()-0.5)*5,
+      life:20
     });
   }
 }
 
-/* ============================================================
-   XP + LEVELING
-============================================================ */
-function gainXP(amount) {
+function gainXP(amount){
   amount *= stats.xpGain;
   xp += amount;
-
-  while (xp >= xpToLevel) {
+  while(xp >= xpToLevel){
     xp -= xpToLevel;
     level++;
-    xpToLevel = Math.floor(xpToLevel * 1.25);
+    xpToLevel = Math.floor(xpToLevel * 1.3);
     levelText.textContent = level;
     openUpgradeUI();
   }
-
   updateXPUI();
 }
-
-function updateXPUI() {
-  const pct = Math.min(1, xp / xpToLevel) * 100;
-  xpBarFill.style.width = pct + "%";
+function updateXPUI(){
+  const pct = Math.min(1, xp/xpToLevel)*100;
+  xpBarFill.style.width = pct+"%";
   xpLabel.textContent = `XP ${Math.floor(xp)} / ${xpToLevel}`;
 }
 
-/* ============================================================
-   UI HELPERS
-============================================================ */
-function anyUIOpen() {
-  return (
-    upgradeUI.style.display === "block" ||
-    classUI.style.display === "block" ||
-    inventoryUI.style.display === "block" ||
-    deathUI.style.display === "block" ||
-    savePopup.style.display === "block"
-  );
+function anyUIOpen(){
+  return upgradeUI.style.display==="block" ||
+         classUI.style.display==="block" ||
+         inventoryUI.style.display==="block" ||
+         deathUI.style.display==="block";
 }
 
-/* ============================================================
-   UPGRADE UI
-============================================================ */
-function openUpgradeUI() {
-  if (dead) return;
+function openUpgradeUI(){
+  if(dead) return;
   paused = true;
   upgradeOptionsDiv.innerHTML = "";
 
   const choices = pickUpgradeChoices();
-  for (let i = 0; i < choices.length; i++) {
+  for(let i=0;i<choices.length;i++){
     const meta = choices[i];
     const lvl = playerUpgrades[meta.id] || 0;
-    const titleLevel = lvl > 0 ? ` (Lv ${lvl})` : " (Lv 0)";
-
+    const titleLevel = lvl>0 ? ` (Lv ${lvl})` : " (Lv 0)";
     const btn = document.createElement("button");
     btn.className = "button";
     btn.innerHTML = `<span class="title">${meta.name}${titleLevel}</span><span class="desc">${meta.desc}</span>`;
-    btn.onclick = () => {
+    btn.onclick = ()=>{
       applyUpgrade(meta.id);
-      upgradeUI.style.display = "none";
-      paused = false;
+      upgradeUI.style.display="none";
+      paused=false;
     };
     upgradeOptionsDiv.appendChild(btn);
   }
 
-  upgradeUI.style.display = "block";
+  upgradeUI.style.display="block";
 }
 
-function pickUpgradeChoices() {
+function pickUpgradeChoices(){
   let weighted = [];
-
-  for (let i = 0; i < upgradesMeta.length; i++) {
+  for(let i=0;i<upgradesMeta.length;i++){
     const meta = upgradesMeta[i];
     let baseWeight = 1;
     const lvl = playerUpgrades[meta.id] || 0;
-
-    if (lvl >= MAX_UPGRADE_LEVEL) baseWeight = 0.2;
+    if(lvl>=MAX_UPGRADE_LEVEL) baseWeight = 0.2;
 
     let hasCategory = false;
-    for (const id in playerUpgrades) {
-      if (playerUpgrades[id] > 0) {
-        const m = upgradesMeta.find(u => u.id === id);
-        if (m && m.category === meta.category) {
+    for(const id in playerUpgrades){
+      if(playerUpgrades[id]>0){
+        const m = upgradesMeta.find(u=>u.id===id);
+        if(m && m.category===meta.category){
           hasCategory = true;
           break;
         }
       }
     }
-    if (hasCategory) baseWeight *= 1.8;
+    if(hasCategory) baseWeight *= 1.8;
 
     const randomPart = 0.7;
     const weightPart = 0.3 * baseWeight;
     const finalWeight = randomPart + weightPart;
-
-    const count = Math.max(1, Math.round(finalWeight * 3));
-    for (let j = 0; j < count; j++) weighted.push(meta);
+    const count = Math.max(1, Math.round(finalWeight*3));
+    for(let j=0;j<count;j++) weighted.push(meta);
   }
 
   let result = [];
-  while (result.length < UPGRADE_CHOICES && weighted.length > 0) {
-    const idx = (Math.random() * weighted.length) | 0;
+  while(result.length<UPGRADE_CHOICES && weighted.length>0){
+    const idx = (Math.random()*weighted.length)|0;
     const meta = weighted[idx];
-    if (result.indexOf(meta) === -1) result.push(meta);
-    weighted = weighted.filter(m => m !== meta);
+    if(result.indexOf(meta)===-1) result.push(meta);
+    weighted = weighted.filter(m=>m!==meta);
   }
-
   return result;
 }
 
-function applyUpgrade(id) {
+function applyUpgrade(id){
   const prevLevel = playerUpgrades[id] || 0;
-  if (prevLevel < MAX_UPGRADE_LEVEL) {
+  if(prevLevel < MAX_UPGRADE_LEVEL){
     playerUpgrades[id] = prevLevel + 1;
   }
 
-  if (streakId === id) {
+  if(streakId === id){
     streakCount++;
   } else {
     streakId = id;
     streakCount = 1;
   }
 
-  if (streakCount >= 3) {
+  if(streakCount >= 3){
     streakId = null;
     streakCount = 0;
   }
@@ -1251,573 +707,408 @@ function applyUpgrade(id) {
   player.hp = Math.min(player.maxHp, Math.max(1, player.maxHp * ratio));
 }
 
-/* ============================================================
-   CLASS UNLOCK UI
-============================================================ */
-function openClassUI() {
-  if (dead) return;
+function openClassUI(){
+  if(dead) return;
   paused = true;
   classOptionsDiv.innerHTML = "";
-
-  const locked = classes.filter(c => !unlockedClasses.has(c.id));
-
-  if (locked.length === 0) {
-    const p = document.createElement("p");
-    p.textContent = "All classes unlocked. Use inventory to switch.";
+  const locked = classes.filter(c=>!unlockedClasses.has(c.id));
+  if(locked.length===0){
+    const p=document.createElement("p");
+    p.textContent="All classes unlocked. Use inventory to switch.";
     classOptionsDiv.appendChild(p);
-
-    const btn = document.createElement("button");
-    btn.className = "button";
-    btn.innerHTML = `<span class="title">Close</span>`;
-    btn.onclick = () => {
-      classUI.style.display = "none";
-      paused = false;
-    };
+    const btn=document.createElement("button");
+    btn.className="button";
+    btn.innerHTML=`<span class="title">Close</span>`;
+    btn.onclick=()=>{ classUI.style.display="none"; paused=false; };
     classOptionsDiv.appendChild(btn);
   } else {
-    const opts = locked.sort(() => Math.random() - 0.5).slice(0, 3);
-    for (let i = 0; i < opts.length; i++) {
+    const opts = locked.sort(()=>Math.random()-0.5).slice(0,3);
+    for(let i=0;i<opts.length;i++){
       const c = opts[i];
-      const btn = document.createElement("button");
-      btn.className = "button";
-      btn.innerHTML = `<span class="title">${c.name}</span><span class="desc">${c.desc}</span>`;
-      btn.onclick = () => {
+      const btn=document.createElement("button");
+      btn.className="button";
+      btn.innerHTML=`<span class="title">${c.name}</span><span class="desc">${c.desc}</span>`;
+      btn.onclick=()=>{
         unlockedClasses.add(c.id);
         applyClass(c.id);
-        classUI.style.display = "none";
-        paused = false;
+        classUI.style.display="none";
+        paused=false;
         refreshInventoryUI();
       };
       classOptionsDiv.appendChild(btn);
     }
   }
-
-  classUI.style.display = "block";
+  classUI.style.display="block";
 }
 
-/* ============================================================
-   INVENTORY UI
-============================================================ */
-function openInventoryUI() {
-  if (dead) return;
-  if (anyUIOpen() && inventoryUI.style.display !== "block") return;
-
+function openInventoryUI(){
+  if(dead) return;
+  if(anyUIOpen() && inventoryUI.style.display!=="block") return;
   paused = true;
   refreshInventoryUI();
-  inventoryUI.style.display = "block";
+  inventoryUI.style.display="block";
 }
-
-function closeInventory() {
-  inventoryUI.style.display = "none";
+function closeInventory(){
+  inventoryUI.style.display="none";
   paused = false;
 }
-
-function toggleInventory() {
-  if (startScreen.style.visibility !== "hidden") {
-    refreshInventoryUI();
-    inventoryUI.style.display = "block";
-    paused = true;
-    return;
-  }
-
-  if (inventoryUI.style.display === "block") closeInventory();
-  else if (!anyUIOpen()) openInventoryUI();
+function toggleInventory(){
+  if(inventoryUI.style.display==="block") closeInventory();
+  else if(!anyUIOpen()) openInventoryUI();
 }
-
 closeInventoryBtn.addEventListener("click", closeInventory);
 
-function refreshInventoryUI() {
-  inventoryClassesDiv.innerHTML = "";
-  for (let i = 0; i < classes.length; i++) {
+function refreshInventoryUI(){
+  inventoryClassesDiv.innerHTML="";
+  for(let i=0;i<classes.length;i++){
     const c = classes[i];
-    if (unlockedClasses.has(c.id)) {
-      const btn = document.createElement("button");
-      btn.className = "button";
-      btn.innerHTML = `<span class="title">${c.name}</span><span class="desc">${c.desc}</span>`;
-      btn.onclick = () => applyClass(c.id);
+    if(unlockedClasses.has(c.id)){
+      const btn=document.createElement("button");
+      btn.className="button";
+      btn.innerHTML=`<span class="title">${c.name}</span><span class="desc">${c.desc}</span>`;
+      btn.onclick=()=>applyClass(c.id);
       inventoryClassesDiv.appendChild(btn);
     }
   }
 }
 
-/* ============================================================
-   SAVE POPUP
-============================================================ */
-function showSavePopup(code) {
-  savePopupOutput.value = code;
-  savePopup.style.display = "block";
-  savePopupOutput.focus();
-  savePopupOutput.select();
+function moveEnemy(e,ang,s){
+  let slow = 1 - stats.enemySlowAura;
+  if(slow<0.5) slow=0.5;
+  e.x+=Math.cos(ang)*e.speed*s*slow;
+  e.y+=Math.sin(ang)*e.speed*s*slow;
 }
 
-function closeSavePopup() {
-  savePopup.style.display = "none";
-}
-
-/* ============================================================
-   SAVE SYSTEM
-============================================================ */
-function makeSaveData() {
-  return {
-    wave,
-    mode: gameState,
-    xp,
-    xpToLevel,
-    level,
-    playerUpgrades,
-    unlockedClasses: Array.from(unlockedClasses),
-    endlessUnlocked,
-    lastClass: player.class
-  };
-}
-
-function loadFromSave(data) {
-  unlockedClasses = new Set(data.unlockedClasses || ["spread"]);
-  playerUpgrades = data.playerUpgrades || {};
-  endlessUnlocked = !!data.endlessUnlocked;
-  wave = data.wave || 1;
-  xp = data.xp || 0;
-  xpToLevel = data.xpToLevel || 100;
-  level = data.level || 1;
-  lastClassBeforeBoss = data.lastClass || "spread";
-
-  initBaseStats();
-  recalcStats();
-
-  resetGame(data.mode || "campaign", true);
-  waveText.textContent = wave;
-  levelText.textContent = level;
-  updateXPUI();
-  applyClass(lastClassBeforeBoss);
-
-  if (endlessUnlocked) {
-    btnStartEndless.classList.remove("disabled");
-  }
-}
-  playerUpgrades = data.playerUpgrades || {};
-  endlessUnlocked = !!data.endlessUnlocked;
-
-  wave = data.wave || 1;
-  xp = data.xp || 0;
-  xpToLevel = data.xpToLevel || 100;
-  level = data.level || 1;
-
-  lastClassBeforeBoss = data.lastClass || "spread";
-
-  initBaseStats();
-  recalcStats();
-
-  resetGame(data.mode || "campaign", true);
-
-  waveText.textContent = wave;
-  levelText.textContent = level;
-  updateXPUI();
-  applyClass(lastClassBeforeBoss);
-
-  if (endlessUnlocked) {
-    btnStartEndless.classList.remove("disabled");
-  }
-}
-
-/* ============================================================
-   START SCREEN BUTTONS
-============================================================ */
-btnStartCampaign.addEventListener("click", () => {
-  resetGame("campaign");
-});
-
-btnStartEndless.addEventListener("click", () => {
-  if (!endlessUnlocked) {
-    alert("Beat wave 100 in Campaign to unlock Endless Mode.");
-    return;
-  }
-  resetGame("endless");
-});
-
-btnInventoryMenu.addEventListener("click", () => {
-  refreshInventoryUI();
-  inventoryUI.style.display = "block";
+function handlePlayerDeath(){
+  if(dead) return;
+  dead = true;
   paused = true;
+  explode(player.x, player.y);
+  deathUI.style.display = "block";
+}
+
+respawnBtn.addEventListener("click", ()=>{
+  resetGame();
 });
 
-btnLoadSave.addEventListener("click", () => {
-  const code = saveCodeInput.value.trim();
-  if (!code) {
-    alert("Paste a save code first.");
-    return;
-  }
-  try {
-    const json = atob(code);
-    const data = JSON.parse(json);
-    loadFromSave(data);
-    alert("Save loaded! Starting game...");
-  } catch (e) {
-    console.error(e);
-    alert("Invalid or corrupted save code.");
-  }
-});
+let frameSkip = 0;
 
-btnGenerateSave.addEventListener("click", () => {
-  const data = makeSaveData();
-  const json = JSON.stringify(data);
-  const code = btoa(json);
-  showSavePopup(code);
-});
-/* ============================================================
-   MOVEMENT + PLAYER UPDATE
-============================================================ */
-function updatePlayer() {
-  let sp = stats.moveSpeed;
+function update(now){
+  if(paused || dead) return;
 
-  if (keys["KeyW"]) player.y -= sp;
-  if (keys["KeyS"]) player.y += sp;
-  if (keys["KeyA"]) player.x -= sp;
-  if (keys["KeyD"]) player.x += sp;
+  frameSkip++;
 
-  // Regen
-  if (stats.hpRegen > 0) {
+  if(stats.hpRegen>0){
     player.hp += stats.hpRegen * 0.1;
-    if (player.hp > stats.maxHp) player.hp = stats.maxHp;
+    if(player.hp>stats.maxHp) player.hp = stats.maxHp;
   }
 
-  // Shield regen
-  if (stats.shieldMax > 0) {
-    player.shield += stats.shieldRegen * 0.1;
-    if (player.shield > stats.shieldMax) player.shield = stats.shieldMax;
+  let vx=0,vy=0;
+  if(keys["KeyW"]) vy--;
+  if(keys["KeyS"]) vy++;
+  if(keys["KeyA"]) vx--;
+  if(keys["KeyD"]) vx++;
+  let len = vx*vx+vy*vy;
+  if(len>0){
+    len = Math.sqrt(len);
+    player.x+=vx/len*stats.moveSpeed;
+    player.y+=vy/len*stats.moveSpeed;
   }
 
-  // Shooting
-  if (keys["Space"]) {
-    const now = performance.now();
-    if (now - player.lastShot > stats.fireRate) {
-      player.lastShot = now;
-      shoot(now);
+  for(let i=0;i<asteroids.length;i++){
+    const a = asteroids[i];
+    let dx=player.x-a.x;
+    let dy=player.y-a.y;
+    let dist2 = dx*dx+dy*dy;
+    const r = a.r+6;
+    if(dist2<r*r){
+      const dist = Math.sqrt(dist2)||1;
+      player.x+=dx/dist*2;
+      player.y+=dy/dist*2;
     }
   }
 
-  hpText.textContent = Math.floor(player.hp);
-}
+  if(keys["Space"] && now-player.lastShot>stats.fireRate){
+    shoot(now);
+    player.lastShot=now;
+  }
 
-/* ============================================================
-   BULLET UPDATE
-============================================================ */
-function updateBullets() {
-  for (let i = bullets.length - 1; i >= 0; i--) {
+  for(let i=0;i<bullets.length;i++){
     const b = bullets[i];
-    b.x += b.vx;
-    b.y += b.vy;
+    b.x+=b.vx;
+    b.y+=b.vy;
     b.life--;
 
-    if (b.life <= 0) {
-      bullets.splice(i, 1);
-      continue;
-    }
-
-    // Enemy bullets hitting player
-    if (!b.fromPlayer) {
-      let dx = b.x - player.x;
-      let dy = b.y - player.y;
-      if (dx * dx + dy * dy < 20 * 20) {
-        let dmg = b.dmg * (1 - stats.damageResist);
-        if (dmg < 0.2) dmg = 0.2;
-
-        if (player.shield > 0) {
-          player.shield -= dmg;
-          if (player.shield < 0) {
-            player.hp += player.shield;
-            player.shield = 0;
-          }
-        } else {
-          player.hp -= dmg;
-        }
-
-        bullets.splice(i, 1);
-      }
+    if(b.fromPlayer){
+      trailParticles.push({
+        x:b.x,
+        y:b.y,
+        life:20
+      });
     }
   }
-}
+  bullets = bullets.filter(b=>b.life>0);
 
-/* ============================================================
-   ENEMY UPDATE
-============================================================ */
-function updateEnemies(now) {
-  for (let i = enemies.length - 1; i >= 0; i--) {
+  const skipAI = (frameSkip & 1)===0;
+
+  for(let i=0;i<enemies.length;i++){
     const e = enemies[i];
-
-    let dx = player.x - e.x;
-    let dy = player.y - e.y;
-    let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    let ang = Math.atan2(dy, dx);
-
-    // Slow aura
-    let slowFactor = 1 - stats.enemySlowAura;
-    if (slowFactor < 0.4) slowFactor = 0.4;
-
-    e.x += Math.cos(ang) * e.speed * slowFactor;
-    e.y += Math.sin(ang) * e.speed * slowFactor;
-
-    // Enemy collision with player
-    if (dist < 20) {
-      let dmg = 0.6 * (1 - stats.damageResist);
-      if (dmg < 0.2) dmg = 0.2;
-      player.hp -= dmg;
-    }
-
-    // Enemy bullets (sniper)
-    if (e.type === "sniper") {
-      e.cool = e.cool || 0;
-      if (now - e.cool > 1400) {
-        e.cool = now;
-        const a = Math.atan2(player.y - e.x, player.x - e.y);
-        spawnBossBullet(e.x, e.y, a, 7, 18);
+    if(!skipAI){
+      let dx = player.x-e.x;
+      let dy = player.y-e.y;
+      let ang = Math.atan2(dy,dx);
+      if(e.type==="swarm") moveEnemy(e,ang,1.1);
+      if(e.type==="tank") moveEnemy(e,ang,0.6);
+      if(e.type==="phantom"){
+        moveEnemy(e,ang,1.1);
+        e.x+=(Math.random()-0.5)*4;
+        e.y+=(Math.random()-0.5)*4;
+      }
+      if(e.type==="sniper"){
+        let dist2 = dx*dx+dy*dy;
+        if(dist2>300*300) moveEnemy(e,ang,1.1);
+        if(now-e.cool>1500){
+          spawnBullet(e.x,e.y,ang,6,10,false);
+          e.cool=now;
+        }
       }
     }
 
-    // Player bullets hitting enemy
-    for (let j = bullets.length - 1; j >= 0; j--) {
+    let dxp = player.x-e.x;
+    let dyp = player.y-e.y;
+    if(dxp*dxp + dyp*dyp < 15*15){
+      let dmg = 0.4 * (1 - stats.damageResist);
+      if(dmg<0.1) dmg=0.1;
+      player.hp-=dmg;
+    }
+
+    for(let j=bullets.length-1;j>=0;j--){
       const b = bullets[j];
-      if (!b.fromPlayer) continue;
-
-      let dx2 = e.x - b.x;
-      let dy2 = e.y - b.y;
-      if (dx2 * dx2 + dy2 * dy2 < 20 * 20) {
-        e.hp -= b.dmg;
-
-        // Life steal
-        if (stats.lifeSteal > 0) {
+      if(!b.fromPlayer) continue;
+      let dx = e.x-b.x;
+      let dy = e.y-b.y;
+      if(dx*dx+dy*dy < 10*10){
+        e.hp-=b.dmg;
+        if(stats.lifeSteal>0){
           player.hp += b.dmg * stats.lifeSteal * 0.05;
-          if (player.hp > stats.maxHp) player.hp = stats.maxHp;
+          if(player.hp>stats.maxHp) player.hp=stats.maxHp;
         }
-
-        if (b.pierce > 0) {
+        if(b.pierce>0){
           b.pierce--;
         } else {
-          bullets.splice(j, 1);
+          bullets.splice(j,1);
         }
       }
     }
-
-    // Enemy death
-    if (e.hp <= 0) {
-      explode(e.x, e.y);
-      enemies.splice(i, 1);
-      gainXP(20 + wave * 2);
-    }
   }
-}
-/* ============================================================
-   DRONE UPDATE
-============================================================ */
-function updateDrones(now) {
-  for (let i = drones.length - 1; i >= 0; i--) {
+
+  if(drones.length>20) drones.length = 20;
+  for(let i=0;i<drones.length;i++){
     const d = drones[i];
-
-    // Move toward player
-    let dx = player.x - d.x;
-    let dy = player.y - d.y;
-    let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    let ang = Math.atan2(dy, dx);
-
-    let speed = 3 * stats.droneSpeedMult;
-    d.x += Math.cos(ang) * speed;
-    d.y += Math.sin(ang) * speed;
-
-    // Fire at nearest enemy
-    let target = null;
-    let best = 999999;
-
-    for (let e of enemies) {
-      let dx2 = e.x - d.x;
-      let dy2 = e.y - d.y;
-      let dd = dx2 * dx2 + dy2 * dy2;
-      if (dd < best) {
-        best = dd;
-        target = e;
-      }
-    }
-
-    if (target) {
-      const a = Math.atan2(target.y - d.y, target.x - d.x);
-      const dmg = 10 * stats.droneDamageMult;
-      const spd = 7 * stats.droneFireRateMult;
-
-      spawnBullet(d.x, d.y, a, spd, dmg, true);
+    const t = enemies[0];
+    if(!t) continue;
+    let dx = t.x-d.x;
+    let dy = t.y-d.y;
+    let ang = Math.atan2(dy,dx);
+    d.x+=Math.cos(ang)*3*stats.droneSpeedMult;
+    d.y+=Math.sin(ang)*3*stats.droneSpeedMult;
+    if(Math.random()<0.05*stats.droneFireRateMult){
+      let dmg = 20*stats.droneDamageMult;
+      if(d.type==="rapid") dmg*=0.6;
+      if(d.type==="sniper") dmg*=1.6;
+      spawnBullet(d.x,d.y,ang,6,dmg);
     }
   }
-}
 
-/* ============================================================
-   PARTICLES
-============================================================ */
-function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life--;
-    if (p.life <= 0) particles.splice(i, 1);
-  }
-}
-
-/* ============================================================
-   WAVE PROGRESSION
-============================================================ */
-function updateWave(now) {
-  if (bossActive) return;
-
-  if (enemies.length === 0 && inWave) {
-    inWave = false;
-    lastEnd = now;
+  for(let i=enemies.length-1;i>=0;i--){
+    if(enemies[i].hp<=0){
+      explode(enemies[i].x,enemies[i].y);
+      enemies.splice(i,1);
+      gainXP(20);
+    }
   }
 
-  if (!inWave && now - lastEnd > 1500) {
+  if(inWave && enemies.length===0){
+    inWave=false;
+    lastEnd=now;
+  }
+  if(!inWave && now-lastEnd>3000){
     wave++;
     waveText.textContent = wave;
-
-    // Every 5 waves unlock class choice
-    if (wave % 5 === 0) {
-      openClassUI();
-    }
-
+    inWave=true;
     startWave();
-    inWave = true;
+    if(wave%5===0) openClassUI();
+  }
+
+  for(let i=0;i<particles.length;i++){
+    const p = particles[i];
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.life--;
+  }
+  particles=particles.filter(p=>p.life>0);
+
+  for(let i=0;i<trailParticles.length;i++){
+    trailParticles[i].life--;
+  }
+  trailParticles = trailParticles.filter(t=>t.life>0);
+
+  hpText.textContent = Math.floor(player.hp);
+  if(player.hp<=0){
+    handlePlayerDeath();
   }
 }
 
-/* ============================================================
-   RENDERING
-============================================================ */
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+  ctx.save();
+  ctx.translate(canvas.width/2-player.x, canvas.height/2-player.y);
 
-  const camX = player.x - cx;
-  const camY = player.y - cy;
-
-  // Stars
+  // Neon stars
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = "#0ff";
   ctx.fillStyle = "#0ff";
-  for (let s of stars) {
+  for(let s of stars){
     ctx.globalAlpha = s.a;
-    ctx.fillRect(s.x - camX, s.y - camY, s.r, s.r);
+    ctx.fillRect(s.x|0, s.y|0, s.r, s.r);
   }
   ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
 
-  // Asteroids
-  ctx.strokeStyle = "#044";
-  for (let a of asteroids) {
+  // Neon asteroids
+  ctx.strokeStyle = "#08f";
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = "#08f";
+  for(let a of asteroids){
     ctx.beginPath();
-    ctx.arc(a.x - camX, a.y - camY, a.r, 0, Math.PI * 2);
+    ctx.arc(a.x,a.y,a.r,0,Math.PI*2);
     ctx.stroke();
   }
+  ctx.shadowBlur = 0;
 
-  // Enemies
-  ctx.fillStyle = "#f00";
-  for (let e of enemies) {
-    ctx.beginPath();
-    ctx.arc(e.x - camX, e.y - camY, 12, 0, Math.PI * 2);
-    ctx.fill();
+  // Neon enemies
+  ctx.fillStyle = "#f0f";
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = "#f0f";
+  for(let e of enemies){
+    ctx.fillRect(e.x-6,e.y-6,12,12);
   }
+  ctx.shadowBlur = 0;
 
-  // Boss
-  if (bossActive && boss) {
-    ctx.fillStyle = "#f0f";
-    ctx.beginPath();
-    ctx.arc(boss.x - camX, boss.y - camY, boss.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Bullets
+  // Neon drones
   ctx.fillStyle = "#0ff";
-  for (let b of bullets) {
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = "#0ff";
+  for(let d of drones){
+    ctx.fillRect(d.x-4,d.y-4,8,8);
+  }
+  ctx.shadowBlur = 0;
+
+  // Player ship
+  if(!dead){
+    ctx.save();
+    ctx.translate(player.x,player.y);
+    let ang = Math.atan2(mouse.y - canvas.height/2, mouse.x - canvas.width/2);
+    ctx.rotate(ang);
+
+    ctx.strokeStyle = "#0f0";
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = "#0f0";
+
     ctx.beginPath();
-    ctx.arc(b.x - camX, b.y - camY, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(12,0);
+    ctx.lineTo(-10,-7);
+    ctx.lineTo(-10,7);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+    ctx.shadowBlur = 0;
   }
 
-  // Drones
+  // Bullet trails (short streaks)
+  ctx.strokeStyle = "#ff0";
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = "#ff0";
+  for(let b of bullets){
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - b.vx*2, b.y - b.vy*2);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+
+  // Trail particles (tiny glowing dots)
   ctx.fillStyle = "#ff0";
-  for (let d of drones) {
-    ctx.beginPath();
-    ctx.arc(d.x - camX, d.y - camY, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Particles
-  ctx.fillStyle = "#fff";
-  for (let p of particles) {
-    ctx.globalAlpha = p.life / 24;
-    ctx.fillRect(p.x - camX, p.y - camY, 3, 3);
+  for(let t of trailParticles){
+    const alpha = t.life / 20;
+    ctx.globalAlpha = alpha;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#ff0";
+    ctx.fillRect(t.x-1, t.y-1, 2, 2);
   }
   ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
 
-  // Player
-  ctx.fillStyle = "#0f0";
+  // Explosions
+  ctx.fillStyle = "#f80";
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = "#f80";
+  for(let p of particles){
+    const alpha = p.life / 20;
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(p.x-2,p.y-2,4,4);
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
+
+  // Neon crosshair
+  ctx.strokeStyle = "#0ff";
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = "#0ff";
   ctx.beginPath();
-  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(mouse.x-10,mouse.y);
+  ctx.lineTo(mouse.x+10,mouse.y);
+  ctx.moveTo(mouse.x,mouse.y-10);
+  ctx.lineTo(mouse.x,mouse.y+10);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // CRT scanlines
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = "#000";
+  for(let y=0;y<canvas.height;y+=2){
+    ctx.fillRect(0,y,canvas.width,1);
+  }
+  ctx.restore();
+
+  // CRT vignette
+  const grad = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 0,
+    canvas.width/2, canvas.height/2, Math.max(canvas.width,canvas.height)/1.2
+  );
+  grad.addColorStop(0,"rgba(0,0,0,0)");
+  grad.addColorStop(1,"rgba(0,0,0,0.6)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 }
-/* ============================================================
-   GAME LOOP
-============================================================ */
-function gameLoop(now) {
-  if (gameState === "menu") {
-    requestAnimationFrame(gameLoop);
-    return;
-  }
 
-  if (!paused && !dead) {
-    updatePlayer();
-    updateBullets();
-    updateEnemies(now);
-    updateDrones(now);
-    updateParticles();
-    updateWave(now);
-
-    if (bossActive) updateBoss(now);
-
-    // Check death
-    if (player.hp <= 0) {
-      dead = true;
-      paused = true;
-      deathUI.style.display = "block";
-    }
-  }
-
+function loop(now){
+  update(now);
   render();
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(gameLoop);
-
-/* ============================================================
-   RESPAWN
-============================================================ */
-respawnBtn.addEventListener("click", () => {
-  deathUI.style.display = "none";
-  resetGame(gameState);
-});
-
-/* ============================================================
-   BOSS BAR HELPERS
-============================================================ */
-function showBossBar(label) {
-  bossBarLabel.textContent = label;
-  bossBarContainer.style.display = "block";
-  bossBarLabel.style.display = "block";
-}
-
-function hideBossBar() {
-  bossBarContainer.style.display = "none";
-  bossBarLabel.style.display = "none";
-}
-
-/* ============================================================
-   END OF SCRIPT
-============================================================ */
+resetGame();
+requestAnimationFrame(loop);
 </script>
-
-
 </body>
 </html>
