@@ -92,23 +92,25 @@
 
 <script>
   (function () {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+
+    if (!isPWA) {
+      document.getElementById('splash')?.remove();
+      return;
+    }
+
     const splash = document.getElementById("splash");
-
-    // 3 slides up from bottom
     setTimeout(() => document.getElementById("s3").classList.add("slide-up"),    80);
-    // 6 slides down from top
     setTimeout(() => document.getElementById("s6").classList.add("slide-down"), 210);
-    // 0 slides up from bottom
     setTimeout(() => document.getElementById("s0").classList.add("slide-up"),   340);
-
-    // Hold for a beat, then fade out and remove
     setTimeout(() => {
       splash.classList.add("fade");
       splash.addEventListener("transitionend", () => splash.remove(), { once: true });
     }, 1250);
   })();
 </script>
-  <!-- Custom Cursor -->
+ <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
   <div class="cursor-crosshair"></div>
