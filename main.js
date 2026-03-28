@@ -107,65 +107,58 @@ updateAuthUI();
 /* ============================================================
    SIDEBAR — click outside to close
    ============================================================ */
-const sidebar       = $("#sidebar");
-const sidebarToggle = $("#sidebarToggle");
-const overlay       = $("#overlay");
-const settingsPanel = $("#settingsPanel");
-const settingsBtn   = $("#settingsBtn");
+const sidebar = document.querySelector(".sidebar");
+const settingsPanel = document.querySelector(".settings-panel");
+const overlay = document.querySelector(".overlay");
+const sidebarToggle = document.querySelector(".sidebar-toggle");
+const settingsBtn = document.getElementById("settingsBtn");
 
-function closeSidebar() {
-  sidebar?.classList.remove("open");
-  overlay?.classList.remove("active");
+/* Helper: update overlay based on open panels */
+function updateOverlay() {
+  const anyOpen =
+    sidebar.classList.contains("open") ||
+    settingsPanel.classList.contains("open");
+
+  if (anyOpen) {
+    overlay.classList.add("active");
+  } else {
+    overlay.classList.remove("active");
+  }
 }
 
-function closeSettings() {
-  settingsPanel?.classList.remove("open");
-  overlay?.classList.remove("active");
-}
+/* Sidebar toggle */
+sidebarToggle?.addEventListener("click", e => {
+  e.stopPropagation();
+  sidebar.classList.toggle("open");
+  updateOverlay();
+});
 
-if (sidebarToggle) {
-  sidebarToggle.onclick = e => {
-    e.stopPropagation();
-    const isOpen = sidebar?.classList.contains("open");
-    closeSidebar();
-    closeSettings();
-    if (!isOpen) {
-      sidebar?.classList.add("open");
-      overlay?.classList.add("active");
-    }
-  };
-}
+/* Settings toggle */
+settingsBtn?.addEventListener("click", e => {
+  e.stopPropagation();
+  settingsPanel.classList.toggle("open");
+  updateOverlay();
+});
 
-if (settingsBtn) {
-  settingsBtn.onclick = e => {
-    e.stopPropagation();
-    const isOpen = settingsPanel?.classList.contains("open");
-    closeSidebar();
-    closeSettings();
-    if (!isOpen) {
-      settingsPanel?.classList.add("open");
-      overlay?.classList.add("active");
-    }
-  };
-}
+/* Clicking overlay closes everything */
+overlay?.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  settingsPanel.classList.remove("open");
+  updateOverlay();
+});
 
-if (overlay) {
-  overlay.onclick = () => {
-    closeSidebar();
-    closeSettings();
-  };
-}
-
-/* Click anywhere outside to close */
+/* Clicking anywhere outside closes everything */
 document.addEventListener("click", e => {
-  const inSidebar  = sidebar?.contains(e.target);
-  const inToggle   = sidebarToggle?.contains(e.target);
-  const inSettings = settingsPanel?.contains(e.target);
-  const inBtn      = settingsBtn?.contains(e.target);
-  const inAuth     = authPopup?.contains(e.target);
+  const insideSidebar = e.target.closest(".sidebar");
+  const insideSettings = e.target.closest(".settings-panel");
+  const onToggle = e.target.closest(".sidebar-toggle");
+  const onSettingsBtn = e.target.closest("#settingsBtn");
 
-  if (!inSidebar  && !inToggle) closeSidebar();
-  if (!inSettings && !inBtn)    closeSettings();
+  if (!insideSidebar && !insideSettings && !onToggle && !onSettingsBtn) {
+    sidebar.classList.remove("open");
+    settingsPanel.classList.remove("open");
+    updateOverlay();
+  }
 });
 
 /* Nav items */
