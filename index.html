@@ -39,6 +39,75 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+ <!-- ============================================================
+     360 ANIMATED SPLASH SCREEN
+     Paste RIGHT AFTER <body> in index.html.
+     Self-removing after animation completes.
+     ============================================================ -->
+
+<div id="splash">
+  <div class="splash-num" id="s3">3</div>
+  <div class="splash-num" id="s6">6</div>
+  <div class="splash-num" id="s0">0</div>
+</div>
+
+<style>
+  #splash {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity .65s ease;
+  }
+  #splash.fade {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .splash-num {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: clamp(5rem, 28vw, 9rem);
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -.01em;
+    line-height: 1;
+    opacity: 0;
+  }
+
+  @keyframes slideFromBottom {
+    from { opacity: 0; transform: translateY(110px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideFromTop {
+    from { opacity: 0; transform: translateY(-110px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-up   { animation: slideFromBottom .52s cubic-bezier(.22,.68,0,1.1) forwards; }
+  .slide-down { animation: slideFromTop    .52s cubic-bezier(.22,.68,0,1.1) forwards; }
+</style>
+
+<script>
+  (function () {
+    const splash = document.getElementById("splash");
+
+    // 3 slides up from bottom
+    setTimeout(() => document.getElementById("s3").classList.add("slide-up"),    80);
+    // 6 slides down from top
+    setTimeout(() => document.getElementById("s6").classList.add("slide-down"), 210);
+    // 0 slides up from bottom
+    setTimeout(() => document.getElementById("s0").classList.add("slide-up"),   340);
+
+    // Hold for a beat, then fade out and remove
+    setTimeout(() => {
+      splash.classList.add("fade");
+      splash.addEventListener("transitionend", () => splash.remove(), { once: true });
+    }, 1250);
+  })();
+</script>
   <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
