@@ -9,6 +9,8 @@ With many search engines and browsers losing trust from core users, this is a gr
 
 <a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.1">Release: V.2.0.1</a>
 
+<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.2">Release V.2.0.1 (.exe)</a>
+
 
                   EMAIL US
 Help Email: help@360-search.com
