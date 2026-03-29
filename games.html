@@ -97,36 +97,48 @@
     <h2>🎮 Games</h2>
     <div class="games-grid">
       
-      <a class="game-card" href="../games/spaceGlider.html">
-        <div class="game-icon">🚀</div>
-        <div class="game-title">Space Glider</div>
-        <div class="game-desc">Navigate through space — dodge obstacles and survive.</div>
-      </a>
-
-      <a class="game-card" href="../games/nyc_dream">
-        <div class="game-icon">🏢</div>
-        <div class="game-title">NYC Dream: The American Hustle</div>
-        <div class="game-desc">Start up as a broke in NYC and dominate the revenue leaderboard!</div>
-      </a>  
-      
-      <a class="game-card" href="https://zakii360.github.io/TheNYCDream/">
-        <div class="game-icon">🏢</div>
-        <div class="game-title">NYC Dream: The American Hustle - BETA!</div>
-        <div class="game-desc">Start up as a broke in NYC and dominate the revenue leaderboard!</div>
-      </a>
-
-      <a class="game-card" href="../games/StarBlasted.html">
-        <div class="game-icon">💫</div>
-        <div class="game-title">StarBlasted</div>
-        <div class="game-desc">As easy as blasting stars :)</div>
-      </a>
-  </div>
+      <div class="game-card" onclick="openGame('../games/spaceGlider.html')">
+  <div class="game-icon">🚀</div>
+  <div class="game-title">Space Glider</div>
+  <div class="game-desc">Navigate through space — dodge obstacles and survive.</div>
 </div>
-    
+
+<div class="game-card" onclick="openGame('../games/nyc_dream/index.html')">
+  <div class="game-icon">🏢</div>
+  <div class="game-title">NYC Dream</div>
+  <div class="game-desc">Start broke in NYC and dominate the revenue leaderboard!</div>
+</div>
+
+<div class="game-card" onclick="openGame('../games/StarBlasted.html')">
+  <div class="game-icon">💫</div>
+  <div class="game-title">StarBlasted</div>
+  <div class="game-desc">As easy as blasting stars :)</div>
+</div>
+
+<div class="game-card" onclick="openGame(https://zakii360.github.io/TheNYCDream/)">
+    <div class="game-icon">🏢</div>
+  <div class="game-title">NYC Dream</div>
+  <div class="game-desc">Start broke in NYC and dominate the revenue leaderboard!</div>
+</div>
   <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
   <script src="../main.js"></script>
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
+<!-- Game Overlay -->
+<div id="game-overlay" style="display:none; position:fixed; inset:0; background:#000; z-index:9999;">
+  <button onclick="closeGame()" style="position:fixed; top:12px; right:16px; z-index:10000; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:7px 16px; cursor:pointer; border-radius:999px; font-size:13px; font-weight:600;">✕ Close</button>
+  <iframe id="game-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+</div>
 
+<script>
+function openGame(url) {
+  document.getElementById('game-frame').src = url;
+  document.getElementById('game-overlay').style.display = 'block';
+}
+function closeGame() {
+  document.getElementById('game-overlay').style.display = 'none';
+  document.getElementById('game-frame').src = '';
+}
+</script>
 </body>
 </html>
