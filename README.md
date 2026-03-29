@@ -99,7 +99,7 @@ Support: zakii@360-search.com
 ![360 Dark Mode](360darkmode.png)
 
 ### Settings
-![360 Settings](360menu_settings.png)
+![360 Settings](360settings.png)
 
 The rest is for you to find out :) Enjoy 360!!
 
