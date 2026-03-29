@@ -42,6 +42,11 @@ Just visit [360-search.com](https://360-search.com) — no install needed.
 1. Download `360-desktop_2.0.1_amd64.deb` from [Releases](https://github.com/360-By-360Digital/360/releases)
 2. Run:
 ```bash
+sudo apt update
+```
+Then:
+
+```bash
 sudo dpkg -i 360-desktop_2.0.1_amd64.deb
 ```
 Or install gdebi for double-click install:
