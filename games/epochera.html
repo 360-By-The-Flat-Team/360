@@ -2,14 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>EpochEra Ultimate+</title>
+<title>EpochEra Ultimate</title>
+
 <style>
-body { margin:0; background:#000; overflow:hidden; }
-canvas { display:block; margin:auto; background:#000; }
+body {
+  margin:0;
+  background:#000;
+  overflow:hidden;
+  font-family: monospace;
+}
+
+canvas {
+  display:block;
+  margin:auto;
+  image-rendering: pixelated;
+}
+
+#ui {
+  position:absolute;
+  top:10px;
+  left:10px;
+  color:#00ffcc;
+}
+
+#centerText {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:#00ffcc;
+  font-size:28px;
+  text-align:center;
+}
 </style>
 </head>
+
 <body>
 <canvas id="c" width="900" height="550"></canvas>
+<div id="ui"></div>
+<div id="centerText">PRESS SPACE TO START</div>
 
 <script>
 const c = document.getElementById("c");
@@ -17,53 +48,179 @@ const ctx = c.getContext("2d");
 
 const W=900,H=550;
 
-// ─── STATE ───
-let player, enemies, boss, particles;
-let level=1, worldIndex=0;
-let worlds=['ruins','city','future','lava','ice','void'];
-let gameState='menu';
+let state="menu";
+let level=1;
+let worlds=["ruins","city","future","lava","ice","void"];
+let worldIndex=0;
 
+let player, enemies, boss;
+let particles=[];
 let keys={};
-let attackCooldown=0, blastCooldown=0;
+
+let slashCD=0;
 
 window.onkeydown=e=>keys[e.code]=true;
 window.onkeyup=e=>keys[e.code]=false;
 
-// ─── RESET ───
 function reset(){
   player={x:50,y:400,w:40,h:40,hp:3};
   enemies=[];
   boss=null;
-  particles=[];
   spawnEnemies();
 }
 
-// ─── ENEMIES ───
 function spawnEnemies(){
-  enemies=[];
-  let count=1+Math.floor(level*0.8);
+  let count=1+Math.floor(level*1.2);
 
   for(let i=0;i<count;i++){
     enemies.push({
       x:Math.random()*800,
-      y:Math.random()*500,
+      y:Math.random()*400,
       w:40,h:40,
-      type:Math.random()>0.5?'chaser':'predictor',
-      speed:1.5+level*0.3
+      type:level<4?'hunter':Math.random()>0.5?'hunter':'stalker',
+      speed:1.5+level*0.3,
+      cooldown:0,
+      hitTimer:0
     });
   }
 
   if(level%3===0){
     boss={
-      x:600,y:200,w:90,h:90,
-      hp:10+level*3,
+      x:650,y:200,w:80,h:80,
+      hp:12+level*3,
       projectiles:[]
     };
   }
 }
 
-// ─── PARTICLES ───
-function spawnParticles(x,y,color,count=10){
+function rects(a,b){
+  return a.x<a.x+b.w && a.x+a.w>b.x &&
+         a.y<a.y+b.h && a.y+a.h>b.y;
+}
+
+function drawBG(){
+  let w=worlds[worldIndex];
+
+  if(w==="ruins") ctx.fillStyle="#d6cebc";
+  else if(w==="city") ctx.fillStyle="#b4daff";
+  else if(w==="future") ctx.fillStyle="#050510";
+  else if(w==="lava") ctx.fillStyle="#330000";
+  else if(w==="ice") ctx.fillStyle="#ccf2ff";
+  else ctx.fillStyle="#000";
+
+  ctx.fillRect(0,0,W,H);
+}
+
+function updatePlayer(){
+  let s=5;
+  if(keys["ArrowLeft"]) player.x-=s;
+  if(keys["ArrowRight"]) player.x+=s;
+  if(keys["ArrowUp"]) player.y-=s;
+  if(keys["ArrowDown"]) player.y+=s;
+
+  player.x=Math.max(0,Math.min(W-player.w,player.x));
+  player.y=Math.max(0,Math.min(H-player.h,player.y));
+
+  if(slashCD>0) slashCD--;
+
+  if(keys["Space"] && slashCD===0){
+    slashCD=25;
+
+    for(let e of enemies){
+      if(Math.hypot(e.x-player.x,e.y-player.y)<90){
+        e.dead=true;
+        spawnParticles(e.x,e.y,"yellow",12);
+      }
+    }
+
+    if(boss && Math.hypot(boss.x-player.x,boss.y-player.y)<120){
+      boss.hp--;
+      spawnParticles(boss.x,boss.y,"magenta",15);
+    }
+  }
+}
+
+function updateEnemies(){
+  for(let e of enemies){
+
+    let dx=player.x-e.x;
+    let dy=player.y-e.y;
+    let dist=Math.hypot(dx,dy)||1;
+
+    if(e.cooldown>0) e.cooldown--;
+
+    if(e.type==="hunter"){
+      if(dist>120){
+        e.x+=dx/dist*e.speed;
+        e.y+=dy/dist*e.speed;
+      } else if(dist<80){
+        e.x-=dx/dist*1.5;
+        e.y-=dy/dist*1.5;
+      }
+    }
+
+    if(e.type==="stalker"){
+      if(dist>150){
+        e.x+=dx/dist*e.speed;
+        e.y+=dy/dist*e.speed;
+      } else {
+        e.x+=Math.sin(Date.now()/300)*2;
+        e.y+=Math.cos(Date.now()/300)*2;
+
+        if(e.cooldown===0){
+          e.vx=dx/dist*8;
+          e.vy=dy/dist*8;
+          e.cooldown=60;
+        }
+      }
+    }
+
+    if(e.vx){
+      e.x+=e.vx;
+      e.y+=e.vy;
+      e.vx*=0.9;
+      e.vy*=0.9;
+    }
+
+    if(rects(player,e) && e.hitTimer===0){
+      player.hp--;
+      e.hitTimer=40;
+      spawnParticles(player.x,player.y,"red",10);
+      if(player.hp<=0) state="over";
+    }
+
+    if(e.hitTimer>0) e.hitTimer--;
+  }
+
+  enemies=enemies.filter(e=>!e.dead);
+}
+
+function updateBoss(){
+  if(!boss) return;
+
+  if(Math.random()<0.03){
+    boss.projectiles.push({
+      x:boss.x+40,
+      y:boss.y+40,
+      vx:(player.x-boss.x)*0.02,
+      vy:(player.y-boss.y)*0.02
+    });
+  }
+
+  for(let p of boss.projectiles){
+    p.x+=p.vx;
+    p.y+=p.vy;
+
+    ctx.fillStyle="magenta";
+    ctx.fillRect(p.x,p.y,6,6);
+
+    if(Math.hypot(p.x-player.x,p.y-player.y)<20){
+      player.hp--;
+    }
+  }
+}
+
+function spawnParticles(x,y,color,count){
   for(let i=0;i<count;i++){
     particles.push({
       x,y,
@@ -75,188 +232,60 @@ function spawnParticles(x,y,color,count=10){
   }
 }
 
-// ─── BACKGROUND ───
-function drawBG(){
-  let w=worlds[worldIndex];
-
-  if(w==='ruins'){ ctx.fillStyle='#d6cebc'; }
-  else if(w==='city'){ ctx.fillStyle='#b4daff'; }
-  else if(w==='future'){ ctx.fillStyle='#050510'; }
-  else if(w==='lava'){ ctx.fillStyle='#330000'; }
-  else if(w==='ice'){ ctx.fillStyle='#ccf2ff'; }
-  else { ctx.fillStyle='#000'; }
-
-  ctx.fillRect(0,0,W,H);
-}
-
-// ─── AI ───
-function updateEnemies(){
-  for(let e of enemies){
-    if(e.type==='chaser'){
-      let dx=player.x-e.x;
-      let dy=player.y-e.y;
-      let d=Math.hypot(dx,dy)||1;
-      e.x+=dx/d*e.speed;
-      e.y+=dy/d*e.speed;
-    } else {
-      let fx=player.x+(keys['ArrowRight']?40:keys['ArrowLeft']?-40:0);
-      let fy=player.y+(keys['ArrowDown']?40:keys['ArrowUp']?-40:0);
-
-      let dx=fx-e.x;
-      let dy=fy-e.y;
-      let d=Math.hypot(dx,dy)||1;
-      e.x+=dx/d*(e.speed+0.5);
-      e.y+=dy/d*(e.speed+0.5);
-    }
-
-    if(collide(player,e)){
-      player.hp--;
-      spawnParticles(player.x,player.y,'red',10);
-      if(player.hp<=0) gameState='over';
-    }
-  }
-}
-
-// ─── BOSS ───
-function updateBoss(){
-  if(!boss) return;
-
-  if(Math.random()<0.03){
-    boss.projectiles.push({
-      x:boss.x+40,y:boss.y+40,
-      vx:(player.x-boss.x)*0.02,
-      vy:(player.y-boss.y)*0.02
-    });
-  }
-
-  for(let p of boss.projectiles){
+function updateParticles(){
+  for(let p of particles){
     p.x+=p.vx;
     p.y+=p.vy;
-
-    ctx.fillStyle='magenta';
-    ctx.fillRect(p.x,p.y,6,6);
-
-    if(Math.hypot(p.x-player.x,p.y-player.y)<20){
-      player.hp--;
-    }
-  }
-
-  if(collide(player,boss)){
-    player.hp--;
-  }
-}
-
-// ─── PLAYER ───
-function updatePlayer(){
-  let s=5;
-  if(keys['ArrowLeft']) player.x-=s;
-  if(keys['ArrowRight']) player.x+=s;
-  if(keys['ArrowUp']) player.y-=s;
-  if(keys['ArrowDown']) player.y+=s;
-
-  player.x=Math.max(0,Math.min(W-player.w,player.x));
-  player.y=Math.max(0,Math.min(H-player.h,player.y));
-
-  // attack
-  if(keys['Space'] && attackCooldown===0){
-    attackCooldown=20;
-
-    for(let e of enemies){
-      if(Math.hypot(e.x-player.x,e.y-player.y)<80){
-        e.dead=true;
-        spawnParticles(e.x,e.y,'yellow',10);
-      }
-    }
-
-    if(boss && Math.hypot(boss.x-player.x,boss.y-player.y)<100){
-      boss.hp--;
-    }
-  }
-
-  // blast
-  if(keys['KeyQ'] && blastCooldown===0){
-    blastCooldown=100;
-
-    for(let e of enemies){
-      let dx=e.x-player.x;
-      let dy=e.y-player.y;
-      let d=Math.hypot(dx,dy)||1;
-
-      if(d<200){
-        e.x+=dx/d*100;
-        e.y+=dy/d*100;
-      }
-    }
-
-    spawnParticles(player.x,player.y,'cyan',20);
-  }
-
-  if(attackCooldown>0) attackCooldown--;
-  if(blastCooldown>0) blastCooldown--;
-}
-
-// ─── COLLISION ───
-function collide(a,b){
-  return a.x<a.x+b.w && a.x+a.w>b.x &&
-         a.y<a.y+b.h && a.y+a.h>b.y;
-}
-
-// ─── DRAW ───
-function draw(){
-  drawBG();
-
-  // player
-  ctx.fillStyle='blue';
-  ctx.fillRect(player.x,player.y,player.w,player.h);
-
-  // enemies
-  enemies=enemies.filter(e=>!e.dead);
-  for(let e of enemies){
-    ctx.fillStyle=e.type==='chaser'?'red':'orange';
-    ctx.fillRect(e.x,e.y,e.w,e.h);
-  }
-
-  // boss
-  if(boss){
-    ctx.fillStyle='purple';
-    ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
-  }
-
-  // particles
-  for(let p of particles){
-    p.x+=p.vx; p.y+=p.vy; p.life--;
+    p.life--;
     ctx.fillStyle=p.color;
     ctx.fillRect(p.x,p.y,4,4);
   }
   particles=particles.filter(p=>p.life>0);
-
-  // UI
-  ctx.fillStyle='white';
-  ctx.fillText("HP: "+player.hp,10,20);
-  ctx.fillText("Level: "+level,10,40);
 }
 
-// ─── GAME LOOP ───
+function draw(){
+  drawBG();
+
+  ctx.fillStyle="#3264ff";
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+
+  for(let e of enemies){
+    ctx.fillStyle=e.type==="hunter"?"#ff3030":"#ffaa00";
+    ctx.fillRect(e.x,e.y,e.w,e.h);
+  }
+
+  if(boss){
+    ctx.fillStyle="#cc0077";
+    ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
+  }
+
+  updateParticles();
+
+  document.getElementById("ui").innerHTML=
+    "HP: "+player.hp+"<br>Level: "+level;
+}
+
 function loop(){
   ctx.clearRect(0,0,W,H);
 
-  if(gameState==='menu'){
-    ctx.fillStyle='white';
-    ctx.fillText("Press SPACE",400,250);
-    if(keys['Space']){
-      gameState='game';
+  if(state==="menu"){
+    if(keys["Space"]){
+      state="game";
+      document.getElementById("centerText").style.display="none";
       reset();
     }
     requestAnimationFrame(loop);
     return;
   }
 
-  if(gameState==='over'){
-    ctx.fillText("Game Over",400,250);
-    if(keys['Space']){
+  if(state==="over"){
+    document.getElementById("centerText").innerHTML="GAME OVER<br>PRESS SPACE";
+    document.getElementById("centerText").style.display="block";
+
+    if(keys["Space"]){
       level=1;
       worldIndex=0;
-      gameState='game';
+      state="game";
       reset();
     }
     requestAnimationFrame(loop);
@@ -272,7 +301,9 @@ function loop(){
     worldIndex=(worldIndex+1)%worlds.length;
 
     if(level>10){
-      gameState='menu';
+      state="menu";
+      document.getElementById("centerText").innerHTML="YOU WIN<br>PRESS SPACE";
+      document.getElementById("centerText").style.display="block";
     } else {
       reset();
     }
