@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Starfall RNG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/png" href="../favicon-32x32.png" />
+<link rel="manifest" href="../manifest.json" />
+<meta name="theme-color" content="#3b82f6" />
+<link rel="stylesheet" href="../main.css" />
+<link rel="stylesheet" href="../responsive.css" />
+<link rel="stylesheet" href="../cursor.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+  color: #f9fafb;
+  overflow: hidden;
+}
+#particles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.game {
+  position: relative;
+  z-index: 1;
+  background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.18), transparent 55%),
+              linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
+  border-radius: 20px;
+  padding: 24px 26px;
+  width: 560px;
+  max-width: 95vw;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(18px);
+}
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+.subtitle {
+  font-size: 0.9rem;
+  text-align: center;
+  color: #9ca3af;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.currency {
+  display: flex;
+  gap: 12px;
+}
+.currency-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.currency-label {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+.currency-value {
+  font-weight: 600;
+}
+.shop-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
+}
+.shop-btn:hover {
+  background: rgba(30, 64, 175, 0.8);
+  box-shadow: 0 10px 24px rgba(30, 64, 175, 0.6);
+}
+.shop-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: #d1d5db;
+}
+.stat-label {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.stat-value {
+  font-weight: 600;
+  margin-top: 3px;
+}
+.xp-bar-container {
+  margin-bottom: 10px;
+}
+.xp-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #e5e7eb;
+  margin-bottom: 4px;
+}
+.xp-bar-outer {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  overflow: hidden;
+}
+.xp-bar-inner {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #38bdf8, #a855f7);
+  transition: width 0.25s ease-out;
+}
+.current-roll {
+  margin: 12px 0;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+}
+.current-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+.current-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.current-extra {
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  margin-top: 4px;
+}
+.rarity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  margin-top: 8px;
+}
+.rarity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.rarity-common   { color: #9ca3af; }
+.rarity-uncommon { color: #22c55e; }
+.rarity-rare     { color: #38bdf8; }
+.rarity-epic     { color: #a855f7; }
+.rarity-legend   { color: #facc15; }
+.rarity-mythic   { color: #fb7185; }
+.rarity-godly    { color: #ff6bff; }
+.rarity-other    { color: #00f0ff; }
+.rarity-hidden   { color: #ffffff; }
+.dot-common   { background: #9ca3af; }
+.dot-uncommon { background: #22c55e; }
+.dot-rare     { background: #38bdf8; }
+.dot-epic     { background: #a855f7; }
+.dot-legend   { background: #facc15; }
+.dot-mythic   { background: #fb7185; }
+.dot-godly    { background: #ff6bff; }
+.dot-other    { background: #00f0ff; }
+.dot-hidden   { background: #ffffff; }
+.roll-btn {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #041007;
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.55);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+.roll-btn:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 18px 40px rgba(22, 163, 74, 0.7);
+}
+.roll-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.5);
+}
+.roll-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+.history {
+  margin-top: 14px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 4px;
+  font-size: 0.85rem;
+}
+.history-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+.history-item:last-child {
+  border-bottom: none;
+}
+.history-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.history-time {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+.history-name {
+  font-weight: 500;
+}
+.history-rarity {
+  font-size: 0.8rem;
+}
+.prob-table {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+  padding-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.prob-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.prob-label {
+  min-width: 80px;
+}
+.prob-value {
+  color: #e5e7eb;
+}
+.spin {
+  animation: spin 0.8s ease-out;
+}
+@keyframes spin {
+  0% { transform: rotateX(0deg) scale(1); opacity: 0.2; }
+  50% { transform: rotateX(360deg) scale(1.2); opacity: 1; }
+  100% { transform: rotateX(720deg) scale(1); opacity: 1; }
+}
+.glow {
+  animation: glowPulse 1.2s ease-out forwards;
+}
+@keyframes glowPulse {
+  0% { text-shadow: 0 0 0px white; transform: scale(1); }
+  50% { text-shadow: 0 0 25px white; transform: scale(1.12); }
+  100% { text-shadow: 0 0 0px white; transform: scale(1); }
+}
+.shake {
+  animation: shake 0.6s ease-in-out;
+}
+@keyframes shake {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-8px, 6px); }
+  40% { transform: translate(8px, -6px); }
+  60% { transform: translate(-6px, 4px); }
+  80% { transform: translate(6px, -4px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Shop modal */
+.shop-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+.shop-modal {
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 16px;
+  padding: 18px 20px;
+  width: 380px;
+  max-width: 90vw;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(148, 163, 184, 0.4);
+}
+.shop-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.shop-subtitle {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+.shop-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shop-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
+}
+.shop-item:hover {
+  background: rgba(30, 64, 175, 0.7);
+  box-shadow: 0 10px 24px rgba(30, 64, 175, 0.6);
+}
+.shop-item:active {
+  transform: translateY(1px) scale(0.99);
+}
+.shop-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.shop-desc {
+  font-size: 0.8rem;
+  color: #d1d5db;
+}
+.shop-cost {
+  font-size: 0.8rem;
+  color: #facc15;
+  margin-top: 2px;
+}
+.shop-close {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: right;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+<div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <button class="back-btn" onclick="window.location.href='../'">← Back</button>
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="../">Home</div>
+      <div class="nav-item" data-href="../ai">AI</div>
+      <div class="nav-item" data-href="../weather">Weather</div>
+      <div class="nav-item" data-href="../translator">Translator</div>
+      <div class="nav-item" data-href="../stocks">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="../chat">Chat</div>
+      <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item active" data-href="../games">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;color:black;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+  </div>
+
+  <div id="auth-popup" class="auth-popup hidden">
+    <div class="auth-box">
+      <h2>Account</h2>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+      <button id="auth-login-btn">Log In</button>
+      <button id="auth-signup-btn">Sign Up</button>
+      <button id="github-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>Sign in with GitHub</span>
+      </button>
+      <button id="google-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-close-btn" class="close-btn">Close</button>
+    </div>
+  </div>
+
+
+<canvas id="particles"></canvas>
+
+<div class="shop-backdrop" id="shop-backdrop">
+  <div class="shop-modal">
+    <div class="shop-title">Starfall Shop</div>
+    <div class="shop-subtitle">Spend coins to bend the odds.</div>
+    <div class="shop-items">
+      <div class="shop-item" data-upgrade="xpBoost">
+        <div class="shop-name">XP Booster</div>
+        <div class="shop-desc">Gain +50% XP per roll.</div>
+        <div class="shop-cost">Cost: 150 coins</div>
+      </div>
+      <div class="shop-item" data-upgrade="luckBoost">
+        <div class="shop-name">Luck Charm</div>
+        <div class="shop-desc">Slightly increases Rare+ chances.</div>
+        <div class="shop-cost">Cost: 200 coins</div>
+      </div>
+      <div class="shop-item" data-upgrade="coinBoost">
+        <div class="shop-name">Coin Magnet</div>
+        <div class="shop-desc">+50% coins from every roll.</div>
+        <div class="shop-cost">Cost: 120 coins</div>
+      </div>
+      <div class="shop-item" data-upgrade="particleBoost">
+        <div class="shop-name">Particle Storm</div>
+        <div class="shop-desc">More particles on good rolls.</div>
+        <div class="shop-cost">Cost: 90 coins</div>
+      </div>
+      <div class="shop-item" data-upgrade="cosmeticAura">
+        <div class="shop-name">Cosmic Trail</div>
+        <div class="shop-desc">Pure flex. No stats, just style.</div>
+        <div class="shop-cost">Cost: 250 coins</div>
+      </div>
+    </div>
+    <div class="shop-close" id="shop-close">Close</div>
+  </div>
+</div>
+
+<div class="game" id="game-card">
+  <div class="title">Starfall RNG</div>
+  <div class="subtitle">Roll, level up, and bend the odds.</div>
+
+  <div class="top-bar">
+    <div class="currency">
+      <div class="currency-item">
+        <span class="currency-label">Coins</span>
+        <span class="currency-value" id="coins">0</span>
+      </div>
+      <div class="currency-item">
+        <span class="currency-label">Level</span>
+        <span class="currency-value" id="level">1</span>
+      </div>
+    </div>
+    <button class="shop-btn" id="shop-btn">Shop</button>
+  </div>
+
+  <div class="xp-bar-container">
+    <div class="xp-top">
+      <span id="xp-label">XP: 0 / 50</span>
+      <span id="xp-bonus-label">No XP bonus</span>
+    </div>
+    <div class="xp-bar-outer">
+      <div class="xp-bar-inner" id="xp-bar-inner"></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div>
+      <div class="stat-label">Total Rolls</div>
+      <div class="stat-value" id="total-rolls">0</div>
+    </div>
+    <div>
+      <div class="stat-label">Best Rarity</div>
+      <div class="stat-value" id="best-rarity">None</div>
+    </div>
+    <div>
+      <div class="stat-label">Last Roll</div>
+      <div class="stat-value" id="last-roll-time">—</div>
+    </div>
+  </div>
+
+  <div class="current-roll" id="current-roll">
+    <div class="current-label">Current Roll</div>
+    <div class="current-name rarity-common" id="current-name">No roll yet</div>
+    <div class="current-extra" id="current-extra">Press "Roll" to begin.</div>
+    <div class="rarity-chip">
+      <span class="rarity-dot dot-common" id="current-dot"></span>
+      <span id="current-rarity-label">—</span>
+    </div>
+  </div>
+
+  <button class="roll-btn" id="roll-btn">Roll</button>
+
+  <div class="history">
+    <div class="history-title">History</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div class="prob-table" id="prob-table"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module">
+/* ---------- Safe Supabase init ---------- */
+let client = null;
+try {
+  const { createClient } = supabase;
+  client = createClient(
+    "https://zppnwbmrbrzcepkrpgiq.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwcG53Ym1yYnJ6Y2Vwa3JwZ2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDE3NjYsImV4cCI6MjA5MDIxNzc2Nn0.RibU8nF5GjJIcY5TOMA6TRQQoSpxonx6JjcsG2GHRD4"
+  );
+} catch (e) {
+  console.warn("Supabase failed to load, running offline mode.");
+  client = null;
+}
+
+/* Anonymous user id (local only) */
+let userId = localStorage.getItem("userId");
+if (!userId) {
+  userId = crypto.randomUUID();
+  localStorage.setItem("userId", userId);
+}
+
+/* Safe load/save player */
+async function loadPlayer() {
+  if (!client) {
+    return {
+      user_id: userId,
+      best_rarity: "None",
+      hidden_unlocked: false,
+      total_rolls: 0,
+      history: [],
+      xp: 0,
+      level: 1,
+      coins: 0,
+      shop_upgrades: {}
+    };
+  }
+
+  const { data, error } = await client
+    .from("players")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (data) {
+    return {
+      user_id: data.user_id,
+      best_rarity: data.best_rarity ?? "None",
+      hidden_unlocked: data.hidden_unlocked ?? false,
+      total_rolls: data.total_rolls ?? 0,
+      history: data.history ?? [],
+      xp: data.xp ?? 0,
+      level: data.level ?? 1,
+      coins: data.coins ?? 0,
+      shop_upgrades: data.shop_upgrades ?? {}
+    };
+  }
+
+  const newPlayer = {
+    user_id: userId,
+    best_rarity: "None",
+    hidden_unlocked: false,
+    total_rolls: 0,
+    history: [],
+    xp: 0,
+    level: 1,
+    coins: 0,
+    shop_upgrades: {}
+  };
+
+  if (client) {
+    await client.from("players").insert(newPlayer);
+  }
+
+  return newPlayer;
+}
+
+async function savePlayer(player) {
+  if (!client) return;
+  await client
+    .from("players")
+    .update(player)
+    .eq("user_id", player.user_id);
+}
+
+/* ---------- Load player ---------- */
+let player = await loadPlayer();
+
+/* ---------- Game state ---------- */
+let hiddenUnlocked = !!player.hidden_unlocked;
+let totalRolls = Number(player.total_rolls || 0);
+let historyArray = Array.isArray(player.history) ? player.history : [];
+let bestRarityName = player.best_rarity || "None";
+let xp = Number(player.xp || 0);
+let level = Number(player.level || 1);
+let coins = Number(player.coins || 0);
+let shopUpgrades = player.shop_upgrades || {};
+
+/* Shop upgrade levels */
+let xpBoostLevel = shopUpgrades.xpBoost || 0;
+let luckBoostLevel = shopUpgrades.luckBoost || 0;
+let coinBoostLevel = shopUpgrades.coinBoost || 0;
+let particleBoostLevel = shopUpgrades.particleBoost || 0;
+let cosmeticAuraOwned = !!shopUpgrades.cosmeticAura;
+
+/* ---------- Rarities with multiple auras ---------- */
+/* Tier chances sum to 1.0; Otherworldly = 0.01 */
+const rarityTiers = [
+  {
+    id: "common",
+    label: "Common",
+    chance: 0.50,
+    className: "rarity-common",
+    dotClass: "dot-common",
+    weight: 1,
+    color: "#9ca3af",
+    auras: [
+      "Faded Glow",
+      "Dusty Spark",
+      "Dim Ember",
+      "Soft Flicker",
+      "Muted Halo"
+    ]
+  },
+  {
+    id: "uncommon",
+    label: "Uncommon",
+    chance: 0.25,
+    className: "rarity-uncommon",
+    dotClass: "dot-uncommon",
+    weight: 2,
+    color: "#22c55e",
+    auras: [
+      "Soft Radiance",
+      "Verdant Pulse",
+      "Gentle Bloom",
+      "Emerald Drift",
+      "Forest Whisper"
+    ]
+  },
+  {
+    id: "rare",
+    label: "Rare",
+    chance: 0.12,
+    className: "rarity-rare",
+    dotClass: "dot-rare",
+    weight: 3,
+    color: "#38bdf8",
+    auras: [
+      "Crystal Pulse",
+      "Azure Shard",
+      "Frozen Echo",
+      "Tidal Prism",
+      "Skyline Fracture"
+    ]
+  },
+  {
+    id: "epic",
+    label: "Epic",
+    chance: 0.06,
+    className: "rarity-epic",
+    dotClass: "dot-epic",
+    weight: 4,
+    color: "#a855f7",
+    auras: [
+      "Nebula Surge",
+      "Violet Collapse",
+      "Stellar Bloom",
+      "Arcane Spiral"
+    ]
+  },
+  {
+    id: "legendary",
+    label: "Legendary",
+    chance: 0.03,
+    className: "rarity-legend",
+    dotClass: "dot-legend",
+    weight: 5,
+    color: "#facc15",
+    auras: [
+      "Solar Flare",
+      "Crown of Dawn",
+      "Golden Horizon"
+    ]
+  },
+  {
+    id: "mythic",
+    label: "Mythic",
+    chance: 0.015,
+    className: "rarity-mythic",
+    dotClass: "dot-mythic",
+    weight: 6,
+    color: "#fb7185",
+    auras: [
+      "Eternal Singularity",
+      "Crimson Eclipse"
+    ]
+  },
+  {
+    id: "godly",
+    label: "Godly",
+    chance: 0.01,
+    className: "rarity-godly",
+    dotClass: "dot-godly",
+    weight: 7,
+    color: "#ff6bff",
+    auras: [
+      "Divine Ascension",
+      "Halo of Infinity"
+    ]
+  },
+  {
+    id: "other",
+    label: "Otherworldly",
+    chance: 0.01, // your request
+    className: "rarity-other",
+    dotClass: "dot-other",
+    weight: 8,
+    color: "#00f0ff",
+    auras: [
+      "Otherworldly Rift"
+    ]
+  },
+  {
+    id: "hidden",
+    label: "???",
+    chance: hiddenUnlocked ? 0 : 0.005,
+    className: "rarity-hidden",
+    dotClass: "dot-hidden",
+    weight: 999,
+    color: "#ffffff",
+    auras: [
+      "???"
+    ]
+  }
+];
+
+
+function getTierByLabel(label) {
+  return rarityTiers.find(t => t.label === label) || null;
+}
+
+/* XP + level helpers */
+function xpNeededForLevel(lvl) {
+  return Math.floor(50 * Math.pow(lvl, 1.5));
+}
+function getXpReward(tierId) {
+  switch (tierId) {
+    case "common": return 1;
+    case "uncommon": return 2;
+    case "rare": return 5;
+    case "epic": return 10;
+    case "legendary": return 20;
+    case "mythic": return 35;
+    case "godly": return 50;
+    case "other": return 75;
+    case "hidden": return 100;
+    default: return 1;
+  }
+}
+function getCoinReward(weight, tierId) {
+  if (tierId === "hidden") return 500;
+  if (weight >= 8) return 200;
+  if (weight >= 7) return 120;
+  if (weight === 6) return 60;
+  if (weight === 5) return 30;
+  if (weight === 4) return 15;
+  if (weight === 3) return 8;
+  if (weight === 2) return 3;
+  return 1;
+}
+
+/* Sounds */
+const sClick  = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3");
+const sRoll   = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-arcade-slot-machine-1930.mp3");
+const sRare   = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-magical-coin-win-1936.mp3");
+const sCosmic = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-distorted-arcade-echo-3130.mp3");
+
+/* Particles */
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+let particles = [];
+class Particle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.size = Math.random() * 6 + 3;
+    this.speedX = (Math.random() - 0.5) * 8;
+    this.speedY = (Math.random() - 0.5) * 8;
+    this.alpha = 1;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.alpha -= 0.02;
+  }
+  draw() {
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+function spawnParticles(color, baseCount = 40) {
+  const rect = document.querySelector(".game").getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const count = baseCount + particleBoostLevel * 15;
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle(cx, cy, color));
+  }
+}
+function spawnRainbowBurst(baseCount = 80) {
+  const rect = document.querySelector(".game").getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ["#ff6bff", "#00f0ff", "#facc15", "#fb7185", "#38bdf8", "#ffffff"];
+  const count = baseCount + particleBoostLevel * 20;
+  for (let i = 0; i < count; i++) {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    particles.push(new Particle(cx, cy, color));
+  }
+}
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.alpha > 0);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* DOM */
+const rollBtn = document.getElementById("roll-btn");
+const totalRollsEl = document.getElementById("total-rolls");
+const bestRarityEl = document.getElementById("best-rarity");
+const lastRollTimeEl = document.getElementById("last-roll-time");
+const currentNameEl = document.getElementById("current-name");
+const currentExtraEl = document.getElementById("current-extra");
+const currentRarityLabelEl = document.getElementById("current-rarity-label");
+const currentDotEl = document.getElementById("current-dot");
+const gameCard = document.getElementById("game-card");
+const historyListEl = document.getElementById("history-list");
+const probTableEl = document.getElementById("prob-table");
+const coinsEl = document.getElementById("coins");
+const levelEl = document.getElementById("level");
+const xpLabelEl = document.getElementById("xp-label");
+const xpBarInnerEl = document.getElementById("xp-bar-inner");
+const xpBonusLabelEl = document.getElementById("xp-bonus-label");
+const shopBtn = document.getElementById("shop-btn");
+const shopBackdrop = document.getElementById("shop-backdrop");
+const shopClose = document.getElementById("shop-close");
+const shopItems = document.querySelectorAll(".shop-item");
+
+/* Derived best weight */
+let bestWeight = 0;
+if (bestRarityName && bestRarityName !== "None") {
+  const tier = getTierByLabel(bestRarityName);
+  if (tier) bestWeight = tier.weight;
+}
+
+/* Helpers */
+function updateCoinsUI() {
+  coinsEl.textContent = coins;
+}
+function updateLevelUI() {
+  levelEl.textContent = level;
+  const needed = xpNeededForLevel(level);
+  const pct = Math.min(100, (xp / needed) * 100);
+  xpBarInnerEl.style.width = pct + "%";
+  xpLabelEl.textContent = `XP: ${xp} / ${needed}`;
+}
+function updateXpBonusUI() {
+  if (xpBoostLevel > 0) {
+    xpBonusLabelEl.textContent = `XP Boost x${1 + 0.5 * xpBoostLevel}`;
+  } else {
+    xpBonusLabelEl.textContent = "No XP bonus";
+  }
+}
+function saveShopUpgrades() {
+  shopUpgrades = {
+    xpBoost: xpBoostLevel,
+    luckBoost: luckBoostLevel,
+    coinBoost: coinBoostLevel,
+    particleBoost: particleBoostLevel,
+    cosmeticAura: cosmeticAuraOwned
+  };
+}
+function updateProbTable() {
+  probTableEl.innerHTML = "";
+  const adjusted = rarityTiers.map(t => {
+    let chance = t.chance;
+    if (luckBoostLevel > 0 && t.weight >= 3 && t.id !== "hidden") {
+      chance *= (1 + 0.15 * luckBoostLevel);
+    }
+    if (t.id === "hidden" && hiddenUnlocked) chance = 0;
+    return { ...t, chance };
+  });
+  const totalChance = adjusted.reduce((sum, t) => sum + t.chance, 0);
+  adjusted.forEach(t => {
+    if (t.chance <= 0) return;
+    const row = document.createElement("div");
+    row.className = "prob-row";
+    const dot = document.createElement("span");
+    dot.className = "rarity-dot " + t.dotClass;
+    const label = document.createElement("span");
+    label.className = "prob-label " + t.className;
+    label.textContent = t.label;
+    const value = document.createElement("span");
+    value.className = "prob-value";
+    const pct = (t.chance / totalChance) * 100;
+    value.textContent = `${pct.toFixed(2)}%`;
+    row.appendChild(dot);
+    row.appendChild(label);
+    row.appendChild(value);
+    probTableEl.appendChild(row);
+  });
+}
+function pickTier() {
+  const adjusted = rarityTiers.map(t => {
+    let chance = t.chance;
+    if (luckBoostLevel > 0 && t.weight >= 3 && t.id !== "hidden") {
+      chance *= (1 + 0.15 * luckBoostLevel);
+    }
+    if (t.id === "hidden" && hiddenUnlocked) chance = 0;
+    return { ...t, chance };
+  });
+  const totalChance = adjusted.reduce((sum, t) => sum + t.chance, 0);
+  let roll = Math.random() * totalChance;
+  for (const t of adjusted) {
+    if (roll <= t.chance) return t;
+    roll -= t.chance;
+  }
+  return adjusted[0];
+}
+function pickAuraFromTier(tier) {
+  const list = tier.auras;
+  const name = list[Math.floor(Math.random() * list.length)];
+  return name;
+}
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+function updateBest(tier) {
+  if (tier.weight > bestWeight) {
+    bestWeight = tier.weight;
+    bestRarityName = tier.label;
+    bestRarityEl.textContent = tier.label;
+    bestRarityEl.className = "stat-value " + tier.className;
+  }
+}
+function addToHistory(auraName, tier, time) {
+  const entry = { name: auraName, rarity: tier.label, time };
+  historyArray.unshift(entry);
+
+  const item = document.createElement("div");
+  item.className = "history-item";
+  const left = document.createElement("div");
+  left.className = "history-left";
+  const dot = document.createElement("span");
+  dot.className = "rarity-dot " + tier.dotClass;
+  const name = document.createElement("span");
+  name.className = "history-name " + tier.className;
+  name.textContent = auraName;
+  left.appendChild(dot);
+  left.appendChild(name);
+  const right = document.createElement("div");
+  const raritySpan = document.createElement("span");
+  raritySpan.className = "history-rarity " + tier.className;
+  raritySpan.textContent = tier.label + " • ";
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "history-time";
+  timeSpan.textContent = time;
+  right.appendChild(raritySpan);
+  right.appendChild(timeSpan);
+  item.appendChild(left);
+  item.appendChild(right);
+  historyListEl.insertBefore(item, historyListEl.firstChild);
+}
+
+/* Shop logic */
+function openShop() {
+  shopBackdrop.style.display = "flex";
+}
+function closeShop() {
+  shopBackdrop.style.display = "none";
+}
+shopBtn.addEventListener("click", openShop);
+shopClose.addEventListener("click", closeShop);
+shopBackdrop.addEventListener("click", (e) => {
+  if (e.target === shopBackdrop) closeShop();
+});
+shopItems.forEach(item => {
+  item.addEventListener("click", async () => {
+    const type = item.getAttribute("data-upgrade");
+    let cost = 0;
+    if (type === "xpBoost") cost = 150;
+    if (type === "luckBoost") cost = 200;
+    if (type === "coinBoost") cost = 120;
+    if (type === "particleBoost") cost = 90;
+    if (type === "cosmeticAura") cost = 250;
+
+    if (coins < cost) {
+      currentExtraEl.textContent = "Not enough coins.";
+      return;
+    }
+
+    coins -= cost;
+
+    if (type === "xpBoost") {
+      xpBoostLevel++;
+      currentExtraEl.textContent = "XP Booster upgraded to level " + xpBoostLevel + ".";
+    }
+    if (type === "luckBoost") {
+      luckBoostLevel++;
+      currentExtraEl.textContent = "Luck Charm upgraded to level " + luckBoostLevel + ".";
+    }
+    if (type === "coinBoost") {
+      coinBoostLevel++;
+      currentExtraEl.textContent = "Coin Magnet upgraded to level " + coinBoostLevel + ".";
+    }
+    if (type === "particleBoost") {
+      particleBoostLevel++;
+      currentExtraEl.textContent = "Particle Storm upgraded to level " + particleBoostLevel + ".";
+    }
+    if (type === "cosmeticAura") {
+      cosmeticAuraOwned = true;
+      currentExtraEl.textContent = "Cosmic Trail unlocked.";
+    }
+
+    saveShopUpgrades();
+    updateCoinsUI();
+    updateXpBonusUI();
+    updateProbTable();
+
+    player.coins = coins;
+    player.shop_upgrades = shopUpgrades;
+    await savePlayer(player);
+  });
+});
+
+/* Roll animation */
+function animateRoll(callback) {
+  rollBtn.disabled = true;
+  rollBtn.textContent = "Rolling...";
+  sClick.currentTime = 0;
+  sClick.play();
+  setTimeout(() => {
+    sRoll.currentTime = 0;
+    sRoll.play();
+  }, 120);
+  let ticks = 18;
+  let interval = 40;
+  let count = 0;
+  const tempInterval = setInterval(() => {
+    const tempTier = pickTier();
+    const tempAura = pickAuraFromTier(tempTier);
+    currentNameEl.textContent = tempAura;
+    currentNameEl.className = "current-name " + tempTier.className;
+    currentRarityLabelEl.textContent = tempTier.label;
+    currentRarityLabelEl.className = tempTier.className;
+    currentDotEl.className = "rarity-dot " + tempTier.dotClass;
+    currentExtraEl.textContent = "Rolling...";
+    count++;
+    if (count >= ticks) {
+      clearInterval(tempInterval);
+      callback();
+    }
+  }, interval);
+}
+
+/* Main roll */
+rollBtn.addEventListener("click", async () => {
+  currentNameEl.classList.remove("spin", "glow");
+  gameCard.classList.remove("shake");
+  animateRoll(async () => {
+    const tier = pickTier();
+    const auraName = pickAuraFromTier(tier);
+    const now = new Date();
+    const timeStr = formatTime(now);
+
+    totalRolls++;
+    totalRollsEl.textContent = totalRolls;
+    lastRollTimeEl.textContent = timeStr;
+
+    currentNameEl.textContent = auraName;
+    currentNameEl.className = "current-name " + tier.className + " spin glow";
+    currentRarityLabelEl.textContent = tier.label;
+    currentRarityLabelEl.className = tier.className;
+    currentDotEl.className = "rarity-dot " + tier.dotClass;
+
+    let baseCoins = getCoinReward(tier.weight, tier.id);
+    let coinMult = 1 + 0.5 * coinBoostLevel;
+    let gainedCoins = Math.floor(baseCoins * coinMult);
+    coins += gainedCoins;
+
+    let baseXp = getXpReward(tier.id);
+    let xpMult = 1 + 0.5 * xpBoostLevel;
+    let gainedXp = Math.floor(baseXp * xpMult);
+    xp += gainedXp;
+
+    let message = `+${gainedCoins} coins, +${gainedXp} XP. `;
+
+    if (tier.id === "hidden") {
+      hiddenUnlocked = true;
+      const hiddenTier = rarityTiers.find(t => t.id === "hidden");
+      if (hiddenTier) hiddenTier.chance = 0;
+      message += "Reality fractures… You found the impossible.";
+      currentExtraEl.textContent = message;
+      spawnRainbowBurst(140);
+      sCosmic.currentTime = 0;
+      sCosmic.play();
+      gameCard.classList.add("shake");
+    } else if (tier.weight >= 8) {
+      message += "Beyond comprehension. An Otherworldly aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(tier.color, 70);
+      sRare.currentTime = 0;
+      sRare.play();
+    } else if (tier.weight >= 7) {
+      message += "Divine luck. You hit a Godly aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(tier.color, 60);
+      sRare.currentTime = 0;
+      sRare.play();
+    } else if (tier.weight >= 4) {
+      message += "Insane roll! You hit a " + tier.label + " aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(tier.color, 50);
+      sRare.currentTime = 0;
+      sRare.play();
+    } else if (tier.weight === 3) {
+      message += "Nice! A solid rare aura.";
+      currentExtraEl.textContent = message;
+      spawnParticles(tier.color, 30);
+    } else if (tier.weight === 2) {
+      message += "Not bad. A small upgrade.";
+      currentExtraEl.textContent = message;
+    } else {
+      message += "Just a common… keep rolling.";
+      currentExtraEl.textContent = message;
+    }
+
+    /* Level up check */
+    let leveledUp = false;
+    while (xp >= xpNeededForLevel(level)) {
+      xp -= xpNeededForLevel(level);
+      level++;
+      leveledUp = true;
+    }
+    if (leveledUp) {
+      spawnRainbowBurst(100);
+      currentExtraEl.textContent += ` Level up! You reached level ${level}.`;
+    }
+
+    updateBest(tier);
+    addToHistory(auraName, tier, timeStr);
+    updateCoinsUI();
+    updateLevelUI();
+    updateXpBonusUI();
+    updateProbTable();
+
+    /* Save to Supabase */
+    player.total_rolls = totalRolls;
+    player.best_rarity = bestRarityName;
+    player.hidden_unlocked = hiddenUnlocked;
+    player.history = historyArray;
+    player.xp = xp;
+    player.level = level;
+    player.coins = coins;
+    saveShopUpgrades();
+    player.shop_upgrades = shopUpgrades;
+    await savePlayer(player);
+
+    rollBtn.disabled = false;
+    rollBtn.textContent = "Roll";
+  });
+});
+
+/* ---------- Initial UI from loaded player ---------- */
+totalRollsEl.textContent = totalRolls;
+updateCoinsUI();
+updateLevelUI();
+updateXpBonusUI();
+updateProbTable();
+
+/* Best rarity label */
+if (bestRarityName && bestRarityName !== "None") {
+  const tier = getTierByLabel(bestRarityName);
+  if (tier) {
+    bestRarityEl.textContent = tier.label;
+    bestRarityEl.className = "stat-value " + tier.className;
+  } else {
+    bestRarityEl.textContent = "None";
+  }
+} else {
+  bestRarityEl.textContent = "None";
+}
+
+/* Render history from Supabase */
+historyArray.forEach(entry => {
+  const tier = getTierByLabel(entry.rarity) || rarityTiers[0];
+  const item = document.createElement("div");
+  item.className = "history-item";
+  const left = document.createElement("div");
+  left.className = "history-left";
+  const dot = document.createElement("span");
+  dot.className = "rarity-dot " + tier.dotClass;
+  const name = document.createElement("span");
+  name.className = "history-name " + tier.className;
+  name.textContent = entry.name;
+  left.appendChild(dot);
+  left.appendChild(name);
+  const right = document.createElement("div");
+  const raritySpan = document.createElement("span");
+  raritySpan.className = "history-rarity " + tier.className;
+  raritySpan.textContent = tier.label + " • ";
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "history-time";
+  timeSpan.textContent = entry.time;
+  right.appendChild(raritySpan);
+  right.appendChild(timeSpan);
+  item.appendChild(left);
+  item.appendChild(right);
+  historyListEl.appendChild(item);
+});
+</script>
+<audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
+<script src="../main.js"></script>
+<script src="../cookie.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
