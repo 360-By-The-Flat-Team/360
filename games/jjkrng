@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JJK RNG</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #05010a 0, #05010a 40%, #000 100%);
+      color: #f9fafb;
+      overflow: hidden;
+    }
+
+    #particles {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .game {
+      position: relative;
+      z-index: 1;
+      background:
+        radial-gradient(circle at top left, rgba(148, 27, 61, 0.25), transparent 55%),
+        linear-gradient(135deg, rgba(10, 10, 15, 0.98), rgba(10, 10, 15, 0.94));
+      border-radius: 20px;
+      padding: 24px 26px;
+      width: 620px;
+      max-width: 95vw;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(148, 27, 61, 0.7);
+      border: 2px solid rgba(148, 27, 61, 0.9);
+      overflow: hidden;
+    }
+
+    .title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f97373;
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.9);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      text-align: center;
+      color: #9ca3af;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+
+    .subtitle span {
+      color: #f97373;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .currency {
+      display: flex;
+      gap: 12px;
+    }
+
+    .currency-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .currency-label {
+      color: #9ca3af;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .currency-value {
+      font-weight: 600;
+    }
+
+    .shop-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 27, 61, 0.9);
+      background: rgba(10, 10, 15, 0.95);
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
+    }
+
+    .shop-btn:hover {
+      background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+      box-shadow: 0 10px 24px rgba(185, 28, 28, 0.7);
+    }
+
+    .shop-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+      color: #d1d5db;
+    }
+
+    .stat-label {
+      color: #9ca3af;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .xp-bar-container {
+      margin-bottom: 10px;
+    }
+
+    .xp-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #e5e7eb;
+      margin-bottom: 4px;
+    }
+
+    .xp-bar-outer {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(10, 10, 15, 0.95);
+      border: 1px solid rgba(148, 27, 61, 0.8);
+      overflow: hidden;
+    }
+
+    .xp-bar-inner {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f97373, #facc15, #a855f7);
+      transition: width 0.25s ease-out;
+    }
+
+    .current-roll {
+      margin: 12px 0;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(148, 27, 61, 0.7);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .current-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+
+    .current-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      position: relative;
+    }
+
+    .current-extra {
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      margin-top: 4px;
+    }
+
+    .rarity-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: rgba(10, 10, 15, 0.95);
+      border: 1px solid rgba(148, 27, 61, 0.7);
+      margin-top: 8px;
+    }
+
+    .rarity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    .rarity-common { color: #9ca3af; }
+    .rarity-uncommon { color: #22c55e; }
+    .rarity-rare { color: #38bdf8; }
+    .rarity-epic { color: #a855f7; }
+    .rarity-legend { color: #facc15; }
+    .rarity-mythic { color: #fb7185; }
+    .rarity-godly { color: #ff6bff; }
+    .rarity-other { color: #00f0ff; }
+    .rarity-heavenly {
+      color: #ffffff;
+      text-shadow: 0 0 10px #facc15;
+    }
+    .rarity-domain {
+      color: #f97373;
+      text-shadow: 0 0 12px #ef4444;
+    }
+
+    .dot-common { background: #9ca3af; }
+    .dot-uncommon { background: #22c55e; }
+    .dot-rare { background: #38bdf8; }
+    .dot-epic { background: #a855f7; }
+    .dot-legend { background: #facc15; }
+    .dot-mythic { background: #fb7185; }
+    .dot-godly { background: #ff6bff; }
+    .dot-other { background: #00f0ff; }
+    .dot-heavenly {
+      background: #ffffff;
+      box-shadow: 0 0 8px #facc15;
+    }
+    .dot-domain {
+      background: #ef4444;
+      box-shadow: 0 0 8px #000;
+    }
+
+    .roll-btn {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 4px;
+      background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+      color: #fee2e2;
+      box-shadow: 0 14px 30px rgba(185, 28, 28, 0.7);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .roll-btn:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 18px 40px rgba(185, 28, 28, 0.9);
+    }
+
+    .roll-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 10px 24px rgba(185, 28, 28, 0.6);
+    }
+
+    .roll-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .history {
+      margin-top: 14px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 4px;
+      font-size: 0.85rem;
+    }
+
+    .history-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(148, 27, 61, 0.4);
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-time {
+      color: #6b7280;
+      font-size: 0.75rem;
+    }
+
+    .history-name {
+      font-weight: 500;
+    }
+
+    .history-rarity {
+      font-size: 0.8rem;
+    }
+
+    .prob-table {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      border-top: 1px dashed rgba(148, 27, 61, 0.6);
+      padding-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+    }
+
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .prob-label {
+      min-width: 120px;
+    }
+
+    .prob-value {
+      color: #e5e7eb;
+    }
+
+    .spin {
+      animation: spin 0.8s ease-out;
+    }
+
+    @keyframes spin {
+      0% { transform: rotateX(0deg) scale(1); opacity: 0.2; }
+      50% { transform: rotateX(360deg) scale(1.2); opacity: 1; }
+      100% { transform: rotateX(720deg) scale(1); opacity: 1; }
+    }
+
+    .glow {
+      animation: glowPulse 1.2s ease-out forwards;
+    }
+
+    @keyframes glowPulse {
+      0% { text-shadow: 0 0 0 white; transform: scale(1); }
+      50% { text-shadow: 0 0 25px white; transform: scale(1.12); }
+      100% { text-shadow: 0 0 0 white; transform: scale(1); }
+    }
+
+    .shake {
+      animation: shake 0.6s ease-in-out;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-8px, 6px); }
+      40% { transform: translate(8px, -6px); }
+      60% { transform: translate(-6px, 4px); }
+      80% { transform: translate(6px, -4px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .glitch-heavenly::before,
+    .glitch-heavenly::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      mix-blend-mode: screen;
+      opacity: 0.7;
+    }
+
+    .glitch-heavenly::before {
+      color: #facc15;
+      clip-path: polygon(0 0, 100% 0, 100% 40%, 0 60%);
+      animation: glitchH 1.2s infinite;
+    }
+
+    .glitch-heavenly::after {
+      color: #ffffff;
+      clip-path: polygon(0 60%, 100% 40%, 100% 100%, 0 100%);
+      animation: glitchH2 1.2s infinite;
+    }
+
+    @keyframes glitchH {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-1px, -1px); }
+      40% { transform: translate(1px, 1px); }
+      60% { transform: translate(-1px, 1px); }
+      80% { transform: translate(1px, -1px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes glitchH2 {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(1px, 1px); }
+      40% { transform: translate(-1px, -1px); }
+      60% { transform: translate(1px, -1px); }
+      80% { transform: translate(-1px, 1px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .glitch-domain::before,
+    .glitch-domain::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      mix-blend-mode: screen;
+      opacity: 0.8;
+    }
+
+    .glitch-domain::before {
+      color: #ef4444;
+      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 55%);
+      animation: glitchD 0.9s infinite;
+    }
+
+    .glitch-domain::after {
+      color: #000000;
+      clip-path: polygon(0 55%, 100% 45%, 100% 100%, 0 100%);
+      animation: glitchD2 0.9s infinite;
+    }
+
+    @keyframes glitchD {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-2px, 1px); }
+      40% { transform: translate(2px, -1px); }
+      60% { transform: translate(-1px, -2px); }
+      80% { transform: translate(1px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes glitchD2 {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(2px, -1px); }
+      40% { transform: translate(-2px, 1px); }
+      60% { transform: translate(1px, 2px); }
+      80% { transform: translate(-1px, -2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .shop-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .shop-modal {
+      background: rgba(10, 10, 15, 0.98);
+      border-radius: 16px;
+      padding: 18px 20px;
+      width: 380px;
+      max-width: 90vw;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(148, 27, 61, 0.7);
+    }
+
+    .shop-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .shop-subtitle {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .shop-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .shop-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 27, 61, 0.7);
+      background: rgba(10, 10, 15, 0.95);
+      cursor: pointer;
+      transition: background 0.12s ease, transform 0.06s ease, box-shadow 0.12s ease;
+    }
+
+    .shop-item:hover {
+      background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+      box-shadow: 0 10px 24px rgba(185, 28, 28, 0.7);
+    }
+
+    .shop-item:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .shop-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .shop-desc {
+      font-size: 0.8rem;
+      color: #d1d5db;
+    }
+
+    .shop-cost {
+      font-size: 0.8rem;
+      color: #facc15;
+      margin-top: 2px;
+    }
+
+    .shop-close {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      text-align: right;
+      cursor: pointer;
+    }
+
+    #upgrade-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+    }
+
+    .upgrade-card-enter {
+      animation: cardIn 0.25s ease-out;
+    }
+
+    @keyframes cardIn {
+      0% { transform: translateY(10px) scale(0.95); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<!-- Shop -->
+<div class="shop-backdrop" id="shop-backdrop">
+  <div class="shop-modal">
+    <div class="shop-title">Cursed Shop</div>
+    <div class="shop-subtitle">Trade coins to twist fate.</div>
+    <div class="shop-items">
+      <div class="shop-item" data-upgrade="xpBoost">
+        <div class="shop-name">Training Regimen</div>
+        <div class="shop-desc">Gain more XP per roll.</div>
+        <div class="shop-cost" id="cost-xpBoost">Cost: 150</div>
+      </div>
+      <div class="shop-item" data-upgrade="luckBoost">
+        <div class="shop-name">Fortune Charm</div>
+        <div class="shop-desc">Increase Rare+ chances.</div>
+        <div class="shop-cost" id="cost-luckBoost">Cost: 200</div>
+      </div>
+      <div class="shop-item" data-upgrade="coinBoost">
+        <div class="shop-name">Bounty Contract</div>
+        <div class="shop-desc">More coins from every roll.</div>
+        <div class="shop-cost" id="cost-coinBoost">Cost: 120</div>
+      </div>
+      <div class="shop-item" data-upgrade="particleBoost">
+        <div class="shop-name">Cursed Energy Overflow</div>
+        <div class="shop-desc">More particles on good rolls.</div>
+        <div class="shop-cost" id="cost-particleBoost">Cost: 90</div>
+      </div>
+      <div class="shop-item" data-upgrade="cosmeticAura">
+        <div class="shop-name">Cursed Aura Trail</div>
+        <div class="shop-desc">Pure style. No stats, all flex.</div>
+        <div class="shop-cost" id="cost-cosmeticAura">Cost: 250</div>
+      </div>
+    </div>
+    <div class="shop-close" id="shop-close">Close</div>
+  </div>
+</div>
+
+<!-- Level Up Upgrade UI -->
+<div class="shop-backdrop" id="upgrade-backdrop">
+  <div class="shop-modal">
+    <div class="shop-title">Level Up!</div>
+    <div class="shop-subtitle">Choose one cursed upgrade:</div>
+    <div class="shop-items" id="upgrade-choices"></div>
+    <div class="shop-close" id="upgrade-close">Skip</div>
+  </div>
+</div>
+
+<div class="game" id="game-card">
+  <div class="title">JJK RNG</div>
+  <div class="subtitle">
+    Roll for <span>cursed techniques</span> and <span>domains</span>.
+  </div>
+
+  <div class="top-bar">
+    <div class="currency">
+      <div class="currency-item">
+        <span class="currency-label">Coins</span>
+        <span class="currency-value" id="coins">0</span>
+      </div>
+      <div class="currency-item">
+        <span class="currency-label">Level</span>
+        <span class="currency-value" id="level">1</span>
+      </div>
+    </div>
+    <button class="shop-btn" id="shop-btn">Cursed Shop</button>
+  </div>
+
+  <div class="xp-bar-container">
+    <div class="xp-top">
+      <span id="xp-label">XP: 0 / 50</span>
+      <span id="xp-bonus-label">No XP bonus</span>
+    </div>
+    <div class="xp-bar-outer">
+      <div class="xp-bar-inner" id="xp-bar-inner"></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div>
+      <div class="stat-label">Total Rolls</div>
+      <div class="stat-value" id="total-rolls">0</div>
+    </div>
+    <div>
+      <div class="stat-label">Best Rarity</div>
+      <div class="stat-value" id="best-rarity">None</div>
+    </div>
+    <div>
+      <div class="stat-label">Last Roll</div>
+      <div class="stat-value" id="last-roll-time">—</div>
+    </div>
+  </div>
+
+  <div class="current-roll" id="current-roll">
+    <div class="current-label">Current Technique</div>
+    <div class="current-name rarity-common" id="current-name">No roll yet</div>
+    <div class="current-extra" id="current-extra">
+      Press "Roll" to summon a cursed technique. (Press P to awaken 天与呪縛 (Heavenly Restriction).)
+    </div>
+    <div class="rarity-chip">
+      <span class="rarity-dot dot-common" id="current-dot"></span>
+      <span id="current-rarity-label">—</span>
+    </div>
+  </div>
+
+  <button class="roll-btn" id="roll-btn">Roll</button>
+
+  <div class="history">
+    <div class="history-title">History</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div class="prob-table" id="prob-table"></div>
+</div>
+
+<script>
+  /* ---------- State ---------- */
+  let totalRolls = 0;
+  let historyArray = [];
+  let bestRarityName = "None";
+  let bestWeight = 0;
+  let xp = 0;
+  let level = 1;
+  let coins = 0;
+  let pityCounter = 0;
+  let hiddenUnlocked = false; // Heavenly Restriction unlocked
+
+  /* Shop upgrade levels */
+  let xpBoostLevel = 0;
+  let luckBoostLevel = 0;
+  let coinBoostLevel = 0;
+  let particleBoostLevel = 0;
+  let cosmeticAuraOwned = false;
+  let pityReductionLevel = 0;
+  let otherworldlyBoostLevel = 0;
+
+  /* Base shop costs */
+  const baseCosts = {
+    xpBoost: 150,
+    luckBoost: 200,
+    coinBoost: 120,
+    particleBoost: 90,
+    cosmeticAura: 250
+  };
+
+  function getUpgradeCost(type) {
+    const levelMap = {
+      xpBoost: xpBoostLevel,
+      luckBoost: luckBoostLevel,
+      coinBoost: coinBoostLevel,
+      particleBoost: particleBoostLevel,
+      cosmeticAura: cosmeticAuraOwned ? 1 : 0
+    };
+    const lvl = levelMap[type] || 0;
+    return Math.floor(baseCosts[type] * (1 + 0.5 * lvl));
+  }
+
+  /* Rarities + JJK techniques/auras */
+  const rarityTiers = [
+    {
+      id: "common",
+      label: "Common",
+      chance: 0.50,
+      className: "rarity-common",
+      dotClass: "dot-common",
+      weight: 1,
+      color: "#9ca3af",
+      auras: [
+        "Weak Cursed Energy",
+        "Minor Burst",
+        "Faint Aura",
+        "Low-Grade Pulse",
+        "Cursed Flicker",
+        "Dull Flow",
+        "Basic Reinforcement",
+        "Minor Surge"
+      ]
+    },
+    {
+      id: "uncommon",
+      label: "Uncommon",
+      chance: 0.25,
+      className: "rarity-uncommon",
+      dotClass: "dot-uncommon",
+      weight: 2,
+      color: "#22c55e",
+      auras: [
+        "Divergent Fist",
+        "Simple Domain",
+        "Shadow Step",
+        "Cursed Tool Slash",
+        "Reinforcement Burst",
+        "Focused Strike",
+        "Cursed Echo",
+        "Aura Spike"
+      ]
+    },
+    {
+      id: "rare",
+      label: "Rare",
+      chance: 0.12,
+      className: "rarity-rare",
+      dotClass: "dot-rare",
+      weight: 3,
+      color: "#38bdf8",
+      auras: [
+        "Black Flash",
+        "Nue Summon",
+        "Max Elephant",
+        "Straw Doll Resonance",
+        "Blood Manipulation",
+        "Ratio Technique",
+        "Cursed Speech (Low Output)",
+        "Ice Formation"
+      ]
+    },
+    {
+      id: "epic",
+      label: "Epic",
+      chance: 0.06,
+      className: "rarity-epic",
+      dotClass: "dot-epic",
+      weight: 4,
+      color: "#a855f7",
+      auras: [
+        "Ten Shadows: Divine Dogs",
+        "Ten Shadows: Max Elephant",
+        "Boogie Woogie",
+        "Idle Transfiguration",
+        "Disaster Plants",
+        "Hollow Wicker Basket"
+      ]
+    },
+    {
+      id: "legendary",
+      label: "Legendary",
+      chance: 0.03,
+      className: "rarity-legend",
+      dotClass: "dot-legend",
+      weight: 5,
+      color: "#facc15",
+      auras: [
+        "Cursed Speech: Full Output",
+        "Ten Shadows: Mahoraga Wheel",
+        "Projection Sorcery",
+        "Sky Manipulation",
+        "Reverse Cursed Technique Mastery"
+      ]
+    },
+    {
+      id: "mythic",
+      label: "Mythic",
+      chance: 0.015,
+      className: "rarity-mythic",
+      dotClass: "dot-mythic",
+      weight: 6,
+      color: "#fb7185",
+      auras: [
+        "Limitless: Blue",
+        "Limitless: Red",
+        "Black Flash Chain",
+        "Shrine Cleave"
+      ]
+    },
+    {
+      id: "godly",
+      label: "神格 (Godly)",
+      chance: 0.01,
+      className: "rarity-godly",
+      dotClass: "dot-godly",
+      weight: 7,
+      color: "#ff6bff",
+      auras: [
+        "Limitless: Purple",
+        "Malevolent Shrine Flames",
+        "Rika Manifestation"
+      ]
+    },
+    {
+      id: "other",
+      label: "Otherworldly",
+      chance: 0.01,
+      className: "rarity-other",
+      dotClass: "dot-other",
+      weight: 8,
+      color: "#00f0ff",
+      auras: [
+        "Void Collapse",
+        "Rift of Calamity"
+      ]
+    },
+    {
+      id: "heavenly",
+      label: "天与呪縛 (Heavenly Restriction)",
+      chance: 0, // 0 until unlocked
+      className: "rarity-heavenly",
+      dotClass: "dot-heavenly",
+      weight: 999,
+      color: "#ffffff",
+      auras: [
+        "Heavenly Restriction: White Coffin",
+        "Heavenly Restriction: Celestial Binding",
+        "Heavenly Restriction: Divine Shackles",
+        "Heavenly Restriction: Halo Suppression",
+        "Heavenly Restriction: Seraphic Limit"
+      ]
+    },
+    {
+      id: "domain",
+      label: "領域展開 (Domain Expansion)",
+      chance: 0.002,
+      className: "rarity-domain",
+      dotClass: "dot-domain",
+      weight: 1000,
+      color: "#ef4444",
+      auras: [
+        "Domain Expansion: Crimson Abyss",
+        "Domain Expansion: Null Sanctuary",
+        "Domain Expansion: Black Sun Collapse"
+      ]
+    }
+  ];
+
+  function getTierByLabel(label) {
+    return rarityTiers.find(t => t.label === label) || null;
+  }
+
+  /* XP + level */
+  function xpNeededForLevel(lvl) {
+    return Math.floor(50 * Math.pow(lvl, 1.5));
+  }
+
+  function getXpReward(tierId) {
+    switch (tierId) {
+      case "common": return 1;
+      case "uncommon": return 2;
+      case "rare": return 5;
+      case "epic": return 10;
+      case "legendary": return 20;
+      case "mythic": return 35;
+      case "godly": return 50;
+      case "other": return 75;
+      case "heavenly": return 120;
+      case "domain": return 150;
+      default: return 1;
+    }
+  }
+
+  function getCoinReward(weight, tierId) {
+    if (tierId === "domain") return 800;
+    if (tierId === "heavenly") return 600;
+    if (tierId === "other") return 200;
+    if (tierId === "godly") return 150;
+    if (tierId === "mythic") return 80;
+    if (tierId === "legendary") return 40;
+    if (tierId === "epic") return 20;
+    if (tierId === "rare") return 10;
+    if (tierId === "uncommon") return 4;
+    return 1;
+  }
+
+  /* Pity */
+  const BASE_PITY_THRESHOLD = 40;
+  function currentPityThreshold() {
+    return Math.max(10, BASE_PITY_THRESHOLD - 5 * pityReductionLevel);
+  }
+
+  /* Sounds (simple placeholders) */
+  const sClick = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3");
+  const sRoll = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-arcade-slot-machine-1930.mp3");
+  const sRare = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-magical-coin-win-1936.mp3");
+  const sCosmic = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-distorted-arcade-echo-3130.mp3");
+  const sLevel = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-video-game-mystery-alert-234.wav");
+
+  /* Particles */
+  const canvas = document.getElementById("particles");
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  let particles = [];
+
+  class Particle {
+    constructor(x, y, color) {
+      this.x = x;
+      this.y = y;
+      this.color = color;
+      this.size = Math.random() * 6 + 3;
+      this.speedX = (Math.random() - 0.5) * 8;
+      this.speedY = (Math.random() - 0.5) * 8;
+      this.alpha = 1;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.alpha -= 0.02;
+    }
+    draw() {
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function spawnParticles(color, baseCount = 40) {
+    const rect = document.querySelector(".game").getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const count = baseCount + particleBoostLevel * 15;
+    for (let i = 0; i < count; i++) {
+      particles.push(new Particle(cx, cy, color));
+    }
+  }
+
+  function spawnRainbowBurst(baseCount = 80) {
+    const rect = document.querySelector(".game").getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ["#ff6bff", "#00f0ff", "#facc15", "#fb7185", "#38bdf8", "#ffffff"];
+    const count = baseCount + particleBoostLevel * 20;
+    for (let i = 0; i < count; i++) {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      particles.push(new Particle(cx, cy, color));
+    }
+  }
+
+  function spawnDomainBurst(baseCount = 100) {
+    const rect = document.querySelector(".game").getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ["#000000", "#ef4444", "#7f1d1d"];
+    const count = baseCount + particleBoostLevel * 25;
+    for (let i = 0; i < count; i++) {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      particles.push(new Particle(cx, cy, color));
+    }
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.alpha > 0);
+    particles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  /* DOM */
+  const rollBtn = document.getElementById("roll-btn");
+  const totalRollsEl = document.getElementById("total-rolls");
+  const bestRarityEl = document.getElementById("best-rarity");
+  const lastRollTimeEl = document.getElementById("last-roll-time");
+  const currentNameEl = document.getElementById("current-name");
+  const currentExtraEl = document.getElementById("current-extra");
+  const currentRarityLabelEl = document.getElementById("current-rarity-label");
+  const currentDotEl = document.getElementById("current-dot");
+  const gameCard = document.getElementById("game-card");
+  const historyListEl = document.getElementById("history-list");
+  const probTableEl = document.getElementById("prob-table");
+  const coinsEl = document.getElementById("coins");
+  const levelEl = document.getElementById("level");
+  const xpLabelEl = document.getElementById("xp-label");
+  const xpBarInnerEl = document.getElementById("xp-bar-inner");
+  const xpBonusLabelEl = document.getElementById("xp-bonus-label");
+  const shopBtn = document.getElementById("shop-btn");
+  const shopBackdrop = document.getElementById("shop-backdrop");
+  const shopClose = document.getElementById("shop-close");
+  const shopItems = document.querySelectorAll(".shop-item");
+  const upgradeBackdrop = document.getElementById("upgrade-backdrop");
+  const upgradeClose = document.getElementById("upgrade-close");
+  const upgradeChoicesContainer = document.getElementById("upgrade-choices");
+  const currentRollCard = document.getElementById("current-roll");
+
+  /* Helpers */
+  function updateCoinsUI() {
+    coinsEl.textContent = coins;
+  }
+
+  function updateLevelUI() {
+    levelEl.textContent = level;
+    const needed = xpNeededForLevel(level);
+    const pct = Math.min(100, (xp / needed) * 100);
+    xpBarInnerEl.style.width = pct + "%";
+    xpLabelEl.textContent = `XP: ${xp} / ${needed}`;
+  }
+
+  function updateXpBonusUI() {
+    if (xpBoostLevel > 0) {
+      xpBonusLabelEl.textContent = `XP Boost x${(1 + 0.5 * xpBoostLevel).toFixed(1)}`;
+    } else {
+      xpBonusLabelEl.textContent = "No XP bonus";
+    }
+  }
+
+  function updateShopCosts() {
+    document.getElementById("cost-xpBoost").textContent = "Cost: " + getUpgradeCost("xpBoost");
+    document.getElementById("cost-luckBoost").textContent = "Cost: " + getUpgradeCost("luckBoost");
+    document.getElementById("cost-coinBoost").textContent = "Cost: " + getUpgradeCost("coinBoost");
+    document.getElementById("cost-particleBoost").textContent = "Cost: " + getUpgradeCost("particleBoost");
+    document.getElementById("cost-cosmeticAura").textContent = "Cost: " + getUpgradeCost("cosmeticAura");
+  }
+
+  function updateProbTable() {
+    probTableEl.innerHTML = "";
+    const adjusted = rarityTiers.map(t => {
+      let chance = t.chance;
+      if (t.id === "heavenly") {
+        chance = hiddenUnlocked ? 0.005 : 0;
+      }
+      if (luckBoostLevel > 0 && t.weight >= 3 && t.id !== "heavenly" && t.id !== "domain") {
+        chance *= 1 + 0.15 * luckBoostLevel;
+      }
+      if (t.id === "other" && otherworldlyBoostLevel > 0) {
+        chance *= 1 + 0.2 * otherworldlyBoostLevel;
+      }
+      return { ...t, chance };
+    });
+    const totalChance = adjusted.reduce((s, t) => s + t.chance, 0);
+    adjusted.forEach(t => {
+      if (t.chance <= 0) return;
+      const row = document.createElement("div");
+      row.className = "prob-row";
+      const dot = document.createElement("span");
+      dot.className = "rarity-dot " + t.dotClass;
+      const label = document.createElement("span");
+      label.className = "prob-label " + t.className;
+      label.textContent = t.label;
+      const value = document.createElement("span");
+      value.className = "prob-value";
+      const pct = (t.chance / totalChance) * 100;
+      value.textContent = pct.toFixed(3) + "%";
+      row.appendChild(dot);
+      row.appendChild(label);
+      row.appendChild(value);
+      probTableEl.appendChild(row);
+    });
+  }
+
+  function pickTier() {
+    const pityThreshold = currentPityThreshold();
+    if (pityCounter >= pityThreshold) {
+      const rarePlus = rarityTiers.filter(
+        t => t.weight >= 3 && !(t.id === "heavenly" && !hiddenUnlocked)
+      );
+      const idx = Math.floor(Math.random() * rarePlus.length);
+      return rarePlus[idx];
+    }
+
+    const adjusted = rarityTiers.map(t => {
+      let chance = t.chance;
+      if (t.id === "heavenly") {
+        chance = hiddenUnlocked ? 0.005 : 0;
+      }
+      if (luckBoostLevel > 0 && t.weight >= 3 && t.id !== "heavenly" && t.id !== "domain") {
+        chance *= 1 + 0.15 * luckBoostLevel;
+      }
+      if (t.id === "other" && otherworldlyBoostLevel > 0) {
+        chance *= 1 + 0.2 * otherworldlyBoostLevel;
+      }
+      return { ...t, chance };
+    });
+
+    const totalChance = adjusted.reduce((s, t) => s + t.chance, 0);
+    let roll = Math.random() * totalChance;
+    for (const t of adjusted) {
+      if (roll <= t.chance) return t;
+      roll -= t.chance;
+    }
+    return adjusted[0];
+  }
+
+  function pickAuraFromTier(tier) {
+    const list = tier.auras;
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function formatTime(d) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
+  function updateBest(tier) {
+    if (tier.weight > bestWeight) {
+      bestWeight = tier.weight;
+      bestRarityName = tier.label;
+      bestRarityEl.textContent = tier.label;
+      bestRarityEl.className = "stat-value " + tier.className;
+    }
+  }
+
+  function addToHistory(auraName, tier, time) {
+    const entry = { name: auraName, rarity: tier.label, time };
+    historyArray.unshift(entry);
+
+    const item = document.createElement("div");
+    item.className = "history-item";
+
+    const left = document.createElement("div");
+    left.className = "history-left";
+    const dot = document.createElement("span");
+    dot.className = "rarity-dot " + tier.dotClass;
+    const name = document.createElement("span");
+    name.className = "history-name " + tier.className;
+    name.textContent = auraName;
+    left.appendChild(dot);
+    left.appendChild(name);
+
+    const right = document.createElement("div");
+    const raritySpan = document.createElement("span");
+    raritySpan.className = "history-rarity " + tier.className;
+    raritySpan.textContent = tier.label + " • ";
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "history-time";
+    timeSpan.textContent = time;
+    right.appendChild(raritySpan);
+    right.appendChild(timeSpan);
+
+    item.appendChild(left);
+    item.appendChild(right);
+    historyListEl.insertBefore(item, historyListEl.firstChild);
+  }
+
+  /* Shop logic */
+  function openShop() {
+    shopBackdrop.style.display = "flex";
+  }
+  function closeShop() {
+    shopBackdrop.style.display = "none";
+  }
+  shopBtn.addEventListener("click", openShop);
+  shopClose.addEventListener("click", closeShop);
+  shopBackdrop.addEventListener("click", e => {
+    if (e.target === shopBackdrop) closeShop();
+  });
+
+  shopItems.forEach(item => {
+    item.addEventListener("click", () => {
+      const type = item.getAttribute("data-upgrade");
+      const cost = getUpgradeCost(type);
+      if (coins < cost) {
+        currentExtraEl.textContent = "Not enough coins.";
+        return;
+      }
+      coins -= cost;
+      if (type === "xpBoost") xpBoostLevel++;
+      if (type === "luckBoost") luckBoostLevel++;
+      if (type === "coinBoost") coinBoostLevel++;
+      if (type === "particleBoost") particleBoostLevel++;
+      if (type === "cosmeticAura") cosmeticAuraOwned = true;
+
+      updateCoinsUI();
+      updateXpBonusUI();
+      updateProbTable();
+      updateShopCosts();
+      currentExtraEl.textContent = "Purchased " + type + " upgrade.";
+    });
+  });
+
+  /* Level-up upgrade UI */
+  const allUpgradeChoices = [
+    { id: "xpBoost", name: "XP Surge", desc: "+25% XP permanently." },
+    { id: "luckBoost", name: "Lucky Blessing", desc: "+10% Rare+ chance permanently." },
+    { id: "coinBoost", name: "Golden Touch", desc: "+25% coins permanently." },
+    { id: "particleBoost", name: "Particle Storm", desc: "More particles on good rolls." },
+    { id: "cosmeticAura", name: "Cosmic Drift", desc: "Cosmetic cursed trail on high rolls." },
+    { id: "pityReduction", name: "Astral Focus", desc: "Pity triggers 5 rolls sooner." },
+    { id: "otherBoost", name: "Rift Sight", desc: "Higher Otherworldly chance." }
+  ];
+
+  function showLevelUpUI() {
+    upgradeChoicesContainer.innerHTML = "";
+    const pool = [...allUpgradeChoices];
+    const chosen = [];
+    while (chosen.length < 3 && pool.length > 0) {
+      const idx = Math.floor(Math.random() * pool.length);
+      chosen.push(pool.splice(idx, 1)[0]);
+    }
+    chosen.forEach(choice => {
+      const div = document.createElement("div");
+      div.className = "shop-item upgrade-card-enter";
+      div.setAttribute("data-upgrade-choice", choice.id);
+      div.innerHTML = `
+        <div class="shop-name">${choice.name}</div>
+        <div class="shop-desc">${choice.desc}</div>
+      `;
+      upgradeChoicesContainer.appendChild(div);
+    });
+    upgradeBackdrop.style.display = "flex";
+    document.querySelectorAll("[data-upgrade-choice]").forEach(el => {
+      el.addEventListener("click", () => {
+        const type = el.getAttribute("data-upgrade-choice");
+        if (type === "xpBoost") xpBoostLevel++;
+        if (type === "luckBoost") luckBoostLevel++;
+        if (type === "coinBoost") coinBoostLevel++;
+        if (type === "particleBoost") particleBoostLevel++;
+        if (type === "cosmeticAura") cosmeticAuraOwned = true;
+        if (type === "pityReduction") pityReductionLevel++;
+        if (type === "otherBoost") otherworldlyBoostLevel++;
+
+        updateXpBonusUI();
+        updateProbTable();
+        updateShopCosts();
+        upgradeBackdrop.style.display = "none";
+      });
+    });
+  }
+
+  upgradeClose.addEventListener("click", () => {
+    upgradeBackdrop.style.display = "none";
+  });
+
+  /* Roll animation */
+  function animateRoll(callback) {
+    rollBtn.disabled = true;
+    rollBtn.textContent = "Rolling...";
+    sClick.currentTime = 0;
+    sClick.play();
+    setTimeout(() => {
+      sRoll.currentTime = 0;
+      sRoll.play();
+    }, 120);
+
+    let ticks = 18;
+    let interval = 40;
+    let count = 0;
+    const tempInterval = setInterval(() => {
+      const tempTier = pickTier();
+      const tempAura = pickAuraFromTier(tempTier);
+      currentNameEl.textContent = tempAura;
+      currentNameEl.className = "current-name " + tempTier.className;
+      currentRarityLabelEl.textContent = tempTier.label;
+      currentRarityLabelEl.className = tempTier.className;
+      currentDotEl.className = "rarity-dot " + tempTier.dotClass;
+      currentExtraEl.textContent = "Rolling...";
+      count++;
+      if (count >= ticks) {
+        clearInterval(tempInterval);
+        callback();
+      }
+    }, interval);
+  }
+
+  /* Main roll */
+  rollBtn.addEventListener("click", () => {
+    currentNameEl.classList.remove("spin", "glow", "glitch-heavenly", "glitch-domain");
+    gameCard.classList.remove("shake");
+    currentRollCard.style.position = "relative";
+
+    animateRoll(() => {
+      const tier = pickTier();
+      const auraName = pickAuraFromTier(tier);
+      const now = new Date();
+      const timeStr = formatTime(now);
+
+      totalRolls++;
+      totalRollsEl.textContent = totalRolls;
+      lastRollTimeEl.textContent = timeStr;
+
+      currentNameEl.textContent = auraName;
+      currentNameEl.className = "current-name " + tier.className + " spin glow";
+      currentNameEl.removeAttribute("data-text");
+
+      if (tier.id === "heavenly") {
+        currentNameEl.classList.add("glitch-heavenly");
+        currentNameEl.setAttribute("data-text", auraName);
+      }
+      if (tier.id === "domain") {
+        currentNameEl.classList.add("glitch-domain");
+        currentNameEl.setAttribute("data-text", auraName);
+      }
+
+      currentRarityLabelEl.textContent = tier.label;
+      currentRarityLabelEl.className = tier.className;
+      currentDotEl.className = "rarity-dot " + tier.dotClass;
+
+      let baseCoins = getCoinReward(tier.weight, tier.id);
+      let coinMult = 1 + 0.5 * coinBoostLevel;
+      let gainedCoins = Math.floor(baseCoins * coinMult);
+      coins += gainedCoins;
+
+      let baseXp = getXpReward(tier.id);
+      let xpMult = 1 + 0.5 * xpBoostLevel;
+      let gainedXp = Math.floor(baseXp * xpMult);
+      xp += gainedXp;
+
+      let message = `+${gainedCoins} coins, +${gainedXp} XP. `;
+
+      const isRarePlus = tier.weight >= 3 || tier.id === "heavenly" || tier.id === "domain";
+      if (isRarePlus) pityCounter = 0;
+      else pityCounter++;
+
+      if (tier.id === "domain") {
+        message += "領域展開 (Domain Expansion) — reality collapses around you.";
+        currentExtraEl.textContent = message;
+        spawnDomainBurst(160);
+        sCosmic.currentTime = 0;
+        sCosmic.play();
+        gameCard.classList.add("shake");
+      } else if (tier.id === "heavenly") {
+        message += "天与呪縛 (Heavenly Restriction) — overwhelming physical might.";
+        currentExtraEl.textContent = message;
+        spawnRainbowBurst(140);
+        sCosmic.currentTime = 0;
+        sCosmic.play();
+        gameCard.classList.add("shake");
+      } else if (tier.weight >= 8) {
+        message += "An Otherworldly cursed anomaly manifests.";
+        currentExtraEl.textContent = message;
+        spawnParticles(tier.color, 70);
+        sRare.currentTime = 0;
+        sRare.play();
+      } else if (tier.weight >= 7) {
+        message += "神格 (Godly) technique — absurdly rare.";
+        currentExtraEl.textContent = message;
+        spawnParticles(tier.color, 60);
+        sRare.currentTime = 0;
+        sRare.play();
+      } else if (tier.weight >= 4) {
+        message += "High-grade technique acquired.";
+        currentExtraEl.textContent = message;
+        spawnParticles(tier.color, 50);
+        sRare.currentTime = 0;
+        sRare.play();
+      } else if (tier.weight === 3) {
+        message += "A solid rare technique.";
+        currentExtraEl.textContent = message;
+        spawnParticles(tier.color, 30);
+      } else if (tier.weight === 2) {
+        message += "Intermediate cursed technique.";
+        currentExtraEl.textContent = message;
+      } else {
+        message += "Low-grade cursed energy. Keep rolling.";
+        currentExtraEl.textContent = message;
+      }
+
+      /* Level up */
+      let leveledUp = false;
+      while (xp >= xpNeededForLevel(level)) {
+        xp -= xpNeededForLevel(level);
+        level++;
+        leveledUp = true;
+      }
+      if (leveledUp) {
+        const levelReward = 300;
+        coins += levelReward;
+        spawnRainbowBurst(100);
+        sLevel.currentTime = 0;
+        sLevel.play();
+        currentExtraEl.textContent += ` Level up! You reached level ${level} and gained +${levelReward} coins.`;
+        showLevelUpUI();
+      }
+
+      updateBest(tier);
+      addToHistory(auraName, tier, timeStr);
+      updateCoinsUI();
+      updateLevelUI();
+      updateXpBonusUI();
+      updateProbTable();
+      updateShopCosts();
+
+      rollBtn.disabled = false;
+      rollBtn.textContent = "Roll";
+    });
+  });
+
+  /* Heavenly Restriction unlock with P */
+  document.addEventListener("keydown", e => {
+    if (e.key.toLowerCase() === "p" && !hiddenUnlocked) {
+      hiddenUnlocked = true;
+      currentExtraEl.textContent =
+        "You invoked 天与呪縛 (Heavenly Restriction). A forbidden tier has awakened.";
+      spawnRainbowBurst(120);
+      sCosmic.currentTime = 0;
+      sCosmic.play();
+      updateProbTable();
+    }
+  });
+
+  /* Initial UI */
+  totalRollsEl.textContent = totalRolls;
+  updateCoinsUI();
+  updateLevelUI();
+  updateXpBonusUI();
+  updateProbTable();
+  updateShopCosts();
+  bestRarityEl.textContent = "None";
+</script>
+</body>
+</html>
