@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Starfall RNG</title>
+<title>Angel RNG</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="icon" type="image/png" href="../favicon-32x32.png" />
 <link rel="manifest" href="../manifest.json" />
@@ -326,6 +326,16 @@ body {
   justify-content: center;
   z-index: 20;
 }
+  #upgrade-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
 .shop-modal {
   background: rgba(15, 23, 42, 0.98);
   border-radius: 16px;
@@ -336,6 +346,7 @@ body {
     0 24px 60px rgba(0, 0, 0, 0.9),
     0 0 0 1px rgba(148, 163, 184, 0.4);
 }
+
 .shop-title {
   font-size: 1.1rem;
   font-weight: 600;
@@ -503,6 +514,31 @@ body {
       </div>
     </div>
     <div class="shop-close" id="shop-close">Close</div>
+  </div>
+</div>
+<div class="shop-backdrop" id="upgrade-backdrop">
+  <div class="shop-modal">
+    <div class="shop-title">Level Up!</div>
+    <div class="shop-subtitle">Choose one upgrade:</div>
+
+    <div class="shop-items">
+      <div class="shop-item" data-upgrade-choice="xpBoost">
+        <div class="shop-name">XP Surge</div>
+        <div class="shop-desc">+25% XP permanently.</div>
+      </div>
+
+      <div class="shop-item" data-upgrade-choice="luckBoost">
+        <div class="shop-name">Lucky Blessing</div>
+        <div class="shop-desc">+10% Rare+ chance permanently.</div>
+      </div>
+
+      <div class="shop-item" data-upgrade-choice="coinBoost">
+        <div class="shop-name">Golden Touch</div>
+        <div class="shop-desc">+25% coins permanently.</div>
+      </div>
+    </div>
+
+    <div class="shop-close" id="upgrade-close">Skip</div>
   </div>
 </div>
 
@@ -1107,6 +1143,32 @@ shopItems.forEach(item => {
       cosmeticAuraOwned = true;
       currentExtraEl.textContent = "Cosmic Trail unlocked.";
     }
+const upgradeBackdrop = document.getElementById("upgrade-backdrop");
+const upgradeClose = document.getElementById("upgrade-close");
+const upgradeChoices = document.querySelectorAll("[data-upgrade-choice]");
+
+upgradeChoices.forEach(choice => {
+  choice.addEventListener("click", async () => {
+    const type = choice.getAttribute("data-upgrade-choice");
+
+    if (type === "xpBoost") xpBoostLevel++;
+    if (type === "luckBoost") luckBoostLevel++;
+    if (type === "coinBoost") coinBoostLevel++;
+
+    saveShopUpgrades();
+    updateXpBonusUI();
+    updateProbTable();
+
+    player.shop_upgrades = shopUpgrades;
+    await savePlayer(player);
+
+    upgradeBackdrop.style.display = "none";
+  });
+});
+
+upgradeClose.addEventListener("click", () => {
+  upgradeBackdrop.style.display = "none";
+});
 
     saveShopUpgrades();
     updateCoinsUI();
@@ -1222,12 +1284,21 @@ rollBtn.addEventListener("click", async () => {
     }
 
     /* Level up check */
-    let leveledUp = false;
-    while (xp >= xpNeededForLevel(level)) {
-      xp -= xpNeededForLevel(level);
-      level++;
-      leveledUp = true;
-    }
+   let leveledUp = false;
+while (xp >= xpNeededForLevel(level)) {
+  xp -= xpNeededForLevel(level);
+  level++;
+  leveledUp = true;
+}
+
+if (leveledUp) {
+  spawnRainbowBurst(100);
+  currentExtraEl.textContent += ` Level up! You reached level ${level}.`;
+
+  // Show upgrade UI
+  document.getElementById("upgrade-backdrop").style.display = "flex";
+}
+
     if (leveledUp) {
       spawnRainbowBurst(100);
       currentExtraEl.textContent += ` Level up! You reached level ${level}.`;
