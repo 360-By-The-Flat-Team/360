@@ -1,7 +1,8 @@
 /* ============================================================
    360 — HOME.JS V2.0.1
    Home page only logic.
-   Handles: Clock, Weather, Temp Unit, Music, URL search param
+   Handles: Clock, Weather, Temp Unit, Music
+   Search: native form → searxng.html (no CSE)
    ============================================================ */
 
 /* ============================================================
@@ -114,49 +115,6 @@ if (musicToggle && music) {
   });
 }
 syncMusicUI();
-
-/* ============================================================
-   AUTO-SEARCH FROM URL PARAMETER
-   Handles Chrome address bar searches:
-   https://360-search.com/?q=your+search+term
-   ============================================================ */
-(function autoSearchFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  const query  = params.get("q");
-  if (!query) return;
-
-  window.__gcse = window.__gcse || {};
-  const existingCallback = window.__gcse.initializationCallback;
-
-  window.__gcse.initializationCallback = function () {
-    if (existingCallback) existingCallback();
-    if (!trySearch(query)) {
-      const interval = setInterval(() => {
-        if (trySearch(query)) clearInterval(interval);
-      }, 100);
-      setTimeout(() => clearInterval(interval), 5000);
-    }
-  };
-
-  function trySearch(q) {
-    if (window.google?.search?.cse?.element) {
-      const el = window.google.search.cse.element.getElement("searchresults-only0")
-               || window.google.search.cse.element.getElement("searchresults0");
-      if (el) { el.execute(q); return true; }
-    }
-    const input = document.querySelector("input.gsc-input");
-    const btn   = document.querySelector("button.gsc-search-button, .gsc-search-button-v2");
-    if (input && btn) {
-      input.value = q;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      btn.click();
-      return true;
-    }
-    return false;
-  }
-
-  document.title = `${query} — 360`;
-})();
 
 /* ============================================================
    READY LOG

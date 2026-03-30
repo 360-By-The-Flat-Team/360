@@ -7,7 +7,6 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-89NN1P6CEV');
 </script>
   <meta charset="UTF-8" />
@@ -37,14 +36,69 @@
 
   <!-- Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Search bar styles (native form, matches 360 glass pill exactly) -->
+  <style>
+    #search-form {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--br);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      margin: 0 auto;
+    }
+    #search-form:focus-within {
+      border-color: var(--a);
+      box-shadow: 0 8px 32px rgba(59,130,246,0.18);
+    }
+    body.dark #search-form {
+      background: rgba(15,23,42,0.6);
+      border-color: rgba(255,255,255,0.15);
+    }
+    #search-input {
+      flex: 1;
+      padding: 14px 22px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      color: var(--txt);
+      font-family: inherit;
+      caret-color: var(--a);
+    }
+    body.dark #search-input { color: var(--txtd); }
+    #search-input::placeholder { color: var(--mut); }
+    body.dark #search-input::placeholder { color: var(--mutd); }
+    #search-btn {
+      flex-shrink: 0;
+      margin: 6px 8px 6px 0;
+      padding: 10px 22px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      color: #050816;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    #search-btn:hover { opacity: 0.85; }
+  </style>
 </head>
 <body>
+
  <!-- ============================================================
      360 ANIMATED SPLASH SCREEN
-     Paste RIGHT AFTER <body> in index.html.
-     Self-removing after animation completes.
      ============================================================ -->
-
 <div id="splash">
   <div class="splash-num" id="s3">3</div>
   <div class="splash-num" id="s6">6</div>
@@ -53,30 +107,17 @@
 
 <style>
   #splash {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; inset: 0; z-index: 99999; background: #000;
+    display: flex; align-items: center; justify-content: center;
     transition: opacity .65s ease;
   }
-  #splash.fade {
-    opacity: 0;
-    pointer-events: none;
-  }
-
+  #splash.fade { opacity: 0; pointer-events: none; }
   .splash-num {
     font-family: "Segoe UI", system-ui, sans-serif;
     font-size: clamp(5rem, 28vw, 9rem);
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: -.01em;
-    line-height: 1;
-    opacity: 0;
+    font-weight: 900; color: #fff;
+    letter-spacing: -.01em; line-height: 1; opacity: 0;
   }
-
   @keyframes slideFromBottom {
     from { opacity: 0; transform: translateY(110px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -85,7 +126,6 @@
     from { opacity: 0; transform: translateY(-110px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   .slide-up   { animation: slideFromBottom .52s cubic-bezier(.22,.68,0,1.1) forwards; }
   .slide-down { animation: slideFromTop    .52s cubic-bezier(.22,.68,0,1.1) forwards; }
 </style>
@@ -94,12 +134,7 @@
   (function () {
     const isPWA = window.matchMedia('(display-mode: standalone)').matches
                   || window.navigator.standalone === true;
-
-    if (!isPWA) {
-      document.getElementById('splash')?.remove();
-      return;
-    }
-
+    if (!isPWA) { document.getElementById('splash')?.remove(); return; }
     const splash = document.getElementById("splash");
     setTimeout(() => document.getElementById("s3").classList.add("slide-up"),    80);
     setTimeout(() => document.getElementById("s6").classList.add("slide-down"), 210);
@@ -110,26 +145,21 @@
     }, 1250);
   })();
 </script>
- <!-- Custom Cursor -->
+
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
 
-  <!-- TOP-RIGHT AUTH BUTTONS -->
   <div class="auth-top-right">
     <button id="signInBtn" class="auth-btn">Sign In</button>
     <button id="signUpBtn" class="auth-btn">Sign Up</button>
     <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
   </div>
 
-  <!-- PWA Install Banner -->
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
-
-  <!-- SIDEBAR TOGGLE -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo-mark"></div>
@@ -149,10 +179,8 @@
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
   </aside>
 
-  <!-- Overlay -->
   <div class="overlay" id="overlay"></div>
 
-  <!-- SETTINGS PANEL -->
   <div class="settings-panel" id="settingsPanel">
     <h3>Appearance</h3>
     <div class="settings-label">Theme</div>
@@ -164,14 +192,11 @@
       <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
       <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
     </div>
-
     <div class="settings-label" style="margin-top:20px;">Mode</div>
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
       <span style="font-size:14px;">Dark mode</span>
       <input type="checkbox" id="darkToggle" />
     </label>
-
-    <!-- Cursor Customization -->
     <h3 style="margin-top:20px;">Cursor</h3>
     <div class="settings-label">Style</div>
     <div class="cursor-options">
@@ -187,14 +212,10 @@
       <input type="color" id="cursorColorPicker" value="#3b82f6" />
       <button id="cursorColorReset">Reset</button>
     </div>
-
-    <!-- Temp Unit -->
     <div class="temp-unit-box" style="margin-top:20px;">
       Temp Unit: <span id="tempUnitLabel">°C</span>
       <button id="tempUnitBtn">Switch</button>
     </div>
-
-    <!-- Background -->
     <div class="settings-box" style="margin-top:20px;">
       <div class="settings-label">Background Image</div>
       <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
@@ -202,13 +223,9 @@
       <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
       <button id="bgResetBtn" class="settings-btn">Reset</button>
     </div>
-
-    <!-- Legal -->
     <h3 style="margin-top:25px;">Legal</h3>
     <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
     <a href="tos.html" class="legal-link">📜 Terms of Service</a>
-
-    <!-- About -->
     <h3 style="margin-top:25px;">About</h3>
     <details class="about-dropdown">
       <summary>ℹ️ What is 360?</summary>
@@ -216,7 +233,6 @@
     </details>
   </div>
 
-  <!-- AUTH POPUP -->
   <div id="auth-popup" class="auth-popup hidden">
     <div class="auth-box">
       <h2>Account</h2>
@@ -243,42 +259,47 @@
     <div class="clock-pill" id="clock">--:--</div>
     <div class="logo-main"><span>360</span></div>
     <div class="weather-chip" id="weatherChip">--°C</div>
+
+    <!-- Search bar — submits to searxng.html -->
     <div class="search-shell">
-      <div class="gcse-search"></div>
+      <form id="search-form" role="search" action="searxng.html" method="GET">
+        <input
+          id="search-input"
+          name="q"
+          type="text"
+          placeholder="Search with 360..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <button id="search-btn" type="submit">Search</button>
+      </form>
     </div>
+
     <audio id="bgMusic" src="calm360.mp3" loop></audio>
     <audio id="clickSound" src="click-sound.mp3" preload="auto"></audio>
     <button id="musicToggle">Music: Off</button>
   </div>
 
-  <!-- SCRIPTS — cursor.js MUST be here -->
   <script src="main.js"></script>
   <script src="home.js"></script>
   <script src="cookie.js"></script>
   <script src="cursor.js"></script>
-  <script async src="https://cse.google.com/cse.js?cx=a63273b557a7f4a87">
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyBkseE2U7bot9WnMLsCc89gYonhLSUHnPs",
-    authDomain: "search360-dev.firebaseapp.com",
-    projectId: "search360-dev",
-    storageBucket: "search360-dev.firebasestorage.app",
-    messagingSenderId: "936030276122",
-    appId: "1:936030276122:web:5877f7152f8f2411e0dfa3",
-    measurementId: "G-KYMVNB0F7M"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyBkseE2U7bot9WnMLsCc89gYonhLSUHnPs",
+      authDomain: "search360-dev.firebaseapp.com",
+      projectId: "search360-dev",
+      storageBucket: "search360-dev.firebasestorage.app",
+      messagingSenderId: "936030276122",
+      appId: "1:936030276122:web:5877f7152f8f2411e0dfa3",
+      measurementId: "G-KYMVNB0F7M"
+    };
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+  </script>
 </body>
 </html>
