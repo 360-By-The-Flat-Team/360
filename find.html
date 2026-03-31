@@ -344,7 +344,7 @@
        b) Use the FALLBACK option (see below)
   ════════════════════════════════════════════════ */
 
-  const SEARXNG_BASE_URL = "https://360-search.com/searxng.html"; // ← So basically this points to this file to render the embedded results in an iFrame... I'm so tired bro.......
+  const SEARXNG_BASE_URL = "https://360-search.com"; // ← So basically this points to this file to render the embedded results in an iFrame... I'm so tired bro.......
 
   /* ── Grab query from URL ── */
   const params   = new URLSearchParams(window.location.search);
@@ -364,7 +364,7 @@
   document.getElementById("strip-search-form").addEventListener("submit", e => {
     e.preventDefault();
     const q = stripInp.value.trim();
-    if (q) window.location.href = "searxng.html?q=" + encodeURIComponent(q);
+    if (q) window.location.href = "find.html?q=" + encodeURIComponent(q);
   });
 
   /* ── Load results ── */
