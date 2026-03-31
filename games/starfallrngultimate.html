@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Starfall RNG - Ultimate</title>
+    <style>
+:root {
+    --bg: #050816;
+    --panel: #0b1020;
+    --accent: #22c55e;
+    --accent-soft: rgba(34, 197, 94, 0.25);
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --border-subtle: rgba(148, 163, 184, 0.3);
+    --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.9);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --transition-fast: 0.15s ease-out;
+    --transition-med: 0.25s ease-out;
+    --wheel-size: 320px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+body {
+    background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+}
+
+#app {
+    width: 100%;
+    max-width: 1320px;
+    margin: 24px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+}
+
+/* Sidebar */
+
+#sidebar {
+    background: #020617;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: var(--shadow-soft);
+    padding: 18px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#game-title {
+    font-size: 1.3rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #e5e7eb;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+#stats-panel {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 4px 0;
+    color: var(--text-muted);
+}
+
+.stat-row span:last-child {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* Nav */
+
+#nav {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nav-btn {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: rgba(15, 23, 42, 0.9);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.nav-btn.active {
+    background: radial-gradient(circle at top left, #22c55e, #16a34a);
+    color: #020617;
+    border-color: #22c55e;
+    font-weight: 700;
+    transform: translateY(-1px);
+}
+
+/* Main */
+
+#main {
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: var(--shadow-soft);
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+#clock {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+#save-status {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    color: var(--text-muted);
+}
+
+/* Screens */
+
+.screen {
+    display: none;
+}
+
+.active-screen {
+    display: block;
+}
+
+/* Roll screen */
+
+#roll-section {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+#wheel-container {
+    position: relative;
+    width: var(--wheel-size);
+    height: var(--wheel-size);
+    margin: 0 auto;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, #020617 0, #020617 40%, #000 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#rarity-wheel {
+    width: 88%;
+    height: 88%;
+    border-radius: 50%;
+    border: 4px solid rgba(148, 163, 184, 0.5);
+    box-shadow:
+        0 0 25px rgba(15, 23, 42, 0.9),
+        0 0 40px rgba(34, 197, 94, 0.25);
+    background: conic-gradient(#111 0 100%);
+    transition: transform 4s cubic-bezier(0.19, 1, 0.22, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+#wheel-pointer {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 28px solid #f9fafb;
+    filter: drop-shadow(0 0 6px #f9fafb);
+    z-index: 10;
+}
+
+#roll-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#roll-controls {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.primary-btn {
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: none;
+    background: radial-gradient(circle at top left, #22c55e, #16a34a);
+    color: #020617;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 12px 30px rgba(22, 163, 74, 0.45);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.primary-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+    box-shadow: none;
+}
+
+.primary-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+    box-shadow: 0 16px 40px rgba(22, 163, 74, 0.6);
+}
+
+/* Rarity card */
+
+#rarity-card {
+    margin: 0 auto 4px;
+    width: 360px;
+    padding: 18px 18px 16px;
+    background: radial-gradient(circle at top, rgba(34, 197, 94, 0.12), rgba(15, 23, 42, 0.95));
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.9);
+    text-align: center;
+    transform-origin: center;
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+#rarity-card.spinning {
+    animation: card-spin-follow 0.6s ease-in-out infinite alternate;
+    box-shadow: 0 18px 45px rgba(34, 197, 94, 0.5);
+}
+
+@keyframes card-spin-follow {
+    from {
+        transform: rotate(-3deg) translateY(0);
+    }
+    to {
+        transform: rotate(3deg) translateY(-2px);
+    }
+}
+
+#rarity-card-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+#rarity-card-aura {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+#rarity-card-desc {
+    font-size: 0.9rem;
+    opacity: 0.75;
+    margin-bottom: 10px;
+}
+
+#rarity-card-tag {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(148, 163, 184, 0.2);
+    color: #e5e7eb;
+}
+
+/* Probability panel */
+
+#rarity-prob-panel {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.rarity-prob-btn {
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.rarity-prob-btn span {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.rarity-prob-btn:hover {
+    background: rgba(30, 64, 175, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.9);
+}
+
+/* Log */
+
+#log-section {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+#log-section h2 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+#roll-log {
+    max-height: 180px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+.log-entry {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.9);
+    color: var(--text-muted);
+}
+
+/* Inventory / Quests / Shop */
+
+#screen-inventory h2,
+#screen-quests h2,
+#screen-shop h2,
+#screen-ascension h2 {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+#inventory-list,
+#quest-list,
+#shop-list {
+    max-height: 420px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+.inv-item,
+.quest-item,
+.shop-item {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    margin-bottom: 6px;
+}
+
+.inv-item-title,
+.quest-item-title,
+.shop-item-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.inv-item-meta,
+.quest-item-meta,
+.shop-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Ascension */
+
+#screen-ascension p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+/* Scrollbars */
+
+#roll-log::-webkit-scrollbar,
+#inventory-list::-webkit-scrollbar,
+#quest-list::-webkit-scrollbar,
+#shop-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#roll-log::-webkit-scrollbar-thumb,
+#inventory-list::-webkit-scrollbar-thumb,
+#quest-list::-webkit-scrollbar-thumb,
+#shop-list::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.6);
+    border-radius: 999px;
+}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <aside id="sidebar">
+            <h1 id="game-title">STARFALL RNG - Ultamite</h1>
+
+            <div id="stats-panel">
+                <div class="stat-row"><span>Coins</span><span id="coins">0</span></div>
+                <div class="stat-row"><span>XP</span><span id="xp">0</span></div>
+                <div class="stat-row"><span>Level</span><span id="level">1</span></div>
+                <div class="stat-row"><span>Ascensions</span><span id="ascensions">0</span></div>
+            </div>
+
+            <nav id="nav">
+                <button class="nav-btn active" data-screen="screen-roll">Roll</button>
+                <button class="nav-btn" data-screen="screen-inventory">Inventory</button>
+                <button class="nav-btn" data-screen="screen-quests">Quests</button>
+                <button class="nav-btn" data-screen="screen-shop">Shop</button>
+                <button class="nav-btn" data-screen="screen-ascension">Ascension</button>
+            </nav>
+        </aside>
+
+        <main id="main">
+            <header id="top-bar">
+                <div id="clock"></div>
+                <div id="save-status">Unsaved</div>
+            </header>
+
+            <!-- ROLL SCREEN -->
+            <section id="screen-roll" class="screen active-screen">
+                <section id="roll-section">
+                    <div id="wheel-container">
+                        <div id="rarity-wheel"></div>
+                        <div id="wheel-pointer"></div>
+                    </div>
+
+                    <div id="roll-right">
+                        <div id="roll-controls">
+                            <button id="roll-btn" class="primary-btn">Roll</button>
+                        </div>
+
+                        <div id="rarity-card">
+                            <div id="rarity-card-title">—</div>
+                            <div id="rarity-card-aura">—</div>
+                            <div id="rarity-card-desc">Roll to begin</div>
+                            <div id="rarity-card-tag">—</div>
+                        </div>
+
+                        <div id="rarity-prob-panel"></div>
+                    </div>
+                </section>
+
+                <section id="log-section">
+                    <h2>Roll Log</h2>
+                    <div id="roll-log"></div>
+                </section>
+            </section>
+
+            <!-- INVENTORY SCREEN -->
+            <section id="screen-inventory" class="screen">
+                <h2>Inventory</h2>
+                <div id="inventory-list"></div>
+            </section>
+
+            <!-- QUESTS SCREEN -->
+            <section id="screen-quests" class="screen">
+                <h2>Quests</h2>
+                <div id="quest-list"></div>
+            </section>
+
+            <!-- SHOP SCREEN -->
+            <section id="screen-shop" class="screen">
+                <h2>Shop</h2>
+                <div id="shop-list"></div>
+            </section>
+
+            <!-- ASCENSION SCREEN -->
+            <section id="screen-ascension" class="screen">
+                <h2>Ascension</h2>
+                <p id="ascend-info"></p>
+                <button id="ascend-btn" class="primary-btn">Ascend</button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+// ---------- Core state ----------
+
+const rarities = [
+    { id: "common",       label: "Common",       color: "#9ca3af", baseChance: 50 },
+    { id: "uncommon",     label: "Uncommon",     color: "#22c55e", baseChance: 25 },
+    { id: "rare",         label: "Rare",         color: "#3b82f6", baseChance: 12 },
+    { id: "epic",         label: "Epic",         color: "#a855f7", baseChance: 6 },
+    { id: "legendary",    label: "Legendary",    color: "#facc15", baseChance: 3 },
+    { id: "mythic",       label: "Mythic",       color: "#f97316", baseChance: 1.5 },
+    { id: "godly",        label: "Godly",        color: "#ef4444", baseChance: 1 },
+    { id: "otherworldly", label: "Otherworldly", color: "#22d3ee", baseChance: 1 },
+    { id: "heavenly",     label: "Heavenly",     color: "#e5e7eb", baseChance: 0.5 },
+    { id: "domain",       label: "Domain",       color: "#a855f7", baseChance: 0.2 }
+];
+
+let coins = 0;
+let xp = 0;
+let level = 1;
+let ascensions = 0;
+
+let wheelRotation = 0;
+let rarityRanges = []; // { rarity, startDeg, endDeg }
+
+let inventory = [];
+let quests = [];
+let questIdCounter = 1;
+
+let shopItems = [
+    { id: "luck1", name: "Minor Luck Charm", desc: "+5% Rare+ chance (flavor)", cost: 100 },
+    { id: "luck2", name: "Stellar Sigil", desc: "+10% Rare+ chance (flavor)", cost: 250 },
+    { id: "cosmetic1", name: "Cosmic Trail", desc: "Purely visual effect (flavor)", cost: 150 }
+];
+
+// ---------- DOM ----------
+
+const coinsEl = document.getElementById("coins");
+const xpEl = document.getElementById("xp");
+const levelEl = document.getElementById("level");
+const ascensionsEl = document.getElementById("ascensions");
+
+const rollBtn = document.getElementById("roll-btn");
+const wheelEl = document.getElementById("rarity-wheel");
+const logEl = document.getElementById("roll-log");
+
+const rarityCard = document.getElementById("rarity-card");
+const rarityCardTitle = document.getElementById("rarity-card-title");
+const rarityCardAura = document.getElementById("rarity-card-aura");
+const rarityCardDesc = document.getElementById("rarity-card-desc");
+const rarityCardTag = document.getElementById("rarity-card-tag");
+
+const probPanel = document.getElementById("rarity-prob-panel");
+const inventoryList = document.getElementById("inventory-list");
+const questList = document.getElementById("quest-list");
+const shopList = document.getElementById("shop-list");
+const ascendBtn = document.getElementById("ascend-btn");
+const ascendInfo = document.getElementById("ascend-info");
+const clockEl = document.getElementById("clock");
+const saveStatusEl = document.getElementById("save-status");
+
+const navButtons = document.querySelectorAll(".nav-btn");
+const screens = document.querySelectorAll(".screen");
+
+// ---------- Utility ----------
+
+function updateClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function updateStats() {
+    coinsEl.textContent = coins.toLocaleString();
+    xpEl.textContent = xp.toLocaleString();
+    levelEl.textContent = level;
+    ascensionsEl.textContent = ascensions;
+}
+
+function log(message) {
+    const div = document.createElement("div");
+    div.className = "log-entry";
+    div.textContent = message;
+    logEl.prepend(div);
+}
+
+// ---------- Screen navigation ----------
+
+function showScreen(id) {
+    screens.forEach(s => s.classList.remove("active-screen"));
+    document.getElementById(id).classList.add("active-screen");
+
+    navButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.screen === id);
+    });
+}
+
+navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+        showScreen(btn.dataset.screen);
+    });
+});
+
+// ---------- Rarity math + wheel ----------
+
+function computeRanges() {
+    const total = rarities.reduce((sum, r) => sum + r.baseChance, 0);
+    let currentDeg = 0;
+    rarityRanges = [];
+
+    let gradientStops = [];
+    rarities.forEach(r => {
+        const fraction = r.baseChance / total;
+        const spanDeg = 360 * fraction;
+        const startDeg = currentDeg;
+        const endDeg = currentDeg + spanDeg;
+
+        rarityRanges.push({ rarity: r, startDeg, endDeg });
+
+        const startPct = (startDeg / 360) * 100;
+        const endPct = (endDeg / 360) * 100;
+        gradientStops.push(`${r.color} ${startPct}% ${endPct}%`);
+
+        currentDeg = endDeg;
+    });
+
+    wheelEl.style.background = `conic-gradient(${gradientStops.join(",")})`;
+}
+
+function pickRarity() {
+    const total = rarities.reduce((sum, r) => sum + r.baseChance, 0);
+    let roll = Math.random() * total;
+    for (const r of rarities) {
+        if (roll < r.baseChance) return r;
+        roll -= r.baseChance;
+    }
+    return rarities[0];
+}
+
+function getRangeForRarity(rarity) {
+    return rarityRanges.find(rr => rr.rarity.id === rarity.id);
+}
+
+function spinWheelToRarity(rarity) {
+    const range = getRangeForRarity(rarity);
+    if (!range) return;
+
+    const mid = (range.startDeg + range.endDeg) / 2;
+    const targetAngle = 360 - mid; // pointer at top
+
+    const extraSpins = 3 * 360;
+    wheelRotation += extraSpins + targetAngle - (wheelRotation % 360);
+
+    wheelEl.style.transform = `rotate(${wheelRotation}deg)`;
+}
+
+// ---------- Rewards ----------
+
+function getCoinReward(rarity) {
+    switch (rarity.id) {
+        case "common": return 1;
+        case "uncommon": return 4;
+        case "rare": return 10;
+        case "epic": return 25;
+        case "legendary": return 60;
+        case "mythic": return 120;
+        case "godly": return 250;
+        case "otherworldly": return 400;
+        case "heavenly": return 700;
+        case "domain": return 1200;
+        default: return 1;
+    }
+}
+
+function getXpReward(rarityId) {
+    switch (rarityId) {
+        case "common": return 1;
+        case "uncommon": return 2;
+        case "rare": return 4;
+        case "epic": return 8;
+        case "legendary": return 15;
+        case "mythic": return 25;
+        case "godly": return 40;
+        case "otherworldly": return 60;
+        case "heavenly": return 90;
+        case "domain": return 140;
+        default: return 1;
+    }
+}
+
+function gainRewards(rarity, auraName) {
+    const c = getCoinReward(rarity);
+    const x = getXpReward(rarity.id);
+
+    coins += c;
+    xp += x;
+
+    while (xp >= level * 100) {
+        xp -= level * 100;
+        level++;
+        log(`Level up! You reached level ${level}.`);
+    }
+
+    updateStats();
+    log(`Rolled ${rarity.label} — ${auraName} (+${c} coins, +${x} XP)`);
+}
+
+// ---------- Aura pool ----------
+
+const auraPool = {
+    common: ["Faint Spark", "Dim Echo"],
+    uncommon: ["Verdant Pulse", "Azure Flicker"],
+    rare: ["Stellar Bloom", "Crimson Surge"],
+    epic: ["Nebula Flare", "Void Spiral"],
+    legendary: ["Solar Crown", "Eclipse Brand"],
+    mythic: ["Astral Dominion", "Prismatic Rift"],
+    godly: ["Divine Singularity", "Celestial Spear"],
+    otherworldly: ["Eldritch Horizon", "Abyssal Bloom"],
+    heavenly: ["Seraphic Radiance", "Halo Cascade"],
+    domain: ["Domain of Stars", "Event Horizon"]
+};
+
+function pickAura(rarity) {
+    const list = auraPool[rarity.id] || ["Unknown Aura"];
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+// ---------- Rarity card + shuffle ----------
+
+function rarityShuffleAnimation() {
+    const order = rarities;
+    let i = 0;
+
+    rarityCard.classList.add("spinning");
+
+    const interval = setInterval(() => {
+        const r = order[i];
+        rarityCardTitle.textContent = r.label;
+        rarityCardTitle.style.color = r.color;
+        rarityCardAura.textContent = "Shuffling…";
+        rarityCardDesc.textContent = "Cycling through possible outcomes...";
+        rarityCardTag.textContent = r.label;
+        rarityCardTag.style.background = r.color + "33";
+        rarityCardTag.style.color = r.color;
+
+        i = (i + 1) % order.length;
+    }, 80);
+
+    return interval;
+}
+
+// ---------- Probability panel ----------
+
+function renderRarityProbabilities() {
+    probPanel.innerHTML = "";
+    const total = rarities.reduce((sum, r) => sum + r.baseChance, 0);
+
+    rarities.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "rarity-prob-btn";
+        div.style.borderColor = r.color;
+        div.style.color = r.color;
+
+        const pct = (r.baseChance / total) * 100;
+
+        div.innerHTML = `
+            ${r.label}
+            <span>${pct.toFixed(2)}%</span>
+        `;
+
+        probPanel.appendChild(div);
+    });
+}
+
+// ---------- Inventory ----------
+
+function addToInventory(rarity, auraName) {
+    inventory.push({
+        rarityId: rarity.id,
+        rarityLabel: rarity.label,
+        aura: auraName
+    });
+    renderInventory();
+}
+
+function renderInventory() {
+    inventoryList.innerHTML = "";
+    inventory.slice().reverse().forEach(item => {
+        const div = document.createElement("div");
+        div.className = "inv-item";
+        const r = rarities.find(r => r.id === item.rarityId);
+        div.style.borderColor = r ? r.color : "#9ca3af";
+
+        div.innerHTML = `
+            <div class="inv-item-title">${item.aura}</div>
+            <div class="inv-item-meta">${item.rarityLabel}</div>
+        `;
+        inventoryList.appendChild(div);
+    });
+}
+
+// ---------- Quest system (shuffle + regenerate) ----------
+
+const questTemplates = [
+    { type: "rolls", minGoal: 5, maxGoal: 20, rewardBase: 30, text: goal => `Roll ${goal} times` },
+    { type: "rarity_at_least", rarityId: "rare", goal: 1, rewardBase: 80, text: () => "Obtain a Rare or higher" },
+    { type: "rarity_at_least", rarityId: "epic", goal: 1, rewardBase: 120, text: () => "Obtain an Epic or higher" },
+    { type: "coins", minGoal: 100, maxGoal: 500, rewardBase: 60, text: goal => `Earn ${goal} coins` }
+];
+
+let totalRolls = 0;
+let totalCoinsEarned = 0;
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateQuest() {
+    const template = questTemplates[Math.floor(Math.random() * questTemplates.length)];
+    let q = { id: questIdCounter++, progress: 0, completed: false };
+
+    if (template.type === "rolls") {
+        const goal = randomInt(template.minGoal, template.maxGoal);
+        q.type = "rolls";
+        q.goal = goal;
+        q.rewardCoins = template.rewardBase + goal;
+        q.text = template.text(goal);
+    } else if (template.type === "rarity_at_least") {
+        q.type = "rarity_at_least";
+        q.goal = template.goal;
+        q.rewardCoins = template.rewardBase;
+        q.rarityId = template.rarityId;
+        q.text = template.text();
+    } else if (template.type === "coins") {
+        const goal = randomInt(template.minGoal, template.maxGoal);
+        q.type = "coins";
+        q.goal = goal;
+        q.rewardCoins = template.rewardBase + Math.floor(goal / 5);
+        q.text = template.text(goal);
+    }
+
+    return q;
+}
+
+function ensureQuestSlots(count) {
+    while (quests.length < count) {
+        quests.push(generateQuest());
+    }
+}
+
+function shuffleQuests() {
+    for (let i = quests.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [quests[i], quests[j]] = [quests[j], quests[i]];
+    }
+}
+
+function updateQuestsOnRoll(rarity, coinsGained) {
+    totalRolls++;
+    totalCoinsEarned += coinsGained;
+
+    quests.forEach(q => {
+        if (q.completed) return;
+
+        if (q.type === "rolls") {
+            q.progress++;
+        } else if (q.type === "rarity_at_least") {
+            const order = ["common","uncommon","rare","epic","legendary","mythic","godly","otherworldly","heavenly","domain"];
+            const idx = order.indexOf(rarity.id);
+            const reqIdx = order.indexOf(q.rarityId);
+            if (idx >= reqIdx) {
+                q.progress = q.goal;
+            }
+        } else if (q.type === "coins") {
+            q.progress += coinsGained;
+        }
+
+        if (q.progress >= q.goal && !q.completed) {
+            q.completed = true;
+            coins += q.rewardCoins;
+            log(`Quest complete: ${q.text} (+${q.rewardCoins} coins)`);
+        }
+    });
+
+    // Remove completed quests and generate new ones
+    const stillActive = quests.filter(q => !q.completed);
+    quests = stillActive;
+    ensureQuestSlots(3);
+    shuffleQuests();
+    renderQuests();
+    updateStats();
+}
+
+function renderQuests() {
+    questList.innerHTML = "";
+    quests.forEach(q => {
+        const div = document.createElement("div");
+        div.className = "quest-item";
+
+        const pct = Math.min(100, (q.progress / q.goal) * 100);
+
+        div.innerHTML = `
+            <div class="quest-item-title">${q.text}</div>
+            <div class="quest-item-meta">
+                Progress: ${Math.min(q.progress, q.goal)}/${q.goal} • ${pct.toFixed(0)}% • Reward: ${q.rewardCoins} coins
+            </div>
+        `;
+        questList.appendChild(div);
+    });
+}
+
+// ---------- Shop ----------
+
+function renderShop() {
+    shopList.innerHTML = "";
+    shopItems.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "shop-item";
+
+        const affordable = coins >= item.cost;
+
+        div.innerHTML = `
+            <div class="shop-item-title">${item.name}</div>
+            <div class="shop-item-meta">${item.desc}</div>
+            <div class="shop-item-meta">Cost: ${item.cost} coins</div>
+        `;
+
+        if (affordable) {
+            div.style.borderColor = "#22c55e";
+        }
+
+        div.addEventListener("click", () => {
+            if (coins < item.cost) {
+                log(`Not enough coins for ${item.name}.`);
+                return;
+            }
+            coins -= item.cost;
+            updateStats();
+            log(`Purchased ${item.name}. (effect is flavor for now)`);
+            saveGame();
+        });
+
+        shopList.appendChild(div);
+    });
+}
+
+// ---------- Ascension ----------
+
+function canAscend() {
+    return level >= 20;
+}
+
+function updateAscendInfo() {
+    if (canAscend()) {
+        ascendInfo.textContent = "Ascend now to reset level and gain a permanent flavor luck bonus.";
+    } else {
+        ascendInfo.textContent = "Reach level 20 to ascend.";
+    }
+}
+
+function performAscend() {
+    if (!canAscend()) return;
+    ascensions++;
+    level = 1;
+    xp = 0;
+    coins = 0;
+    inventory = [];
+    quests = [];
+    totalRolls = 0;
+    totalCoinsEarned = 0;
+    log("You have ascended. The stars bend slightly in your favor (flavor).");
+    renderInventory();
+    ensureQuestSlots(3);
+    shuffleQuests();
+    renderQuests();
+    updateStats();
+    updateAscendInfo();
+    saveGame();
+}
+
+// ---------- Save / Load ----------
+
+function saveGame() {
+    const data = {
+        coins,
+        xp,
+        level,
+        ascensions,
+        inventory,
+        quests,
+        totalRolls,
+        totalCoinsEarned
+    };
+    localStorage.setItem("starfall_rng_save", JSON.stringify(data));
+    saveStatusEl.textContent = "Saved";
+    setTimeout(() => (saveStatusEl.textContent = "Unsaved"), 2000);
+}
+
+function loadGame() {
+    const raw = localStorage.getItem("starfall_rng_save");
+    if (!raw) return;
+    try {
+        const data = JSON.parse(raw);
+        coins = data.coins ?? 0;
+        xp = data.xp ?? 0;
+        level = data.level ?? 1;
+        ascensions = data.ascensions ?? 0;
+        inventory = data.inventory ?? [];
+        quests = data.quests ?? [];
+        totalRolls = data.totalRolls ?? 0;
+        totalCoinsEarned = data.totalCoinsEarned ?? 0;
+    } catch (e) {
+        console.error("Failed to load save", e);
+    }
+}
+
+// ---------- Roll flow ----------
+
+function performRoll() {
+    rollBtn.disabled = true;
+    rollBtn.textContent = "Spinning...";
+
+    // start card animation
+    rarityCard.classList.add("spinning");
+
+    const shuffle = rarityShuffleAnimation();
+    const rarity = pickRarity();
+    const aura = pickAura(rarity);
+
+    spinWheelToRarity(rarity);
+
+    // stop both at the same time
+    setTimeout(() => {
+        clearInterval(shuffle);
+        finalizeRoll(rarity, aura);
+    }, 4000);
+}
+
+function finalizeRoll(rarity, aura) {
+    // stop card animation immediately
+    rarityCard.classList.remove("spinning");
+
+    rarityCardTitle.textContent = rarity.label;
+    rarityCardTitle.style.color = rarity.color;
+
+    rarityCardAura.textContent = aura;
+
+    const c = getCoinReward(rarity);
+    const x = getXpReward(rarity.id);
+    rarityCardDesc.textContent = `+${c} coins, +${x} XP.`;
+
+    rarityCardTag.textContent = rarity.label;
+    rarityCardTag.style.background = rarity.color + "33";
+    rarityCardTag.style.color = rarity.color;
+
+    gainRewards(rarity, aura);
+    addToInventory(rarity, aura);
+    updateQuestsOnRoll(rarity, c);
+    saveGame();
+
+    rollBtn.disabled = false;
+    rollBtn.textContent = "Roll";
+}
+
+// ---------- Init ----------
+
+function init() {
+    loadGame();
+    computeRanges();
+    renderRarityProbabilities();
+    renderInventory();
+    ensureQuestSlots(3);
+    shuffleQuests();
+    renderQuests();
+    renderShop();
+    updateStats();
+    updateAscendInfo();
+
+    rollBtn.addEventListener("click", performRoll);
+    ascendBtn.addEventListener("click", performAscend);
+
+    showScreen("screen-roll");
+}
+
+init();
+    </script>
+</body>
+</html>
