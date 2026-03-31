@@ -548,7 +548,7 @@
             <div class="ac-pemail">${esc(user.email||"")}</div>
           </div>
           <p class="ac-msg" id="profMsg"></p>
-          <button class="ac-sec-btn" onclick="window.history.back();">← Back to 360</button>
+          <button class="ac-sec-btn" onclick="window.loaction.href='/';">← Back to 360</button>
           <button class="ac-sec-btn ac-signout-btn" id="pgSignOut">Sign Out</button>
         </div>
       `;
@@ -570,7 +570,7 @@
           <div class="ac-logout-title">You've been signed out</div>
           <p class="ac-logout-sub">Thanks for using 360. See you next time!</p>
           <button class="ac-btn" onclick="history.replaceState(null,'','/accounts.html?signin');renderSignIn();">Sign Back In</button>
-          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.history.back()">← Back to 360</button>
+          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.loaction.href='/';">← Back to 360</button>
         </div>
       `;
     }
