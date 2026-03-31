@@ -35,8 +35,8 @@ function closeAuth() {
   if (authError) authError.textContent = "";
 }
 
-if (signInBtn) signInBtn.onclick = openAuth;
-if (signUpBtn) signUpBtn.onclick = openAuth;
+if (signInBtn) signInBtn.onclick = () => location.href = "/accounts.html?signin";
+if (signUpBtn) signUpBtn.onclick = () => location.href = "/accounts.html?signup";
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
 /* Click backdrop to close auth popup */
@@ -92,7 +92,7 @@ if (googleBtn) {
 if (signOutBtn) {
   signOutBtn.onclick = async () => {
     await supabaseClient.auth.signOut();
-    updateAuthUI();
+    location.href = "/accounts.html?login&from=logout";
   };
 }
 
