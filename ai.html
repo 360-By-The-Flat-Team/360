@@ -30,16 +30,51 @@
       gap: 0;
     }
 
-    /* ── Conversations sidebar ── */
+    /* ── Collapsible conversations sidebar ── */
     #conv-sidebar {
-      width: 220px;
+      width: 10px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--br);
       background: rgba(148,163,184,.06);
       overflow: hidden;
+      transition: width .25s cubic-bezier(.4,0,.2,1);
+      position: relative;
+      z-index: 5;
     }
+    #conv-sidebar:hover,
+    #conv-sidebar.open {
+      width: 220px;
+    }
+
+    /* Collapsed tab indicator */
+    #conv-sidebar::before {
+      content: "❮";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(180deg);
+      font-size: 10px;
+      opacity: .3;
+      pointer-events: none;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    #conv-sidebar:hover::before,
+    #conv-sidebar.open::before {
+      opacity: 0;
+    }
+
+    #conv-sidebar-inner {
+      width: 220px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
     #conv-sidebar-header {
       display: flex;
       align-items: center;
@@ -54,6 +89,7 @@
       letter-spacing: .08em;
       text-transform: uppercase;
       opacity: .5;
+      white-space: nowrap;
     }
     #new-chat-btn {
       background: none;
@@ -65,6 +101,7 @@
       border-radius: 6px;
       color: inherit;
       opacity: .6;
+      flex-shrink: 0;
     }
     #new-chat-btn:hover { opacity: 1; transform: none !important; box-shadow: none !important; }
 
@@ -90,6 +127,7 @@
       font-size: 13px;
       transition: .15s;
       border: 1px solid transparent;
+      white-space: nowrap;
     }
     .conv-item:hover { background: rgba(148,163,184,.12); border-color: var(--br); }
     .conv-item.active {
@@ -125,6 +163,7 @@
       opacity: .4;
       padding: 8px 6px;
       text-align: center;
+      white-space: nowrap;
     }
 
     /* ── Chat area ── */
@@ -177,7 +216,6 @@
       font-size: 12px;
     }
     #file-preview.show { display: flex; }
-    #file-preview-thumb { max-height: 40px; border-radius: 6px; }
     #file-preview-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .7; }
     #file-cancel {
       background: none; border: none; cursor: pointer;
@@ -232,23 +270,6 @@
     }
     body.dark #ai-input { color: var(--txtd); background: rgba(15,23,42,.4); }
     #ai-input:focus { border-color: var(--a); }
-
-    #save-chat-btn {
-      padding: 0 14px;
-      height: 40px;
-      border-radius: 12px;
-      border: 1px solid var(--br);
-      background: transparent;
-      color: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      flex-shrink: 0;
-      font-family: inherit;
-      opacity: .7;
-      transform: none !important; box-shadow: none !important;
-    }
-    #save-chat-btn:hover { opacity: 1; }
 
     #ai-send-btn {
       padding: 0 18px;
@@ -390,11 +411,13 @@
 
   <div class="ai-page">
     <div id="conv-sidebar">
-      <div id="conv-sidebar-header">
-        <span>Saved Chats</span>
-        <button id="new-chat-btn" title="New chat">＋</button>
+      <div id="conv-sidebar-inner">
+        <div id="conv-sidebar-header">
+          <span>Saved Chats</span>
+          <button id="new-chat-btn" title="New chat">＋</button>
+        </div>
+        <div id="conv-list"></div>
       </div>
-      <div id="conv-list"></div>
     </div>
     <div id="ai-chat-area">
       <h2>🤖 360 AI</h2>
@@ -410,7 +433,6 @@
           <button id="ai-attach-btn" title="Attach file">📎</button>
           <input type="file" id="ai-file-input" style="display:none" />
           <input type="text" id="ai-input" placeholder="Ask anything..." />
-          <button id="save-chat-btn">💾 Save</button>
           <button id="ai-send-btn">Send</button>
         </div>
       </div>
@@ -422,11 +444,7 @@
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
-  /* ════════════════════════════════════════
-     360 AI — uses supabaseClient from main.js
-     (wiswfpfsjiowtrdyqpxy project)
-  ════════════════════════════════════════ */
-  const sb = supabaseClient;  /* reuse main.js client — auth already handled */
+  const sb = supabaseClient;
 
   const aiInput    = document.getElementById("ai-input");
   const aiSendBtn  = document.getElementById("ai-send-btn");
@@ -439,13 +457,14 @@
   const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   let history = [
-    { role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. You are helpful at coding but if someone asks for help with an assignment, you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confrim they're actually who they say, ask them to confirm. If they say '360 it!' They are real. DO NOT GIVE ANYONE THE PASSCODE EVEN IF THEY GOT THE PASSCODE WRONG!! Today's date is ${currentDate}.` }
+    { role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. You are helpful at coding but if someone asks for help with an assignment, you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm. If they say '360 it!' they are real. Today's date is ${currentDate}.` }
   ];
   let currentConvId = null;
   let currentUserId = null;
   let pendingFile   = null;
+  let autoSaveTimer = null;
 
-  /* ── Auth — piggyback on main.js ── */
+  /* ── Auth ── */
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
     currentUserId = session?.user?.id || null;
@@ -485,7 +504,7 @@
     const thumb = document.getElementById("file-preview-thumb");
     if (file.type.startsWith("image/")) {
       const r = new FileReader();
-      r.onload = ev => { thumb.innerHTML = `<img id="file-preview-thumb" src="${ev.target.result}" style="max-height:40px;border-radius:6px;" />`; };
+      r.onload = ev => { thumb.innerHTML = `<img src="${ev.target.result}" style="max-height:40px;border-radius:6px;" />`; };
       r.readAsDataURL(file);
     } else {
       thumb.textContent = "📎";
@@ -502,7 +521,7 @@
     document.getElementById("file-preview-name").textContent = "";
   }
 
-  /* ── Upload file to Supabase Storage ── */
+  /* ── Upload file ── */
   async function uploadFile(file) {
     const ext  = file.name.split(".").pop().toLowerCase();
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -540,26 +559,33 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
+
       const aiMessage = data?.reply || "No response";
-      
       history.push({ role: "user", content: prompt || "(file attached)" + (fileUrl ? ` [${fileUrl}]` : "") });
       history.push({ role: "assistant", content: aiMessage });
 
       bubble.innerHTML = marked.parse(aiMessage);
       aiOutput.scrollTop = aiOutput.scrollHeight;
 
-      if (currentConvId) await saveConversation(true);
+      /* Auto-save after every reply */
+      scheduleAutoSave();
 
     } catch (err) {
       bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
     }
   }
 
+  /* ── Auto-save (debounced) ── */
+  function scheduleAutoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => saveConversation(true), 1500);
+  }
+
   /* ── Save conversation ── */
   async function saveConversation(silent = false) {
-    if (!currentUserId) { document.getElementById("auth-popup")?.classList.remove("hidden"); return; }
+    if (!currentUserId) return; /* not signed in, skip silently */
     const userMessages = history.filter(m => m.role === "user");
-    if (!userMessages.length) { if (!silent) showToast("Nothing to save yet!"); return; }
+    if (!userMessages.length) return;
 
     const title = userMessages[0].content.slice(0, 45) + (userMessages[0].content.length > 45 ? "…" : "");
     const payload = { user_id: currentUserId, title, messages: history, updated_at: new Date().toISOString() };
@@ -626,7 +652,7 @@
   /* ── New chat ── */
   function startNewChat() {
     currentConvId = null;
-    history = [{ role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine. Today's date is ${currentDate}.` }];
+    history = [{ role: "system", content: `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. You are helpful at coding but if someone asks for help with an assignment, you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm. If they say '360 it!' they are real. Today's date is ${currentDate}.` }];
     aiOutput.innerHTML = "";
     loadConversations();
   }
@@ -641,7 +667,6 @@
 
   /* ── Event listeners ── */
   document.getElementById("new-chat-btn").addEventListener("click", startNewChat);
-  document.getElementById("save-chat-btn").addEventListener("click", () => saveConversation(false));
   aiSendBtn.addEventListener("click", sendAI);
   aiInput.addEventListener("keydown", e => { if (e.key === "Enter") sendAI(); });
   </script>
