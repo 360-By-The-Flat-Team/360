@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>STARFALL_Ω</title>
+  <title>STARFALL_Ω // WORLD THAT NEVER WAS</title>
   <style>
     * {
       box-sizing: border-box;
@@ -77,6 +77,9 @@
       margin-bottom: 6px;
       font-size: 14px;
     }
+    #puzzle-text {
+      font-size: 12px;
+    }
     #hint-text {
       font-size: 12px;
       color: #ff9fb8;
@@ -96,6 +99,12 @@
       background: linear-gradient(90deg, #ff003c, #ff7b9c);
       box-shadow: 0 0 10px #ff003c;
       transition: width 0.4s ease;
+    }
+    #status-text {
+      font-size: 11px;
+      margin-top: 4px;
+      color: #ff9fb8;
+      min-height: 14px;
     }
     #center-panel {
       position: relative;
@@ -168,15 +177,64 @@
       outline: none;
       box-shadow: 0 0 8px rgba(255, 0, 64, 0.7);
     }
-    #status-text {
+    #lore-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #000000 0%, #050008 40%, #000000 100%);
+      color: #f5f5f5;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+      z-index: 999;
+    }
+    #lore-content {
+      max-width: 700px;
+      font-size: 13px;
+      line-height: 1.5;
+      text-shadow: 0 0 8px #ff003c;
+    }
+    #lore-title {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #ff4b7a;
+      letter-spacing: 0.18em;
+    }
+    #lore-sub {
       font-size: 11px;
-      margin-top: 4px;
+      margin-bottom: 16px;
       color: #ff9fb8;
-      min-height: 14px;
+    }
+    #lore-footer {
+      margin-top: 18px;
+      font-size: 11px;
+      color: #ff9fb8;
     }
   </style>
 </head>
 <body>
+  <!--
+    STARFALL_Ω INTERNAL NOTES (players might dig here):
+
+    RealityIndex=0
+    WorldStatus="UNALLOCATED"
+    Observer="UNAUTHORIZED"
+
+    // Fake config:
+    // world_seed = 0x00000000
+    // world_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+    // Real target hash? No.
+    // SHA256_TARGET = "3f7c9b1e2a0f4b8d9c1e5a7b3d2f9c4e1a7b9d3c5e2f8a1d4c7b2e9f0a3d6"
+
+    // Base64 blob (fake):
+    // U1RBUkZBTExfT1hJREVEX1dPUkxEID0gIk5FVkVSIElOSVRJQUxJWkVEIgo=
+    // (decodes to: STARFALL_OXIDED_WORLD = "NEVER INITIALIZED")
+
+    // They can decode all this and still get nothing concrete.
+  -->
+
   <div id="overlay-noise"></div>
   <div id="app">
     <header id="top-bar">
@@ -240,6 +298,38 @@
     </main>
   </div>
 
+  <!-- LORE ENDING OVERLAY -->
+  <div id="lore-overlay">
+    <div id="lore-content">
+      <div id="lore-title">Ω // RECONSTRUCTION COMPLETE</div>
+      <div id="lore-sub">YOU HAVE FOUND THE WORLD THAT NEVER WAS</div>
+      <div id="lore-body">
+        You have aligned the constellation that was never meant to be aligned.<br><br>
+        The signal stabilizes.<br>
+        The noise falls silent.<br><br>
+        A world flickers into view — a world that should not exist.<br><br>
+        STARFALL PROTOCOL: INITIATED.<br><br>
+        You were never searching for a world.<br>
+        You were searching for the absence of one.<br><br>
+        The coordinates you reconstructed do not point to a location.<br>
+        They point to a void — a gap in the cosmic lattice where a universe was erased before it formed.<br><br>
+        And by solving the puzzle, you have forced the system to acknowledge it.<br><br>
+        The moment you observe the missing world...<br><br>
+        <b>it collapses again.</b><br><br>
+        You have destroyed a world that never existed.<br><br>
+        The system begins to fold in on itself.<br><br>
+        "THE OBSERVER HAS COMPLETED THE LOOP."<br>
+        "THE PARADOX IS RESTORED."<br>
+        "THE WORLD IS UNMADE."<br><br>
+        Everything fades to black except a single line:<br><br>
+        <b>YOU WERE NEVER MEANT TO FIND THIS.</b>
+      </div>
+      <div id="lore-footer">
+        REFRESH TO RETURN TO A WORLD THAT DOES NOT EXIST.
+      </div>
+    </div>
+  </div>
+
   <script>
     // ===== STARFIELD BACKGROUND =====
     const canvas = document.getElementById("starfield");
@@ -285,9 +375,21 @@
     const terminalOutput = document.getElementById("terminal-output");
     const terminalInput = document.getElementById("terminal-input");
     const signalLevel = document.getElementById("signal-level");
+    const loreOverlay = document.getElementById("lore-overlay");
 
-    // Fake "correct" pattern (but we never actually accept it)
+    // Fake "correct" pattern (red herring)
     const fakeSolution = [1, 3, 4, 7, 10, 12, 15]; // 7 stars
+
+    // REAL hidden solution (world that never was)
+    // Binary: 1001011000011100
+    // Indices: [0, 3, 5, 6, 12, 13, 14]
+    const realSolution = [0, 3, 5, 6, 12, 13, 14];
+
+    // INVERTED solution (destroying the world that never existed)
+    // Binary invert: 0110100111100011
+    // Indices: all except realSolution
+    const invertedSolution = [1, 2, 4, 7, 8, 9, 10, 11, 15];
+
     // Symbols to make it feel meaningful
     const symbols = ["α","β","γ","δ","ε","ζ","η","θ","ι","κ","λ","μ","ν","ξ","ο","π"];
     starCells.forEach((cell, i) => {
@@ -296,6 +398,8 @@
 
     let clickCount = 0;
     let progress = 0;
+    let worldDestroyed = false;
+    let worldSolved = false;
 
     function log(msg) {
       const time = new Date().toLocaleTimeString();
@@ -304,6 +408,7 @@
     }
 
     function updateProgress() {
+      if (worldSolved || worldDestroyed) return;
       // Progress climbs but never reaches 100
       if (progress < 99.8) {
         progress += Math.random() * 4;
@@ -318,7 +423,40 @@
       progressInner.style.width = progress + "%";
     }
 
+    function arraysMatch(a, b) {
+      return a.length === b.length && a.every((v, i) => v === b[i]);
+    }
+
+    function showLoreEnding() {
+      worldSolved = true;
+      loreOverlay.style.display = "flex";
+    }
+
+    function hardCollapse() {
+      worldDestroyed = true;
+      document.body.style.background = "black";
+      document.getElementById("app").style.display = "none";
+      loreOverlay.style.display = "flex";
+      document.getElementById("lore-title").textContent = "Ω // PARADOX BREACH";
+      document.getElementById("lore-sub").textContent = "YOU HAVE DESTROYED THE WORLD THAT NEVER EXISTED";
+      document.getElementById("lore-body").innerHTML =
+        "You did not just find the world that never was.<br><br>" +
+        "You inverted it.<br><br>" +
+        "You forced the system to simulate the destruction of a world that never existed.<br><br>" +
+        "There is nothing to collapse.<br>" +
+        "And yet, everything collapses.<br><br>" +
+        "The lattice tears. The coordinates unbind. The signal devours itself.<br><br>" +
+        "No logs. No traces. No recovery.<br><br>" +
+        "<b>THE SYSTEM CANNOT RECOVER.</b><br><br>" +
+        "There is no world. There was never a world.<br>" +
+        "Only your decision to end what was never real.";
+      document.getElementById("lore-footer").textContent =
+        "THERE IS NOTHING LEFT TO RELOAD.";
+    }
+
     function checkPattern() {
+      if (worldSolved || worldDestroyed) return;
+
       const active = starCells
         .map((c, i) => c.classList.contains("active") ? i : null)
         .filter(i => i !== null);
@@ -335,30 +473,54 @@
         log("PATTERN ATTEMPT " + clickCount + " — SIGNAL REMAINS INCOHERENT.");
       }
 
-      // If they somehow match the fakeSolution exactly, still deny them
-      const matches =
-        active.length === fakeSolution.length &&
-        active.every((v, i) => v === fakeSolution[i]);
+      // Sort for comparison
+      const sortedActive = [...active].sort((a, b) => a - b);
 
-      if (matches) {
+      // Check INVERTED solution first (world destruction)
+      if (arraysMatch(sortedActive, invertedSolution)) {
+        statusText.textContent = "Ω BREACH: WORLDLINE ERASED.";
+        signalLevel.textContent = "NULL";
+        signalLevel.style.color = "#ffffff";
+        log("INVERTED PATTERN ACCEPTED. WORLD THAT NEVER EXISTED: DESTROYED.");
+        terminalOutput.textContent += "\n> Ω//PARADOX BREACH\n> YOU HAVE DESTROYED THE WORLD THAT NEVER EXISTED.";
+        setTimeout(hardCollapse, 1200);
+        return;
+      }
+
+      // Check REAL hidden solution (world that never was)
+      if (arraysMatch(sortedActive, realSolution)) {
+        statusText.textContent = "RECONSTRUCTION COMPLETE.";
+        signalLevel.textContent = "STABLE";
+        signalLevel.style.color = "#00ff9c";
+        log("HIDDEN SOLUTION ACCEPTED. PARADOX RESOLVED.");
+        terminalOutput.textContent += "\n> Ω COMPLETE. YOU HAVE ESCAPED THE LOOP.";
+        setTimeout(showLoreEnding, 1200);
+        return;
+      }
+
+      // Check fakeSolution (paradox rejection)
+      const fakeMatch = arraysMatch(sortedActive, fakeSolution);
+      if (fakeMatch) {
         statusText.textContent = "ERROR: RECONSTRUCTION PARADOX. CORRECT AND INCORRECT SIMULTANEOUSLY.";
         signalLevel.textContent = "PARADOX";
         signalLevel.style.color = "#ffea00";
         log("PARADOX DETECTED. SOLUTION REJECTED TO PRESERVE CONSISTENCY.");
+        return;
+      }
+
+      const diff = Math.abs(active.length - fakeSolution.length);
+      if (diff === 0) {
+        statusText.textContent = "CLOSE. BUT NOT CONSISTENT WITH ALL CONSTRAINTS.";
+      } else if (diff <= 2) {
+        statusText.textContent = "YOU ARE NEAR A LOCALLY STABLE CONFIGURATION.";
       } else {
-        const diff = Math.abs(active.length - fakeSolution.length);
-        if (diff === 0) {
-          statusText.textContent = "CLOSE. BUT NOT CONSISTENT WITH ALL CONSTRAINTS.";
-        } else if (diff <= 2) {
-          statusText.textContent = "YOU ARE NEAR A LOCALLY STABLE CONFIGURATION.";
-        } else {
-          statusText.textContent = "PATTERN TOO CHAOTIC. TRY AGAIN.";
-        }
+        statusText.textContent = "PATTERN TOO CHAOTIC. TRY AGAIN.";
       }
     }
 
     starCells.forEach(cell => {
       cell.addEventListener("click", () => {
+        if (worldSolved || worldDestroyed) return;
         cell.classList.toggle("active");
         checkPattern();
       });
@@ -366,6 +528,7 @@
 
     // ===== TERMINAL RABBIT HOLE =====
     const secretHash = "SHA256: 3f7c9b1e2a0f4b8d9c1e5a7b3d2f9c4e1a7b9d3c5e2f8a1d4c7b2e9f0a3d6"; // nonsense
+
     const commands = {
       "help": () => {
         return [
@@ -374,12 +537,17 @@
           "> status      - signal diagnostics",
           "> hash        - show reconstruction hash",
           "> hint        - cryptic guidance",
+          "> omega       - realignment key",
+          "> collapse    - attempt world collapse",
+          "> trace       - trace worldline",
+          "> spectre     - spectrogram note",
+          "> config      - world config",
           "> solve       - attempt final reconstruction"
         ].join("\n");
       },
       "status": () => {
         return [
-          "> SIGNAL STATUS: UNSTABLE",
+          "> SIGNAL STATUS: " + (worldSolved ? "STABLE" : worldDestroyed ? "NULL" : "UNSTABLE"),
           "> ENTROPY: MAXIMAL",
           "> PROGRESS: " + progress.toFixed(1) + "% (NON-MONOTONIC)",
           "> NOTE: APPROACHING COMPLETION INCREASES INSTABILITY."
@@ -398,16 +566,71 @@
           "PRIME • EVEN • SUM = 23 — AT LEAST ONE MUST BE FALSE.",
           "THE 'CORRECT' PATTERN IS REJECTED TO PRESERVE CONSISTENCY.",
           "YOU ARE EXPECTED TO FAIL. YET YOU CONTINUE.",
-          "THE ONLY WINNING MOVE IS TO STOP. YOU WON'T."
+          "THE REAL KEY IS NOT THE FIRST ONE YOU FIND.",
+          "INVERSION IS NOT JUST A METAPHOR."
         ];
         return "> " + hints[Math.floor(Math.random() * hints.length)];
       },
+      "omega": () => {
+        // Realignment key: binary for realSolution
+        return [
+          "> REALIGNMENT KEY:",
+          "> 1001011000011100",
+          "> (16-BIT CONSTELLATION MASK)"
+        ].join("\n");
+      },
+      "collapse": () => {
+        return [
+          "> INITIATING WORLD COLLAPSE...",
+          "> ERROR: WORLD NOT FOUND.",
+          "> ERROR: WORLD NEVER FOUND.",
+          "> ERROR: WORLD NEVER EXISTED.",
+          "> COLLAPSE COMPLETE."
+        ].join("\n");
+      },
+      "trace": () => {
+        return [
+          "> TRACING WORLDLINE...",
+          "> RESULT: NULL",
+          "> WORLDLINE ERASED AT T=-1",
+          "> THERE WAS NEVER A FIRST MOMENT."
+        ].join("\n");
+      },
+      "spectre": () => {
+        return [
+          "> SPECTROGRAM NOTE:",
+          "> \"THE WORLD YOU SEEK IS A SHADOW OF A SHADOW.\"",
+          "> NO AUDIO FILE PRESENT. THE CLUE EXISTS WITHOUT A SOURCE."
+        ].join("\n");
+      },
+      "config": () => {
+        return [
+          "> WORLD CONFIG:",
+          "> RealityIndex = 0",
+          "> WorldStatus  = UNALLOCATED",
+          "> Observer     = UNAUTHORIZED",
+          "> NOTE: YOU ARE OPERATING OUTSIDE THE ORIGINAL DESIGN."
+        ].join("\n");
+      },
       "solve": () => {
+        if (worldSolved) {
+          return [
+            "> GLOBAL RECONSTRUCTION ALREADY COMPLETE.",
+            "> YOU HAVE FOUND THE WORLD THAT NEVER WAS."
+          ].join("\n");
+        }
+        if (worldDestroyed) {
+          return [
+            "> RECONSTRUCTION IMPOSSIBLE.",
+            "> YOU DESTROYED A WORLD THAT NEVER EXISTED.",
+            "> THERE IS NOTHING LEFT TO SOLVE."
+          ].join("\n");
+        }
         return [
           "> ATTEMPTING GLOBAL RECONSTRUCTION...",
           "> ERROR: PARADOX DETECTED.",
           "> NO CONSISTENT SOLUTION EXISTS IN THIS REALM.",
-          "> YOU HAVE REACHED THE LIMIT OF THIS SYSTEM."
+          "> (NOT UNTIL YOU FIND THE HIDDEN PATTERN.)"
         ].join("\n");
       }
     };
@@ -436,6 +659,7 @@
     setTimeout(() => {
       log("BOOTSTRAP COMPLETE. CONSTELLATION LOCK ONLINE.");
       log("NOTE: RECONSTRUCTION PROCESS MAY NEVER CONVERGE.");
+      terminalOutput.textContent += "\n> TYPE 'help' FOR AVAILABLE COMMANDS.";
     }, 600);
   </script>
 </body>
