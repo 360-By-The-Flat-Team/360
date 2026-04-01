@@ -24,7 +24,7 @@
   <link rel="icon" type="image/png" href="favicon-32x32.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
-  <!-- CSS — same as every other page -->
+  <!-- CSS -->
   <link rel="stylesheet" href="main.css" />
   <link rel="stylesheet" href="cursor.css" />
 
@@ -32,7 +32,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* Centre the card in whatever space remains */
     body {
       min-height: 100vh;
       display: flex;
@@ -42,7 +41,7 @@
 
     .ac-wrap {
       margin: 80px 20px;
-      width: 400px;
+      width: 420px;
       max-width: calc(100vw - 40px);
       position: relative;
       z-index: 1;
@@ -70,7 +69,7 @@
       to   { opacity: 1; transform: translateY(0)    scale(1);   }
     }
 
-    /* Logo row inside card */
+    /* Logo row */
     .ac-logo {
       display: flex; align-items: center; gap: 10px;
       margin-bottom: 20px;
@@ -212,6 +211,177 @@
     .ac-logout-sub { font-size: 13px; color: var(--mut); }
     body.dark .ac-logout-sub { color: var(--mutd); }
 
+    /* ── PASSWORD STRENGTH METER ── */
+    .pw-strength-wrap { margin-top: 6px; }
+    .pw-bar-track {
+      height: 3px;
+      background: rgba(148,163,184,.2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .pw-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width .35s cubic-bezier(.34,1.56,.64,1), background .25s;
+    }
+    .pw-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 14px;
+    }
+    .pw-strength-label {
+      font-size: 11px;
+      font-weight: 600;
+      transition: color .2s;
+    }
+    .pw-strength-hint {
+      font-size: 11px;
+      color: var(--mut);
+    }
+    body.dark .pw-strength-hint { color: var(--mutd); }
+    .pw-checks {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 7px;
+    }
+    .pw-pill {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 500;
+      border: 1px solid var(--br);
+      background: rgba(148,163,184,.08);
+      color: var(--mut);
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    body.dark .pw-pill { color: var(--mutd); border-color: rgba(255,255,255,.1); }
+    .pw-pill.pass {
+      background: rgba(16,185,129,.12);
+      border-color: rgba(16,185,129,.35);
+      color: #059669;
+    }
+    body.dark .pw-pill.pass { color: #34d399; background: rgba(52,211,153,.1); border-color: rgba(52,211,153,.3); }
+    .pw-pip {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .4;
+      transition: opacity .2s;
+      flex-shrink: 0;
+    }
+    .pw-pill.pass .pw-pip { opacity: 1; }
+
+    /* ── BOB SECTION ── */
+    .bob-section {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(148,163,184,.07);
+      border: 1px solid var(--br);
+    }
+    body.dark .bob-section { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+
+    /* Bob toggle row — matches 360 toggle style */
+    .bob-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0;
+    }
+    .bob-toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--txt);
+    }
+    body.dark .bob-toggle-label { color: var(--txtd); }
+    .bob-toggle-sub {
+      font-size: 11px;
+      color: var(--mut);
+      margin-top: 1px;
+    }
+    body.dark .bob-toggle-sub { color: var(--mutd); }
+
+    /* Toggle track — matches #darkToggle in main.css */
+    .bob-track {
+      width: 38px; height: 22px;
+      background: rgba(148,163,184,.3);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      transition: background .25s;
+      flex-shrink: 0;
+      border: none;
+    }
+    .bob-track::before {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform .25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .bob-track.on { background: var(--a); }
+    .bob-track.on::before { transform: translateX(16px); }
+
+    /* Bob content */
+    .bob-content {
+      margin-top: 12px;
+      display: none;
+    }
+    .bob-content.visible { display: block; }
+    .bob-search-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .bob-search-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--mut);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+    body.dark .bob-search-icon { color: var(--mutd); }
+    .bob-search-input {
+      width: 100%;
+      padding: 10px 44px 10px 36px;
+      border-radius: 9px;
+      border: 1.5px solid var(--br);
+      background: rgba(255,255,255,.75);
+      color: var(--txt);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    body.dark .bob-search-input {
+      background: rgba(255,255,255,.06);
+      color: var(--txtd);
+      border-color: rgba(255,255,255,.12);
+    }
+    .bob-search-input:focus {
+      border-color: var(--a);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .bob-canvas-wrap {
+      position: absolute;
+      right: 8px;
+      display: flex;
+      align-items: center;
+    }
+    canvas { display: block; }
+
     @media (max-width: 600px) {
       .ac-wrap { margin: 70px 12px 20px; }
       .ac-card { padding: 28px 20px 24px; }
@@ -333,17 +503,15 @@
     </div>
   </div>
 
-  <!-- SCRIPTS — same order as index.html -->
+  <!-- SCRIPTS -->
   <script src="main.js"></script>
   <script src="cookie.js"></script>
   <script src="cursor.js"></script>
 
   <!-- ACCOUNTS PAGE LOGIC -->
   <script>
-    /* Reuse supabaseClient created by main.js */
     const sb = supabaseClient;
 
-    /* ── URL routing ── */
     const qs       = location.search.slice(1);
     const param    = qs.split("&")[0].toLowerCase();
     const isLogout = param === "login" && qs.includes("from=logout");
@@ -352,10 +520,162 @@
     (async () => {
       if (isLogout) { showLogout(); return; }
       const { data: { session } } = await sb.auth.getSession();
-      if (session)            showProfile(session.user);
+      if (session)                 showProfile(session.user);
       else if (param === "signup") renderSignUp();
-      else                    renderSignIn();
+      else                         renderSignIn();
     })();
+
+    /* ════════════════════
+       PASSWORD STRENGTH
+    ════════════════════ */
+    const PW_COLORS = ['#ef4444','#f97316','#eab308','#10b981','#3b82f6'];
+    const PW_LABELS = ['Weak','Fair','Moderate','Strong','Very Strong'];
+    const PW_HINTS  = ['Add more variety','Try a number or symbol','Getting better!','Add a symbol to max out',''];
+
+    function getStrength(v) {
+      let s = 0;
+      if (v.length >= 6)  s++;
+      if (v.length >= 10) s++;
+      if (/[A-Z]/.test(v)) s++;
+      if (/[0-9]/.test(v)) s++;
+      if (/[^A-Za-z0-9]/.test(v)) s++;
+      return Math.min(s, 5);
+    }
+
+    function initStrengthMeter(inputEl, wrapperId) {
+      const wrap = document.getElementById(wrapperId);
+      if (!wrap) return;
+      const bar   = wrap.querySelector('.pw-bar-fill');
+      const label = wrap.querySelector('.pw-strength-label');
+      const hint  = wrap.querySelector('.pw-strength-hint');
+
+      function togglePill(id, pass) {
+        const el = wrap.querySelector('#' + id);
+        if (el) el.classList.toggle('pass', pass);
+      }
+
+      inputEl.addEventListener('input', () => {
+        const v = inputEl.value;
+        const s = getStrength(v);
+        if (!v) {
+          bar.style.width = '0%';
+          label.textContent = '';
+          hint.textContent = '';
+          ['pw-c-len','pw-c-up','pw-c-num','pw-c-sym'].forEach(id => togglePill(id, false));
+          return;
+        }
+        bar.style.width = (s * 20) + '%';
+        bar.style.background = PW_COLORS[Math.max(s - 1, 0)];
+        label.textContent = PW_LABELS[Math.max(s - 1, 0)];
+        label.style.color = PW_COLORS[Math.max(s - 1, 0)];
+        hint.textContent  = PW_HINTS[Math.max(s - 1, 0)];
+        togglePill('pw-c-len', v.length >= 8);
+        togglePill('pw-c-up',  /[A-Z]/.test(v));
+        togglePill('pw-c-num', /[0-9]/.test(v));
+        togglePill('pw-c-sym', /[^A-Za-z0-9]/.test(v));
+      });
+    }
+
+    /* ════════════════════
+       BOB
+    ════════════════════ */
+    let bobRAF = null;
+    let bobFrame = 0;
+    let bobEnergy = 0;
+    let typingVelocity = 0;
+    let lastTypeTime = 0;
+    let lastCharCount = 0;
+
+    function initBob(canvasEl, inputEl) {
+      const ctx = canvasEl.getContext('2d');
+      if (bobRAF) cancelAnimationFrame(bobRAF);
+      bobFrame = 0; bobEnergy = 0; typingVelocity = 0;
+
+      inputEl.addEventListener('input', () => {
+        const now = Date.now();
+        const dt = now - lastTypeTime;
+        const chars = Math.abs(inputEl.value.length - lastCharCount);
+        typingVelocity = Math.min((chars / Math.max(dt, 50)) * 1000, 25);
+        lastTypeTime = now;
+        lastCharCount = inputEl.value.length;
+        bobEnergy = Math.min(bobEnergy + typingVelocity * 0.15, 10);
+      });
+
+      function drawBob(frame, energy) {
+        ctx.clearRect(0, 0, 32, 32);
+        const t = frame * 0.12;
+        const isDark = document.body.classList.contains('dark') ||
+          window.matchMedia('(prefers-color-scheme:dark)').matches;
+        const clr = isDark ? '#e5e7eb' : '#374151';
+        ctx.strokeStyle = clr;
+        ctx.fillStyle   = clr;
+        ctx.lineWidth   = 1.5;
+        ctx.lineCap     = 'round';
+
+        const cx = 16, cy = 8;
+        const bounce = energy > 0 ? Math.sin(t * 3) * energy * 1.2 : 0;
+        const wobble = energy > 5 ? Math.sin(t * 7) * 2 : 0;
+        const shake  = energy > 7 ? (Math.random() - 0.5) * energy * 0.5 : 0;
+        const bx = cx + shake, by = cy + bounce * 0.3;
+
+        // head
+        ctx.beginPath();
+        ctx.arc(bx, by, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // body
+        const bodyTop = by + 4;
+        const bodyBot = by + 12 + Math.abs(bounce) * 0.2;
+        ctx.beginPath(); ctx.moveTo(bx, bodyTop); ctx.lineTo(bx, bodyBot); ctx.stroke();
+
+        // arms
+        const armSwing = energy > 0 ? Math.sin(t * 3) * Math.min(energy * 3, 30) : 0;
+        const armAlt   = energy > 7 ? Math.cos(t * 5) * 10 : 0;
+        ctx.save(); ctx.translate(bx, bodyTop + 3);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-5 + wobble, 5 + armSwing); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo( 5 + wobble, 5 - armSwing + armAlt); ctx.stroke();
+        ctx.restore();
+
+        // legs
+        const legPhase = energy > 0 ? t * 3 : 0;
+        const legKick  = Math.min(energy * 4, 28);
+        ctx.save(); ctx.translate(bx, bodyBot);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-3 + Math.sin(legPhase) * legKick * 0.4, 7 + Math.cos(legPhase) * legKick * 0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo( 3 - Math.sin(legPhase) * legKick * 0.4, 7 - Math.cos(legPhase) * legKick * 0.2); ctx.stroke();
+        ctx.restore();
+
+        // stars when hyper
+        if (energy > 6) {
+          const starCount = Math.floor(energy - 5);
+          for (let i = 0; i < starCount; i++) {
+            const angle = t * 2 + i * (Math.PI * 2 / starCount);
+            const r  = 10 + energy * 0.5;
+            const sx = bx + Math.cos(angle) * r;
+            const sy = by - 2 + Math.sin(angle) * r * 0.5;
+            ctx.save(); ctx.translate(sx, sy);
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            for (let j = 0; j < 5; j++) {
+              const a  = j * 1.2566 - Math.PI / 2;
+              const ra = j * 1.2566 - Math.PI / 2 + 0.6283;
+              if (j === 0) ctx.moveTo(Math.cos(a) * 2.5, Math.sin(a) * 2.5);
+              else { ctx.lineTo(Math.cos(ra) * 1.2, Math.sin(ra) * 1.2); ctx.lineTo(Math.cos(a) * 2.5, Math.sin(a) * 2.5); }
+            }
+            ctx.closePath(); ctx.fill(); ctx.restore();
+          }
+        }
+      }
+
+      function tick() {
+        bobFrame++;
+        const now = Date.now();
+        if (now - lastTypeTime > 800) typingVelocity = Math.max(typingVelocity * 0.9, 0);
+        bobEnergy = Math.max(bobEnergy - 0.08, 0);
+        drawBob(bobFrame, bobEnergy);
+        bobRAF = requestAnimationFrame(tick);
+      }
+      tick();
+    }
 
     /* ════════════════
        SIGN IN
@@ -447,6 +767,19 @@
         <div class="ac-field">
           <label>Password</label>
           <input id="suPass" type="password" placeholder="Min. 6 characters" autocomplete="new-password" />
+          <div class="pw-strength-wrap" id="pwStrengthWrap">
+            <div class="pw-bar-track"><div class="pw-bar-fill"></div></div>
+            <div class="pw-meta">
+              <span class="pw-strength-label"></span>
+              <span class="pw-strength-hint"></span>
+            </div>
+            <div class="pw-checks">
+              <div class="pw-pill" id="pw-c-len"><span class="pw-pip"></span>8+ chars</div>
+              <div class="pw-pill" id="pw-c-up"><span class="pw-pip"></span>uppercase</div>
+              <div class="pw-pill" id="pw-c-num"><span class="pw-pip"></span>number</div>
+              <div class="pw-pill" id="pw-c-sym"><span class="pw-pip"></span>symbol</div>
+            </div>
+          </div>
           <span class="ac-hint" id="passHint"></span>
         </div>
         <div class="ac-field">
@@ -454,6 +787,29 @@
           <input id="suConfirm" type="password" placeholder="Repeat your password" autocomplete="new-password" />
           <span class="ac-hint" id="confirmHint"></span>
         </div>
+
+        <!-- BOB SECTION -->
+        <div class="bob-section">
+          <div class="bob-toggle-row" id="bobToggleRow">
+            <div>
+              <div class="bob-toggle-label">Enable Bob</div>
+              <div class="bob-toggle-sub">A stick figure that reacts to your typing</div>
+            </div>
+            <div class="bob-track" id="bobTrack"></div>
+          </div>
+          <div class="bob-content" id="bobContent">
+            <div class="bob-search-row" style="margin-top:0;">
+              <div class="bob-search-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </div>
+              <input class="bob-search-input" id="bobSearchInput" placeholder="Type anything to see Bob go…" />
+              <div class="bob-canvas-wrap">
+                <canvas id="bobCanvas" width="32" height="32"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <p class="ac-msg" id="suMsg"></p>
         <button class="ac-btn" id="suBtn">Create Account</button>
         <div class="ac-divider">or sign up with</div>
@@ -469,13 +825,38 @@
         </div>
         <p class="ac-switch">Already have an account? <a href="/accounts.html?signin">Sign In</a></p>
       `;
+
+      // Tab wiring
       document.getElementById("tabSI").onclick = () => { history.replaceState(null,"","/accounts.html?signin"); renderSignIn(); };
       document.getElementById("tabSU").onclick = () => { history.replaceState(null,"","/accounts.html?signup"); renderSignUp(); };
 
+      // Password strength
+      initStrengthMeter(document.getElementById("suPass"), "pwStrengthWrap");
+
+      // Bob toggle
+      let bobOn = false;
+      const bobTrack   = document.getElementById("bobTrack");
+      const bobContent = document.getElementById("bobContent");
+      document.getElementById("bobToggleRow").addEventListener("click", () => {
+        bobOn = !bobOn;
+        bobTrack.classList.toggle("on", bobOn);
+        if (bobOn) {
+          bobContent.classList.add("visible");
+          // slight delay so DOM is visible before canvas init
+          setTimeout(() => {
+            initBob(document.getElementById("bobCanvas"), document.getElementById("bobSearchInput"));
+          }, 30);
+        } else {
+          bobContent.classList.remove("visible");
+          if (bobRAF) { cancelAnimationFrame(bobRAF); bobRAF = null; }
+        }
+      });
+
+      // Username validation
       let usernameOk = false, usernameTimer = null;
-      const suUser=document.getElementById("suUser"), userHint=document.getElementById("userHint");
-      const suPass=document.getElementById("suPass"), passHint=document.getElementById("passHint");
-      const suConfirm=document.getElementById("suConfirm"), confirmHint=document.getElementById("confirmHint");
+      const suUser      = document.getElementById("suUser"),      userHint    = document.getElementById("userHint");
+      const suPass      = document.getElementById("suPass"),      passHint    = document.getElementById("passHint");
+      const suConfirm   = document.getElementById("suConfirm"),   confirmHint = document.getElementById("confirmHint");
 
       suUser.addEventListener("input", () => {
         const v=suUser.value.trim(); usernameOk=false; clearTimeout(usernameTimer); suUser.classList.remove("invalid");
@@ -492,7 +873,7 @@
         const v=suPass.value;
         if (!v) { setHint(passHint,"",""); suPass.classList.remove("invalid"); return; }
         if (v.length<6) { setHint(passHint,"Must be at least 6 characters.","err"); suPass.classList.add("invalid"); }
-        else { setHint(passHint,"✓ Looks good","ok"); suPass.classList.remove("invalid"); }
+        else { setHint(passHint,"",""); suPass.classList.remove("invalid"); }
         if (suConfirm.value) validateConfirm();
       });
       suConfirm.addEventListener("input", validateConfirm);
@@ -511,10 +892,10 @@
     }
 
     async function doSignUp(usernameOk) {
-      const email=document.getElementById("suEmail").value.trim();
-      const username=document.getElementById("suUser").value.trim();
-      const password=document.getElementById("suPass").value;
-      const confirm=document.getElementById("suConfirm").value;
+      const email    = document.getElementById("suEmail").value.trim();
+      const username = document.getElementById("suUser").value.trim();
+      const password = document.getElementById("suPass").value;
+      const confirm  = document.getElementById("suConfirm").value;
       const btn=document.getElementById("suBtn"), msg=document.getElementById("suMsg");
       if (!email||!username||!password||!confirm) { setMsg(msg,"All fields are required.","err"); return; }
       if (!email.includes("@"))                   { setMsg(msg,"Please enter a valid email address.","err"); return; }
@@ -548,7 +929,7 @@
             <div class="ac-pemail">${esc(user.email||"")}</div>
           </div>
           <p class="ac-msg" id="profMsg"></p>
-          <button class="ac-sec-btn" onclick="window.loaction.href='/';">← Back to 360</button>
+          <button class="ac-sec-btn" onclick="window.location.href='/';">← Back to 360</button>
           <button class="ac-sec-btn ac-signout-btn" id="pgSignOut">Sign Out</button>
         </div>
       `;
@@ -570,7 +951,7 @@
           <div class="ac-logout-title">You've been signed out</div>
           <p class="ac-logout-sub">Thanks for using 360. See you next time!</p>
           <button class="ac-btn" onclick="history.replaceState(null,'','/accounts.html?signin');renderSignIn();">Sign Back In</button>
-          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.loaction.href='/';">← Back to 360</button>
+          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.location.href='/';">← Back to 360</button>
         </div>
       `;
     }
