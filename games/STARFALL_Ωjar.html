@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>STARFALL_Ω</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Consolas", "Courier New", monospace;
+    }
+    body {
+      background: radial-gradient(circle at top, #220011 0%, #050008 55%, #000000 100%);
+      color: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #overlay-noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+      z-index: 1;
+    }
+    #app {
+      position: relative;
+      z-index: 2;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 10px 18px;
+    }
+    #top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 0, 64, 0.4);
+      background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(40,0,20,0.7));
+    }
+    #logo {
+      font-size: 20px;
+      letter-spacing: 0.2em;
+      color: #ff003c;
+      text-shadow: 0 0 8px #ff003c;
+    }
+    #signal-status {
+      font-size: 12px;
+      color: #ff7b9c;
+    }
+    #signal-level {
+      color: #ff003c;
+    }
+    #main-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 280px;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    #left-panel, #right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card {
+      background: radial-gradient(circle at top, rgba(40,0,20,0.9), rgba(5,0,10,0.95));
+      border: 1px solid rgba(255, 0, 64, 0.4);
+      box-shadow: 0 0 18px rgba(255, 0, 64, 0.25);
+      padding: 10px 12px;
+      border-radius: 6px;
+    }
+    .card h1, .card h2 {
+      color: #ff4b7a;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    #hint-text {
+      font-size: 12px;
+      color: #ff9fb8;
+      margin-top: 4px;
+    }
+    #fake-progress {
+      width: 100%;
+      height: 8px;
+      background: #200010;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    #fake-progress-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff003c, #ff7b9c);
+      box-shadow: 0 0 10px #ff003c;
+      transition: width 0.4s ease;
+    }
+    #center-panel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 0, 64, 0.4);
+      background: radial-gradient(circle at center, #120010, #020006);
+    }
+    #starfield {
+      position: absolute;
+      inset: 0;
+    }
+    #constellation-grid {
+      position: absolute;
+      inset: 12% 18%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .star-cell {
+      border-radius: 50%;
+      border: 1px solid rgba(255, 0, 64, 0.5);
+      background: radial-gradient(circle at center, #ff003c 0%, #300010 40%, #050008 100%);
+      box-shadow: 0 0 12px rgba(255, 0, 64, 0.6);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+    .star-cell::after {
+      content: attr(data-symbol);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #ffd6e3;
+      opacity: 0.9;
+    }
+    .star-cell.active {
+      transform: scale(1.1);
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.9);
+      filter: brightness(1.4);
+    }
+    #right-panel #log-output {
+      font-size: 11px;
+      height: 140px;
+      overflow-y: auto;
+      padding-right: 4px;
+      white-space: pre-wrap;
+    }
+    #terminal-output {
+      font-size: 11px;
+      height: 120px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+      white-space: pre-wrap;
+    }
+    #terminal-input {
+      width: 100%;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 0, 64, 0.5);
+      background: #050008;
+      color: #f5f5f5;
+      font-size: 11px;
+    }
+    #terminal-input:focus {
+      outline: none;
+      box-shadow: 0 0 8px rgba(255, 0, 64, 0.7);
+    }
+    #status-text {
+      font-size: 11px;
+      margin-top: 4px;
+      color: #ff9fb8;
+      min-height: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay-noise"></div>
+  <div id="app">
+    <header id="top-bar">
+      <div id="logo">STARFALL_Ω</div>
+      <div id="signal-status">SIGNAL: <span id="signal-level">UNSTABLE</span></div>
+    </header>
+
+    <main id="main-layout">
+      <section id="left-panel">
+        <div class="card">
+          <h1>CONSTELLATION LOCK</h1>
+          <p id="puzzle-text">
+            16 stars. Only 7 must be lit.<br>
+            The pattern is hidden in the noise.
+          </p>
+          <div id="hint-text">
+            HINT: "PRIME • EVEN • SUM = 23" — they can't all be true.
+          </div>
+          <div id="fake-progress">
+            <div id="fake-progress-inner"></div>
+          </div>
+          <div id="status-text"></div>
+        </div>
+
+        <div class="card">
+          <h2>ANOMALY LOG</h2>
+          <div id="log-output"></div>
+        </div>
+      </section>
+
+      <section id="center-panel">
+        <canvas id="starfield"></canvas>
+        <div id="constellation-grid">
+          <!-- 16 stars -->
+          <div class="star-cell" data-index="0"></div>
+          <div class="star-cell" data-index="1"></div>
+          <div class="star-cell" data-index="2"></div>
+          <div class="star-cell" data-index="3"></div>
+          <div class="star-cell" data-index="4"></div>
+          <div class="star-cell" data-index="5"></div>
+          <div class="star-cell" data-index="6"></div>
+          <div class="star-cell" data-index="7"></div>
+          <div class="star-cell" data-index="8"></div>
+          <div class="star-cell" data-index="9"></div>
+          <div class="star-cell" data-index="10"></div>
+          <div class="star-cell" data-index="11"></div>
+          <div class="star-cell" data-index="12"></div>
+          <div class="star-cell" data-index="13"></div>
+          <div class="star-cell" data-index="14"></div>
+          <div class="star-cell" data-index="15"></div>
+        </div>
+      </section>
+
+      <section id="right-panel">
+        <div class="card">
+          <h2>Ω TERMINAL</h2>
+          <div id="terminal-output">&gt; AWAITING RECONSTRUCTION...</div>
+          <input id="terminal-input" type="text" placeholder="enter command and press enter">
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ===== STARFIELD BACKGROUND =====
+    const canvas = document.getElementById("starfield");
+    const ctx = canvas.getContext("2d");
+    function resizeCanvas() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    const stars = [];
+    for (let i = 0; i < 140; i++) {
+      stars.push({
+        x: Math.random(),
+        y: Math.random(),
+        r: Math.random() * 1.2 + 0.3,
+        s: Math.random() * 0.0006 + 0.0002
+      });
+    }
+
+    function drawStarfield(t) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let star of stars) {
+        const twinkle = 0.5 + 0.5 * Math.sin(t * star.s * 0.5);
+        ctx.beginPath();
+        ctx.arc(star.x * canvas.width, star.y * canvas.height, star.r * twinkle, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 0, 80, " + (0.3 + 0.7 * twinkle) + ")";
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStarfield);
+    }
+    requestAnimationFrame(drawStarfield);
+
+    // ===== CONSTELLATION PUZZLE =====
+    const starCells = Array.from(document.querySelectorAll(".star-cell"));
+    const logOutput = document.getElementById("log-output");
+    const statusText = document.getElementById("status-text");
+    const progressInner = document.getElementById("fake-progress-inner");
+    const terminalOutput = document.getElementById("terminal-output");
+    const terminalInput = document.getElementById("terminal-input");
+    const signalLevel = document.getElementById("signal-level");
+
+    // Fake "correct" pattern (but we never actually accept it)
+    const fakeSolution = [1, 3, 4, 7, 10, 12, 15]; // 7 stars
+    // Symbols to make it feel meaningful
+    const symbols = ["α","β","γ","δ","ε","ζ","η","θ","ι","κ","λ","μ","ν","ξ","ο","π"];
+    starCells.forEach((cell, i) => {
+      cell.dataset.symbol = symbols[i];
+    });
+
+    let clickCount = 0;
+    let progress = 0;
+
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      logOutput.textContent += "[" + time + "] " + msg + "\n";
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function updateProgress() {
+      // Progress climbs but never reaches 100
+      if (progress < 99.8) {
+        progress += Math.random() * 4;
+        if (progress > 99.8) progress = 99.8;
+      } else {
+        // Occasionally "glitch" backwards
+        if (Math.random() < 0.25) {
+          progress = Math.random() * 40;
+          log("PROGRESS CORRUPTED. RESTARTING RECONSTRUCTION...");
+        }
+      }
+      progressInner.style.width = progress + "%";
+    }
+
+    function checkPattern() {
+      const active = starCells
+        .map((c, i) => c.classList.contains("active") ? i : null)
+        .filter(i => i !== null);
+
+      updateProgress();
+
+      if (active.length === 0) {
+        statusText.textContent = "";
+        return;
+      }
+
+      clickCount++;
+      if (clickCount % 5 === 0) {
+        log("PATTERN ATTEMPT " + clickCount + " — SIGNAL REMAINS INCOHERENT.");
+      }
+
+      // If they somehow match the fakeSolution exactly, still deny them
+      const matches =
+        active.length === fakeSolution.length &&
+        active.every((v, i) => v === fakeSolution[i]);
+
+      if (matches) {
+        statusText.textContent = "ERROR: RECONSTRUCTION PARADOX. CORRECT AND INCORRECT SIMULTANEOUSLY.";
+        signalLevel.textContent = "PARADOX";
+        signalLevel.style.color = "#ffea00";
+        log("PARADOX DETECTED. SOLUTION REJECTED TO PRESERVE CONSISTENCY.");
+      } else {
+        const diff = Math.abs(active.length - fakeSolution.length);
+        if (diff === 0) {
+          statusText.textContent = "CLOSE. BUT NOT CONSISTENT WITH ALL CONSTRAINTS.";
+        } else if (diff <= 2) {
+          statusText.textContent = "YOU ARE NEAR A LOCALLY STABLE CONFIGURATION.";
+        } else {
+          statusText.textContent = "PATTERN TOO CHAOTIC. TRY AGAIN.";
+        }
+      }
+    }
+
+    starCells.forEach(cell => {
+      cell.addEventListener("click", () => {
+        cell.classList.toggle("active");
+        checkPattern();
+      });
+    });
+
+    // ===== TERMINAL RABBIT HOLE =====
+    const secretHash = "SHA256: 3f7c9b1e2a0f4b8d9c1e5a7b3d2f9c4e1a7b9d3c5e2f8a1d4c7b2e9f0a3d6"; // nonsense
+    const commands = {
+      "help": () => {
+        return [
+          "> AVAILABLE COMMANDS:",
+          "> help        - list commands",
+          "> status      - signal diagnostics",
+          "> hash        - show reconstruction hash",
+          "> hint        - cryptic guidance",
+          "> solve       - attempt final reconstruction"
+        ].join("\n");
+      },
+      "status": () => {
+        return [
+          "> SIGNAL STATUS: UNSTABLE",
+          "> ENTROPY: MAXIMAL",
+          "> PROGRESS: " + progress.toFixed(1) + "% (NON-MONOTONIC)",
+          "> NOTE: APPROACHING COMPLETION INCREASES INSTABILITY."
+        ].join("\n");
+      },
+      "hash": () => {
+        return [
+          "> CURRENT TARGET:",
+          "> " + secretHash,
+          "> NOTE: NO KNOWN PREIMAGE. YOU ARE CHASING A GHOST."
+        ].join("\n");
+      },
+      "hint": () => {
+        const hints = [
+          "THE GRID LIES. THE CONSTRAINTS CONTRADICT.",
+          "PRIME • EVEN • SUM = 23 — AT LEAST ONE MUST BE FALSE.",
+          "THE 'CORRECT' PATTERN IS REJECTED TO PRESERVE CONSISTENCY.",
+          "YOU ARE EXPECTED TO FAIL. YET YOU CONTINUE.",
+          "THE ONLY WINNING MOVE IS TO STOP. YOU WON'T."
+        ];
+        return "> " + hints[Math.floor(Math.random() * hints.length)];
+      },
+      "solve": () => {
+        return [
+          "> ATTEMPTING GLOBAL RECONSTRUCTION...",
+          "> ERROR: PARADOX DETECTED.",
+          "> NO CONSISTENT SOLUTION EXISTS IN THIS REALM.",
+          "> YOU HAVE REACHED THE LIMIT OF THIS SYSTEM."
+        ].join("\n");
+      }
+    };
+
+    function appendTerminal(text) {
+      terminalOutput.textContent += "\n" + text;
+      terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    terminalInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const raw = terminalInput.value.trim();
+        if (!raw) return;
+        appendTerminal("> " + raw);
+        const cmd = raw.toLowerCase();
+        if (commands[cmd]) {
+          appendTerminal(commands[cmd]());
+        } else {
+          appendTerminal("> UNKNOWN COMMAND. TYPE 'help'.");
+        }
+        terminalInput.value = "";
+      }
+    });
+
+    // Initial flavor logs
+    setTimeout(() => {
+      log("BOOTSTRAP COMPLETE. CONSTELLATION LOCK ONLINE.");
+      log("NOTE: RECONSTRUCTION PROCESS MAY NEVER CONVERGE.");
+    }, 600);
+  </script>
+</body>
+</html>
