@@ -13,13 +13,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* ── Apps page header matches games page ── */
     .apps-page {
       max-width: 900px;
       margin: 0 auto;
       padding: 80px 24px 60px;
     }
-
     .apps-page h2 {
       font-size: 22px;
       font-weight: 700;
@@ -28,28 +26,17 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-
-    .apps-subtitle {
-      font-size: 13px;
-      color: var(--mut);
-      margin-bottom: 28px;
-    }
+    .apps-subtitle { font-size: 13px; color: var(--mut); margin-bottom: 28px; }
     body.dark .apps-subtitle { color: var(--mutd); }
 
-    /* ── Section label ── */
     .apps-section-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--mut);
-      margin-bottom: 14px;
-      padding-bottom: 6px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--mut);
+      margin-bottom: 14px; padding-bottom: 6px;
       border-bottom: 1px solid var(--br);
     }
     body.dark .apps-section-label { color: var(--mutd); }
 
-    /* ── Grid — same as games grid ── */
     .apps-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -57,7 +44,6 @@
       margin-bottom: 36px;
     }
 
-    /* ── App card — styled like .game-card with blue accent layer ── */
     .app-card {
       background: rgba(255,255,255,.6);
       backdrop-filter: blur(10px);
@@ -76,57 +62,30 @@
       position: relative;
       overflow: hidden;
     }
-    body.dark .app-card {
-      background: rgba(15,23,42,.7);
-    }
+    body.dark .app-card { background: rgba(15,23,42,.7); }
     .app-card:hover {
       transform: translateY(-3px);
       box-shadow: 0 12px 30px rgba(59,130,246,.18);
       border-color: var(--a);
     }
-
-    /* Blue shimmer accent on hover */
     .app-card::before {
       content: "";
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: linear-gradient(135deg, rgba(59,130,246,.08), rgba(6,182,212,.04));
-      opacity: 0;
-      transition: opacity .2s;
-      border-radius: inherit;
+      opacity: 0; transition: opacity .2s; border-radius: inherit;
     }
     .app-card:hover::before { opacity: 1; }
 
-    .app-icon {
-      font-size: 38px;
-      line-height: 1;
-    }
-
-    .app-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--txt);
-    }
+    .app-icon { font-size: 38px; line-height: 1; }
+    .app-title { font-size: 15px; font-weight: 700; color: var(--txt); }
     body.dark .app-title { color: var(--txtd); }
-
-    .app-desc {
-      font-size: 12px;
-      color: var(--mut);
-      line-height: 1.5;
-    }
+    .app-desc { font-size: 12px; color: var(--mut); line-height: 1.5; }
     body.dark .app-desc { color: var(--mutd); }
 
-    /* "New" badge */
     .app-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      padding: 2px 8px;
-      border-radius: 999px;
+      position: absolute; top: 10px; right: 10px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; padding: 2px 8px; border-radius: 999px;
       background: linear-gradient(110deg, var(--a), var(--a2));
       color: #050816;
     }
@@ -156,9 +115,9 @@
       <div class="nav-item" data-href="translator">Translator</div>
       <div class="nav-item" data-href="stocks">Stocks</div>
       <div class="nav-item" data-href="url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="chat">Chat</div>
       <div class="nav-item" data-href="news">News</div>
       <div class="nav-item active" data-href="apps">Apps</div>
-      <div class="nav-item" data-href="chat">Chat</div>
       <div class="nav-item" data-href="games">Games</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
@@ -239,8 +198,8 @@
     <div class="apps-section-label">360 Suite</div>
     <div class="apps-grid">
 
-      <!-- 360Mail -->
-      <a class="app-card" href="https://mail.360-search.com" target="_blank" rel="noopener noreferrer">
+      <!-- 360Mail — links to mail.html -->
+      <a class="app-card" href="mail.html">
         <span class="app-badge">New</span>
         <div class="app-icon">✉️</div>
         <div class="app-title">360Mail</div>

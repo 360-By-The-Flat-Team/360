@@ -37,8 +37,8 @@
   <!-- Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Search bar styles (native form, matches 360 glass pill exactly) -->
   <style>
+    /* ── Search bar ── */
     #search-form {
       display: flex;
       align-items: center;
@@ -49,9 +49,10 @@
       backdrop-filter: blur(12px);
       border: 1px solid var(--br);
       box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      overflow: hidden;
+      overflow: visible; /* allow Bob canvas to peek out */
       transition: box-shadow 0.2s, border-color 0.2s;
       margin: 0 auto;
+      position: relative;
     }
     #search-form:focus-within {
       border-color: var(--a);
@@ -71,10 +72,24 @@
       color: var(--txt);
       font-family: inherit;
       caret-color: var(--a);
+      border-radius: 999px 0 0 999px;
     }
     body.dark #search-input { color: var(--txtd); }
     #search-input::placeholder { color: var(--mut); }
     body.dark #search-input::placeholder { color: var(--mutd); }
+
+    /* Bob canvas — floats above the right edge of the search bar */
+    #bob-canvas-wrap {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    #bob-canvas-wrap.visible { display: flex; }
+    #bob-canvas { display: block; }
+
     #search-btn {
       flex-shrink: 0;
       margin: 6px 8px 6px 0;
@@ -92,57 +107,73 @@
       box-shadow: none !important;
     }
     #search-btn:hover { opacity: 0.85; }
+
+    /* Settings panel Bob section */
+    .settings-bob-section {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(148,163,184,.07);
+      border: 1px solid var(--br);
+    }
+    body.dark .settings-bob-section { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+
+    .bob-toggle-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .bob-toggle-label { font-size: 13px; font-weight: 600; color: var(--txt); }
+    body.dark .bob-toggle-label { color: var(--txtd); }
+    .bob-toggle-sub { font-size: 11px; color: var(--mut); margin-top: 1px; }
+    body.dark .bob-toggle-sub { color: var(--mutd); }
+
+    .bob-track {
+      width: 38px; height: 22px;
+      background: rgba(148,163,184,.3);
+      border-radius: 999px; position: relative;
+      cursor: pointer; transition: background .25s;
+      flex-shrink: 0; border: none;
+    }
+    .bob-track::before {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: white; border-radius: 50%;
+      transition: transform .25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .bob-track.on { background: var(--a); }
+    .bob-track.on::before { transform: translateX(16px); }
   </style>
 </head>
 <body>
 
- <!-- ============================================================
-     360 ANIMATED SPLASH SCREEN
-     ============================================================ -->
+ <!-- ── SPLASH ── -->
 <div id="splash">
   <div class="splash-num" id="s3">3</div>
   <div class="splash-num" id="s6">6</div>
   <div class="splash-num" id="s0">0</div>
 </div>
-
 <style>
-  #splash {
-    position: fixed; inset: 0; z-index: 99999; background: #000;
-    display: flex; align-items: center; justify-content: center;
-    transition: opacity .65s ease;
-  }
-  #splash.fade { opacity: 0; pointer-events: none; }
-  .splash-num {
-    font-family: "Segoe UI", system-ui, sans-serif;
-    font-size: clamp(5rem, 28vw, 9rem);
-    font-weight: 900; color: #fff;
-    letter-spacing: -.01em; line-height: 1; opacity: 0;
-  }
-  @keyframes slideFromBottom {
-    from { opacity: 0; transform: translateY(110px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideFromTop {
-    from { opacity: 0; transform: translateY(-110px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .slide-up   { animation: slideFromBottom .52s cubic-bezier(.22,.68,0,1.1) forwards; }
-  .slide-down { animation: slideFromTop    .52s cubic-bezier(.22,.68,0,1.1) forwards; }
+  #splash { position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .65s ease; }
+  #splash.fade { opacity:0;pointer-events:none; }
+  .splash-num { font-family:"Segoe UI",system-ui,sans-serif;font-size:clamp(5rem,28vw,9rem);font-weight:900;color:#fff;letter-spacing:-.01em;line-height:1;opacity:0; }
+  @keyframes slideFromBottom { from{opacity:0;transform:translateY(110px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideFromTop    { from{opacity:0;transform:translateY(-110px)} to{opacity:1;transform:translateY(0)} }
+  .slide-up   { animation:slideFromBottom .52s cubic-bezier(.22,.68,0,1.1) forwards; }
+  .slide-down { animation:slideFromTop    .52s cubic-bezier(.22,.68,0,1.1) forwards; }
 </style>
-
 <script>
-  (function () {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches
-                  || window.navigator.standalone === true;
-    if (!isPWA) { document.getElementById('splash')?.remove(); return; }
-    const splash = document.getElementById("splash");
-    setTimeout(() => document.getElementById("s3").classList.add("slide-up"),    80);
-    setTimeout(() => document.getElementById("s6").classList.add("slide-down"), 210);
-    setTimeout(() => document.getElementById("s0").classList.add("slide-up"),   340);
-    setTimeout(() => {
-      splash.classList.add("fade");
-      splash.addEventListener("transitionend", () => splash.remove(), { once: true });
-    }, 1250);
+  (function(){
+    const isPWA=window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true;
+    if(!isPWA){document.getElementById('splash')?.remove();return;}
+    const splash=document.getElementById("splash");
+    setTimeout(()=>document.getElementById("s3").classList.add("slide-up"),80);
+    setTimeout(()=>document.getElementById("s6").classList.add("slide-down"),210);
+    setTimeout(()=>document.getElementById("s0").classList.add("slide-up"),340);
+    setTimeout(()=>{splash.classList.add("fade");splash.addEventListener("transitionend",()=>splash.remove(),{once:true});},1250);
   })();
 </script>
 
@@ -174,6 +205,7 @@
       <div class="nav-item" data-href="url-shortener">URL Shortener</div>
       <div class="nav-item" data-href="chat">Chat</div>
       <div class="nav-item" data-href="news">News</div>
+      <div class="nav-item" data-href="apps">Apps</div>
       <div class="nav-item" data-href="games">Games</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
@@ -223,6 +255,19 @@
       <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
       <button id="bgResetBtn" class="settings-btn">Reset</button>
     </div>
+
+    <!-- ── BOB TOGGLE in Settings ── -->
+    <h3 style="margin-top:25px;">Bob</h3>
+    <div class="settings-bob-section">
+      <div class="bob-toggle-row" id="bobToggleRow">
+        <div>
+          <div class="bob-toggle-label">Enable Bob</div>
+          <div class="bob-toggle-sub">Stick figure reacts as you type in the search bar</div>
+        </div>
+        <div class="bob-track" id="bobTrack"></div>
+      </div>
+    </div>
+
     <h3 style="margin-top:25px;">Legal</h3>
     <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
     <a href="tos.html" class="legal-link">📜 Terms of Service</a>
@@ -260,7 +305,7 @@
     <div class="logo-main"><span>360</span></div>
     <div class="weather-chip" id="weatherChip">--°C</div>
 
-    <!-- Search bar — submits to searxng.html -->
+    <!-- Search bar with Bob canvas slot -->
     <div class="search-shell">
       <form id="search-form" role="search" action="find.html" method="GET">
         <input
@@ -273,6 +318,10 @@
           autocapitalize="off"
           spellcheck="false"
         />
+        <!-- Bob sits here, between input and button -->
+        <div id="bob-canvas-wrap">
+          <canvas id="bob-canvas" width="32" height="32"></canvas>
+        </div>
         <button id="search-btn" type="submit">Search</button>
       </form>
     </div>
@@ -286,6 +335,146 @@
   <script src="home.js"></script>
   <script src="cookie.js"></script>
   <script src="cursor.js"></script>
+
+  <!-- ── BOB SCRIPT ── -->
+  <script>
+  (function() {
+    const STORAGE_KEY = "360_bob_on";
+    const bobTrack    = document.getElementById("bobTrack");
+    const bobToggleRow = document.getElementById("bobToggleRow");
+    const bobCanvasWrap = document.getElementById("bob-canvas-wrap");
+    const bobCanvas   = document.getElementById("bob-canvas");
+    const searchInput = document.getElementById("search-input");
+
+    let bobOn = localStorage.getItem(STORAGE_KEY) === "true";
+    let bobRAF = null;
+    let bobFrame = 0;
+    let bobEnergy = 0;
+    let typingVelocity = 0;
+    let lastTypeTime = 0;
+    let lastCharCount = 0;
+
+    // Sync toggle visual
+    function syncTrack() {
+      bobTrack.classList.toggle("on", bobOn);
+      if (bobOn) {
+        bobCanvasWrap.classList.add("visible");
+        startBob();
+      } else {
+        bobCanvasWrap.classList.remove("visible");
+        stopBob();
+      }
+    }
+
+    // Toggle on click
+    bobToggleRow.addEventListener("click", () => {
+      bobOn = !bobOn;
+      localStorage.setItem(STORAGE_KEY, bobOn);
+      syncTrack();
+    });
+
+    // React to search input
+    searchInput.addEventListener("input", () => {
+      if (!bobOn) return;
+      const now = Date.now();
+      const dt = now - lastTypeTime;
+      const chars = Math.abs(searchInput.value.length - lastCharCount);
+      typingVelocity = Math.min((chars / Math.max(dt, 50)) * 1000, 25);
+      lastTypeTime = now;
+      lastCharCount = searchInput.value.length;
+      bobEnergy = Math.min(bobEnergy + typingVelocity * 0.15, 10);
+    });
+
+    function stopBob() {
+      if (bobRAF) { cancelAnimationFrame(bobRAF); bobRAF = null; }
+      const ctx = bobCanvas.getContext("2d");
+      ctx.clearRect(0, 0, 32, 32);
+    }
+
+    function startBob() {
+      if (bobRAF) return; // already running
+      bobFrame = 0; bobEnergy = 0; typingVelocity = 0;
+
+      const ctx = bobCanvas.getContext("2d");
+
+      function drawBob(frame, energy) {
+        ctx.clearRect(0, 0, 32, 32);
+        const t = frame * 0.12;
+        const isDark = document.body.classList.contains("dark");
+        const clr = isDark ? "#e5e7eb" : "#374151";
+        ctx.strokeStyle = clr;
+        ctx.fillStyle   = clr;
+        ctx.lineWidth   = 1.5;
+        ctx.lineCap     = "round";
+
+        const cx = 16, cy = 8;
+        const bounce = energy > 0 ? Math.sin(t * 3) * energy * 1.2 : 0;
+        const wobble = energy > 5 ? Math.sin(t * 7) * 2 : 0;
+        const shake  = energy > 7 ? (Math.random() - 0.5) * energy * 0.5 : 0;
+        const bx = cx + shake, by = cy + bounce * 0.3;
+
+        // head
+        ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill();
+
+        // body
+        const bodyTop = by + 4;
+        const bodyBot = by + 12 + Math.abs(bounce) * 0.2;
+        ctx.beginPath(); ctx.moveTo(bx, bodyTop); ctx.lineTo(bx, bodyBot); ctx.stroke();
+
+        // arms
+        const armSwing = energy > 0 ? Math.sin(t * 3) * Math.min(energy * 3, 30) : 0;
+        const armAlt   = energy > 7 ? Math.cos(t * 5) * 10 : 0;
+        ctx.save(); ctx.translate(bx, bodyTop + 3);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-5+wobble, 5+armSwing); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo( 5+wobble, 5-armSwing+armAlt); ctx.stroke();
+        ctx.restore();
+
+        // legs
+        const legPhase = energy > 0 ? t * 3 : 0;
+        const legKick  = Math.min(energy * 4, 28);
+        ctx.save(); ctx.translate(bx, bodyBot);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-3+Math.sin(legPhase)*legKick*0.4, 7+Math.cos(legPhase)*legKick*0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo( 3-Math.sin(legPhase)*legKick*0.4, 7-Math.cos(legPhase)*legKick*0.2); ctx.stroke();
+        ctx.restore();
+
+        // stars when hyper
+        if (energy > 6) {
+          const starCount = Math.floor(energy - 5);
+          for (let i = 0; i < starCount; i++) {
+            const angle = t * 2 + i * (Math.PI * 2 / starCount);
+            const r = 10 + energy * 0.5;
+            const sx = bx + Math.cos(angle) * r;
+            const sy = by - 2 + Math.sin(angle) * r * 0.5;
+            ctx.save(); ctx.translate(sx, sy);
+            ctx.fillStyle = "#f59e0b";
+            ctx.beginPath();
+            for (let j = 0; j < 5; j++) {
+              const a  = j * 1.2566 - Math.PI / 2;
+              const ra = j * 1.2566 - Math.PI / 2 + 0.6283;
+              if (j===0) ctx.moveTo(Math.cos(a)*2.5, Math.sin(a)*2.5);
+              else { ctx.lineTo(Math.cos(ra)*1.2, Math.sin(ra)*1.2); ctx.lineTo(Math.cos(a)*2.5, Math.sin(a)*2.5); }
+            }
+            ctx.closePath(); ctx.fill(); ctx.restore();
+          }
+        }
+      }
+
+      function tick() {
+        bobFrame++;
+        const now = Date.now();
+        if (now - lastTypeTime > 800) typingVelocity = Math.max(typingVelocity * 0.9, 0);
+        bobEnergy = Math.max(bobEnergy - 0.08, 0);
+        drawBob(bobFrame, bobEnergy);
+        bobRAF = requestAnimationFrame(tick);
+      }
+      tick();
+    }
+
+    // Init
+    syncTrack();
+  })();
+  </script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
