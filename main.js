@@ -1,6 +1,12 @@
 /* ============================================================
-   360 — MAIN.JS V2.1
-   Fixes: Ripple, click-outside menus, OAuth SVG icons
+   360 — MAIN.JS V2.2
+   Changes:
+   - JS prefetch on hover for instant page loads
+   - User PFP chip replaces sign-out button
+   - Nav item ripple effects
+   - Auth tab sliding indicator
+   - Normalized nav active state across all paths
+   - Sidebar close animation (reverse stagger)
    ============================================================ */
 
 const $ = s => document.querySelector(s);
@@ -16,7 +22,42 @@ const supabaseClient = supabase.createClient(
 );
 
 /* ============================================================
-   AUTH SYSTEM
+   PREFETCH — instant page loads on hover
+   Prefetches a page's HTML as soon as the user hovers a link
+   or nav item, so by the time they click it's already cached.
+   ============================================================ */
+const prefetched = new Set();
+
+function prefetchPage(href) {
+  if (!href || href.startsWith("http") || href.startsWith("#") || prefetched.has(href)) return;
+  prefetched.add(href);
+  const link = document.createElement("link");
+  link.rel = "prefetch";
+  link.href = href;
+  link.as = "document";
+  document.head.appendChild(link);
+}
+
+// Prefetch on nav-item hover
+document.addEventListener("mouseover", e => {
+  const navItem = e.target.closest(".nav-item[data-href]");
+  if (navItem) prefetchPage(navItem.dataset.href);
+
+  const anchor = e.target.closest("a[href]");
+  if (anchor && !anchor.href.startsWith("mailto") && !anchor.href.startsWith("javascript")) {
+    prefetchPage(anchor.getAttribute("href"));
+  }
+});
+
+// Also prefetch all nav items immediately on load (tiny pages, big UX win)
+document.addEventListener("DOMContentLoaded", () => {
+  $$(".nav-item[data-href]").forEach(item => {
+    setTimeout(() => prefetchPage(item.dataset.href), 300);
+  });
+});
+
+/* ============================================================
+   AUTH SYSTEM + USER CHIP
    ============================================================ */
 const authPopup    = $("#auth-popup");
 const authEmail    = $("#auth-email");
@@ -39,11 +80,8 @@ if (signInBtn) signInBtn.onclick = () => location.href = "/accounts.html?signin"
 if (signUpBtn) signUpBtn.onclick = () => location.href = "/accounts.html?signup";
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
-/* Click backdrop to close auth popup */
 if (authPopup) {
-  authPopup.addEventListener("click", e => {
-    if (e.target === authPopup) closeAuth();
-  });
+  authPopup.addEventListener("click", e => { if (e.target === authPopup) closeAuth(); });
 }
 
 if (authSignupBtn) {
@@ -74,7 +112,7 @@ if (githubBtn) {
       provider: "github",
       options: { redirectTo: window.location.origin }
     });
-    if (error) console.error("GitHub OAuth error:", error.message);
+    if (error) console.error("GitHub OAuth:", error.message);
   };
 }
 
@@ -85,10 +123,11 @@ if (googleBtn) {
       provider: "google",
       options: { redirectTo: window.location.origin }
     });
-    if (error) console.error("Google OAuth error:", error.message);
+    if (error) console.error("Google OAuth:", error.message);
   };
 }
 
+// Sign-out handled via chip dropdown
 if (signOutBtn) {
   signOutBtn.onclick = async () => {
     await supabaseClient.auth.signOut();
@@ -96,80 +135,210 @@ if (signOutBtn) {
   };
 }
 
+/* ── User Chip ── */
+function getInitials(name) {
+  if (!name) return "?";
+  const p = name.trim().split(" ");
+  return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[1][0]).toUpperCase();
+}
+
+function buildUserChip(user, profile) {
+  // Remove any existing chip
+  document.querySelector(".user-chip")?.remove();
+
+  const username  = profile?.username
+    || user.user_metadata?.username
+    || user.user_metadata?.full_name
+    || user.email?.split("@")[0]
+    || "User";
+
+  const avatarUrl = profile?.avatar_url || user.user_metadata?.avatar_url || null;
+
+  const chip = document.createElement("div");
+  chip.className = "user-chip";
+  chip.title = "Signed in as " + username;
+
+  chip.innerHTML = `
+    <div class="user-chip-avatar" id="chipAvatar">
+      ${avatarUrl ? `<img src="${avatarUrl}" alt="${username}" onerror="this.remove()" />` : getInitials(username)}
+    </div>
+    <span class="user-chip-label">@${username}</span>
+    <div class="user-chip-dropdown">
+      <div class="chip-drop-item" id="chipProfile">👤 My Account</div>
+      <div class="chip-drop-item danger" id="chipSignOut">Sign Out</div>
+    </div>
+  `;
+
+  chip.style.display = "flex";
+
+  // Toggle dropdown
+  chip.addEventListener("click", e => {
+    e.stopPropagation();
+    chip.classList.toggle("open");
+  });
+  document.addEventListener("click", () => chip.classList.remove("open"));
+
+  chip.querySelector("#chipProfile").onclick = e => {
+    e.stopPropagation();
+    location.href = "/accounts.html";
+  };
+  chip.querySelector("#chipSignOut").onclick = async e => {
+    e.stopPropagation();
+    await supabaseClient.auth.signOut();
+    location.href = "/accounts.html?login&from=logout";
+  };
+
+  return chip;
+}
+
 async function updateAuthUI() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (signInBtn)  signInBtn.style.display  = session ? "none"         : "inline-block";
-  if (signUpBtn)  signUpBtn.style.display  = session ? "none"         : "inline-block";
-  if (signOutBtn) signOutBtn.style.display = session ? "inline-block" : "none";
+
+  // Hide/show the plain sign-in/up buttons
+  const showBtns = !session;
+  if (signInBtn)  signInBtn.style.display  = showBtns ? "inline-block" : "none";
+  if (signUpBtn)  signUpBtn.style.display  = showBtns ? "inline-block" : "none";
+  if (signOutBtn) signOutBtn.style.display = "none"; // always hidden; chip handles this
+
+  if (session) {
+    // Fetch profile for username / avatar
+    let profile = null;
+    try {
+      const { data } = await supabaseClient
+        .from("profiles")
+        .select("username,avatar_url")
+        .eq("id", session.user.id)
+        .single();
+      profile = data;
+    } catch {}
+
+    const authRight = $(".auth-top-right");
+    if (authRight) {
+      const chip = buildUserChip(session.user, profile);
+      authRight.appendChild(chip);
+    }
+  } else {
+    document.querySelector(".user-chip")?.remove();
+  }
 }
 updateAuthUI();
 
+supabaseClient.auth.onAuthStateChange(() => updateAuthUI());
+
 /* ============================================================
-   SIDEBAR — click outside to close
+   SIDEBAR — open/close with animation
    ============================================================ */
-const sidebar = document.querySelector(".sidebar");
-const settingsPanel = document.querySelector(".settings-panel");
-const overlay = document.querySelector(".overlay");
-const sidebarToggle = document.querySelector(".sidebar-toggle");
-const settingsBtn = document.getElementById("settingsBtn");
+const sidebar       = $(".sidebar");
+const settingsPanel = $(".settings-panel");
+const overlay       = $(".overlay");
+const sidebarToggle = $(".sidebar-toggle");
+const settingsBtn   = $("#settingsBtn");
 
-/* Helper: update overlay based on open panels */
 function updateOverlay() {
-  const anyOpen =
-    sidebar.classList.contains("open") ||
-    settingsPanel.classList.contains("open");
-
-  if (anyOpen) {
-    overlay.classList.add("active");
-  } else {
-    overlay.classList.remove("active");
-  }
+  const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
+  overlay?.classList.toggle("active", !!anyOpen);
 }
 
-/* Sidebar toggle */
+function closeSidebar() {
+  // Remove .open so the CSS transition reverses
+  sidebar?.classList.remove("open");
+  // Reset stagger animation states so they replay next open
+  if (sidebar) {
+    $$(".nav-item", sidebar).forEach(item => {
+      item.style.animation = "none";
+    });
+  }
+  updateOverlay();
+}
+
 sidebarToggle?.addEventListener("click", e => {
   e.stopPropagation();
-  sidebar.classList.toggle("open");
-  updateOverlay();
-});
-
-/* Settings toggle */
-settingsBtn?.addEventListener("click", e => {
-  e.stopPropagation();
-  settingsPanel.classList.toggle("open");
-  updateOverlay();
-});
-
-/* Clicking overlay closes everything */
-overlay?.addEventListener("click", () => {
-  sidebar.classList.remove("open");
-  settingsPanel.classList.remove("open");
-  updateOverlay();
-});
-
-/* Clicking anywhere outside closes everything */
-document.addEventListener("click", e => {
-  const insideSidebar = e.target.closest(".sidebar");
-  const insideSettings = e.target.closest(".settings-panel");
-  const onToggle = e.target.closest(".sidebar-toggle");
-  const onSettingsBtn = e.target.closest("#settingsBtn");
-
-  if (!insideSidebar && !insideSettings && !onToggle && !onSettingsBtn) {
-    sidebar.classList.remove("open");
-    settingsPanel.classList.remove("open");
+  if (sidebar?.classList.contains("open")) {
+    closeSidebar();
+  } else {
+    // Re-enable animations before opening
+    if (sidebar) {
+      $$(".nav-item", sidebar).forEach(item => {
+        item.style.animation = "";
+      });
+    }
+    sidebar?.classList.add("open");
     updateOverlay();
   }
 });
 
-/* Nav items */
-$$(".nav-item").forEach(item => {
-  item.onclick = e => {
-    e.stopPropagation();
-    const href = item.dataset.href;
-    if (href) window.location.href = href;
-    closeSidebar();
-  };
+settingsBtn?.addEventListener("click", e => {
+  e.stopPropagation();
+  settingsPanel?.classList.toggle("open");
+  updateOverlay();
 });
+
+overlay?.addEventListener("click", () => {
+  closeSidebar();
+  settingsPanel?.classList.remove("open");
+  updateOverlay();
+});
+
+document.addEventListener("click", e => {
+  if (
+    !e.target.closest(".sidebar") &&
+    !e.target.closest(".settings-panel") &&
+    !e.target.closest(".sidebar-toggle") &&
+    !e.target.closest("#settingsBtn")
+  ) {
+    closeSidebar();
+    settingsPanel?.classList.remove("open");
+    updateOverlay();
+  }
+});
+
+/* ── Nav item click + RIPPLE ── */
+function $$(selector, root = document) { return root.querySelectorAll(selector); }
+
+$$(".nav-item").forEach(item => {
+  item.addEventListener("click", e => {
+    e.stopPropagation();
+
+    // Ripple
+    const rect = item.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top  - size / 2;
+    const rip = document.createElement("span");
+    rip.className = "nav-ripple";
+    Object.assign(rip.style, {
+      width: size + "px", height: size + "px",
+      left: x + "px", top: y + "px",
+    });
+    item.appendChild(rip);
+    rip.addEventListener("animationend", () => rip.remove());
+
+    const href = item.dataset.href;
+    if (href) {
+      setTimeout(() => { window.location.href = href; }, 200);
+    }
+    closeSidebar();
+  });
+});
+
+/* ============================================================
+   NAV ACTIVE STATE — normalize paths
+   Marks the nav item whose href matches the current page,
+   regardless of relative vs absolute path format.
+   ============================================================ */
+(function markActiveNav() {
+  const path = location.pathname.replace(/\/$/, "") || "/";
+  $$(".nav-item[data-href]").forEach(item => {
+    let href = item.dataset.href || "";
+    // Normalize: strip leading "../" and ensure leading "/"
+    href = "/" + href.replace(/^\/+/, "").replace(/^\.\.\//, "");
+    if (href === "/" && (path === "/" || path === "/index.html")) {
+      item.classList.add("active");
+    } else if (href !== "/" && path.startsWith(href)) {
+      item.classList.add("active");
+    }
+  });
+})();
 
 /* ============================================================
    THEME SYSTEM
@@ -178,9 +347,7 @@ $$(".swatch").forEach(swatch => {
   swatch.onclick = e => {
     e.stopPropagation();
     const theme = swatch.dataset.theme;
-    body.classList.forEach(cls => {
-      if (cls.startsWith("theme-")) body.classList.remove(cls);
-    });
+    body.classList.forEach(cls => { if (cls.startsWith("theme-")) body.classList.remove(cls); });
     body.classList.add("theme-" + theme);
     localStorage.setItem("theme", theme);
     $$(".swatch").forEach(s => s.classList.remove("active"));
@@ -192,8 +359,8 @@ $$(".swatch").forEach(swatch => {
   const saved = localStorage.getItem("theme");
   if (!saved) return;
   body.classList.add("theme-" + saved);
-  const swatch = $(`.swatch[data-theme="${saved}"]`);
-  if (swatch) swatch.classList.add("active");
+  const sw = $(`.swatch[data-theme="${saved}"]`);
+  if (sw) sw.classList.add("active");
 })();
 
 /* ============================================================
@@ -231,26 +398,24 @@ function applyBackground(url) {
   if (saved) applyBackground(saved);
 })();
 
-const bgUpload = $("#bgUpload");
+const bgUpload   = $("#bgUpload");
+const bgUrlBtn   = $("#bgUrlBtn");
+const bgResetBtn = $("#bgResetBtn");
+
 if (bgUpload) {
   bgUpload.addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = () => applyBackground(reader.result);
     reader.readAsDataURL(file);
   });
 }
-
-const bgUrlBtn = $("#bgUrlBtn");
 if (bgUrlBtn) {
   bgUrlBtn.onclick = () => {
     const url = $("#bgUrlInput")?.value.trim();
     if (url) applyBackground(url);
   };
 }
-
-const bgResetBtn = $("#bgResetBtn");
 if (bgResetBtn) {
   bgResetBtn.onclick = () => {
     localStorage.removeItem("customBG");
@@ -259,16 +424,52 @@ if (bgResetBtn) {
 }
 
 /* ============================================================
-   RIPPLE EFFECT — FIXED
-   Double rAF ensures transition fires correctly.
-   Cleans up after itself via transitionend.
+   AUTH TAB SLIDING INDICATOR (accounts.html)
+   Updates the ::before pseudo-element position to slide under
+   the active tab smoothly instead of flicking.
+   ============================================================ */
+function syncTabSlider(tabsEl) {
+  if (!tabsEl) return;
+  const active = tabsEl.querySelector(".ac-tab.active");
+  if (!active) return;
+  const tabsRect  = tabsEl.getBoundingClientRect();
+  const activeRect = active.getBoundingClientRect();
+  const left  = activeRect.left - tabsRect.left;
+  const width = activeRect.width;
+  tabsEl.style.setProperty("--slider-left",  left + "px");
+  tabsEl.style.setProperty("--slider-width", width + "px");
+  // Apply via inline style since ::before can't read custom props directly
+  // We inject a style tag instead
+  let styleTag = document.getElementById("_tab_slider_style");
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = "_tab_slider_style";
+    document.head.appendChild(styleTag);
+  }
+  styleTag.textContent = `.ac-tabs::before { left: ${left}px !important; width: ${width}px !important; }`;
+}
+
+document.addEventListener("click", e => {
+  const tab = e.target.closest(".ac-tab");
+  if (!tab) return;
+  const tabs = tab.closest(".ac-tabs");
+  if (!tabs) return;
+  // Small delay so active class is set first
+  requestAnimationFrame(() => syncTabSlider(tabs));
+});
+
+// Initial sync on load
+document.addEventListener("DOMContentLoaded", () => {
+  syncTabSlider($(".ac-tabs"));
+});
+
+/* ============================================================
+   RIPPLE EFFECT (global buttons)
    ============================================================ */
 document.addEventListener("click", e => {
-  const target = e.target.closest(
-    "[data-ripple], button, .nav-item, .swatch, .auth-btn"
-  );
+  const target = e.target.closest("[data-ripple], button, .swatch, .auth-btn");
   if (!target) return;
-  if (target.matches("input, textarea, select, .overlay, .auth-popup")) return;
+  if (target.matches("input, textarea, select, .overlay, .auth-popup, .nav-item")) return;
 
   const rect   = target.getBoundingClientRect();
   const size   = Math.max(rect.width, rect.height);
@@ -284,19 +485,18 @@ document.addEventListener("click", e => {
     left:          x + "px",
     top:           y + "px",
     borderRadius:  "50%",
-    background:    "rgba(255,255,255,0.3)",
+    background:    "rgba(255,255,255,0.28)",
     transform:     "scale(0)",
     opacity:       "1",
     pointerEvents: "none",
     transition:    "transform 0.5s ease, opacity 0.5s ease"
   });
 
-  const prevPosition = getComputedStyle(target).position;
-  if (prevPosition === "static") target.style.position = "relative";
+  const prevPos = getComputedStyle(target).position;
+  if (prevPos === "static") target.style.position = "relative";
   target.style.overflow = "hidden";
   target.appendChild(ripple);
 
-  /* Double rAF — ensures browser paints scale(0) before animating */
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       ripple.style.transform = "scale(2.5)";
@@ -308,7 +508,7 @@ document.addEventListener("click", e => {
     ripple.remove();
     if (!target.querySelector(".ripple-fx")) {
       target.style.overflow = "";
-      if (prevPosition === "static") target.style.position = "";
+      if (prevPos === "static") target.style.position = "";
     }
   }, { once: true });
 });
@@ -320,7 +520,7 @@ const clickSound = $("#clickSound");
 if (clickSound) {
   document.addEventListener("click", e => {
     const tag = e.target.tagName.toLowerCase();
-    if (["button", "a"].includes(tag) || e.target.classList.contains("nav-item")) {
+    if (["button","a"].includes(tag) || e.target.classList.contains("nav-item")) {
       clickSound.currentTime = 0;
       clickSound.play().catch(() => {});
     }
@@ -332,16 +532,14 @@ if (clickSound) {
    ============================================================ */
 let deferredPrompt;
 const installBtn = $("#installBtn");
-
 window.addEventListener("beforeinstallprompt", e => {
   e.preventDefault();
   deferredPrompt = e;
   if (installBtn) installBtn.style.display = "block";
 });
-
 if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
 
 /* ============================================================
    READY LOG
    ============================================================ */
-console.log("%c360 V2.1 — main.js loaded (cursor handled by cursor.js)", "color:#4ade80;font-weight:bold;font-size:14px;");
+console.log("%c360 V2.2 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
