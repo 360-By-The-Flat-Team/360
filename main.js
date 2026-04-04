@@ -1,5 +1,5 @@
 /* ============================================================
-   360 — MAIN.JS V2.2 (FIXED)
+   360 — MAIN.JS V2.2 (AUTH FIXED)
    ============================================================ */
 
 const $ = s => document.querySelector(s);
@@ -15,38 +15,29 @@ const supabaseClient = supabase.createClient(
 );
 
 /* ============================================================
-   PREFETCH — instant page loads on hover
+   PREFETCH
    ============================================================ */
 const prefetched = new Set();
-
 function prefetchPage(href) {
   if (!href || href.startsWith("http") || href.startsWith("#") || prefetched.has(href)) return;
   prefetched.add(href);
   const link = document.createElement("link");
-  link.rel = "prefetch";
-  link.href = href;
-  link.as = "document";
+  link.rel = "prefetch"; link.href = href; link.as = "document";
   document.head.appendChild(link);
 }
-
 document.addEventListener("mouseover", e => {
   const navItem = e.target.closest(".nav-item[data-href]");
   if (navItem) prefetchPage(navItem.dataset.href);
-
   const anchor = e.target.closest("a[href]");
-  if (anchor && !anchor.href.startsWith("mailto") && !anchor.href.startsWith("javascript")) {
+  if (anchor && !anchor.href.startsWith("mailto") && !anchor.href.startsWith("javascript"))
     prefetchPage(anchor.getAttribute("href"));
-  }
 });
-
 document.addEventListener("DOMContentLoaded", () => {
-  $$(".nav-item[data-href]").forEach(item => {
-    setTimeout(() => prefetchPage(item.dataset.href), 300);
-  });
+  $$(".nav-item[data-href]").forEach(item => setTimeout(() => prefetchPage(item.dataset.href), 300));
 });
 
 /* ============================================================
-   AUTH SYSTEM + USER CHIP
+   AUTH SYSTEM
    ============================================================ */
 const authPopup    = $("#auth-popup");
 const authEmail    = $("#auth-email");
@@ -65,28 +56,26 @@ function closeAuth() {
   if (authError) authError.textContent = "";
 }
 
-if (signInBtn) signInBtn.onclick = () => location.href = "/accounts.html?signin";
-if (signUpBtn) signUpBtn.onclick = () => location.href = "/accounts.html?signup";
-if (authCloseBtn) authCloseBtn.onclick = closeAuth;
+/* Redirect to accounts page */
+if (signInBtn)  signInBtn.onclick  = () => location.href = "/accounts.html?signin";
+if (signUpBtn)  signUpBtn.onclick  = () => location.href = "/accounts.html?signup";
+if (signOutBtn) signOutBtn.style.display = "none";
 
-if (authPopup) {
-  authPopup.addEventListener("click", e => { if (e.target === authPopup) closeAuth(); });
-}
+if (authPopup) authPopup.addEventListener("click", e => { if (e.target === authPopup) closeAuth(); });
+if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
 if (authSignupBtn) {
   authSignupBtn.onclick = async () => {
-    const email    = authEmail?.value.trim();
-    const password = authPassword?.value.trim();
+    const email = authEmail?.value.trim(), password = authPassword?.value.trim();
     if (!email || !password) { if (authError) authError.textContent = "Email and password required."; return; }
     const { error } = await supabaseClient.auth.signUp({ email, password });
-    if (authError) authError.textContent = error ? error.message : "Check your email to confirm your account!";
+    if (authError) authError.textContent = error ? error.message : "Check your email to confirm!";
   };
 }
 
 if (authLoginBtn) {
   authLoginBtn.onclick = async () => {
-    const email    = authEmail?.value.trim();
-    const password = authPassword?.value.trim();
+    const email = authEmail?.value.trim(), password = authPassword?.value.trim();
     if (!email || !password) { if (authError) authError.textContent = "Email and password required."; return; }
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) { if (authError) authError.textContent = error.message; }
@@ -97,120 +86,179 @@ if (authLoginBtn) {
 const githubBtn = $("#github-login");
 if (githubBtn) {
   githubBtn.onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-      provider: "github",
-      options: { redirectTo: window.location.origin }
-    });
+    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "github", options: { redirectTo: window.location.origin } });
     if (error) console.error("GitHub OAuth:", error.message);
   };
 }
-
 const googleBtn = $("#google-login");
 if (googleBtn) {
   googleBtn.onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin }
-    });
+    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
     if (error) console.error("Google OAuth:", error.message);
   };
 }
 
-if (signOutBtn) {
-  signOutBtn.onclick = async () => {
-    await supabaseClient.auth.signOut();
-    location.href = "/accounts.html?login&from=logout";
-  };
-}
-
-/* ── User Chip ── */
+/* ── Helpers ── */
 function getInitials(name) {
   if (!name) return "?";
-  const p = name.trim().split(" ");
-  return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[1][0]).toUpperCase();
+  const p = name.trim().split(/\s+/);
+  return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
 }
 
+/* ── Build user chip ── */
 function buildUserChip(user, profile) {
   document.querySelector(".user-chip")?.remove();
 
-  const username  = profile?.username
+  const username = profile?.username
     || user.user_metadata?.username
     || user.user_metadata?.full_name
     || user.email?.split("@")[0]
     || "User";
-
   const avatarUrl = profile?.avatar_url || user.user_metadata?.avatar_url || null;
+  const isDark = body.classList.contains("dark");
 
   const chip = document.createElement("div");
   chip.className = "user-chip";
-  chip.title = "Signed in as " + username;
-
-  chip.innerHTML = `
-    <div class="user-chip-avatar" id="chipAvatar">
-      ${avatarUrl ? `<img src="${avatarUrl}" alt="${username}" onerror="this.remove()" />` : getInitials(username)}
-    </div>
-    <span class="user-chip-label">@${username}</span>
-    <div class="user-chip-dropdown">
-      <div class="chip-drop-item" id="chipProfile">👤 My Account</div>
-      <div class="chip-drop-item danger" id="chipSignOut">Sign Out</div>
-    </div>
+  chip.style.cssText = `
+    display:flex;align-items:center;gap:8px;
+    padding:5px 12px 5px 5px;border-radius:999px;
+    background:${isDark ? "rgba(9,9,20,0.97)" : "rgba(255,255,255,0.9)"};
+    backdrop-filter:blur(12px);
+    border:1px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(148,163,184,0.4)"};
+    cursor:pointer;position:relative;z-index:50;
+    font-size:13px;font-weight:600;white-space:nowrap;max-width:220px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.1);
   `;
 
-  chip.style.display = "flex";
+  /* Avatar */
+  const av = document.createElement("div");
+  av.style.cssText = `
+    width:28px;height:28px;border-radius:50%;flex-shrink:0;overflow:hidden;
+    background:linear-gradient(135deg,var(--a,#3b82f6),var(--a2,#06b6d4));
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:#050816;
+  `;
+  if (avatarUrl) {
+    const img = document.createElement("img");
+    img.src = avatarUrl; img.alt = username;
+    img.style.cssText = "width:100%;height:100%;object-fit:cover;";
+    img.onerror = () => { img.remove(); av.textContent = getInitials(username); };
+    av.appendChild(img);
+  } else {
+    av.textContent = getInitials(username);
+  }
 
-  chip.addEventListener("click", e => {
-    e.stopPropagation();
-    chip.classList.toggle("open");
-  });
-  document.addEventListener("click", () => chip.classList.remove("open"));
+  /* Label */
+  const lbl = document.createElement("span");
+  lbl.textContent = "@" + username;
+  lbl.style.cssText = `
+    color:${isDark ? "#e7e7ea" : "#111827"};
+    overflow:hidden;text-overflow:ellipsis;max-width:110px;
+  `;
 
-  chip.querySelector("#chipProfile").onclick = e => {
-    e.stopPropagation();
-    location.href = "/accounts.html";
+  /* Caret */
+  const caret = document.createElement("span");
+  caret.textContent = "▾";
+  caret.style.cssText = "font-size:10px;opacity:0.5;";
+
+  /* Dropdown */
+  const dd = document.createElement("div");
+  dd.style.cssText = `
+    display:none;position:absolute;top:calc(100% + 8px);right:0;
+    min-width:175px;border-radius:12px;overflow:hidden;z-index:200;
+    background:${isDark ? "rgba(9,9,20,0.98)" : "rgba(255,255,255,0.98)"};
+    border:1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(148,163,184,0.3)"};
+    box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  `;
+
+  const makeItem = (text, danger = false) => {
+    const item = document.createElement("div");
+    item.textContent = text;
+    item.style.cssText = `
+      padding:11px 16px;font-size:13px;font-weight:500;cursor:pointer;
+      color:${danger ? "#ef4444" : (isDark ? "#e7e7ea" : "#111827")};
+      transition:background 0.15s;
+    `;
+    item.addEventListener("mouseenter", () => item.style.background = danger ? "rgba(239,68,68,0.08)" : "rgba(148,163,184,0.15)");
+    item.addEventListener("mouseleave", () => item.style.background = "");
+    return item;
   };
-  chip.querySelector("#chipSignOut").onclick = async e => {
+
+  const profileItem = makeItem("👤 My Account");
+  profileItem.onclick = e => { e.stopPropagation(); location.href = "/accounts.html"; };
+
+  const signedInAs = makeItem("Signed in as @" + username);
+  signedInAs.style.cssText += "font-size:11px;opacity:0.5;cursor:default;border-bottom:1px solid rgba(148,163,184,0.2);";
+  signedInAs.addEventListener("mouseenter", () => signedInAs.style.background = "");
+
+  const signOutItem = makeItem("Sign Out", true);
+  signOutItem.onclick = async e => {
     e.stopPropagation();
+    signOutItem.textContent = "Signing out…";
     await supabaseClient.auth.signOut();
     location.href = "/accounts.html?login&from=logout";
   };
 
+  dd.appendChild(signedInAs);
+  dd.appendChild(profileItem);
+  dd.appendChild(signOutItem);
+
+  chip.appendChild(av);
+  chip.appendChild(lbl);
+  chip.appendChild(caret);
+  chip.appendChild(dd);
+
+  let open = false;
+  chip.addEventListener("click", e => {
+    e.stopPropagation();
+    open = !open;
+    dd.style.display = open ? "block" : "none";
+    caret.textContent = open ? "▴" : "▾";
+  });
+  document.addEventListener("click", () => {
+    open = false; dd.style.display = "none"; caret.textContent = "▾";
+  });
+
   return chip;
 }
 
+/* ── Update auth UI ── */
 async function updateAuthUI() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
-  const showBtns = !session;
-  if (signInBtn)  signInBtn.style.display  = showBtns ? "inline-block" : "none";
-  if (signUpBtn)  signUpBtn.style.display  = showBtns ? "inline-block" : "none";
-  if (signOutBtn) signOutBtn.style.display = "none";
-
-  if (session) {
-    let profile = null;
-    try {
-      const { data } = await supabaseClient
-        .from("profiles")
-        .select("username,avatar_url")
-        .eq("id", session.user.id)
-        .single();
-      profile = data;
-    } catch {}
-
-    const authRight = $(".auth-top-right");
-    if (authRight) {
-      const chip = buildUserChip(session.user, profile);
-      authRight.appendChild(chip);
-    }
-  } else {
+    if (signOutBtn) signOutBtn.style.display = "none";
     document.querySelector(".user-chip")?.remove();
+
+    if (session) {
+      if (signInBtn) signInBtn.style.display = "none";
+      if (signUpBtn) signUpBtn.style.display = "none";
+
+      let profile = null;
+      try {
+        const { data } = await supabaseClient
+          .from("profiles").select("username,avatar_url").eq("id", session.user.id).single();
+        profile = data;
+      } catch (_) {}
+
+      const chip = buildUserChip(session.user, profile);
+      const authRight = $(".auth-top-right");
+      if (authRight) authRight.appendChild(chip);
+
+    } else {
+      if (signInBtn) signInBtn.style.display = "inline-block";
+      if (signUpBtn) signUpBtn.style.display = "inline-block";
+    }
+  } catch (err) {
+    console.warn("updateAuthUI error:", err);
   }
 }
-updateAuthUI();
 
+updateAuthUI();
 supabaseClient.auth.onAuthStateChange(() => updateAuthUI());
 
 /* ============================================================
-   SIDEBAR — open/close
+   SIDEBAR
    ============================================================ */
 const sidebar       = $(".sidebar");
 const settingsPanel = $(".settings-panel");
@@ -225,11 +273,7 @@ function updateOverlay() {
 
 function closeSidebar() {
   sidebar?.classList.remove("open");
-  if (sidebar) {
-    sidebar.querySelectorAll(".nav-item").forEach(item => {
-      item.style.animation = "none";
-    });
-  }
+  if (sidebar) sidebar.querySelectorAll(".nav-item").forEach(i => { i.style.animation = "none"; });
   updateOverlay();
 }
 
@@ -239,11 +283,7 @@ if (sidebarToggle) {
     if (sidebar?.classList.contains("open")) {
       closeSidebar();
     } else {
-      if (sidebar) {
-        sidebar.querySelectorAll(".nav-item").forEach(item => {
-          item.style.animation = "";
-        });
-      }
+      if (sidebar) sidebar.querySelectorAll(".nav-item").forEach(i => { i.style.animation = ""; });
       sidebar?.classList.add("open");
       updateOverlay();
     }
@@ -267,42 +307,31 @@ if (overlay) {
 }
 
 document.addEventListener("click", e => {
-  if (
-    !e.target.closest(".sidebar") &&
-    !e.target.closest(".settings-panel") &&
-    !e.target.closest(".sidebar-toggle") &&
-    !e.target.closest("#settingsBtn")
-  ) {
+  if (!e.target.closest(".sidebar") && !e.target.closest(".settings-panel") &&
+      !e.target.closest(".sidebar-toggle") && !e.target.closest("#settingsBtn")) {
     closeSidebar();
     settingsPanel?.classList.remove("open");
     updateOverlay();
   }
 });
 
-/* ── Nav item click + RIPPLE ── */
-// NOTE: Use querySelectorAll directly here — do NOT redeclare $$
+/* ── Nav item click + ripple ── */
 document.querySelectorAll(".nav-item").forEach(item => {
   item.addEventListener("click", e => {
     e.stopPropagation();
-
-    // Ripple effect
     const rect = item.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
-    const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top  - size / 2;
     const rip = document.createElement("span");
     rip.className = "nav-ripple";
     Object.assign(rip.style, {
       width: size + "px", height: size + "px",
-      left: x + "px", top: y + "px",
+      left: (e.clientX - rect.left - size / 2) + "px",
+      top:  (e.clientY - rect.top  - size / 2) + "px",
     });
     item.appendChild(rip);
     rip.addEventListener("animationend", () => rip.remove());
-
     const href = item.dataset.href;
-    if (href) {
-      setTimeout(() => { window.location.href = href; }, 180);
-    }
+    if (href) setTimeout(() => { window.location.href = href; }, 180);
     closeSidebar();
   });
 });
@@ -313,14 +342,9 @@ document.querySelectorAll(".nav-item").forEach(item => {
 (function markActiveNav() {
   const path = location.pathname.replace(/\/$/, "") || "/";
   document.querySelectorAll(".nav-item[data-href]").forEach(item => {
-    let href = item.dataset.href || "";
-    // Normalize: strip leading "../" and ensure leading "/"
-    href = "/" + href.replace(/^\/+/, "").replace(/^\.\.\//, "");
-    if (href === "/" && (path === "/" || path === "/index.html")) {
-      item.classList.add("active");
-    } else if (href !== "/" && path.startsWith(href)) {
-      item.classList.add("active");
-    }
+    let href = "/" + (item.dataset.href || "").replace(/^\/+/, "").replace(/^\.\.\//, "");
+    if (href === "/" && (path === "/" || path === "/index.html")) item.classList.add("active");
+    else if (href !== "/" && path.startsWith(href)) item.classList.add("active");
   });
 })();
 
@@ -416,15 +440,13 @@ function syncTabSlider(tabsEl) {
   if (!active) return;
   const tabsRect   = tabsEl.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();
-  const left  = activeRect.left - tabsRect.left;
-  const width = activeRect.width;
   let styleTag = document.getElementById("_tab_slider_style");
   if (!styleTag) {
     styleTag = document.createElement("style");
     styleTag.id = "_tab_slider_style";
     document.head.appendChild(styleTag);
   }
-  styleTag.textContent = `.ac-tabs::before { left: ${left}px !important; width: ${width}px !important; }`;
+  styleTag.textContent = `.ac-tabs::before { left: ${activeRect.left - tabsRect.left}px !important; width: ${activeRect.width}px !important; }`;
 }
 
 document.addEventListener("click", e => {
@@ -449,23 +471,18 @@ document.addEventListener("click", e => {
 
   const rect   = target.getBoundingClientRect();
   const size   = Math.max(rect.width, rect.height);
-  const x      = e.clientX - rect.left - size / 2;
-  const y      = e.clientY - rect.top  - size / 2;
   const ripple = document.createElement("span");
   ripple.className = "ripple-fx";
-
   Object.assign(ripple.style, {
-    position:      "absolute",
-    width:         size + "px",
-    height:        size + "px",
-    left:          x + "px",
-    top:           y + "px",
-    borderRadius:  "50%",
-    background:    "rgba(255,255,255,0.28)",
-    transform:     "scale(0)",
-    opacity:       "1",
+    position: "absolute",
+    width: size + "px", height: size + "px",
+    left: (e.clientX - rect.left - size / 2) + "px",
+    top:  (e.clientY - rect.top  - size / 2) + "px",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.28)",
+    transform: "scale(0)", opacity: "1",
     pointerEvents: "none",
-    transition:    "transform 0.5s ease, opacity 0.5s ease"
+    transition: "transform 0.5s ease, opacity 0.5s ease"
   });
 
   const prevPos = getComputedStyle(target).position;
@@ -473,12 +490,10 @@ document.addEventListener("click", e => {
   target.style.overflow = "hidden";
   target.appendChild(ripple);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      ripple.style.transform = "scale(2.5)";
-      ripple.style.opacity   = "0";
-    });
-  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ripple.style.transform = "scale(2.5)";
+    ripple.style.opacity   = "0";
+  }));
 
   ripple.addEventListener("transitionend", () => {
     ripple.remove();
@@ -515,7 +530,4 @@ window.addEventListener("beforeinstallprompt", e => {
 });
 if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
 
-/* ============================================================
-   READY LOG
-   ============================================================ */
-console.log("%c360 V2.2 FIXED — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
+console.log("%c360 V2.2 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
