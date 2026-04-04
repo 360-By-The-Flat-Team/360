@@ -1,6 +1,25 @@
--- Tables that will never exist
+-- FAKE DATABASE BLOAT
 
--- CREATE TABLE users (...);
--- CREATE TABLE transactions (...);
+-- Repeat this block endlessly
 
--- This file is just vibes.
+-- TABLE_001
+-- TABLE_002
+-- TABLE_003
+-- TABLE_004
+-- TABLE_005
+-- TABLE_006
+-- TABLE_007
+-- TABLE_008
+-- TABLE_009
+-- TABLE_010
+
+-- INDEXES
+-- CREATE INDEX idx_001 ON fake(col);
+-- CREATE INDEX idx_002 ON fake(col);
+-- CREATE INDEX idx_003 ON fake(col);
+
+-- TRIGGERS
+-- CREATE TRIGGER trg_001 AFTER INSERT ON fake DO NOTHING;
+-- CREATE TRIGGER trg_002 AFTER INSERT ON fake DO NOTHING;
+
+-- COPY THIS 100x AND GITHUB WILL THINK YOU RUN A BANK
