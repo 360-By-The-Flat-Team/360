@@ -21,6 +21,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Background news preloader — loads all categories silently -->
+  <script src="../news-preloader.js"></script>
+
   <style>
     :root {
       --news-bg: #07080f;
@@ -114,13 +117,35 @@
       cursor: pointer;
       transition: .2s;
       white-space: nowrap;
+      position: relative;
     }
-    .news-cat:hover { border-color: var(--news-accent); color: var(--news-text); transform: none; box-shadow: none; }
+    .news-cat:hover {
+      border-color: var(--news-accent);
+      color: var(--news-text);
+      transform: none;
+      box-shadow: none;
+    }
     .news-cat.active {
       background: linear-gradient(110deg, var(--news-accent), var(--news-accent2));
       color: #fff;
       border-color: transparent;
     }
+
+    /* Preloaded indicator dot */
+    .news-cat::after {
+      content: "";
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #22c55e;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .news-cat.preloaded::after { opacity: 1; }
+    .news-cat.active::after { opacity: 0; }
 
     /* ── SEARCH ── */
     .news-search {
@@ -327,8 +352,47 @@
       width: 6px; height: 6px;
       border-radius: 50%;
       background: #22c55e;
+      transition: background .3s;
     }
     #api-badge.offline .dot { background: #ef4444; }
+    #api-badge.cached .dot { background: #3b82f6; }
+
+    /* ── Cache status bar ── */
+    #cache-status-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+      font-size: 12px;
+      color: rgba(240,242,255,0.7);
+    }
+    #cache-status-bar.show { display: flex; }
+    #cache-status-bar .cache-dots {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+    #cache-status-bar .cache-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transition: background .3s;
+    }
+    #cache-status-bar .cache-dot.loaded {
+      background: #22c55e;
+    }
+    #cache-status-bar .cache-dot.loading {
+      background: #f59e0b;
+      animation: pulse .8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
 
     @media (max-width: 600px) {
       .news-grid { grid-template-columns: 1fr; }
@@ -427,55 +491,19 @@
         <h2>360 News <span id="api-badge"><span class="dot"></span><span id="api-label">Loading</span></span></h2>
         <p id="news-timestamp"></p>
       </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="loadNews()">
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshCurrent()">
         <span class="icon">↻</span> Refresh
       </button>
     </div>
 
-    <!-- Category pills -->
-    <div class="news-cats">
-      <button class="news-cat active"
-        data-primary="https://feeds.bbci.co.uk/news/rss.xml"
-        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
-        data-label="Top Stories" data-emoji="📰"
-        onclick="switchCat(this)">📰 Top Stories</button>
-
-      <button class="news-cat"
-        data-primary="https://feeds.bbci.co.uk/news/technology/rss.xml"
-        data-backup="https://techcrunch.com/feed/"
-        data-label="Tech" data-emoji="💻"
-        onclick="switchCat(this)">💻 Tech</button>
-
-      <button class="news-cat"
-        data-primary="https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
-        data-backup="https://www.nasa.gov/rss/dyn/breaking_news.rss"
-        data-label="Science" data-emoji="🔬"
-        onclick="switchCat(this)">🔬 Science</button>
-
-      <button class="news-cat"
-        data-primary="https://feeds.bbci.co.uk/news/business/rss.xml"
-        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/Business.xml"
-        data-label="Business" data-emoji="📈"
-        onclick="switchCat(this)">📈 Business</button>
-
-      <button class="news-cat"
-        data-primary="https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"
-        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml"
-        data-label="Entertainment" data-emoji="🎬"
-        onclick="switchCat(this)">🎬 Entertainment</button>
-
-      <button class="news-cat"
-        data-primary="https://feeds.bbci.co.uk/sport/rss.xml"
-        data-backup="https://www.espn.com/espn/rss/news"
-        data-label="Sports" data-emoji="⚽"
-        onclick="switchCat(this)">⚽ Sports</button>
-
-      <button class="news-cat"
-        data-primary="https://feeds.bbci.co.uk/news/world/rss.xml"
-        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
-        data-label="World" data-emoji="🌍"
-        onclick="switchCat(this)">🌍 World</button>
+    <!-- Cache status bar -->
+    <div id="cache-status-bar">
+      <span id="cache-status-text">⚡ Preloading all categories in background…</span>
+      <div class="cache-dots" id="cache-dots"></div>
     </div>
+
+    <!-- Category pills -->
+    <div class="news-cats" id="news-cats"></div>
 
     <!-- Search -->
     <div class="news-search">
@@ -501,37 +529,188 @@
   <script src="../cursor.js"></script>
 
   <script>
-  // ─── CONFIG ───────────────────────────────────────────────────────────────
-  // Three proxy options tried in order:
-  const PROXIES = [
-    url => `https://api.rss2json.com/v1/api.json?count=25&rss_url=${encodeURIComponent(url)}`,
-    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+  /* ════════════════════════════════════════════════════════
+     360 NEWS PAGE — Cache-first, instant category switching
+  ════════════════════════════════════════════════════════ */
+
+  // Category definitions — must match news-preloader.js
+  const CATEGORIES = [
+    { id: "top",           label: "Top Stories",   emoji: "📰" },
+    { id: "tech",          label: "Tech",           emoji: "💻" },
+    { id: "science",       label: "Science",        emoji: "🔬" },
+    { id: "business",      label: "Business",       emoji: "📈" },
+    { id: "entertainment", label: "Entertainment",  emoji: "🎬" },
+    { id: "sports",        label: "Sports",         emoji: "⚽" },
+    { id: "world",         label: "World",          emoji: "🌍" }
   ];
 
-  // Cache: avoid re-fetching the same feed within 5 minutes
-  const CACHE = {};
-  const CACHE_TTL = 5 * 60 * 1000;
+  let activeCategory = CATEGORIES[0];
+  let allArticles    = [];
 
-  let allArticles = [];
-  let currentBtn  = null;
+  /* ── Build category tabs ── */
+  function buildTabs() {
+    const catsEl = document.getElementById("news-cats");
+    catsEl.innerHTML = "";
 
-  // ─── IMAGE EXTRACTION ────────────────────────────────────────────────────
+    CATEGORIES.forEach((cat, i) => {
+      const btn = document.createElement("button");
+      btn.className = "news-cat" + (i === 0 ? " active" : "");
+      btn.dataset.id = cat.id;
+      btn.textContent = cat.emoji + " " + cat.label;
+
+      // Check if already preloaded
+      if (window.NewsCache && window.NewsCache.get(cat.id)) {
+        btn.classList.add("preloaded");
+      }
+
+      // Hover: trigger preload for this category immediately
+      btn.addEventListener("mouseenter", () => {
+        if (window.NewsCache) window.NewsCache.preload(cat.id);
+      });
+
+      btn.addEventListener("click", () => switchCategory(cat, btn));
+      catsEl.appendChild(btn);
+    });
+  }
+
+  /* ── Build cache status dots ── */
+  function buildCacheDots() {
+    const dotsEl = document.getElementById("cache-dots");
+    dotsEl.innerHTML = "";
+    CATEGORIES.forEach(cat => {
+      const dot = document.createElement("div");
+      dot.className = "cache-dot";
+      dot.id = "cdot-" + cat.id;
+      dot.title = cat.label;
+      if (window.NewsCache && window.NewsCache.get(cat.id)) {
+        dot.classList.add("loaded");
+      }
+      dotsEl.appendChild(dot);
+    });
+  }
+
+  function updateCacheDot(id, state) {
+    // state: 'loading' | 'loaded'
+    const dot = document.getElementById("cdot-" + id);
+    if (!dot) return;
+    dot.classList.remove("loading", "loaded");
+    dot.classList.add(state);
+
+    // Also mark tab as preloaded
+    const btn = document.querySelector(`.news-cat[data-id="${id}"]`);
+    if (btn && state === "loaded") btn.classList.add("preloaded");
+
+    // Check if all done
+    const allLoaded = CATEGORIES.every(cat =>
+      window.NewsCache && window.NewsCache.get(cat.id)
+    );
+    if (allLoaded) {
+      const bar = document.getElementById("cache-status-bar");
+      const txt = document.getElementById("cache-status-text");
+      if (txt) txt.textContent = "✅ All categories ready — switching is instant!";
+      setTimeout(() => bar && bar.classList.remove("show"), 3000);
+    }
+  }
+
+  /* ── Switch category ── */
+  async function switchCategory(cat, btn) {
+    activeCategory = cat;
+    document.getElementById("news-search-input").value = "";
+
+    // Update active tab
+    document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+
+    await loadNews();
+  }
+
+  /* ── Main load function — cache-first ── */
+  async function loadNews() {
+    const grid  = document.getElementById("news-grid");
+    const badge = document.getElementById("api-badge");
+    const label = document.getElementById("api-label");
+    const ts    = document.getElementById("news-timestamp");
+    const btn   = document.getElementById("refreshBtn");
+
+    // 1. Check cache first
+    const cached = window.NewsCache ? window.NewsCache.get(activeCategory.id) : null;
+
+    if (cached) {
+      // Instant render from cache
+      allArticles = cached;
+      renderHero(allArticles[0], activeCategory.emoji);
+      renderCards(allArticles.slice(1), activeCategory.emoji);
+      badge.className = "cached";
+      label.textContent = "Cached";
+      ts.textContent = "Instant load from cache";
+      return;
+    }
+
+    // 2. Not cached — show spinner and fetch
+    grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading ${activeCategory.label}…</div>`;
+    document.getElementById("news-hero").classList.remove("visible");
+    btn.classList.add("spinning");
+    badge.className = "";
+    label.textContent = "Loading";
+
+    try {
+      // Delegate fetch to preloader's refresh function
+      let items = null;
+      if (window.NewsCache) {
+        items = await window.NewsCache.refresh(activeCategory.id);
+      }
+
+      btn.classList.remove("spinning");
+
+      if (!items || !items.length) {
+        grid.innerHTML = `<div class="news-status">❌ Failed to load news. Try refreshing.</div>`;
+        badge.className = "offline";
+        label.textContent = "Offline";
+        return;
+      }
+
+      allArticles = items;
+      badge.className = "";
+      label.textContent = "Live";
+      ts.textContent = `Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+
+      renderHero(allArticles[0], activeCategory.emoji);
+      renderCards(allArticles.slice(1), activeCategory.emoji);
+
+    } catch (err) {
+      btn.classList.remove("spinning");
+      grid.innerHTML = `<div class="news-status">❌ Error: ${err.message}</div>`;
+      badge.className = "offline";
+      label.textContent = "Error";
+    }
+  }
+
+  /* ── Force refresh current category ── */
+  async function refreshCurrent() {
+    const btn = document.getElementById("refreshBtn");
+    btn.classList.add("spinning");
+
+    // Bust cache for current category
+    if (window.NewsCache) {
+      await window.NewsCache.refresh(activeCategory.id);
+    }
+
+    btn.classList.remove("spinning");
+    await loadNews();
+  }
+
+  /* ── Image extraction ── */
   function extractImage(item) {
-    // 1. rss2json enclosure
     if (item.enclosure?.link) return item.enclosure.link;
-    // 2. thumbnail from rss2json
     if (item.thumbnail && !item.thumbnail.includes("blank")) return item.thumbnail;
-    // 3. media:thumbnail / media:content in raw XML
     const media = item["media:thumbnail"] || item["media:content"];
     if (media?.url) return media.url;
-    // 4. og:image scraped from description HTML
     const m = (item.description || item.content || "").match(/src="([^"]+\.(jpg|jpeg|png|webp))"/i);
     if (m) return m[1];
     return null;
   }
 
-  // ─── TIME AGO ────────────────────────────────────────────────────────────
+  /* ── Time ago ── */
   function timeAgo(dateStr) {
     if (!dateStr) return "";
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -544,73 +723,16 @@
     return `${d}d ago`;
   }
 
-  // ─── FETCH WITH FALLBACKS ────────────────────────────────────────────────
-  async function fetchFeed(url) {
-    // Check cache
-    if (CACHE[url] && Date.now() - CACHE[url].ts < CACHE_TTL) {
-      return CACHE[url].data;
-    }
-
-    for (let i = 0; i < PROXIES.length; i++) {
-      try {
-        const res = await fetch(PROXIES[i](url), { signal: AbortSignal.timeout(8000) });
-        if (!res.ok) continue;
-
-        const json = await res.json();
-
-        // rss2json format
-        if (json.items) {
-          CACHE[url] = { ts: Date.now(), data: json.items };
-          return json.items;
-        }
-
-        // allorigins / corsproxy — parse XML manually
-        const rawText = json.contents || await res.text();
-        const items   = parseXML(rawText, url);
-        if (items.length) {
-          CACHE[url] = { ts: Date.now(), data: items };
-          return items;
-        }
-      } catch { /* try next proxy */ }
-    }
-    return [];
-  }
-
-  // ─── XML PARSER (fallback) ────────────────────────────────────────────────
-  function parseXML(text, sourceUrl) {
-    try {
-      const doc   = new DOMParser().parseFromString(text, "text/xml");
-      const nodes = [...doc.querySelectorAll("item")];
-      return nodes.map(n => {
-        const raw   = n.querySelector("description")?.textContent || "";
-        const imgM  = raw.match(/src="([^"]+\.(jpg|jpeg|png|webp))"/i);
-        const media = n.querySelector("thumbnail,content");
-        return {
-          title:       n.querySelector("title")?.textContent?.trim() || "Untitled",
-          link:        n.querySelector("link")?.textContent?.trim() || "#",
-          description: raw.replace(/<[^>]*>/g, "").slice(0, 200),
-          pubDate:     n.querySelector("pubDate")?.textContent || "",
-          author:      n.querySelector("author,creator")?.textContent?.trim() || "",
-          enclosure:   { link: media?.getAttribute("url") || imgM?.[1] || "" },
-          thumbnail:   media?.getAttribute("url") || imgM?.[1] || ""
-        };
-      });
-    } catch { return []; }
-  }
-
-  // ─── RENDER HERO ─────────────────────────────────────────────────────────
+  /* ── Render hero ── */
   function renderHero(a, emoji) {
     const el = document.getElementById("news-hero");
     if (!a) { el.classList.remove("visible"); return; }
-
     const img = extractImage(a);
     el.href = a.link;
     el.classList.add("visible");
-
     el.innerHTML = img
       ? `<img class="news-hero-img" src="${img}" alt="" onerror="this.style.display='none'">`
       : `<div style="width:100%;height:100%;background:linear-gradient(135deg,rgba(59,130,246,.3),rgba(139,92,246,.2));display:flex;align-items:center;justify-content:center;font-size:64px">${emoji}</div>`;
-
     el.innerHTML += `
       <div class="news-hero-overlay">
         <div class="news-hero-source">${a.author || "Top Story"}</div>
@@ -619,25 +741,21 @@
       </div>`;
   }
 
-  // ─── RENDER CARDS ────────────────────────────────────────────────────────
+  /* ── Render cards ── */
   function renderCards(list, emoji) {
     const grid = document.getElementById("news-grid");
     if (!list.length) {
       grid.innerHTML = `<div class="news-status">No articles found.</div>`;
       return;
     }
-
     grid.innerHTML = list.map((a, i) => {
-      const img  = extractImage(a);
+      const img = extractImage(a);
       const imgEl = img
-        ? `<img class="news-card-img" src="${img}" alt=""
-             onerror="this.outerHTML='<div class=\\'news-card-placeholder\\'>${emoji}</div>'">`
+        ? `<img class="news-card-img" src="${img}" alt="" onerror="this.outerHTML='<div class=\\'news-card-placeholder\\'>${emoji}</div>'">`
         : `<div class="news-card-placeholder">${emoji}</div>`;
-
       const desc   = (a.description || a.content || "").replace(/<[^>]*>/g, "").trim();
       const source = a.author || "News";
       const date   = timeAgo(a.pubDate);
-
       return `
         <a class="news-card" href="${a.link}" target="_blank" rel="noopener noreferrer"
            style="animation-delay:${i * 0.04}s">
@@ -652,58 +770,12 @@
     }).join("");
   }
 
-  // ─── LOAD NEWS ────────────────────────────────────────────────────────────
-  async function loadNews() {
-    const grid     = document.getElementById("news-grid");
-    const badge    = document.getElementById("api-badge");
-    const label    = document.getElementById("api-label");
-    const btn      = document.getElementById("refreshBtn");
-    const ts       = document.getElementById("news-timestamp");
-
-    grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading news…</div>`;
-    document.getElementById("news-hero").classList.remove("visible");
-    document.getElementById("news-search-input").value = "";
-    btn.classList.add("spinning");
-    badge.className = ""; label.textContent = "Loading";
-
-    // Get active category
-    const active = document.querySelector(".news-cat.active");
-    const primary = active?.dataset.primary || "https://feeds.bbci.co.uk/news/rss.xml";
-    const backup  = active?.dataset.backup  || "";
-    const emoji   = active?.dataset.emoji   || "📰";
-
-    // Try primary first, then backup
-    let items = await fetchFeed(primary);
-    let source = "BBC";
-
-    if (!items.length && backup) {
-      items = await fetchFeed(backup);
-      source = "Backup";
-    }
-
-    btn.classList.remove("spinning");
-
-    if (!items.length) {
-      grid.innerHTML = `<div class="news-status">❌ Failed to load news. Try refreshing or check your connection.</div>`;
-      badge.className = "offline"; label.textContent = "Offline";
-      return;
-    }
-
-    badge.className = ""; label.textContent = source;
-    ts.textContent = `Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
-
-    allArticles = items.slice(0, 28);
-    renderHero(allArticles[0], emoji);
-    renderCards(allArticles.slice(1), emoji);
-  }
-
-  // ─── FILTER ───────────────────────────────────────────────────────────────
+  /* ── Filter by search ── */
   function filterNews() {
     const q = document.getElementById("news-search-input").value.toLowerCase().trim();
-    const emoji = document.querySelector(".news-cat.active")?.dataset.emoji || "📰";
     if (!q) {
-      renderHero(allArticles[0], emoji);
-      renderCards(allArticles.slice(1), emoji);
+      renderHero(allArticles[0], activeCategory.emoji);
+      renderCards(allArticles.slice(1), activeCategory.emoji);
       return;
     }
     document.getElementById("news-hero").classList.remove("visible");
@@ -711,21 +783,48 @@
       (a.title       || "").toLowerCase().includes(q) ||
       (a.description || "").toLowerCase().includes(q)
     );
-    renderCards(filtered, emoji);
+    renderCards(filtered, activeCategory.emoji);
   }
 
-  // ─── SWITCH CATEGORY ──────────────────────────────────────────────────────
-  function switchCat(btn) {
-    document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+  /* ── Listen for background cache events from preloader ── */
+  window.addEventListener("360:newsCached", e => {
+    updateCacheDot(e.detail.id, "loaded");
+
+    // If this is the active category and we're still showing spinner, auto-render
+    if (e.detail.id === activeCategory.id) {
+      const grid = document.getElementById("news-grid");
+      if (grid.querySelector(".spinner")) {
+        loadNews();
+      }
+    }
+  });
+
+  /* ── Init ── */
+  document.addEventListener("DOMContentLoaded", () => {
+    buildTabs();
+    buildCacheDots();
+
+    // Show cache status bar
+    const bar = document.getElementById("cache-status-bar");
+    bar.classList.add("show");
+
+    // Mark already-cached categories
+    CATEGORIES.forEach(cat => {
+      if (window.NewsCache && window.NewsCache.get(cat.id)) {
+        updateCacheDot(cat.id, "loaded");
+      }
+    });
+
+    // Load initial category
     loadNews();
-  }
 
-  // ─── AUTO-REFRESH every 5 min ─────────────────────────────────────────────
-  setInterval(loadNews, 5 * 60 * 1000);
-
-  // ─── INIT ─────────────────────────────────────────────────────────────────
-  loadNews();
+    // Auto-refresh every 5 min
+    setInterval(() => {
+      if (window.NewsCache) {
+        window.NewsCache.refresh(activeCategory.id).then(() => loadNews());
+      }
+    }, 5 * 60 * 1000);
+  });
   </script>
 </body>
 </html>
