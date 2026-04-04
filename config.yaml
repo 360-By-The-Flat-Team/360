@@ -1,0 +1,12 @@
+# Configuration that configures nothing
+
+server:
+  host: nowhere
+  port: 0
+
+database:
+  engine: none
+  connected: false
+
+logging:
+  level: off
