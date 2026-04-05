@@ -39,6 +39,13 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ============================================================
    AUTH SYSTEM
    ============================================================ */
+
+// These buttons exist on every page in auth-top-right
+const signInBtn  = $("#signInBtn");
+const signUpBtn  = $("#signUpBtn");
+const signOutBtn = $("#signOutBtn");
+
+// Old inline auth-popup (legacy, kept for compat but hidden by default)
 const authPopup    = $("#auth-popup");
 const authEmail    = $("#auth-email");
 const authPassword = $("#auth-password");
@@ -46,9 +53,6 @@ const authLoginBtn = $("#auth-login-btn");
 const authSignupBtn= $("#auth-signup-btn");
 const authCloseBtn = $("#auth-close-btn");
 const authError    = $("#auth-error");
-const signInBtn    = $("#signInBtn");
-const signUpBtn    = $("#signUpBtn");
-const signOutBtn   = $("#signOutBtn");
 
 function openAuth()  { if (authPopup) authPopup.classList.remove("hidden"); }
 function closeAuth() {
@@ -56,14 +60,16 @@ function closeAuth() {
   if (authError) authError.textContent = "";
 }
 
-/* Redirect to accounts page */
+// Redirect sign in/up buttons to accounts page
 if (signInBtn)  signInBtn.onclick  = () => location.href = "/accounts.html?signin";
 if (signUpBtn)  signUpBtn.onclick  = () => location.href = "/accounts.html?signup";
 if (signOutBtn) signOutBtn.style.display = "none";
 
+// Close popup on backdrop click
 if (authPopup) authPopup.addEventListener("click", e => { if (e.target === authPopup) closeAuth(); });
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
+// Legacy inline auth handlers (used on pages that still have the old popup)
 if (authSignupBtn) {
   authSignupBtn.onclick = async () => {
     const email = authEmail?.value.trim(), password = authPassword?.value.trim();
@@ -86,14 +92,20 @@ if (authLoginBtn) {
 const githubBtn = $("#github-login");
 if (githubBtn) {
   githubBtn.onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "github", options: { redirectTo: window.location.origin } });
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: "github",
+      options: { redirectTo: window.location.origin }
+    });
     if (error) console.error("GitHub OAuth:", error.message);
   };
 }
 const googleBtn = $("#google-login");
 if (googleBtn) {
   googleBtn.onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin }
+    });
     if (error) console.error("Google OAuth:", error.message);
   };
 }
@@ -184,12 +196,12 @@ function buildUserChip(user, profile) {
     return item;
   };
 
-  const profileItem = makeItem("👤 My Account");
-  profileItem.onclick = e => { e.stopPropagation(); location.href = "/accounts.html"; };
-
   const signedInAs = makeItem("Signed in as @" + username);
   signedInAs.style.cssText += "font-size:11px;opacity:0.5;cursor:default;border-bottom:1px solid rgba(148,163,184,0.2);";
   signedInAs.addEventListener("mouseenter", () => signedInAs.style.background = "");
+
+  const profileItem = makeItem("👤 My Account");
+  profileItem.onclick = e => { e.stopPropagation(); location.href = "/accounts.html"; };
 
   const signOutItem = makeItem("Sign Out", true);
   signOutItem.onclick = async e => {
@@ -246,8 +258,8 @@ async function updateAuthUI() {
       if (authRight) authRight.appendChild(chip);
 
     } else {
-      if (signInBtn) signInBtn.style.display = "inline-block";
-      if (signUpBtn) signUpBtn.style.display = "inline-block";
+      if (signInBtn) { signInBtn.style.display = "inline-block"; }
+      if (signUpBtn) { signUpBtn.style.display = "inline-block"; }
     }
   } catch (err) {
     console.warn("updateAuthUI error:", err);
