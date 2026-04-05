@@ -6,7 +6,7 @@
 A multi-tool browser and search engine.
 Our Reddit: https://www.reddit.com/r/360Search/
 
-360 is a multi-tool browser (search engine) that has more tools to outperform any browser through conveniently organized UIs — so your work doesn't need to be done on 50+ tabs.
+360 is a multi-tool browser (search engine) that has more tools to outperform any search engine through conveniently organized UIs — so your work doesn't need to be done on 50+ tabs.
 
 With many search engines and browsers losing trust from core users, this is a great opportunity to switch to a fully private, fully open source search engine. Using 360 supports 360 Digital, Co. and every contribution counts. Switch to 360 now! (if you want — we're humble and will not be pushy)
 
