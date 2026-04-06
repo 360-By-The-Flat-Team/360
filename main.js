@@ -33,7 +33,8 @@ document.addEventListener("mouseover", e => {
     prefetchPage(anchor.getAttribute("href"));
 });
 document.addEventListener("DOMContentLoaded", () => {
-  $$(".nav-item[data-href]").forEach(item => setTimeout(() => prefetchPage(item.dataset.href), 300));
+  const items = [...$$(".nav-item[data-href]")];
+  items.forEach((item, i) => setTimeout(() => prefetchPage(item.dataset.href), 1000 + i * 400));
 });
 
 /* ============================================================
