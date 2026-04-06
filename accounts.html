@@ -11,19 +11,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360 — Account</title>
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="360" />
+
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon-32x32.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+  <!-- CSS — same as every other page -->
   <link rel="stylesheet" href="main.css" />
   <link rel="stylesheet" href="cursor.css" />
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    /* Centre the card in whatever space remains */
     body {
       min-height: 100vh;
       display: flex;
@@ -33,12 +42,13 @@
 
     .ac-wrap {
       margin: 80px 20px;
-      width: 420px;
+      width: 400px;
       max-width: calc(100vw - 40px);
       position: relative;
       z-index: 1;
     }
 
+    /* Card */
     .ac-card {
       background: rgba(255,255,255,.97);
       backdrop-filter: blur(22px);
@@ -60,15 +70,23 @@
       to   { opacity: 1; transform: translateY(0)    scale(1);   }
     }
 
-    .ac-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    /* Logo row inside card */
+    .ac-logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px;
+    }
     .ac-logo-mark {
       width: 34px; height: 34px; border-radius: 10px;
       background: linear-gradient(135deg, var(--a), var(--a2));
       flex-shrink: 0;
     }
-    .ac-logo-text { font-size: 21px; font-weight: 900; letter-spacing: -.02em; color: var(--txt); }
+    .ac-logo-text {
+      font-size: 21px; font-weight: 900; letter-spacing: -.02em;
+      color: var(--txt);
+    }
     body.dark .ac-logo-text { color: var(--txtd); }
 
+    /* Tabs */
     .ac-tabs {
       display: flex;
       background: rgba(148,163,184,.12);
@@ -83,10 +101,17 @@
       color: var(--mut); border: none; background: transparent;
     }
     body.dark .ac-tab { color: var(--mutd); }
-    .ac-tab.active { background: linear-gradient(110deg, var(--a), var(--a2)); color: #050816; }
+    .ac-tab.active {
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816;
+    }
     .ac-tab:not(.active):hover { background: rgba(148,163,184,.15); }
 
-    .ac-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    /* Fields */
+    .ac-field {
+      display: flex; flex-direction: column; gap: 5px;
+      margin-bottom: 12px;
+    }
     .ac-field label {
       font-size: 11px; font-weight: 600;
       text-transform: uppercase; letter-spacing: .05em;
@@ -114,11 +139,13 @@
       box-shadow: 0 0 0 3px rgba(239,68,68,.12);
     }
 
+    /* Hints */
     .ac-hint { font-size: 11px; color: var(--mut); margin-top: 3px; min-height: 14px; }
     body.dark .ac-hint { color: var(--mutd); }
     .ac-hint.err { color: #ef4444; }
     .ac-hint.ok  { color: #10b981; }
 
+    /* Primary button */
     .ac-btn {
       width: 100%; padding: 12px;
       border-radius: 10px; border: none;
@@ -131,10 +158,12 @@
     .ac-btn:active:not(:disabled) { transform: translateY(0); }
     .ac-btn:disabled { opacity: .45; cursor: not-allowed; }
 
+    /* Message */
     .ac-msg { font-size: 13px; text-align: center; min-height: 18px; margin-top: 10px; }
     .ac-msg.err { color: #ef4444; }
     .ac-msg.ok  { color: #10b981; }
 
+    /* Divider */
     .ac-divider {
       display: flex; align-items: center; gap: 10px;
       color: var(--mut); font-size: 12px;
@@ -143,6 +172,7 @@
     body.dark .ac-divider { color: var(--mutd); }
     .ac-divider::before, .ac-divider::after { content: ""; flex: 1; height: 1px; background: var(--br); }
 
+    /* OAuth */
     .ac-oauth { display: flex; flex-direction: column; gap: 8px; }
     .ac-oauth-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -155,11 +185,13 @@
     body.dark .ac-oauth-btn { background: rgba(255,255,255,.05); color: var(--txtd); border-color: rgba(255,255,255,.1); }
     .ac-oauth-btn:hover { background: rgba(148,163,184,.18); transform: translateY(-1px); }
 
+    /* Switch link */
     .ac-switch { font-size: 13px; text-align: center; margin-top: 14px; color: var(--mut); }
     body.dark .ac-switch { color: var(--mutd); }
     .ac-switch a { color: var(--a); font-weight: 600; text-decoration: none; }
     .ac-switch a:hover { text-decoration: underline; }
 
+    /* Profile */
     .ac-profile { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0; text-align: center; }
     .ac-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--a), var(--a2)); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; }
     .ac-pname  { font-size: 19px; font-weight: 700; color: var(--txt); }
@@ -172,87 +204,13 @@
     .ac-signout-btn { background: rgba(239,68,68,.09) !important; border-color: rgba(239,68,68,.28) !important; color: #ef4444 !important; }
     .ac-signout-btn:hover { background: rgba(239,68,68,.17) !important; }
 
+    /* Logout */
     .ac-logout { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0; text-align: center; }
     .ac-logout-icon { font-size: 44px; }
     .ac-logout-title { font-size: 19px; font-weight: 700; color: var(--txt); }
     body.dark .ac-logout-title { color: var(--txtd); }
     .ac-logout-sub { font-size: 13px; color: var(--mut); }
     body.dark .ac-logout-sub { color: var(--mutd); }
-
-    /* ── PASSWORD STRENGTH METER ── */
-    .pw-strength-wrap { margin-top: 6px; }
-    .pw-bar-track { height: 3px; background: rgba(148,163,184,.2); border-radius: 999px; overflow: hidden; margin-bottom: 5px; }
-    .pw-bar-fill { height: 100%; width: 0%; border-radius: 999px; transition: width .35s cubic-bezier(.34,1.56,.64,1), background .25s; }
-    .pw-meta { display: flex; justify-content: space-between; align-items: center; min-height: 14px; }
-    .pw-strength-label { font-size: 11px; font-weight: 600; transition: color .2s; }
-    .pw-strength-hint { font-size: 11px; color: var(--mut); }
-    body.dark .pw-strength-hint { color: var(--mutd); }
-    .pw-checks { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
-    .pw-pill {
-      display: flex; align-items: center; gap: 3px;
-      padding: 2px 7px; border-radius: 999px;
-      font-size: 10px; font-weight: 500;
-      border: 1px solid var(--br);
-      background: rgba(148,163,184,.08);
-      color: var(--mut); transition: background .2s, border-color .2s, color .2s;
-    }
-    body.dark .pw-pill { color: var(--mutd); border-color: rgba(255,255,255,.1); }
-    .pw-pill.pass { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); color: #059669; }
-    body.dark .pw-pill.pass { color: #34d399; background: rgba(52,211,153,.1); border-color: rgba(52,211,153,.3); }
-    .pw-pip { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; transition: opacity .2s; flex-shrink: 0; }
-    .pw-pill.pass .pw-pip { opacity: 1; }
-
-    /* ── SETTINGS BOB SECTION ── */
-    .settings-bob-section {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 12px;
-      background: rgba(148,163,184,.07);
-      border: 1px solid var(--br);
-    }
-    body.dark .settings-bob-section { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
-
-    .bob-toggle-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      cursor: pointer; user-select: none;
-    }
-    .bob-toggle-label { font-size: 13px; font-weight: 600; color: var(--txt); }
-    body.dark .bob-toggle-label { color: var(--txtd); }
-    .bob-toggle-sub { font-size: 11px; color: var(--mut); margin-top: 1px; }
-    body.dark .bob-toggle-sub { color: var(--mutd); }
-
-    .bob-track {
-      width: 38px; height: 22px;
-      background: rgba(148,163,184,.3);
-      border-radius: 999px; position: relative;
-      cursor: pointer; transition: background .25s;
-      flex-shrink: 0; border: none;
-    }
-    .bob-track::before {
-      content: "";
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 16px; height: 16px;
-      background: white; border-radius: 50%;
-      transition: transform .25s;
-      box-shadow: 0 1px 3px rgba(0,0,0,.2);
-    }
-    .bob-track.on { background: var(--a); }
-    .bob-track.on::before { transform: translateX(16px); }
-
-    /* Bob canvas badge in search bar — injected by JS */
-    #bob-search-canvas-wrap {
-      position: absolute;
-      right: 48px; /* sits left of the search button */
-      top: 50%;
-      transform: translateY(-50%);
-      display: none;
-      align-items: center;
-      pointer-events: none;
-      z-index: 10;
-    }
-    #bob-search-canvas-wrap.visible { display: flex; }
 
     @media (max-width: 600px) {
       .ac-wrap { margin: 70px 12px 20px; }
@@ -262,20 +220,26 @@
 </head>
 <body>
 
+  <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
 
+  <!-- TOP-RIGHT AUTH BUTTONS -->
   <div class="auth-top-right">
     <button id="signInBtn"  class="auth-btn">Sign In</button>
     <button id="signUpBtn"  class="auth-btn">Sign Up</button>
     <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
   </div>
 
+  <!-- PWA Install Banner -->
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
+
+  <!-- SIDEBAR TOGGLE -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
 
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo-mark"></div>
@@ -290,16 +254,16 @@
       <div class="nav-item"        data-href="url-shortener">URL Shortener</div>
       <div class="nav-item"        data-href="chat">Chat</div>
       <div class="nav-item"        data-href="news">News</div>
-      <div class="nav-item"        data-href="apps">Apps</div>
       <div class="nav-item"        data-href="games">Games</div>
       <div class="nav-item active" data-href="accounts.html">Accounts</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
   </aside>
 
+  <!-- Overlay -->
   <div class="overlay" id="overlay"></div>
 
-  <!-- SETTINGS PANEL — includes Bob toggle -->
+  <!-- SETTINGS PANEL -->
   <div class="settings-panel" id="settingsPanel">
     <h3>Appearance</h3>
     <div class="settings-label">Theme</div>
@@ -347,18 +311,6 @@
       <button id="bgResetBtn" class="settings-btn">Reset</button>
     </div>
 
-    <!-- ── BOB SECTION in Settings ── -->
-    <h3 style="margin-top:20px;">Bob</h3>
-    <div class="settings-bob-section">
-      <div class="bob-toggle-row" id="settingsBobToggleRow">
-        <div>
-          <div class="bob-toggle-label">Enable Bob</div>
-          <div class="bob-toggle-sub">Stick figure reacts to your search typing</div>
-        </div>
-        <div class="bob-track" id="settingsBobTrack"></div>
-      </div>
-    </div>
-
     <h3 style="margin-top:25px;">Legal</h3>
     <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
     <a href="tos.html" class="legal-link">📜 Terms of Service</a>
@@ -381,13 +333,17 @@
     </div>
   </div>
 
+  <!-- SCRIPTS — same order as index.html -->
   <script src="main.js"></script>
   <script src="cookie.js"></script>
   <script src="cursor.js"></script>
 
+  <!-- ACCOUNTS PAGE LOGIC -->
   <script>
+    /* Reuse supabaseClient created by main.js */
     const sb = supabaseClient;
 
+    /* ── URL routing ── */
     const qs       = location.search.slice(1);
     const param    = qs.split("&")[0].toLowerCase();
     const isLogout = param === "login" && qs.includes("from=logout");
@@ -396,116 +352,10 @@
     (async () => {
       if (isLogout) { showLogout(); return; }
       const { data: { session } } = await sb.auth.getSession();
-      if (session)                 showProfile(session.user);
+      if (session)            showProfile(session.user);
       else if (param === "signup") renderSignUp();
-      else                         renderSignIn();
+      else                    renderSignIn();
     })();
-
-    /* ════════════════════════════════════════
-       BOB ENGINE — now lives in Settings,
-       attaches to #search-input on index page.
-       Persisted in localStorage("360_bob_on").
-    ════════════════════════════════════════ */
-    let bobRAF = null;
-    let bobFrame = 0;
-    let bobEnergy = 0;
-    let typingVelocity = 0;
-    let lastTypeTime = 0;
-    let lastCharCount = 0;
-
-    // Bob state persisted across pages
-    let bobOn = localStorage.getItem("360_bob_on") === "true";
-    const settingsBobTrack = document.getElementById("settingsBobTrack");
-    if (bobOn) settingsBobTrack.classList.add("on");
-
-    document.getElementById("settingsBobToggleRow").addEventListener("click", () => {
-      bobOn = !bobOn;
-      localStorage.setItem("360_bob_on", bobOn);
-      settingsBobTrack.classList.toggle("on", bobOn);
-    });
-
-    function initBob(canvasEl, inputEl) {
-      const ctx = canvasEl.getContext('2d');
-      if (bobRAF) cancelAnimationFrame(bobRAF);
-      bobFrame = 0; bobEnergy = 0; typingVelocity = 0;
-
-      inputEl.addEventListener('input', () => {
-        const now = Date.now();
-        const dt = now - lastTypeTime;
-        const chars = Math.abs(inputEl.value.length - lastCharCount);
-        typingVelocity = Math.min((chars / Math.max(dt, 50)) * 1000, 25);
-        lastTypeTime = now;
-        lastCharCount = inputEl.value.length;
-        bobEnergy = Math.min(bobEnergy + typingVelocity * 0.15, 10);
-      });
-
-      function drawBob(frame, energy) {
-        ctx.clearRect(0, 0, 32, 32);
-        const t = frame * 0.12;
-        const isDark = document.body.classList.contains('dark');
-        const clr = isDark ? '#e5e7eb' : '#374151';
-        ctx.strokeStyle = clr;
-        ctx.fillStyle   = clr;
-        ctx.lineWidth   = 1.5;
-        ctx.lineCap     = 'round';
-
-        const cx = 16, cy = 8;
-        const bounce = energy > 0 ? Math.sin(t * 3) * energy * 1.2 : 0;
-        const wobble = energy > 5 ? Math.sin(t * 7) * 2 : 0;
-        const shake  = energy > 7 ? (Math.random() - 0.5) * energy * 0.5 : 0;
-        const bx = cx + shake, by = cy + bounce * 0.3;
-
-        ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill();
-
-        const bodyTop = by + 4;
-        const bodyBot = by + 12 + Math.abs(bounce) * 0.2;
-        ctx.beginPath(); ctx.moveTo(bx, bodyTop); ctx.lineTo(bx, bodyBot); ctx.stroke();
-
-        const armSwing = energy > 0 ? Math.sin(t * 3) * Math.min(energy * 3, 30) : 0;
-        const armAlt   = energy > 7 ? Math.cos(t * 5) * 10 : 0;
-        ctx.save(); ctx.translate(bx, bodyTop + 3);
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-5 + wobble, 5 + armSwing); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo( 5 + wobble, 5 - armSwing + armAlt); ctx.stroke();
-        ctx.restore();
-
-        const legPhase = energy > 0 ? t * 3 : 0;
-        const legKick  = Math.min(energy * 4, 28);
-        ctx.save(); ctx.translate(bx, bodyBot);
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-3 + Math.sin(legPhase) * legKick * 0.4, 7 + Math.cos(legPhase) * legKick * 0.2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo( 3 - Math.sin(legPhase) * legKick * 0.4, 7 - Math.cos(legPhase) * legKick * 0.2); ctx.stroke();
-        ctx.restore();
-
-        if (energy > 6) {
-          const starCount = Math.floor(energy - 5);
-          for (let i = 0; i < starCount; i++) {
-            const angle = t * 2 + i * (Math.PI * 2 / starCount);
-            const r  = 10 + energy * 0.5;
-            const sx = bx + Math.cos(angle) * r;
-            const sy = by - 2 + Math.sin(angle) * r * 0.5;
-            ctx.save(); ctx.translate(sx, sy);
-            ctx.fillStyle = '#f59e0b';
-            ctx.beginPath();
-            for (let j = 0; j < 5; j++) {
-              const a  = j * 1.2566 - Math.PI / 2;
-              const ra = j * 1.2566 - Math.PI / 2 + 0.6283;
-              if (j === 0) ctx.moveTo(Math.cos(a) * 2.5, Math.sin(a) * 2.5);
-              else { ctx.lineTo(Math.cos(ra) * 1.2, Math.sin(ra) * 1.2); ctx.lineTo(Math.cos(a) * 2.5, Math.sin(a) * 2.5); }
-            }
-            ctx.closePath(); ctx.fill(); ctx.restore();
-          }
-        }
-      }
-
-      function tick() {
-        bobFrame++;
-        const now = Date.now();
-        if (now - lastTypeTime > 800) typingVelocity = Math.max(typingVelocity * 0.9, 0);
-        bobEnergy = Math.max(bobEnergy - 0.08, 0);
-        drawBob(bobFrame, bobEnergy);
-        bobRAF = requestAnimationFrame(tick);
-      }
-      tick();
-    }
 
     /* ════════════════
        SIGN IN
@@ -577,7 +427,7 @@
     }
 
     /* ════════════════
-       SIGN UP — Bob removed from here, now in Settings
+       SIGN UP
     ════════════════ */
     function renderSignUp() {
       content.innerHTML = `
@@ -597,19 +447,6 @@
         <div class="ac-field">
           <label>Password</label>
           <input id="suPass" type="password" placeholder="Min. 6 characters" autocomplete="new-password" />
-          <div class="pw-strength-wrap" id="pwStrengthWrap">
-            <div class="pw-bar-track"><div class="pw-bar-fill"></div></div>
-            <div class="pw-meta">
-              <span class="pw-strength-label"></span>
-              <span class="pw-strength-hint"></span>
-            </div>
-            <div class="pw-checks">
-              <div class="pw-pill" id="pw-c-len"><span class="pw-pip"></span>8+ chars</div>
-              <div class="pw-pill" id="pw-c-up"><span class="pw-pip"></span>uppercase</div>
-              <div class="pw-pill" id="pw-c-num"><span class="pw-pip"></span>number</div>
-              <div class="pw-pill" id="pw-c-sym"><span class="pw-pip"></span>symbol</div>
-            </div>
-          </div>
           <span class="ac-hint" id="passHint"></span>
         </div>
         <div class="ac-field">
@@ -632,16 +469,13 @@
         </div>
         <p class="ac-switch">Already have an account? <a href="/accounts.html?signin">Sign In</a></p>
       `;
-
       document.getElementById("tabSI").onclick = () => { history.replaceState(null,"","/accounts.html?signin"); renderSignIn(); };
       document.getElementById("tabSU").onclick = () => { history.replaceState(null,"","/accounts.html?signup"); renderSignUp(); };
 
-      initStrengthMeter(document.getElementById("suPass"), "pwStrengthWrap");
-
       let usernameOk = false, usernameTimer = null;
-      const suUser      = document.getElementById("suUser"),      userHint    = document.getElementById("userHint");
-      const suPass      = document.getElementById("suPass"),      passHint    = document.getElementById("passHint");
-      const suConfirm   = document.getElementById("suConfirm"),   confirmHint = document.getElementById("confirmHint");
+      const suUser=document.getElementById("suUser"), userHint=document.getElementById("userHint");
+      const suPass=document.getElementById("suPass"), passHint=document.getElementById("passHint");
+      const suConfirm=document.getElementById("suConfirm"), confirmHint=document.getElementById("confirmHint");
 
       suUser.addEventListener("input", () => {
         const v=suUser.value.trim(); usernameOk=false; clearTimeout(usernameTimer); suUser.classList.remove("invalid");
@@ -658,7 +492,7 @@
         const v=suPass.value;
         if (!v) { setHint(passHint,"",""); suPass.classList.remove("invalid"); return; }
         if (v.length<6) { setHint(passHint,"Must be at least 6 characters.","err"); suPass.classList.add("invalid"); }
-        else { setHint(passHint,"",""); suPass.classList.remove("invalid"); }
+        else { setHint(passHint,"✓ Looks good","ok"); suPass.classList.remove("invalid"); }
         if (suConfirm.value) validateConfirm();
       });
       suConfirm.addEventListener("input", validateConfirm);
@@ -677,10 +511,10 @@
     }
 
     async function doSignUp(usernameOk) {
-      const email    = document.getElementById("suEmail").value.trim();
-      const username = document.getElementById("suUser").value.trim();
-      const password = document.getElementById("suPass").value;
-      const confirm  = document.getElementById("suConfirm").value;
+      const email=document.getElementById("suEmail").value.trim();
+      const username=document.getElementById("suUser").value.trim();
+      const password=document.getElementById("suPass").value;
+      const confirm=document.getElementById("suConfirm").value;
       const btn=document.getElementById("suBtn"), msg=document.getElementById("suMsg");
       if (!email||!username||!password||!confirm) { setMsg(msg,"All fields are required.","err"); return; }
       if (!email.includes("@"))                   { setMsg(msg,"Please enter a valid email address.","err"); return; }
@@ -714,7 +548,7 @@
             <div class="ac-pemail">${esc(user.email||"")}</div>
           </div>
           <p class="ac-msg" id="profMsg"></p>
-          <button class="ac-sec-btn" onclick="window.location.href='/';">← Back to 360</button>
+          <button class="ac-sec-btn" onclick="window.loaction.href='/';">← Back to 360</button>
           <button class="ac-sec-btn ac-signout-btn" id="pgSignOut">Sign Out</button>
         </div>
       `;
@@ -736,7 +570,7 @@
           <div class="ac-logout-title">You've been signed out</div>
           <p class="ac-logout-sub">Thanks for using 360. See you next time!</p>
           <button class="ac-btn" onclick="history.replaceState(null,'','/accounts.html?signin');renderSignIn();">Sign Back In</button>
-          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.location.href='/';">← Back to 360</button>
+          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.loaction.href='/';">← Back to 360</button>
         </div>
       `;
     }
@@ -750,57 +584,6 @@
         options: { redirectTo: window.location.origin + "/accounts.html?signin" }
       });
       if (error) alert("OAuth error: " + error.message);
-    }
-
-    /* ════════════════
-       PASSWORD STRENGTH
-    ════════════════ */
-    const PW_COLORS = ['#ef4444','#f97316','#eab308','#10b981','#3b82f6'];
-    const PW_LABELS = ['Weak','Fair','Moderate','Strong','Very Strong'];
-    const PW_HINTS  = ['Add more variety','Try a number or symbol','Getting better!','Add a symbol to max out',''];
-
-    function getStrength(v) {
-      let s = 0;
-      if (v.length >= 6)  s++;
-      if (v.length >= 10) s++;
-      if (/[A-Z]/.test(v)) s++;
-      if (/[0-9]/.test(v)) s++;
-      if (/[^A-Za-z0-9]/.test(v)) s++;
-      return Math.min(s, 5);
-    }
-
-    function initStrengthMeter(inputEl, wrapperId) {
-      const wrap = document.getElementById(wrapperId);
-      if (!wrap) return;
-      const bar   = wrap.querySelector('.pw-bar-fill');
-      const label = wrap.querySelector('.pw-strength-label');
-      const hint  = wrap.querySelector('.pw-strength-hint');
-
-      function togglePill(id, pass) {
-        const el = wrap.querySelector('#' + id);
-        if (el) el.classList.toggle('pass', pass);
-      }
-
-      inputEl.addEventListener('input', () => {
-        const v = inputEl.value;
-        const s = getStrength(v);
-        if (!v) {
-          bar.style.width = '0%';
-          label.textContent = '';
-          hint.textContent = '';
-          ['pw-c-len','pw-c-up','pw-c-num','pw-c-sym'].forEach(id => togglePill(id, false));
-          return;
-        }
-        bar.style.width = (s * 20) + '%';
-        bar.style.background = PW_COLORS[Math.max(s - 1, 0)];
-        label.textContent = PW_LABELS[Math.max(s - 1, 0)];
-        label.style.color = PW_COLORS[Math.max(s - 1, 0)];
-        hint.textContent  = PW_HINTS[Math.max(s - 1, 0)];
-        togglePill('pw-c-len', v.length >= 8);
-        togglePill('pw-c-up',  /[A-Z]/.test(v));
-        togglePill('pw-c-num', /[0-9]/.test(v));
-        togglePill('pw-c-sym', /[^A-Za-z0-9]/.test(v));
-      });
     }
 
     /* ════════════════
