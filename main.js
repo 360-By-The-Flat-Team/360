@@ -263,7 +263,7 @@ function updateOverlay() {
 
 function closeSidebar() {
   sidebar?.classList.remove("open");
-  if (sidebar) sidebar.querySelectorAll(".nav-item").forEach(i => { i.style.animation = "none"; });
+  sidebar?.classList.add("sidebar-closed");
   updateOverlay();
 }
 
@@ -273,7 +273,7 @@ if (sidebarToggle) {
     if (sidebar?.classList.contains("open")) {
       closeSidebar();
     } else {
-      if (sidebar) sidebar.querySelectorAll(".nav-item").forEach(i => { i.style.animation = ""; });
+      sidebar?.classList.remove("sidebar-closed");
       sidebar?.classList.add("open");
       updateOverlay();
     }
