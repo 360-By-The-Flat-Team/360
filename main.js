@@ -15,29 +15,6 @@ const supabaseClient = supabase.createClient(
 );
 
 /* ============================================================
-   PREFETCH
-   ============================================================ */
-const prefetched = new Set();
-function prefetchPage(href) {
-  if (!href || href.startsWith("http") || href.startsWith("#") || prefetched.has(href)) return;
-  prefetched.add(href);
-  const link = document.createElement("link");
-  link.rel = "prefetch"; link.href = href; link.as = "document";
-  document.head.appendChild(link);
-}
-document.addEventListener("mouseover", e => {
-  const navItem = e.target.closest(".nav-item[data-href]");
-  if (navItem) prefetchPage(navItem.dataset.href);
-  const anchor = e.target.closest("a[href]");
-  if (anchor && !anchor.href.startsWith("mailto") && !anchor.href.startsWith("javascript"))
-    prefetchPage(anchor.getAttribute("href"));
-});
-document.addEventListener("DOMContentLoaded", () => {
-  const items = [...$$(".nav-item[data-href]")];
-  items.forEach((item, i) => setTimeout(() => prefetchPage(item.dataset.href), 1000 + i * 400));
-});
-
-/* ============================================================
    AUTH SYSTEM
    ============================================================ */
 
