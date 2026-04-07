@@ -9,135 +9,136 @@
   gtag('config', 'G-89NN1P6CEV');
 </script>
   <meta charset="UTF-8" />
-  <title>360 | Zone</title>
+  <title>360 | Zone — Essay & Math Helper</title>
   <style>
     :root {
       --accent: #4a6cff;
       --accent-light: #6f86ff;
       --accent-hover: #3a58d6;
       --bg: #f7f8ff;
-      --bg-dark: #111827;
       --card: #ffffff;
-      --card-dark: #1f2933;
       --text: #111827;
-      --text-dark: #f9fafb;
+      --sub: #6b7280;
+      --border: #e5e7eb;
       --radius: 10px;
-      --transition: 0.25s ease;
+      --tr: 0.2s ease;
+    }
+    body.dark {
+      --bg: #111827;
+      --card: #1f2937;
+      --text: #f9fafb;
+      --sub: #9ca3af;
+      --border: #374151;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, sans-serif;
-      max-width: 900px;
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 920px;
       margin: 2rem auto;
-      padding: 0 1.5rem 4rem;
+      padding: 0 1.5rem 5rem;
       background: var(--bg);
       color: var(--text);
-      transition: background var(--transition), color var(--transition);
+      transition: background var(--tr), color var(--tr);
     }
 
-    body.dark { background: var(--bg-dark); color: var(--text-dark); }
-
+    /* ── Header ── */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    body.dark .header { border-color: #374151; }
-    .header h1 { font-size: 1.4rem; font-weight: 800; }
+    .header h1 { font-size: 1.35rem; font-weight: 800; }
     .header h1 span {
       background: linear-gradient(120deg, #4a6cff, #a855f7);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-
-    .toggleRow { display: flex; gap: 8px; }
-    .toggleBtn {
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .hbtn {
       padding: 6px 14px;
       border-radius: 999px;
-      border: 1px solid #ccc;
-      background: #f3f4ff;
+      border: 1px solid var(--border);
+      background: transparent;
       cursor: pointer;
       font-size: 0.8rem;
-      transition: var(--transition);
+      font-weight: 600;
+      color: var(--text);
+      transition: var(--tr);
+      font-family: inherit;
     }
-    body.dark .toggleBtn { background: #1f2937; border-color: #4b5563; color: #e5e7eb; }
-    .toggleBtn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .hbtn:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
+    /* ── Tabs ── */
     .tabs {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
     }
-    .tabBtn {
-      padding: 9px 18px;
+    .tab {
+      padding: 8px 16px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
-      background: #e5e7eb;
-      color: #374151;
-      transition: var(--transition);
+      background: var(--border);
+      color: var(--sub);
+      transition: var(--tr);
+      font-family: inherit;
     }
-    .tabBtn:hover { background: var(--accent-light); color: white; transform: translateY(-2px); }
-    .tabBtn.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(74,108,255,.35); }
-    body.dark .tabBtn { background: #374151; color: #e5e7eb; }
-    body.dark .tabBtn.active { background: var(--accent); color: white; }
+    .tab:hover { background: var(--accent-light); color: white; transform: translateY(-1px); }
+    .tab.active { background: var(--accent); color: white; box-shadow: 0 4px 14px rgba(74,108,255,.3); }
 
-    .tabContent {
+    /* ── Card ── */
+    .card {
       display: none;
       padding: 1.5rem;
-      border: 1px solid #e5e7eb;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       background: var(--card);
       box-shadow: 0 4px 16px rgba(0,0,0,.06);
     }
-    body.dark .tabContent { background: var(--card-dark); border-color: #374151; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+    body.dark .card { box-shadow: 0 4px 16px rgba(0,0,0,.35); }
 
     label {
       display: block;
       margin-top: 1rem;
       margin-bottom: 0.3rem;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+      color: var(--text);
     }
     label:first-child { margin-top: 0; }
+    label .hint { font-weight: 400; color: var(--sub); font-size: 0.8rem; }
 
-    textarea, select, input[type="text"], input:not([type]) {
+    textarea, select, input[type="text"], input:not([type]), input[type="number"] {
       width: 100%;
       padding: 0.6rem 0.8rem;
-      font-size: 0.95rem;
+      font-size: 0.93rem;
       border-radius: 7px;
-      border: 1px solid #d1d5db;
-      background: #fafafa;
-      color: #111827;
-      transition: border-color .2s, box-shadow .2s;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color .18s, box-shadow .18s;
       font-family: inherit;
     }
     textarea:focus, select:focus, input:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(74,108,255,.15);
-    }
-    body.dark textarea,
-    body.dark select,
-    body.dark input {
-      background: #111827;
-      color: #e5e7eb;
-      border-color: #4b5563;
+      box-shadow: 0 0 0 3px rgba(74,108,255,.14);
     }
 
-    .btn-row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+    .row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
 
-    button.action {
-      position: relative;
-      overflow: hidden;
+    button.primary {
       padding: 0.6rem 1.4rem;
       font-size: 0.9rem;
       cursor: pointer;
@@ -145,380 +146,801 @@
       border: none;
       background: var(--accent);
       color: white;
-      font-weight: 600;
-      transition: var(--transition);
+      font-weight: 700;
+      transition: var(--tr);
+      font-family: inherit;
     }
-    button.action:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(74,108,255,.3); }
-    button.action:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    button.primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,108,255,.3); }
+    button.primary:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+    button.primary.purple { background: #7c3aed; }
+    button.primary.purple:hover { background: #6d28d9; }
+    button.primary.green { background: #059669; }
+    button.primary.green:hover { background: #047857; }
 
-    button.copy-btn {
+    button.ghost {
       padding: 0.6rem 1.2rem;
       font-size: 0.85rem;
       cursor: pointer;
       border-radius: 7px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border);
       background: transparent;
       color: var(--text);
       font-weight: 600;
-      transition: var(--transition);
+      transition: var(--tr);
+      font-family: inherit;
     }
-    body.dark button.copy-btn { border-color: #4b5563; color: #e5e7eb; }
-    button.copy-btn:hover { background: #f3f4ff; border-color: var(--accent); color: var(--accent); }
+    button.ghost:hover { background: #f0f0ff; border-color: var(--accent); color: var(--accent); }
+    body.dark button.ghost:hover { background: #1e1b4b; }
 
-    .output-wrap { position: relative; margin-top: 1rem; }
     .output {
+      margin-top: 1rem;
       padding: 1rem;
-      border: 1px solid #e5e7eb;
+      border: 1px solid var(--border);
       border-radius: 7px;
-      background: #f9fafb;
+      background: var(--bg);
       white-space: pre-wrap;
-      min-height: 60px;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      color: #111827;
+      min-height: 56px;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      color: var(--text);
+      display: none;
     }
-    body.dark .output { background: #111827; border-color: #374151; color: #e5e7eb; }
-    .output:empty { display: none; }
-    .output.loading { color: #9ca3af; font-style: italic; }
+    .output.loading { color: var(--sub); font-style: italic; }
+    .output.show { display: block; }
 
-    .error {
-      color: #b91c1c;
-      font-size: 0.85rem;
+    .err {
       margin-top: 0.5rem;
       padding: 0.5rem 0.8rem;
       border-radius: 6px;
       background: #fef2f2;
       border: 1px solid #fecaca;
+      color: #b91c1c;
+      font-size: 0.82rem;
       display: none;
     }
-    body.dark .error { background: #1f1212; border-color: #7f1d1d; color: #fca5a5; }
-    .error.visible { display: block; }
+    body.dark .err { background: #1f1212; border-color: #7f1d1d; color: #fca5a5; }
+    .err.show { display: block; }
 
-    mark { background: #ffe066; padding: 1px 3px; border-radius: 3px; }
+    /* ── Pronoun ── */
+    mark { background: #ffe066; padding: 1px 3px; border-radius: 3px; color: #111; }
     body.dark mark { background: #854d0e; color: #fef3c7; }
-
-    #pronounSuggestions {
+    .pronoun-hint {
       margin-top: 0.8rem;
       padding: 0.8rem 1rem;
       border-radius: 7px;
       background: #f0f4ff;
       border: 1px solid #c7d2fe;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       line-height: 1.7;
+      display: none;
     }
-    body.dark #pronounSuggestions { background: #1e1b4b; border-color: #3730a3; color: #c7d2fe; }
+    body.dark .pronoun-hint { background: #1e1b4b; border-color: #3730a3; color: #c7d2fe; }
 
-    #mlaOut { font-family: "Times New Roman", serif; font-size: 1rem; }
-    .char-count { font-size: 0.75rem; color: #9ca3af; text-align: right; margin-top: 2px; }
+    /* ── MLA ── */
+    .mla-citation {
+      font-family: "Times New Roman", serif;
+      font-size: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--accent);
+      background: var(--bg);
+      border-radius: 0 7px 7px 0;
+      margin-top: 1rem;
+      line-height: 1.7;
+      display: none;
+    }
+
+    /* ── Math Helper ── */
+    .math-mode-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .mth {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--sub);
+      transition: var(--tr);
+      font-family: inherit;
+    }
+    .mth.active { background: var(--accent); color: white; border-color: transparent; }
+    .mth:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+    .math-panel { display: none; }
+    .math-panel.show { display: block; }
+
+    /* Calculator grid */
+    .calc-display {
+      background: #0f172a;
+      color: #f0f0f0;
+      border-radius: 10px;
+      padding: 14px 18px;
+      text-align: right;
+      margin-bottom: 12px;
+    }
+    .calc-expr { font-size: 0.8rem; color: #94a3b8; min-height: 18px; word-break: break-all; }
+    .calc-val  { font-size: 2rem; font-weight: 800; word-break: break-all; letter-spacing: -.02em; }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .cbtn {
+      padding: 14px 0;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .12s, transform .08s;
+      font-family: inherit;
+    }
+    .cbtn:hover { background: var(--accent-light); color: white; border-color: transparent; }
+    .cbtn:active { transform: scale(.96); }
+    .cbtn.op  { color: var(--accent); }
+    .cbtn.eq  { background: var(--accent); color: white; border-color: transparent; font-size: 1.1rem; }
+    .cbtn.eq:hover { background: var(--accent-hover); }
+    .cbtn.clr { color: #ef4444; }
+    .cbtn.s2  { grid-column: span 2; }
+
+    /* Unit converter */
+    .unit-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; margin-top: 1rem; }
+    .unit-swap {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      transition: transform .2s;
+      font-family: inherit;
+    }
+    .unit-swap:hover { transform: rotate(180deg); }
+    .convert-result {
+      margin-top: 1rem;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+    }
+
+    /* Progress badge */
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(74,108,255,.1);
+      border: 1px solid rgba(74,108,255,.25);
+      color: var(--accent);
+      margin-left: auto;
+      font-weight: 600;
+    }
+    .dot-pulse {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse .9s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    @media (max-width: 600px) {
+      body { padding: 0 1rem 4rem; margin: 1rem auto; }
+      .tabs { gap: 4px; }
+      .tab { padding: 7px 11px; font-size: 0.8rem; }
+      .calc-val { font-size: 1.5rem; }
+    }
   </style>
 </head>
-
 <body>
+
   <div class="header">
-    <h1>Zone <span>Essay Helper</span></h1>
-    <div class="toggleRow">
-      <button class="toggleBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-      <a href="/" style="padding:6px 14px;border-radius:999px;border:1px solid #ccc;background:#f3f4ff;font-size:0.8rem;text-decoration:none;color:inherit;">← Back to 360</a>
+    <h1>Zone <span>Essay & Math Helper</span></h1>
+    <div class="header-actions">
+      <button class="hbtn" onclick="toggleDark()">🌙 Dark</button>
+      <a href="/" class="hbtn" style="text-decoration:none;">← Back to 360</a>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tabBtn active" onclick="showTab('builder', this)">📝 Paragraph Builder</button>
-    <button class="tabBtn" onclick="showTab('grammar', this)">✏️ Grammar Fixer</button>
-    <button class="tabBtn" onclick="showTab('mla', this)">📚 MLA Generator</button>
-    <button class="tabBtn" onclick="showTab('evidence', this)">🔍 Evidence Helper</button>
-    <button class="tabBtn" onclick="showTab('pronouns', this)">👁️ Pronoun Checker</button>
+    <button class="tab active" onclick="show('builder',this)">📝 Paragraph Builder</button>
+    <button class="tab" onclick="show('grammar',this)">✏️ Grammar Fixer</button>
+    <button class="tab" onclick="show('mla',this)">📚 MLA Generator</button>
+    <button class="tab" onclick="show('evidence',this)">🔍 Evidence Helper</button>
+    <button class="tab" onclick="show('pronouns',this)">👁️ Pronoun Checker</button>
+    <button class="tab" onclick="show('math',this)">🔢 Math Helper</button>
   </div>
 
-  <!-- PARAGRAPH BUILDER -->
-  <div id="builder" class="tabContent" style="display:block;">
+  <!-- ════ PARAGRAPH BUILDER ════ -->
+  <div class="card" id="builder" style="display:block;">
     <label>Paragraph type</label>
-    <select id="paragraphType">
-      <option value="introduction">Introduction</option>
-      <option value="body (first)">Body 1</option>
-      <option value="body (second)">Body 2</option>
-      <option value="body (third)">Body 3</option>
-      <option value="conclusion">Conclusion</option>
+    <select id="pType">
+      <option>Introduction</option>
+      <option>Body (First)</option>
+      <option>Body (Second)</option>
+      <option>Body (Third)</option>
+      <option>Conclusion</option>
     </select>
-    <label>Topic / Claim</label>
-    <textarea id="claim" rows="2" placeholder="e.g. Social media negatively impacts mental health in teenagers."></textarea>
-    <label>Evidence / Notes</label>
-    <textarea id="evidence" rows="5" placeholder="Paste your evidence, quotes, or bullet points here..."></textarea>
-    <div class="btn-row">
-      <button class="action" onclick="buildParagraph(this)">✨ Build Paragraph</button>
-      <button class="copy-btn" onclick="copyOutput('builderOut')">Copy</button>
+
+    <label>Claim / Topic sentence</label>
+    <textarea id="pClaim" rows="2" placeholder="e.g. Social media negatively impacts mental health in teenagers."></textarea>
+
+    <label>Evidence / Notes <span class="hint">(paste quotes, bullet points, anything)</span></label>
+    <textarea id="pEvidence" rows="5" placeholder="Paste your evidence, quotes, or rough notes here..."></textarea>
+
+    <div class="row">
+      <button class="primary" onclick="buildParagraph(this)">✨ Build Paragraph</button>
+      <button class="ghost"   onclick="copyEl('pOut')">Copy</button>
+      <span class="ai-badge"><span class="dot-pulse"></span>AI</span>
     </div>
-    <div class="output-wrap">
-      <div class="output" id="builderOut"></div>
-      <div class="error" id="builderErr"></div>
-    </div>
+    <div class="err" id="pErr"></div>
+    <div class="output" id="pOut"></div>
   </div>
 
-  <!-- GRAMMAR FIXER -->
-  <div id="grammar" class="tabContent">
-    <label>Paste your text</label>
-    <textarea id="grammarInput" rows="8" placeholder="Paste your essay or paragraph here and AI will fix grammar, punctuation, and flow..."></textarea>
-    <div class="btn-row">
-      <button class="action" onclick="fixGrammar(this)">✨ Fix Grammar</button>
-      <button class="copy-btn" onclick="copyOutput('grammarOut')">Copy</button>
-    </div>
-    <div class="output-wrap">
-      <div class="output" id="grammarOut"></div>
-      <div class="error" id="grammarErr"></div>
-    </div>
-  </div>
+  <!-- ════ GRAMMAR FIXER ════ -->
+  <div class="card" id="grammar">
+    <label>Paste your paragraph or essay <span class="hint">(Ctrl+Enter to fix)</span></label>
+    <textarea id="gIn" rows="9" placeholder="Paste your writing here. AI will fix grammar, punctuation, clarity, and flow without changing your meaning..."></textarea>
 
-  <!-- MLA GENERATOR -->
-  <div id="mla" class="tabContent">
-    <label>Author (Last, First)</label>
-    <input id="mlaAuthor" placeholder="e.g. Smith, John" />
+    <div class="row">
+      <button class="primary" onclick="fixGrammar(this)">✨ Fix Grammar</button>
+      <button class="ghost"   onclick="copyEl('gOut')">Copy</button>
+      <span class="ai-badge"><span class="dot-pulse"></span>AI</span>
+    </div>
+    <div class="err" id="gErr"></div>
+    <div class="output" id="gOut"></div>
+  </div>
+  <script>
+    document.getElementById("gIn")?.addEventListener("keydown", e => {
+      if ((e.ctrlKey||e.metaKey) && e.key==="Enter") document.querySelector("#grammar .primary")?.click();
+    });
+  </script>
+
+  <!-- ════ MLA GENERATOR ════ -->
+  <div class="card" id="mla">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label>Author <span class="hint">(Last, First)</span></label>
+        <input id="mAuthor" placeholder="Smith, Jane" />
+      </div>
+      <div>
+        <label>Date Published <span class="hint">(optional)</span></label>
+        <input id="mDate" placeholder="12 May 2024" />
+      </div>
+    </div>
     <label>Article / Page Title</label>
-    <input id="mlaTitle" placeholder="e.g. The Effects of Climate Change" />
+    <input id="mTitle" placeholder="The Effects of Climate Change" />
     <label>Website / Publication Name</label>
-    <input id="mlaSite" placeholder="e.g. National Geographic" />
+    <input id="mSite" placeholder="National Geographic" />
     <label>URL</label>
-    <input id="mlaURL" placeholder="https://..." />
-    <label>Date Published <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
-    <input id="mlaDate" placeholder="e.g. 12 May 2024" />
+    <input id="mURL" placeholder="https://..." type="text" />
     <label>Date Accessed</label>
-    <input id="mlaAccess" placeholder="e.g. 10 Mar. 2026" />
-    <div class="btn-row">
-      <button class="action" onclick="generateMLA(this)">✨ Generate Citation</button>
-      <button class="copy-btn" onclick="copyOutput('mlaOut')">Copy</button>
+    <input id="mAccess" placeholder="10 Mar. 2026" />
+
+    <div class="row">
+      <button class="primary" onclick="genMLA(this)">✨ Generate Citation</button>
+      <button class="ghost"   onclick="copyEl('mOut')">Copy</button>
+      <span class="ai-badge"><span class="dot-pulse"></span>AI</span>
     </div>
-    <div class="output-wrap">
-      <div class="output" id="mlaOut"></div>
-      <div class="error" id="mlaErr"></div>
-    </div>
+    <div class="err" id="mErr"></div>
+    <div class="mla-citation" id="mOut"></div>
   </div>
 
-  <!-- EVIDENCE HELPER -->
-  <div id="evidence" class="tabContent">
+  <!-- ════ EVIDENCE HELPER ════ -->
+  <div class="card" id="evidence">
     <label>Your Claim</label>
-    <textarea id="evClaim" rows="2" placeholder="e.g. Renewable energy is essential for reducing carbon emissions."></textarea>
-    <label>Evidence chunks <span style="font-weight:400;color:#9ca3af">(one per line or paste multiple)</span></label>
-    <textarea id="evChunks" rows="6" placeholder="Paste each piece of evidence on its own line..."></textarea>
-    <div class="btn-row">
-      <button class="action" onclick="alignEvidence(this)">✨ Align Evidence</button>
-      <button class="copy-btn" onclick="copyOutput('evidenceOut')">Copy</button>
+    <textarea id="eClaim" rows="2" placeholder="e.g. Renewable energy is essential for reducing carbon emissions."></textarea>
+    <label>Evidence chunks <span class="hint">(one per line, or paste multiple)</span></label>
+    <textarea id="eChunks" rows="7" placeholder="Paste each piece of evidence on a new line..."></textarea>
+
+    <div class="row">
+      <button class="primary" onclick="alignEvidence(this)">✨ Align Evidence</button>
+      <button class="ghost"   onclick="copyEl('eOut')">Copy</button>
+      <span class="ai-badge"><span class="dot-pulse"></span>AI</span>
     </div>
-    <div class="output-wrap">
-      <div class="output" id="evidenceOut"></div>
-      <div class="error" id="evidenceErr"></div>
-    </div>
+    <div class="err" id="eErr"></div>
+    <div class="output" id="eOut"></div>
   </div>
 
-  <!-- PRONOUN CHECKER -->
-  <div id="pronouns" class="tabContent">
+  <!-- ════ PRONOUN CHECKER ════ -->
+  <div class="card" id="pronouns">
     <label>Paste your text</label>
-    <textarea id="pronounInput" rows="6" placeholder="Paste your paragraph here..."></textarea>
+    <textarea id="prIn" rows="7" placeholder="Paste your paragraph or essay section here..."></textarea>
+
     <label>Pronoun category to highlight</label>
-    <select id="pronounCategory">
-      <option value="subjective">Subjective — he, she, they, I, we, you</option>
-      <option value="objective">Objective — him, her, them, me, us, you</option>
-      <option value="possessive">Possessive — his, hers, theirs, mine, ours</option>
-      <option value="reflexive">Reflexive — himself, herself, themselves, myself</option>
+    <select id="prCat">
+      <option value="subjective">Subjective — he, she, they, I, we, you, it</option>
+      <option value="objective">Objective — him, her, them, me, us, you, it</option>
+      <option value="possessive">Possessive — his, hers, theirs, mine, ours, yours, its</option>
+      <option value="reflexive">Reflexive — himself, herself, themselves, myself, ourselves</option>
     </select>
-    <div class="btn-row">
-      <button class="action" onclick="checkPronouns()">🔎 Highlight Pronouns</button>
-      <button class="action" onclick="aiCheckPronouns(this)" style="background:#7c3aed;">✨ AI Suggestions</button>
+
+    <div class="row">
+      <button class="primary green" onclick="highlightPronouns()">🔎 Highlight</button>
+      <button class="primary purple" onclick="aiPronouns(this)">✨ AI Suggestions</button>
+      <button class="ghost" onclick="copyEl('prOut')">Copy</button>
     </div>
-    <div class="output-wrap">
-      <div class="output" id="pronounOut"></div>
-      <div id="pronounSuggestions" style="display:none;"></div>
-      <div class="error" id="pronounErr"></div>
+    <div class="err" id="prErr"></div>
+    <div class="output" id="prOut"></div>
+    <div class="pronoun-hint" id="prHint"></div>
+  </div>
+
+  <!-- ════ MATH HELPER ════ -->
+  <div class="card" id="math">
+    <div class="math-mode-tabs">
+      <button class="mth active" onclick="mathMode('calc',this)">🧮 Calculator</button>
+      <button class="mth" onclick="mathMode('solver',this)">🔭 Equation Solver</button>
+      <button class="mth" onclick="mathMode('word',this)">📖 Word Problem</button>
+      <button class="mth" onclick="mathMode('units',this)">📐 Unit Converter</button>
+    </div>
+
+    <!-- Calculator -->
+    <div class="math-panel show" id="mpCalc">
+      <div class="calc-display">
+        <div class="calc-expr" id="cExpr"></div>
+        <div class="calc-val"  id="cVal">0</div>
+      </div>
+      <div class="calc-grid" id="cGrid"></div>
+    </div>
+
+    <!-- Equation Solver -->
+    <div class="math-panel" id="mpSolver">
+      <label>Enter your equation or expression <span class="hint">(e.g. "2x + 5 = 13" or "x² - 4x + 4 = 0")</span></label>
+      <textarea id="eqInput" rows="3" placeholder="Type your equation here...&#10;e.g. 3x + 7 = 22&#10;e.g. x² + 5x + 6 = 0"></textarea>
+      <div class="row">
+        <button class="primary" onclick="solveEq(this)">✨ Solve Step-by-Step</button>
+        <button class="ghost"   onclick="copyEl('eqOut')">Copy</button>
+        <span class="ai-badge"><span class="dot-pulse"></span>AI</span>
+      </div>
+      <div class="err" id="eqErr"></div>
+      <div class="output" id="eqOut"></div>
+    </div>
+
+    <!-- Word Problem -->
+    <div class="math-panel" id="mpWord">
+      <label>Paste your word problem <span class="hint">(AI will solve it step-by-step)</span></label>
+      <textarea id="wpInput" rows="5" placeholder="e.g. A train leaves Chicago at 9am traveling 60 mph. Another train leaves St. Louis at 10am traveling 80 mph toward Chicago. The cities are 300 miles apart. When do they meet?"></textarea>
+      <div class="row">
+        <button class="primary" onclick="solveWord(this)">✨ Solve Problem</button>
+        <button class="ghost"   onclick="copyEl('wpOut')">Copy</button>
+        <span class="ai-badge"><span class="dot-pulse"></span>AI</span>
+      </div>
+      <div class="err" id="wpErr"></div>
+      <div class="output" id="wpOut"></div>
+    </div>
+
+    <!-- Unit Converter -->
+    <div class="math-panel" id="mpUnits">
+      <label>Category</label>
+      <select id="uCat" onchange="updateUnitLists()">
+        <option value="length">Length</option>
+        <option value="mass">Mass / Weight</option>
+        <option value="temp">Temperature</option>
+        <option value="area">Area</option>
+        <option value="volume">Volume</option>
+        <option value="speed">Speed</option>
+        <option value="time">Time</option>
+        <option value="data">Data / Storage</option>
+        <option value="energy">Energy</option>
+        <option value="pressure">Pressure</option>
+      </select>
+      <div class="unit-row">
+        <div>
+          <label>From</label>
+          <select id="uFrom"></select>
+          <input id="uVal" type="number" placeholder="Value" style="margin-top:8px;" />
+        </div>
+        <button class="unit-swap" onclick="swapUnits()" title="Swap">⇄</button>
+        <div>
+          <label>To</label>
+          <select id="uTo"></select>
+          <div class="convert-result" id="uResult">--</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="primary" onclick="doConvert()">Convert</button>
+      </div>
     </div>
   </div>
 
   <script>
-  // ── All Groq calls go through the secure proxy — no key in frontend ──
-  const GROQ_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/zone-groq-proxy";
+  /* ═══════════════════════════════════════════════════════
+     ZONE V2 — All systems operational
+  ═══════════════════════════════════════════════════════ */
+
+  const PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/zone-groq-proxy";
   const MODEL = "llama-3.1-8b-instant";
 
-  function toggleDarkMode() {
+  /* ── Theme ── */
+  function toggleDark() {
     document.body.classList.toggle("dark");
-    const btn = document.querySelector('.toggleBtn');
-    btn.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
+    document.querySelector(".hbtn").textContent = document.body.classList.contains("dark") ? "☀️ Light" : "🌙 Dark";
   }
 
-  function showTab(id, btn) {
-    document.querySelectorAll('.tabContent').forEach(d => d.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-    document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  /* ── Tab switching ── */
+  function show(id, btn) {
+    document.querySelectorAll(".card").forEach(c => c.style.display = "none");
+    document.getElementById(id).style.display = "block";
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
   }
 
-  function copyOutput(id) {
-    const el   = document.getElementById(id);
-    const text = el.innerText || el.textContent;
-    if (!text.trim()) return;
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = event.target;
-      btn.textContent = "Copied!";
-      setTimeout(() => btn.textContent = "Copy", 1500);
-    });
-  }
-
-  function setLoading(btn, outId, errId, loading) {
-    const out = document.getElementById(outId);
-    const err = document.getElementById(errId);
-    if (loading) {
-      btn.disabled = true;
-      btn.dataset.orig = btn.textContent;
-      btn.textContent = "Thinking...";
-      out.classList.add("loading");
-      out.textContent = "Generating response...";
-      err.classList.remove("visible");
-    } else {
-      btn.disabled = false;
-      btn.textContent = btn.dataset.orig || btn.textContent;
-      out.classList.remove("loading");
-    }
-  }
-
-  function showError(errId, msg) {
-    const err = document.getElementById(errId);
-    err.textContent = "⚠️ " + msg;
-    err.classList.add("visible");
-  }
-
-  async function ai(prompt) {
-    const res = await fetch(GROQ_PROXY, {
+  /* ── AI call ── */
+  async function ai(prompt, system) {
+    const sysMsg = system || "You are a helpful academic writing and math assistant for middle and high school students. Be clear, academic, and precise. Return only what is asked — no preamble, no extra commentary.";
+    const res = await fetch(PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: "system", content: "You are a helpful ELA writing assistant for middle and high school students. Be clear, academic, and concise. Return only what is asked with no extra commentary or preamble." },
+          { role: "system", content: sysMsg },
           { role: "user",   content: prompt }
         ],
-        max_tokens: 1024,
-        temperature: 0.7
+        max_tokens: 1200,
+        temperature: 0.65
       })
     });
-
     if (!res.ok) {
       let msg = "";
-      try { const j = await res.json(); msg = j.error?.message || JSON.stringify(j); }
+      try { msg = (await res.json())?.error?.message || "Unknown error"; }
       catch { msg = await res.text(); }
-      throw new Error(`${res.status}: ${msg}`);
+      throw new Error(msg);
     }
-
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content?.trim() || "(No response)";
+    const d = await res.json();
+    return d.choices?.[0]?.message?.content?.trim() || "(No response)";
   }
 
-  async function buildParagraph(btn) {
-    const type     = document.getElementById("paragraphType").value;
-    const claim    = document.getElementById("claim").value.trim();
-    const evidence = document.getElementById("evidence").value.trim();
-    if (!claim) { showError("builderErr", "Please enter a claim or topic."); return; }
-    setLoading(btn, "builderOut", "builderErr", true);
-    try {
-      document.getElementById("builderOut").textContent = await ai(
-        `Write a well-structured ${type} paragraph for a middle or high school essay.\n\nClaim/Topic:\n${claim}\n\n${evidence ? `Evidence/Notes:\n${evidence}\n\n` : ""}Requirements:\n- Use clear academic language\n- Follow proper ${type} paragraph structure\n- Include a topic sentence, supporting details, and a closing sentence\n- Do NOT include labels like "Topic sentence:" or "Closing sentence:"\n- Return only the finished paragraph`
-      );
-    } catch (e) {
-      document.getElementById("builderOut").textContent = "";
-      showError("builderErr", e.message);
-    }
-    setLoading(btn, "builderOut", "builderErr", false);
+  /* ── Helpers ── */
+  function setLoading(btn, isLoading) {
+    if (isLoading) { btn.disabled = true; btn._orig = btn.textContent; btn.textContent = "Thinking…"; }
+    else           { btn.disabled = false; btn.textContent = btn._orig; }
   }
-
-  async function fixGrammar(btn) {
-    const text = document.getElementById("grammarInput").value.trim();
-    if (!text) { showError("grammarErr", "Please paste some text to fix."); return; }
-    setLoading(btn, "grammarOut", "grammarErr", true);
-    try {
-      document.getElementById("grammarOut").textContent = await ai(
-        `Fix all grammar, punctuation, spelling, and clarity issues in the following text. Improve sentence flow where needed. Do NOT change the meaning or content. Return only the corrected text with no commentary.\n\nText:\n${text}`
-      );
-    } catch (e) {
-      document.getElementById("grammarOut").textContent = "";
-      showError("grammarErr", e.message);
-    }
-    setLoading(btn, "grammarOut", "grammarErr", false);
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = "⚠️ " + msg;
+    el.classList.add("show");
   }
-
-  async function generateMLA(btn) {
-    const author = document.getElementById("mlaAuthor").value.trim();
-    const title  = document.getElementById("mlaTitle").value.trim();
-    const site   = document.getElementById("mlaSite").value.trim();
-    const url    = document.getElementById("mlaURL").value.trim();
-    const date   = document.getElementById("mlaDate").value.trim();
-    const access = document.getElementById("mlaAccess").value.trim();
-    if (!title) { showError("mlaErr", "Please enter at least an article title."); return; }
-    setLoading(btn, "mlaOut", "mlaErr", true);
-    try {
-      document.getElementById("mlaOut").textContent = await ai(
-        `Generate a correctly formatted MLA 9th edition Works Cited citation for an online source.\n\nAuthor: ${author || "No author"}\nArticle Title: ${title}\nWebsite/Publication: ${site || "N/A"}\nURL: ${url || "N/A"}\nDate Published: ${date || "N/A"}\nDate Accessed: ${access || "N/A"}\n\nRules:\n- Use hanging indent format (describe with spaces if needed)\n- Follow MLA 9 exactly\n- Return only the citation, nothing else`
-      );
-    } catch (e) {
-      document.getElementById("mlaOut").textContent = "";
-      showError("mlaErr", e.message);
-    }
-    setLoading(btn, "mlaOut", "mlaErr", false);
+  function clearErr(id) { document.getElementById(id).classList.remove("show"); }
+  function showOut(id, html, asHtml = false) {
+    const el = document.getElementById(id);
+    el.classList.add("show");
+    el.classList.remove("loading");
+    if (asHtml) el.innerHTML = html;
+    else        el.textContent = html;
   }
-
-  async function alignEvidence(btn) {
-    const claim  = document.getElementById("evClaim").value.trim();
-    const chunks = document.getElementById("evChunks").value.trim();
-    if (!claim || !chunks) { showError("evidenceErr", "Please enter both a claim and evidence."); return; }
-    setLoading(btn, "evidenceOut", "evidenceErr", true);
-    try {
-      document.getElementById("evidenceOut").textContent = await ai(
-        `A student is writing an essay with the following claim:\n"${claim}"\n\nThey have collected this evidence:\n${chunks}\n\nFor each piece of evidence:\n1. Explain clearly how it supports the claim\n2. Suggest how to integrate it smoothly into a paragraph\n3. Rate its relevance (Strong / Moderate / Weak)\n\nUse clear, student-friendly language. Format each piece of evidence as a numbered item.`
-      );
-    } catch (e) {
-      document.getElementById("evidenceOut").textContent = "";
-      showError("evidenceErr", e.message);
-    }
-    setLoading(btn, "evidenceOut", "evidenceErr", false);
+  function loadingOut(id) {
+    const el = document.getElementById(id);
+    el.classList.add("show","loading");
+    el.textContent = "Generating…";
   }
-
-  const pronounSets = {
-    subjective: ["he","she","they","i","we","you","it"],
-    objective:  ["him","her","them","me","us","you","it"],
-    possessive: ["his","hers","theirs","mine","ours","yours","its"],
-    reflexive:  ["himself","herself","themselves","myself","ourselves","yourself","itself"]
-  };
-
-  function checkPronouns() {
-    const text     = document.getElementById("pronounInput").value;
-    const category = document.getElementById("pronounCategory").value;
+  function copyEl(id) {
+    const el = document.getElementById(id);
+    const text = el.innerText || el.textContent;
     if (!text.trim()) return;
-    let highlighted = text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    pronounSets[category].forEach(p => {
-      highlighted = highlighted.replace(new RegExp(`\\b${p}\\b`, "gi"), m => `<mark>${m}</mark>`);
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = event.target;
+      const o = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => btn.textContent = o, 1500);
     });
-    const out = document.getElementById("pronounOut");
-    out.innerHTML = highlighted;
-    out.style.display = "block";
-    const sug = document.getElementById("pronounSuggestions");
-    sug.style.display = "block";
-    sug.innerHTML = `<strong>💡 Tip:</strong> Highlighted pronouns may be too vague in academic writing. Consider replacing them with specific nouns or names for clarity.`;
   }
 
-  async function aiCheckPronouns(btn) {
-    const text = document.getElementById("pronounInput").value.trim();
-    if (!text) { showError("pronounErr", "Please paste some text first."); return; }
-    btn.disabled = true;
-    btn.dataset.orig = btn.textContent;
-    btn.textContent = "Thinking...";
-    document.getElementById("pronounErr").classList.remove("visible");
+  /* ═══ PARAGRAPH BUILDER ═══ */
+  async function buildParagraph(btn) {
+    const type = document.getElementById("pType").value;
+    const claim = document.getElementById("pClaim").value.trim();
+    const evidence = document.getElementById("pEvidence").value.trim();
+    clearErr("pErr");
+    if (!claim) { showErr("pErr","Please enter a claim or topic."); return; }
+    setLoading(btn, true); loadingOut("pOut");
     try {
       const result = await ai(
-        `Review the following text for pronoun usage in an academic essay context.\n\nText:\n${text}\n\nProvide:\n1. A list of pronouns found and whether they are clear or ambiguous\n2. Specific suggestions for replacing vague pronouns with nouns\n3. A rewritten version of the text with improved pronoun clarity\n\nFormat clearly with numbered sections.`
+        `Write a polished, well-structured ${type} paragraph for a high school essay.\n\nClaim/Topic:\n${claim}\n\n${evidence?`Evidence/Notes:\n${evidence}\n\n`:""}Requirements:\n- Academic language appropriate for grades 9-12\n- Correct paragraph structure for a ${type}\n- Smooth transitions, no mechanical sentence starters\n- Do NOT label parts (no "Topic sentence:", "Concluding sentence:" etc.)\n- Return only the finished paragraph, nothing else`
       );
-      const sug = document.getElementById("pronounSuggestions");
-      sug.style.display = "block";
-      sug.textContent = result;
-    } catch (e) {
-      showError("pronounErr", e.message);
-    }
-    btn.disabled = false;
-    btn.textContent = btn.dataset.orig;
+      showOut("pOut", result);
+    } catch(e) { showOut("pOut",""); showErr("pErr", e.message); }
+    setLoading(btn, false);
   }
+
+  /* ═══ GRAMMAR FIXER ═══ */
+  async function fixGrammar(btn) {
+    const text = document.getElementById("gIn").value.trim();
+    clearErr("gErr");
+    if (!text) { showErr("gErr","Please paste some text first."); return; }
+    setLoading(btn, true); loadingOut("gOut");
+    try {
+      const result = await ai(
+        `Fix all grammar, punctuation, spelling, and clarity issues in the text below. Improve sentence flow and variety where needed. Keep the student's voice and do NOT change meaning or content. Return only the corrected text with no commentary.\n\nText:\n${text}`
+      );
+      showOut("gOut", result);
+    } catch(e) { showOut("gOut",""); showErr("gErr", e.message); }
+    setLoading(btn, false);
+  }
+
+  /* ═══ MLA GENERATOR ═══ */
+  async function genMLA(btn) {
+    const title  = document.getElementById("mTitle").value.trim();
+    const author = document.getElementById("mAuthor").value.trim();
+    const site   = document.getElementById("mSite").value.trim();
+    const url    = document.getElementById("mURL").value.trim();
+    const date   = document.getElementById("mDate").value.trim();
+    const access = document.getElementById("mAccess").value.trim();
+    clearErr("mErr");
+    if (!title) { showErr("mErr","Please enter at least an article title."); return; }
+    setLoading(btn, true);
+    const mOut = document.getElementById("mOut");
+    mOut.style.display = "block";
+    mOut.textContent = "Generating…";
+    try {
+      const result = await ai(
+        `Generate a correctly formatted MLA 9th edition Works Cited entry for a web source.\n\nAuthor: ${author||"No author"}\nTitle: "${title}"\nWebsite/Publisher: ${site||"N/A"}\nURL: ${url||"N/A"}\nDate Published: ${date||"N/A"}\nDate Accessed: ${access||"N/A"}\n\nRules:\n- MLA 9 format exactly\n- Use period-separated elements\n- If no author, start with title\n- URL should be enclosed in angle brackets with period after\n- Return only the citation line, nothing else`
+      );
+      mOut.textContent = result;
+    } catch(e) { mOut.textContent=""; showErr("mErr", e.message); }
+    setLoading(btn, false);
+  }
+
+  /* ═══ EVIDENCE HELPER ═══ */
+  async function alignEvidence(btn) {
+    const claim  = document.getElementById("eClaim").value.trim();
+    const chunks = document.getElementById("eChunks").value.trim();
+    clearErr("eErr");
+    if (!claim || !chunks) { showErr("eErr","Please enter both a claim and evidence."); return; }
+    setLoading(btn, true); loadingOut("eOut");
+    try {
+      const result = await ai(
+        `A student has this claim:\n"${claim}"\n\nThey collected this evidence:\n${chunks}\n\nFor each piece of evidence:\n1. Restate the evidence in one sentence\n2. Explain how it directly supports the claim (2-3 sentences)\n3. Rate relevance: Strong / Moderate / Weak and briefly say why\n4. Suggest a transition phrase to introduce it in a paragraph\n\nNumber each piece. Use clear, student-friendly language.`
+      );
+      showOut("eOut", result);
+    } catch(e) { showOut("eOut",""); showErr("eErr", e.message); }
+    setLoading(btn, false);
+  }
+
+  /* ═══ PRONOUN CHECKER ═══ */
+  const pronounSets = {
+    subjective: ["he","she","they","i","we","you","it","who"],
+    objective:  ["him","her","them","me","us","you","it","whom"],
+    possessive: ["his","hers","theirs","mine","ours","yours","its"],
+    reflexive:  ["himself","herself","themselves","myself","ourselves","yourself","itself","yourselves"]
+  };
+
+  function highlightPronouns() {
+    const text = document.getElementById("prIn").value;
+    const cat  = document.getElementById("prCat").value;
+    if (!text.trim()) return;
+    let html = text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    pronounSets[cat].forEach(p => {
+      html = html.replace(new RegExp(`\\b${p}\\b`,"gi"), m => `<mark>${m}</mark>`);
+    });
+    const out = document.getElementById("prOut");
+    out.classList.add("show"); out.classList.remove("loading");
+    out.innerHTML = html;
+    const hint = document.getElementById("prHint");
+    hint.style.display = "block";
+    hint.innerHTML = `<strong>💡 Academic writing tip:</strong> Highlighted pronouns may be too vague in formal essays. Consider replacing them with specific nouns or names for clarity and precision.`;
+  }
+
+  async function aiPronouns(btn) {
+    const text = document.getElementById("prIn").value.trim();
+    clearErr("prErr");
+    if (!text) { showErr("prErr","Please paste some text first."); return; }
+    setLoading(btn, true); loadingOut("prOut");
+    try {
+      const result = await ai(
+        `Review the following text for pronoun usage in an academic essay.\n\nText:\n${text}\n\nProvide:\n1. A list of all pronouns found — mark each as Clear or Ambiguous\n2. Specific suggestions: which pronouns should be replaced with nouns, and with what\n3. A fully rewritten version of the text with improved pronoun clarity and academic tone\n\nFormat with clear numbered sections.`
+      );
+      const hint = document.getElementById("prHint");
+      hint.style.display = "none";
+      showOut("prOut", result);
+    } catch(e) { showOut("prOut",""); showErr("prErr", e.message); }
+    setLoading(btn, false);
+  }
+
+  /* ═══ MATH HELPER ═══ */
+
+  /* Mode switching */
+  function mathMode(id, btn) {
+    document.querySelectorAll(".math-panel").forEach(p => p.classList.remove("show"));
+    document.getElementById("mp" + id.charAt(0).toUpperCase() + id.slice(1)).classList.add("show");
+    document.querySelectorAll(".mth").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+
+  /* ── Calculator ── */
+  (function initCalc() {
+    const BTNS = [
+      {l:"C",  c:"clr", v:"C"}, {l:"±", c:"op",v:"±"}, {l:"%",c:"op",v:"%"}, {l:"÷",c:"op",v:"/"},
+      {l:"7",  c:"",    v:"7"}, {l:"8", c:"",  v:"8"}, {l:"9",c:"",  v:"9"}, {l:"×",c:"op",v:"*"},
+      {l:"4",  c:"",    v:"4"}, {l:"5", c:"",  v:"5"}, {l:"6",c:"",  v:"6"}, {l:"−",c:"op",v:"-"},
+      {l:"1",  c:"",    v:"1"}, {l:"2", c:"",  v:"2"}, {l:"3",c:"",  v:"3"}, {l:"+",c:"op",v:"+"},
+      {l:"0",  c:"s2",  v:"0"}, {l:".", c:"",  v:"."}, {l:"=",c:"eq",v:"="},
+    ];
+    let expr="", cur="0", evaled=false;
+    function render() {
+      document.getElementById("cExpr").textContent = expr;
+      document.getElementById("cVal").textContent  = cur;
+    }
+    function press(v) {
+      if (v==="C") { expr=""; cur="0"; evaled=false; render(); return; }
+      if (v==="±") { cur = cur.startsWith("-") ? cur.slice(1) : "-"+cur; render(); return; }
+      if (v==="%")  { try { cur = String(parseFloat(cur)/100); } catch{} render(); return; }
+      if (v==="=") {
+        const e = expr+cur; expr = e+" =";
+        try { cur = String(parseFloat(Function('"use strict";return('+e+')')().toFixed(10)).replace(/\.?0+$/,"")); }
+        catch { cur = "Error"; }
+        evaled = true; render(); return;
+      }
+      const isOp = ["+","-","*","/"].includes(v);
+      if (isOp) { expr = (evaled?cur:expr+cur)+" "+v+" "; cur="0"; evaled=false; }
+      else {
+        if (evaled) { cur="0"; evaled=false; }
+        if (v==="." && cur.includes(".")) { render(); return; }
+        cur = cur==="0" && v!=="." ? v : cur+v;
+      }
+      render();
+    }
+    const grid = document.getElementById("cGrid");
+    BTNS.forEach(b => {
+      const btn = document.createElement("button");
+      btn.className = "cbtn " + b.c;
+      btn.textContent = b.l;
+      btn.addEventListener("click", () => press(b.v));
+      grid.appendChild(btn);
+    });
+    document.addEventListener("keydown", e => {
+      if (document.getElementById("mpCalc").classList.contains("show")) {
+        if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+        const map = {"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","+":"+","-":"-","*":"*","/":"/",".":".","Enter":"=","=":"=","Escape":"C","Backspace":"BS"};
+        if (e.key === "Backspace") { cur = cur.length>1?cur.slice(0,-1):"0"; render(); return; }
+        if (map[e.key]) { e.preventDefault(); press(map[e.key]); }
+      }
+    });
+    render();
+  })();
+
+  /* ── Equation Solver ── */
+  async function solveEq(btn) {
+    const eq = document.getElementById("eqInput").value.trim();
+    clearErr("eqErr");
+    if (!eq) { showErr("eqErr","Please enter an equation."); return; }
+    setLoading(btn, true); loadingOut("eqOut");
+    try {
+      const result = await ai(
+        `Solve the following math equation step-by-step. Show all work clearly.\n\nEquation: ${eq}\n\nFormat:\n- Step 1: [description]\n  → [operation]\n- Step 2: ...\n- ...\n- Final Answer: x = ...\n\nIf it's an expression (not an equation), simplify it step by step.\nReturn only the solution steps and answer, no intro text.`,
+        "You are an expert math tutor. Solve problems step-by-step with clear explanations. Be precise and show all work."
+      );
+      showOut("eqOut", result);
+    } catch(e) { showOut("eqOut",""); showErr("eqErr", e.message); }
+    setLoading(btn, false);
+  }
+
+  /* ── Word Problem Solver ── */
+  async function solveWord(btn) {
+    const prob = document.getElementById("wpInput").value.trim();
+    clearErr("wpErr");
+    if (!prob) { showErr("wpErr","Please enter a word problem."); return; }
+    setLoading(btn, true); loadingOut("wpOut");
+    try {
+      const result = await ai(
+        `Solve this math word problem step-by-step. Identify what is given, what is unknown, set up the equation, solve it, and state the answer clearly in a full sentence.\n\nProblem:\n${prob}\n\nFormat:\n📌 Given: ...\n❓ Find: ...\n📐 Setup: ...\n🔢 Solve:\n   Step 1 → ...\n   Step 2 → ...\n✅ Answer: ...\n\nReturn only the solution, no extra commentary.`,
+        "You are an expert math tutor. Solve word problems clearly with labeled steps."
+      );
+      showOut("wpOut", result);
+    } catch(e) { showOut("wpOut",""); showErr("wpErr", e.message); }
+    setLoading(btn, false);
+  }
+
+  /* ── Unit Converter ── */
+  const UNIT_DEFS = {
+    length: {
+      units: ["Meter","Kilometer","Centimeter","Millimeter","Mile","Yard","Foot","Inch","Nautical Mile","Light Year"],
+      toBase: { "Meter":1,"Kilometer":1000,"Centimeter":0.01,"Millimeter":0.001,"Mile":1609.344,"Yard":0.9144,"Foot":0.3048,"Inch":0.0254,"Nautical Mile":1852,"Light Year":9.461e15 }
+    },
+    mass: {
+      units: ["Kilogram","Gram","Milligram","Metric Ton","Pound","Ounce","Stone","US Ton"],
+      toBase: { "Kilogram":1,"Gram":0.001,"Milligram":1e-6,"Metric Ton":1000,"Pound":0.453592,"Ounce":0.0283495,"Stone":6.35029,"US Ton":907.185 }
+    },
+    temp: {
+      units: ["Celsius","Fahrenheit","Kelvin"],
+      toBase: null // handled separately
+    },
+    area: {
+      units: ["Square Meter","Square Kilometer","Square Mile","Square Foot","Square Inch","Hectare","Acre"],
+      toBase: { "Square Meter":1,"Square Kilometer":1e6,"Square Mile":2.58999e6,"Square Foot":0.0929,"Square Inch":0.000645,"Hectare":10000,"Acre":4046.86 }
+    },
+    volume: {
+      units: ["Liter","Milliliter","Cubic Meter","Gallon (US)","Quart","Pint","Cup","Fluid Ounce","Tablespoon","Teaspoon"],
+      toBase: { "Liter":1,"Milliliter":0.001,"Cubic Meter":1000,"Gallon (US)":3.78541,"Quart":0.946353,"Pint":0.473176,"Cup":0.236588,"Fluid Ounce":0.0295735,"Tablespoon":0.0147868,"Teaspoon":0.00492892 }
+    },
+    speed: {
+      units: ["Meter/second","Kilometer/hour","Mile/hour","Knot","Foot/second"],
+      toBase: { "Meter/second":1,"Kilometer/hour":0.277778,"Mile/hour":0.44704,"Knot":0.514444,"Foot/second":0.3048 }
+    },
+    time: {
+      units: ["Second","Millisecond","Microsecond","Minute","Hour","Day","Week","Month","Year"],
+      toBase: { "Second":1,"Millisecond":0.001,"Microsecond":1e-6,"Minute":60,"Hour":3600,"Day":86400,"Week":604800,"Month":2629800,"Year":31557600 }
+    },
+    data: {
+      units: ["Bit","Byte","Kilobyte","Megabyte","Gigabyte","Terabyte","Petabyte"],
+      toBase: { "Bit":0.125,"Byte":1,"Kilobyte":1024,"Megabyte":1048576,"Gigabyte":1073741824,"Terabyte":1.0995e12,"Petabyte":1.1259e15 }
+    },
+    energy: {
+      units: ["Joule","Kilojoule","Calorie","Kilocalorie","Watt-hour","Kilowatt-hour","BTU","Electron Volt"],
+      toBase: { "Joule":1,"Kilojoule":1000,"Calorie":4.184,"Kilocalorie":4184,"Watt-hour":3600,"Kilowatt-hour":3.6e6,"BTU":1055.06,"Electron Volt":1.602e-19 }
+    },
+    pressure: {
+      units: ["Pascal","Bar","Atmosphere","PSI","Torr","mmHg"],
+      toBase: { "Pascal":1,"Bar":100000,"Atmosphere":101325,"PSI":6894.76,"Torr":133.322,"mmHg":133.322 }
+    }
+  };
+
+  function updateUnitLists() {
+    const cat   = document.getElementById("uCat").value;
+    const { units } = UNIT_DEFS[cat];
+    const from  = document.getElementById("uFrom");
+    const to    = document.getElementById("uTo");
+    from.innerHTML = units.map(u=>`<option>${u}</option>`).join("");
+    to.innerHTML   = units.map((u,i)=>`<option${i===1?" selected":""}>${u}</option>`).join("");
+    document.getElementById("uResult").style.display = "none";
+  }
+
+  function swapUnits() {
+    const from = document.getElementById("uFrom");
+    const to   = document.getElementById("uTo");
+    const tmp  = from.value;
+    from.value = to.value;
+    to.value   = tmp;
+    doConvert();
+  }
+
+  function doConvert() {
+    const cat  = document.getElementById("uCat").value;
+    const from = document.getElementById("uFrom").value;
+    const to   = document.getElementById("uTo").value;
+    const val  = parseFloat(document.getElementById("uVal").value);
+    const res  = document.getElementById("uResult");
+    if (isNaN(val)) { res.style.display="none"; return; }
+
+    let result;
+    if (cat === "temp") {
+      result = convertTemp(val, from, to);
+    } else {
+      const { toBase } = UNIT_DEFS[cat];
+      const inBase = val * toBase[from];
+      result = inBase / toBase[to];
+    }
+
+    res.style.display = "block";
+    const decimals = Math.abs(result) >= 1000 ? 2 : Math.abs(result) >= 1 ? 4 : 8;
+    res.textContent = `${val} ${from} = ${result.toLocaleString("en-US", {maximumFractionDigits: decimals})} ${to}`;
+  }
+
+  function convertTemp(val, from, to) {
+    let c;
+    if (from==="Celsius")    c = val;
+    else if (from==="Fahrenheit") c = (val-32)*5/9;
+    else                     c = val - 273.15;
+    if (to==="Celsius")    return c;
+    if (to==="Fahrenheit") return c*9/5+32;
+    return c + 273.15;
+  }
+
+  // Init converter
+  updateUnitLists();
   </script>
 </body>
 </html>
