@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-89NN1P6CEV');
 </script>
   <meta charset="UTF-8" />
@@ -42,6 +40,7 @@
       <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
       <div class="nav-item" data-href="../chat">Chat</div>
       <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item" data-href="../apps">Apps</div>
       <div class="nav-item" data-href="../games">Games</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
@@ -102,6 +101,12 @@
     </div>
   </div>
 
+  <div class="auth-top-right">
+    <button id="signInBtn" class="auth-btn">Sign In</button>
+    <button id="signUpBtn" class="auth-btn">Sign Up</button>
+    <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
+  </div>
+
   <div class="stocks-page">
     <h2>📈 Stocks</h2>
     <form class="stock-form" id="stockForm">
@@ -116,6 +121,9 @@
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
+    // ── All stock calls go through the secure proxy ──
+    const STOCKS_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/stocks-proxy";
+
     document.getElementById("stockForm").onsubmit = async e => {
       e.preventDefault();
       const t    = document.getElementById("ticker").value.trim().toUpperCase();
@@ -124,15 +132,15 @@
       card.style.display = "block";
       card.innerHTML = "Loading...";
       try {
-        const res  = await fetch("https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + t + "&apikey=I3B9DMLF3EUUP0MY");
+        const res  = await fetch(`${STOCKS_PROXY}?ticker=${encodeURIComponent(t)}`);
         const data = await res.json();
         const g    = data["Global Quote"];
         if (!g || !g["05. price"]) throw new Error("No data for " + t);
         const price = parseFloat(g["05. price"]).toFixed(2);
         const change = parseFloat(g["09. change"]).toFixed(2);
         const isPos = parseFloat(change) >= 0;
-        card.innerHTML = "<div style=\"font-size:24px;font-weight:900;background:linear-gradient(120deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;\">" + t + "</div><div style=\"font-size:20px;font-weight:700;\">$" + price + "</div><div style=\"color:" + (isPos?"#22c55e":"#ef4444") + ";\">" + (isPos?"▲":"▼") + " " + Math.abs(change) + " (" + g["10. change percent"] + ")</div>";
-      } catch (err) { card.innerHTML = "<span style=\"color:#ef4444;\">Error: " + err.message + "</span>"; }
+        card.innerHTML = `<div style="font-size:24px;font-weight:900;background:linear-gradient(120deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${t}</div><div style="font-size:20px;font-weight:700;">$${price}</div><div style="color:${isPos?"#22c55e":"#ef4444"};">${isPos?"▲":"▼"} ${Math.abs(change)} (${g["10. change percent"]})</div>`;
+      } catch (err) { card.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`; }
     };
   </script>
 </body>

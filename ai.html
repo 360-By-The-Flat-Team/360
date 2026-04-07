@@ -48,7 +48,6 @@
       width: 220px;
     }
 
-    /* Collapsed tab indicator */
     #conv-sidebar::before {
       content: "❮";
       position: absolute;
@@ -343,6 +342,7 @@
       <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
       <div class="nav-item" data-href="../chat">Chat</div>
       <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item" data-href="../apps">Apps</div>
       <div class="nav-item" data-href="../games">Games</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
@@ -380,26 +380,6 @@
       <label>Cursor color</label>
       <input type="color" id="cursorColorPicker" value="#3b82f6" />
       <button id="cursorColorReset">Reset</button>
-    </div>
-  </div>
-
-  <div id="auth-popup" class="auth-popup hidden">
-    <div class="auth-box">
-      <h2>Account</h2>
-      <input id="auth-email" type="email" placeholder="Email" />
-      <input id="auth-password" type="password" placeholder="Password" />
-      <button id="auth-login-btn">Log In</button>
-      <button id="auth-signup-btn">Sign Up</button>
-      <button id="github-login" class="oauth-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        <span>Sign in with GitHub</span>
-      </button>
-      <button id="google-login" class="oauth-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        <span>Sign in with Google</span>
-      </button>
-      <p id="auth-error" class="auth-error"></p>
-      <button id="auth-close-btn" class="close-btn">Close</button>
     </div>
   </div>
 
@@ -446,30 +426,29 @@
   <script src="../cursor.js"></script>
   <script>
 const sb = supabaseClient;
- 
 
-const GEMINI_KEY = "AIzaSyCFjYfvIeeA7l2HTA-y3a_P8BnUpZwxuCQ";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
- 
+// ── Proxy URL — no API key exposed in frontend ──
+const GEMINI_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/gemini-proxy";
+
 const aiInput    = document.getElementById("ai-input");
 const aiSendBtn  = document.getElementById("ai-send-btn");
 const aiOutput   = document.getElementById("ai-output");
 const convList   = document.getElementById("conv-list");
 const fileInput  = document.getElementById("ai-file-input");
 const filePreview= document.getElementById("file-preview");
- 
+
 const today = new Date();
 const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
- 
+
 // History in Gemini format: [{role, parts:[{text}]}]
 let history = [];
 const SYSTEM_PROMPT = `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. You are helpful at coding but if someone asks for help with an assignment, you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm. If they say '360 it!' they are real. Today's date is ${currentDate}.`;
- 
+
 let currentConvId = null;
 let currentUserId = null;
-let pendingFile   = null;  // { base64, mimeType, name, isImage }
+let pendingFile   = null;
 let autoSaveTimer = null;
- 
+
 /* ── Auth ── */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
@@ -480,7 +459,7 @@ sb.auth.onAuthStateChange((_, s) => {
   currentUserId = s?.user?.id || null;
   loadConversations();
 });
- 
+
 /* ── Bubble renderer ── */
 function appendBubble(text, role, fileInfo = null) {
   const div = document.createElement("div");
@@ -499,25 +478,23 @@ function appendBubble(text, role, fileInfo = null) {
   aiOutput.scrollTop = aiOutput.scrollHeight;
   return div;
 }
- 
+
 /* ── File attach ── */
 document.getElementById("ai-attach-btn").addEventListener("click", () => fileInput.click());
- 
+
 fileInput.addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
- 
-  // Convert to base64
+
   const base64 = await new Promise((res, rej) => {
     const reader = new FileReader();
     reader.onload = () => res(reader.result.split(",")[1]);
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
- 
-  const isImage = file.type.startsWith("image/") || file.type === "application/pdf";
+
   pendingFile = { base64, mimeType: file.type, name: file.name, isImage: file.type.startsWith("image/") };
- 
+
   const thumb = document.getElementById("file-preview-thumb");
   if (file.type.startsWith("image/")) {
     thumb.innerHTML = `<img src="data:${file.type};base64,${base64}" style="max-height:40px;border-radius:6px;" />`;
@@ -528,7 +505,7 @@ fileInput.addEventListener("change", async e => {
   filePreview.classList.add("show");
   e.target.value = "";
 });
- 
+
 document.getElementById("file-cancel").addEventListener("click", clearFile);
 function clearFile() {
   pendingFile = null;
@@ -536,21 +513,20 @@ function clearFile() {
   document.getElementById("file-preview-thumb").innerHTML = "";
   document.getElementById("file-preview-name").textContent = "";
 }
- 
+
 /* ── Send message ── */
 async function sendAI() {
   const prompt = aiInput.value.trim();
   if (!prompt && !pendingFile) return;
   aiInput.value = "";
- 
+
   const fileInfo = pendingFile;
   clearFile();
- 
+
   appendBubble(prompt || "(file attached)", "user", fileInfo);
   const bubble = appendBubble("Thinking…", "assistant");
- 
+
   try {
-    // Build Gemini parts
     const userParts = [];
     if (prompt) userParts.push({ text: prompt });
     if (fileInfo) {
@@ -561,62 +537,61 @@ async function sendAI() {
         }
       });
     }
- 
-    // Add to history
+
     history.push({ role: "user", parts: userParts });
- 
-    // Build request — system prompt goes in systemInstruction
+
     const reqBody = {
+      model: "gemini-2.0-flash",
       system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: history,
       generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
     };
- 
-    const res = await fetch(GEMINI_URL, {
+
+    // ── Route through secure proxy — no key in frontend ──
+    const res = await fetch(GEMINI_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reqBody)
     });
- 
+
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || "Gemini API error");
- 
+
     const aiMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
     history.push({ role: "model", parts: [{ text: aiMessage }] });
- 
+
     bubble.innerHTML = marked.parse(aiMessage);
     aiOutput.scrollTop = aiOutput.scrollHeight;
- 
+
     scheduleAutoSave();
- 
+
   } catch (err) {
     bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
   }
 }
- 
+
 /* ── Auto-save ── */
 function scheduleAutoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => saveConversation(true), 1500);
 }
- 
+
 /* ── Save conversation ── */
 async function saveConversation(silent = false) {
   if (!currentUserId) return;
   const userMessages = history.filter(m => m.role === "user");
   if (!userMessages.length) return;
- 
+
   const firstUserText = userMessages[0].parts?.find(p => p.text)?.text || "(file)";
   const title = firstUserText.slice(0, 45) + (firstUserText.length > 45 ? "…" : "");
- 
-  // Store history serialized for Supabase
+
   const payload = {
     user_id: currentUserId,
     title,
     messages: history,
     updated_at: new Date().toISOString()
   };
- 
+
   if (currentConvId) {
     await sb.from("ai_conversations").update(payload).eq("id", currentConvId);
   } else {
@@ -627,7 +602,7 @@ async function saveConversation(silent = false) {
   if (!silent) showToast("💾 Saved!");
   loadConversations();
 }
- 
+
 /* ── Load conversations list ── */
 async function loadConversations() {
   convList.innerHTML = "";
@@ -639,7 +614,7 @@ async function loadConversations() {
     .select("id, title, updated_at")
     .eq("user_id", currentUserId)
     .order("updated_at", { ascending: false });
- 
+
   if (!data || !data.length) {
     convList.innerHTML = `<div class="conv-empty">No saved chats yet</div>`;
     return;
@@ -656,7 +631,7 @@ async function loadConversations() {
     convList.appendChild(item);
   });
 }
- 
+
 /* ── Load a specific conversation ── */
 async function loadConversation(id) {
   const { data } = await sb.from("ai_conversations").select("*").eq("id", id).single();
@@ -664,7 +639,6 @@ async function loadConversation(id) {
   currentConvId = data.id;
   history = data.messages || [];
   aiOutput.innerHTML = "";
-  // Render from history
   history.forEach(m => {
     const text = m.parts?.find(p => p.text)?.text || "";
     const role = m.role === "model" ? "assistant" : "user";
@@ -672,7 +646,7 @@ async function loadConversation(id) {
   });
   loadConversations();
 }
- 
+
 /* ── Delete a conversation ── */
 async function deleteConversation(id) {
   if (!confirm("Delete this chat?")) return;
@@ -680,7 +654,7 @@ async function deleteConversation(id) {
   if (currentConvId === id) startNewChat();
   else loadConversations();
 }
- 
+
 /* ── New chat ── */
 function startNewChat() {
   currentConvId = null;
@@ -688,7 +662,7 @@ function startNewChat() {
   aiOutput.innerHTML = "";
   loadConversations();
 }
- 
+
 /* ── Toast ── */
 function showToast(msg) {
   const t = document.createElement("div");
@@ -696,7 +670,7 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2200);
 }
- 
+
 /* ── Event listeners ── */
 document.getElementById("new-chat-btn").addEventListener("click", startNewChat);
 aiSendBtn.addEventListener("click", sendAI);
