@@ -1,0 +1,36 @@
+<!-- 
+=== PATCH INSTRUCTIONS FOR index.html ===
+Apply these 2 changes directly — the file is too large to rewrite fully.
+
+CHANGE 1: Replace the back button on every subpage (not index itself).
+In ai.html, weather.html, translator.html, url-shortener.html, stocks.html, chat.html, games.html:
+
+FIND:
+  onclick="window.location.href='../'"
+
+REPLACE WITH:
+  onclick="history.length > 1 ? history.back() : window.location.href='../'"
+
+CHANGE 2: Add auth-fix.js after main.js on these pages:
+ai.html, weather.html, translator.html, url-shortener.html, stocks.html, chat.html, games.html
+
+FIND (in each file's script block at the bottom):
+  <script src="../main.js"></script>
+
+ADD AFTER IT:
+  <script src="../auth-fix.js"></script>
+
+For index.html specifically, the back button does not apply (it IS the home page).
+auth-fix.js is already compatible with index.html — no changes needed there.
+
+=== BACK BUTTON FIX — UNIVERSAL SNIPPET ===
+Replace ALL instances of:
+  onclick="window.location.href='../'"
+With:
+  onclick="history.length > 1 ? history.back() : window.location.href='../'"
+
+And ALL instances of (root-level pages that go to /):
+  onclick="window.location.href='./'"
+With:
+  onclick="history.length > 1 ? history.back() : window.location.href='./'"
+-->

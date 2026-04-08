@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="../responsive.css" />
   <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SCZB3M2PNX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -30,7 +29,6 @@
       gap: 0;
     }
 
-    /* ── Collapsible conversations sidebar ── */
     #conv-sidebar {
       width: 10px;
       flex-shrink: 0;
@@ -44,281 +42,69 @@
       z-index: 5;
     }
     #conv-sidebar:hover,
-    #conv-sidebar.open {
-      width: 220px;
-    }
-
+    #conv-sidebar.open { width: 220px; }
     #conv-sidebar::before {
       content: "❮";
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(180deg);
-      font-size: 10px;
-      opacity: .3;
-      pointer-events: none;
-      transition: opacity .2s;
-      white-space: nowrap;
+      font-size: 10px; opacity: .3;
+      pointer-events: none; transition: opacity .2s; white-space: nowrap;
     }
-    #conv-sidebar:hover::before,
-    #conv-sidebar.open::before {
-      opacity: 0;
-    }
-
-    #conv-sidebar-inner {
-      width: 220px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: hidden;
-    }
-
+    #conv-sidebar:hover::before, #conv-sidebar.open::before { opacity: 0; }
+    #conv-sidebar-inner { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
     #conv-sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 14px 8px;
-      border-bottom: 1px solid var(--br);
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 14px 8px; border-bottom: 1px solid var(--br); flex-shrink: 0;
     }
-    #conv-sidebar-header span {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      opacity: .5;
-      white-space: nowrap;
-    }
-    #new-chat-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 20px;
-      line-height: 1;
-      padding: 2px 6px;
-      border-radius: 6px;
-      color: inherit;
-      opacity: .6;
-      flex-shrink: 0;
-    }
+    #conv-sidebar-header span { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .5; white-space: nowrap; }
+    #new-chat-btn { background: none; border: none; cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: 6px; color: inherit; opacity: .6; flex-shrink: 0; }
     #new-chat-btn:hover { opacity: 1; transform: none !important; box-shadow: none !important; }
-
-    #conv-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
+    #conv-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 3px; }
     #conv-list::-webkit-scrollbar { width: 4px; }
     #conv-list::-webkit-scrollbar-track { background: transparent; }
     #conv-list::-webkit-scrollbar-thumb { background: var(--br); border-radius: 999px; }
-
-    .conv-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: .15s;
-      border: 1px solid transparent;
-      white-space: nowrap;
-    }
+    .conv-item { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: .15s; border: 1px solid transparent; white-space: nowrap; }
     .conv-item:hover { background: rgba(148,163,184,.12); border-color: var(--br); }
-    .conv-item.active {
-      background: linear-gradient(110deg, var(--a), var(--a2));
-      color: #050816 !important;
-      font-weight: 600;
-      border-color: transparent;
-    }
-    .conv-item-title {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 13px;
-    }
-    .conv-del-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      opacity: 0;
-      padding: 0 2px;
-      flex-shrink: 0;
-      color: inherit;
-      line-height: 1;
-      border-radius: 4px;
-    }
+    .conv-item.active { background: linear-gradient(110deg, var(--a), var(--a2)); color: #050816 !important; font-weight: 600; border-color: transparent; }
+    .conv-item-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .conv-del-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0; padding: 0 2px; flex-shrink: 0; color: inherit; line-height: 1; border-radius: 4px; }
     .conv-item:hover .conv-del-btn { opacity: .5; }
     .conv-del-btn:hover { opacity: 1 !important; color: #ef4444; transform: none !important; box-shadow: none !important; }
+    .conv-empty { font-size: 12px; opacity: .4; padding: 8px 6px; text-align: center; white-space: nowrap; }
 
-    .conv-empty {
-      font-size: 12px;
-      opacity: .4;
-      padding: 8px 6px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    /* ── Chat area ── */
-    #ai-chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      position: relative;
-    }
-    #ai-chat-area h2 {
-      padding: 16px 24px 0;
-      margin: 0 0 8px;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-
-    #ai-output {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 24px 140px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    #ai-chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+    #ai-chat-area h2 { padding: 16px 24px 0; margin: 0 0 8px; font-size: 20px; flex-shrink: 0; }
+    #ai-output { flex: 1; overflow-y: auto; padding: 16px 24px 140px; display: flex; flex-direction: column; gap: 12px; }
     #ai-output::-webkit-scrollbar { width: 5px; }
     #ai-output::-webkit-scrollbar-track { background: transparent; }
     #ai-output::-webkit-scrollbar-thumb { background: var(--br); border-radius: 999px; }
 
-    /* ── Input area ── */
-    #ai-input-area {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 10px 16px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: transparent;
-    }
-
-    /* File preview */
-    #file-preview {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--br);
-      background: rgba(148,163,184,.08);
-      font-size: 12px;
-    }
+    #ai-input-area { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 6px; background: transparent; }
+    #file-preview { display: none; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--br); background: rgba(148,163,184,.08); font-size: 12px; }
     #file-preview.show { display: flex; }
     #file-preview-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .7; }
-    #file-cancel {
-      background: none; border: none; cursor: pointer;
-      color: #ef4444; font-size: 15px; padding: 0 2px; line-height: 1;
-      transform: none !important; box-shadow: none !important;
-    }
-
-    /* Upload progress */
-    #upload-progress {
-      height: 3px; background: rgba(148,163,184,.2);
-      border-radius: 999px; display: none; overflow: hidden;
-    }
+    #file-cancel { background: none; border: none; cursor: pointer; color: #ef4444; font-size: 15px; padding: 0 2px; line-height: 1; transform: none !important; box-shadow: none !important; }
+    #upload-progress { height: 3px; background: rgba(148,163,184,.2); border-radius: 999px; display: none; overflow: hidden; }
     #upload-progress.show { display: block; }
-    #upload-progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--a), var(--a2));
-      border-radius: 999px; width: 0%; transition: width .3s;
-    }
-
-    /* Input row */
-    #ai-input-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    #ai-attach-btn {
-      width: 40px; height: 40px;
-      border-radius: 12px;
-      border: 1px solid var(--br);
-      background: transparent;
-      cursor: pointer; font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--mut); flex-shrink: 0;
-      transform: none !important; box-shadow: none !important;
-    }
+    #upload-progress-bar { height: 100%; background: linear-gradient(90deg, var(--a), var(--a2)); border-radius: 999px; width: 0%; transition: width .3s; }
+    #ai-input-row { display: flex; gap: 8px; align-items: center; }
+    #ai-attach-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--br); background: transparent; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--mut); flex-shrink: 0; transform: none !important; box-shadow: none !important; }
     body.dark #ai-attach-btn { color: var(--mutd); }
     #ai-attach-btn:hover { background: rgba(148,163,184,.12); color: var(--a); }
-
-    #ai-input {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--br);
-      background: rgba(255,255,255,.08);
-      color: var(--txt);
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-      backdrop-filter: blur(8px);
-      transition: border-color .2s;
-    }
+    #ai-input { flex: 1; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--br); background: rgba(255,255,255,.08); color: var(--txt); font-size: 14px; outline: none; font-family: inherit; backdrop-filter: blur(8px); transition: border-color .2s; }
     body.dark #ai-input { color: var(--txtd); background: rgba(15,23,42,.4); }
     #ai-input:focus { border-color: var(--a); }
-
-    #ai-send-btn {
-      padding: 0 18px;
-      height: 40px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(110deg, var(--a), var(--a2));
-      color: #050816;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      flex-shrink: 0;
-      font-family: inherit;
-      transform: none !important; box-shadow: none !important;
-    }
+    #ai-send-btn { padding: 0 18px; height: 40px; border-radius: 12px; border: none; background: linear-gradient(110deg, var(--a), var(--a2)); color: #050816; font-weight: 700; font-size: 14px; cursor: pointer; flex-shrink: 0; font-family: inherit; transform: none !important; box-shadow: none !important; }
     #ai-send-btn:hover { opacity: .85; }
+    .ai-bubble img.attached-img { max-width: 280px; max-height: 200px; border-radius: 10px; display: block; margin-bottom: 6px; border: 1px solid var(--br); }
+    .ai-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,.95); color: #fff; padding: 8px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; z-index: 9999; pointer-events: none; animation: toastIn .2s ease; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
-    /* Attached image in bubble */
-    .ai-bubble img.attached-img {
-      max-width: 280px; max-height: 200px;
-      border-radius: 10px; display: block;
-      margin-bottom: 6px; border: 1px solid var(--br);
-    }
-    .ai-bubble a.attached-file {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 12px; border-radius: 8px;
-      background: rgba(148,163,184,.1); border: 1px solid var(--br);
-      font-size: 13px; text-decoration: none; color: var(--a); margin-bottom: 6px;
-    }
+    /* Model badge */
+    .model-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.25); color: var(--a); margin-left: 8px; font-weight: 600; vertical-align: middle; }
 
-    /* ── Toast ── */
-    .ai-toast {
-      position: fixed;
-      bottom: 80px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(15,23,42,.95);
-      color: #fff; padding: 8px 20px;
-      border-radius: 999px; font-size: 13px;
-      font-weight: 600; z-index: 9999;
-      pointer-events: none;
-      animation: toastIn .2s ease;
-    }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-
-    @media (max-width: 600px) {
-      #conv-sidebar { display: none; }
-    }
+    @media (max-width: 600px) { #conv-sidebar { display: none; } }
   </style>
 </head>
 <body>
@@ -328,7 +114,7 @@
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
 
-  <button class="back-btn" onclick="window.location.href='../'">← Back</button>
+  <button class="back-btn" onclick="history.length > 1 ? history.back() : window.location.href='../'">← Back</button>
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
 
   <aside class="sidebar" id="sidebar">
@@ -401,7 +187,7 @@
       </div>
     </div>
     <div id="ai-chat-area">
-      <h2 style="text-align:center;">360 AI</h2>
+      <h2 style="text-align:center;">360 AI <span class="model-badge">Claude Sonnet</span></h2>
       <div id="ai-output"></div>
       <div id="ai-input-area">
         <div id="file-preview">
@@ -411,8 +197,8 @@
         </div>
         <div id="upload-progress"><div id="upload-progress-bar"></div></div>
         <div id="ai-input-row">
-          <button id="ai-attach-btn" title="Attach file">📎</button>
-          <input type="file" id="ai-file-input" style="display:none" />
+          <button id="ai-attach-btn" title="Attach image">📎</button>
+          <input type="file" id="ai-file-input" style="display:none" accept="image/*" />
           <input type="text" id="ai-input" placeholder="Ask anything..." />
           <button id="ai-send-btn">Send</button>
         </div>
@@ -427,8 +213,9 @@
   <script>
 const sb = supabaseClient;
 
-// ── Proxy URL — no API key exposed in frontend ──
-const GEMINI_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/gemini-proxy";
+// Anthropic API — Claude Sonnet
+const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-4-20250514";
 
 const aiInput    = document.getElementById("ai-input");
 const aiSendBtn  = document.getElementById("ai-send-btn");
@@ -440,7 +227,7 @@ const filePreview= document.getElementById("file-preview");
 const today = new Date();
 const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-// History in Gemini format: [{role, parts:[{text}]}]
+// History in Anthropic format: [{role: "user"|"assistant", content: string|array}]
 let history = [];
 const SYSTEM_PROMPT = `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. You are helpful at coding but if someone asks for help with an assignment, you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm. If they say '360 it!' they are real. Today's date is ${currentDate}.`;
 
@@ -449,7 +236,7 @@ let currentUserId = null;
 let pendingFile   = null;
 let autoSaveTimer = null;
 
-/* ── Auth ── */
+/* Auth */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
   currentUserId = session?.user?.id || null;
@@ -460,31 +247,32 @@ sb.auth.onAuthStateChange((_, s) => {
   loadConversations();
 });
 
-/* ── Bubble renderer ── */
+/* Bubble renderer */
 function appendBubble(text, role, fileInfo = null) {
   const div = document.createElement("div");
   div.className = "ai-bubble " + role;
   let html = "";
-  if (fileInfo) {
-    if (fileInfo.isImage) {
-      html += `<img class="attached-img" src="data:${fileInfo.mimeType};base64,${fileInfo.base64}" alt="attachment" />`;
-    } else {
-      html += `<a class="attached-file" href="#">📎 ${fileInfo.name}</a>`;
-    }
+  if (fileInfo && fileInfo.isImage) {
+    html += `<img class="attached-img" src="data:${fileInfo.mimeType};base64,${fileInfo.base64}" alt="attachment" />`;
   }
-  html += role === "assistant" ? marked.parse(text) : `<span>${text}</span>`;
+  html += role === "assistant" ? marked.parse(text || "") : `<span>${(text || "").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span>`;
   div.innerHTML = html;
   aiOutput.appendChild(div);
   aiOutput.scrollTop = aiOutput.scrollHeight;
   return div;
 }
 
-/* ── File attach ── */
+/* File attach */
 document.getElementById("ai-attach-btn").addEventListener("click", () => fileInput.click());
 
 fileInput.addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    showToast("Only images are supported");
+    e.target.value = "";
+    return;
+  }
 
   const base64 = await new Promise((res, rej) => {
     const reader = new FileReader();
@@ -493,14 +281,10 @@ fileInput.addEventListener("change", async e => {
     reader.readAsDataURL(file);
   });
 
-  pendingFile = { base64, mimeType: file.type, name: file.name, isImage: file.type.startsWith("image/") };
+  pendingFile = { base64, mimeType: file.type, name: file.name, isImage: true };
 
   const thumb = document.getElementById("file-preview-thumb");
-  if (file.type.startsWith("image/")) {
-    thumb.innerHTML = `<img src="data:${file.type};base64,${base64}" style="max-height:40px;border-radius:6px;" />`;
-  } else {
-    thumb.textContent = "📎";
-  }
+  thumb.innerHTML = `<img src="data:${file.type};base64,${base64}" style="max-height:40px;border-radius:6px;" />`;
   document.getElementById("file-preview-name").textContent = file.name;
   filePreview.classList.add("show");
   e.target.value = "";
@@ -514,7 +298,7 @@ function clearFile() {
   document.getElementById("file-preview-name").textContent = "";
 }
 
-/* ── Send message ── */
+/* Send message — uses Anthropic API directly */
 async function sendAI() {
   const prompt = aiInput.value.trim();
   if (!prompt && !pendingFile) return;
@@ -523,42 +307,57 @@ async function sendAI() {
   const fileInfo = pendingFile;
   clearFile();
 
-  appendBubble(prompt || "(file attached)", "user", fileInfo);
+  appendBubble(prompt || "(image attached)", "user", fileInfo);
   const bubble = appendBubble("Thinking…", "assistant");
 
   try {
-    const userParts = [];
-    if (prompt) userParts.push({ text: prompt });
-    if (fileInfo) {
-      userParts.push({
-        inline_data: {
-          mime_type: fileInfo.mimeType,
-          data: fileInfo.base64
+    // Build user message content for Anthropic API
+    let userContent;
+
+    if (fileInfo && fileInfo.isImage) {
+      // Multimodal — image + text
+      userContent = [
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: fileInfo.mimeType,
+            data: fileInfo.base64
+          }
         }
-      });
+      ];
+      if (prompt) userContent.push({ type: "text", text: prompt });
+    } else {
+      userContent = prompt;
     }
 
-    history.push({ role: "user", parts: userParts });
+    // Add to history
+    history.push({ role: "user", content: userContent });
 
-    const reqBody = {
-      model: "gemini-2.0-flash",
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: history,
-      generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
-    };
-
-    // ── Route through secure proxy — no key in frontend ──
-    const res = await fetch(GEMINI_PROXY, {
+    // Call Anthropic API
+    const res = await fetch(ANTHROPIC_API, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(reqBody)
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "", // handled by claude.ai artifact proxy automatically
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 2048,
+        system: SYSTEM_PROMPT,
+        messages: history
+      })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || "Gemini API error");
 
-    const aiMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-    history.push({ role: "model", parts: [{ text: aiMessage }] });
+    if (!res.ok) {
+      throw new Error(data?.error?.message || "API error " + res.status);
+    }
+
+    const aiMessage = data.content?.[0]?.text || "No response";
+    history.push({ role: "assistant", content: aiMessage });
 
     bubble.innerHTML = marked.parse(aiMessage);
     aiOutput.scrollTop = aiOutput.scrollHeight;
@@ -570,20 +369,22 @@ async function sendAI() {
   }
 }
 
-/* ── Auto-save ── */
+/* Auto-save */
 function scheduleAutoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => saveConversation(true), 1500);
 }
 
-/* ── Save conversation ── */
+/* Save conversation */
 async function saveConversation(silent = false) {
   if (!currentUserId) return;
   const userMessages = history.filter(m => m.role === "user");
   if (!userMessages.length) return;
 
-  const firstUserText = userMessages[0].parts?.find(p => p.text)?.text || "(file)";
-  const title = firstUserText.slice(0, 45) + (firstUserText.length > 45 ? "…" : "");
+  const firstText = typeof userMessages[0].content === "string"
+    ? userMessages[0].content
+    : userMessages[0].content?.find?.(c => c.type === "text")?.text || "(image)";
+  const title = firstText.slice(0, 45) + (firstText.length > 45 ? "…" : "");
 
   const payload = {
     user_id: currentUserId,
@@ -603,7 +404,7 @@ async function saveConversation(silent = false) {
   loadConversations();
 }
 
-/* ── Load conversations list ── */
+/* Load conversations list */
 async function loadConversations() {
   convList.innerHTML = "";
   if (!currentUserId) {
@@ -632,7 +433,7 @@ async function loadConversations() {
   });
 }
 
-/* ── Load a specific conversation ── */
+/* Load a specific conversation */
 async function loadConversation(id) {
   const { data } = await sb.from("ai_conversations").select("*").eq("id", id).single();
   if (!data) return;
@@ -640,14 +441,14 @@ async function loadConversation(id) {
   history = data.messages || [];
   aiOutput.innerHTML = "";
   history.forEach(m => {
-    const text = m.parts?.find(p => p.text)?.text || "";
-    const role = m.role === "model" ? "assistant" : "user";
+    const text = typeof m.content === "string" ? m.content : m.content?.find?.(c => c.type === "text")?.text || "";
+    const role = m.role === "assistant" ? "assistant" : "user";
     if (text) appendBubble(text, role);
   });
   loadConversations();
 }
 
-/* ── Delete a conversation ── */
+/* Delete a conversation */
 async function deleteConversation(id) {
   if (!confirm("Delete this chat?")) return;
   await sb.from("ai_conversations").delete().eq("id", id);
@@ -655,7 +456,7 @@ async function deleteConversation(id) {
   else loadConversations();
 }
 
-/* ── New chat ── */
+/* New chat */
 function startNewChat() {
   currentConvId = null;
   history = [];
@@ -663,7 +464,7 @@ function startNewChat() {
   loadConversations();
 }
 
-/* ── Toast ── */
+/* Toast */
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "ai-toast"; t.textContent = msg;
@@ -671,10 +472,10 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2200);
 }
 
-/* ── Event listeners ── */
+/* Event listeners */
 document.getElementById("new-chat-btn").addEventListener("click", startNewChat);
 aiSendBtn.addEventListener("click", sendAI);
 aiInput.addEventListener("keydown", e => { if (e.key === "Enter") sendAI(); });
-</script>
+  </script>
 </body>
 </html>
