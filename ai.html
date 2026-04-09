@@ -12,8 +12,7 @@
   <link rel="stylesheet" href="../responsive.css" />
   <link rel="stylesheet" href="../cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Puter.js — free, unlimited Claude access, no API key needed -->
-  <script src="https://js.puter.com/v2/"></script>
+  <!-- NO puter.js — using 360's own Gemini backend instead -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SCZB3M2PNX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -22,6 +21,7 @@
     gtag('config', 'G-SCZB3M2PNX');
   </script>
   <style>
+    /* ... (keep all the existing CSS from ai.html unchanged) ... */
     .ai-page {
       display: flex;
       flex-direction: row;
@@ -30,7 +30,6 @@
       padding: 0;
       gap: 0;
     }
-
     #conv-sidebar {
       width: 10px;
       flex-shrink: 0;
@@ -74,14 +73,12 @@
     .conv-item:hover .conv-del-btn { opacity: .5; }
     .conv-del-btn:hover { opacity: 1 !important; color: #ef4444; transform: none !important; box-shadow: none !important; }
     .conv-empty { font-size: 12px; opacity: .4; padding: 8px 6px; text-align: center; white-space: nowrap; }
-
     #ai-chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
     #ai-chat-area h2 { padding: 16px 24px 0; margin: 0 0 8px; font-size: 20px; flex-shrink: 0; }
     #ai-output { flex: 1; overflow-y: auto; padding: 16px 24px 140px; display: flex; flex-direction: column; gap: 12px; }
     #ai-output::-webkit-scrollbar { width: 5px; }
     #ai-output::-webkit-scrollbar-track { background: transparent; }
     #ai-output::-webkit-scrollbar-thumb { background: var(--br); border-radius: 999px; }
-
     #ai-input-area { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 6px; background: transparent; }
     #file-preview { display: none; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--br); background: rgba(148,163,184,.08); font-size: 12px; }
     #file-preview.show { display: flex; }
@@ -101,7 +98,6 @@
     @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
     .model-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.25); color: var(--a); margin-left: 8px; font-weight: 600; vertical-align: middle; }
     .ai-bubble.assistant .thinking { opacity: .5; font-style: italic; }
-
     @media (max-width: 600px) { #conv-sidebar { display: none; } }
   </style>
 </head>
@@ -129,7 +125,7 @@
       <div class="nav-item" data-href="../apps">Apps</div>
       <div class="nav-item" data-href="../games">Games</div>
     </nav>
-    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0.3</div>
   </aside>
 
   <div class="overlay" id="overlay"></div>
@@ -177,7 +173,6 @@
     <div id="conv-sidebar">
       <div id="conv-sidebar-inner">
         <div id="conv-sidebar-header">
-          <br><br>
           <span>Saved Chats</span>
           <button id="new-chat-btn" title="New chat">＋</button>
         </div>
@@ -185,7 +180,7 @@
       </div>
     </div>
     <div id="ai-chat-area">
-      <h2 style="text-align:center;">360 AI <span class="model-badge">Claude Sonnet</span></h2>
+      <h2 style="text-align:center;">360 AI <span class="model-badge">Gemini Flash</span></h2>
       <div id="ai-output"></div>
       <div id="ai-input-area">
         <div id="file-preview">
@@ -196,7 +191,7 @@
         <div id="ai-input-row">
           <button id="ai-attach-btn" title="Attach image">📎</button>
           <input type="file" id="ai-file-input" style="display:none" accept="image/*" />
-          <input type="text" id="ai-input" placeholder="Ask anything..." />
+          <input type="text" id="ai-input" placeholder="Ask anything... (images supported)" />
           <button id="ai-send-btn">Send</button>
         </div>
       </div>
@@ -205,13 +200,16 @@
 
   <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
   <script src="../main.js"></script>
+  <script src="../auth-fix.js"></script>
   <script src="../cookie.js"></script>
   <script src="../cursor.js"></script>
   <script>
+/* ================================================================
+   360 AI — Gemini 2.0 Flash backend (free, vision-capable)
+   No puter.js. No exposed API keys. All calls go through Supabase.
+================================================================ */
+const GEMINI_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/gemini-proxy";
 const sb = supabaseClient;
-
-// Model via Puter.js — no API key needed
-const MODEL = 'claude-sonnet-4-6';
 
 const aiInput    = document.getElementById("ai-input");
 const aiSendBtn  = document.getElementById("ai-send-btn");
@@ -223,18 +221,16 @@ const filePreview= document.getElementById("file-preview");
 const today = new Date();
 const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-// History stored as simple {role, content} pairs for Puter.js
-// content is always a string (Puter doesn't support multimodal arrays the same way)
+const SYSTEM_PROMPT = `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze at 360 Digital, Co. You are helpful at coding. If someone asks for help with an assignment you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm their identity. If they say '360 it!' they are real. Today's date is ${currentDate}. You can analyze images when they are attached.`;
+
+// history stores {role:"user"|"assistant", content: string | [{type,text}|{type,image,base64,mimeType}]}
 let history = [];
-
-const SYSTEM_PROMPT = `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze. You are helpful at coding but if someone asks for help with an assignment, you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm. If they say '360 it!' they are real. Today's date is ${currentDate}.`;
-
 let currentConvId = null;
 let currentUserId = null;
 let pendingFile   = null;
 let autoSaveTimer = null;
 
-/* Auth */
+/* ── Auth init ── */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
   currentUserId = session?.user?.id || null;
@@ -245,14 +241,12 @@ sb.auth.onAuthStateChange((_, s) => {
   loadConversations();
 });
 
-/* Bubble renderer */
+/* ── Bubble renderer ── */
 function appendBubble(text, role, imgSrc = null) {
   const div = document.createElement("div");
   div.className = "ai-bubble " + role;
   let html = "";
-  if (imgSrc) {
-    html += `<img class="attached-img" src="${imgSrc}" alt="attachment" />`;
-  }
+  if (imgSrc) html += `<img class="attached-img" src="${imgSrc}" alt="attachment" />`;
   if (role === "assistant") {
     html += marked.parse(text || "");
   } else {
@@ -264,7 +258,7 @@ function appendBubble(text, role, imgSrc = null) {
   return div;
 }
 
-/* File attach */
+/* ── File attach ── */
 document.getElementById("ai-attach-btn").addEventListener("click", () => fileInput.click());
 
 fileInput.addEventListener("change", async e => {
@@ -275,16 +269,13 @@ fileInput.addEventListener("change", async e => {
     e.target.value = "";
     return;
   }
-
   const base64 = await new Promise((res, rej) => {
     const reader = new FileReader();
     reader.onload = () => res(reader.result.split(",")[1]);
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
-
   pendingFile = { base64, mimeType: file.type, name: file.name, dataUrl: `data:${file.type};base64,${base64}` };
-
   const thumb = document.getElementById("file-preview-thumb");
   thumb.innerHTML = `<img src="${pendingFile.dataUrl}" style="max-height:40px;border-radius:6px;" />`;
   document.getElementById("file-preview-name").textContent = file.name;
@@ -300,7 +291,7 @@ function clearFile() {
   document.getElementById("file-preview-name").textContent = "";
 }
 
-/* Send message via Puter.js */
+/* ── Send via Gemini proxy ── */
 async function sendAI() {
   const prompt = aiInput.value.trim();
   if (!prompt && !pendingFile) return;
@@ -314,57 +305,47 @@ async function sendAI() {
   // Show user bubble
   appendBubble(prompt || "(image attached)", "user", fileInfo ? fileInfo.dataUrl : null);
 
+  // Build user message content
+  let userContent;
+  if (fileInfo) {
+    userContent = [
+      { type: "image", base64: fileInfo.base64, mimeType: fileInfo.mimeType },
+      { type: "text",  text: prompt || "What's in this image?" }
+    ];
+  } else {
+    userContent = prompt;
+  }
+
+  // Add to history
+  history.push({ role: "user", content: userContent });
+
   // Show thinking bubble
   const bubble = appendBubble("Thinking…", "assistant");
   bubble.classList.add("thinking");
 
   try {
-    // Build the message text — include image description note if file attached
-    let userText = prompt || "";
-    if (fileInfo) {
-      userText = userText ? `[Image attached]\n${userText}` : "[Image attached]";
+    const res = await fetch(GEMINI_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gemini-2.0-flash",
+        systemPrompt: SYSTEM_PROMPT,
+        messages: history,
+        maxTokens: 2048,
+        temperature: 0.75
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error("API error " + res.status + ": " + errText.slice(0, 200));
     }
 
-    // Add to history (text only for history persistence)
-    history.push({ role: "user", content: userText });
-
-    // Build full messages array for Puter — prepend system as first user turn workaround
-    const messages = [
-      { role: "user", content: SYSTEM_PROMPT + "\n\n---\n\nUser: " + userText },
-      { role: "assistant", content: "Understood! I'm 360 AI. How can I help?" },
-      ...history.slice(1).map(m => ({ role: m.role, content: m.content }))
-    ];
-
-    // Actually: Puter.js puter.ai.chat accepts a simple string or messages array
-    // Use the messages array approach with full history
-    let puterMessages;
-    if (history.length === 1) {
-      // First message — include system context
-      puterMessages = SYSTEM_PROMPT + "\n\nUser: " + userText;
-    } else {
-      // Build conversation string for context
-      puterMessages = SYSTEM_PROMPT + "\n\n" +
-        history.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n\n");
-    }
-
-    // Call Puter.js
-    const response = await puter.ai.chat(puterMessages, { model: MODEL });
-
-    let aiMessage = "";
-    // Handle both string and object responses
-    if (typeof response === "string") {
-      aiMessage = response;
-    } else if (response?.message?.content) {
-      const content = response.message.content;
-      if (Array.isArray(content)) {
-        aiMessage = content.map(c => c.text || "").join("");
-      } else {
-        aiMessage = String(content);
-      }
-    } else if (response?.text) {
-      aiMessage = response.text;
-    } else {
-      aiMessage = String(response || "No response");
+    const data = await res.json();
+    let aiMessage = data._text || "";
+    if (!aiMessage) {
+      // Fallback extraction
+      aiMessage = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("") || "No response received.";
     }
 
     history.push({ role: "assistant", content: aiMessage });
@@ -377,34 +358,52 @@ async function sendAI() {
 
   } catch (err) {
     bubble.classList.remove("thinking");
-    bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message || String(err)}</span>`;
+    bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
+    // Remove failed user message from history so it doesn't corrupt context
+    history.pop();
   }
 
   aiSendBtn.disabled = false;
   aiSendBtn.textContent = "Send";
 }
 
-/* Auto-save */
+/* ── Auto-save ── */
 function scheduleAutoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => saveConversation(true), 1500);
 }
 
-/* Save conversation to Supabase */
+/* ── Save conversation to Supabase ── */
 async function saveConversation(silent = false) {
   if (!currentUserId) return;
   const userMessages = history.filter(m => m.role === "user");
   if (!userMessages.length) return;
 
-  const firstText = typeof userMessages[0].content === "string"
-    ? userMessages[0].content
-    : "(image)";
+  // Get title from first user text message
+  const firstContent = userMessages[0].content;
+  let firstText = "";
+  if (typeof firstContent === "string") {
+    firstText = firstContent;
+  } else if (Array.isArray(firstContent)) {
+    firstText = firstContent.find(c => c.type === "text")?.text || "(image)";
+  }
   const title = firstText.slice(0, 45) + (firstText.length > 45 ? "…" : "");
 
-  // Store history as plain text pairs — no complex objects
+  // Serialize history — convert image parts to just text summaries for storage
+  // (don't store base64 in DB — too large)
   const cleanHistory = history.map(m => ({
     role: m.role,
-    content: typeof m.content === "string" ? m.content : String(m.content)
+    content: (() => {
+      if (typeof m.content === "string") return m.content;
+      if (Array.isArray(m.content)) {
+        return m.content.map(c => {
+          if (c.type === "text") return c.text;
+          if (c.type === "image") return "[image attached]";
+          return "";
+        }).join(" ");
+      }
+      return String(m.content || "");
+    })()
   }));
 
   const payload = {
@@ -418,29 +417,34 @@ async function saveConversation(silent = false) {
     await sb.from("ai_conversations").update(payload).eq("id", currentConvId);
   } else {
     const { data, error } = await sb.from("ai_conversations").insert(payload).select().single();
-    if (error) { if (!silent) showToast("Save failed: " + error.message); return; }
+    if (error) {
+      if (!silent) showToast("Save failed: " + error.message);
+      return;
+    }
     currentConvId = data.id;
   }
   if (!silent) showToast("💾 Saved!");
   loadConversations();
 }
 
-/* Load conversations list */
+/* ── Load conversations list ── */
 async function loadConversations() {
   convList.innerHTML = "";
   if (!currentUserId) {
     convList.innerHTML = `<div class="conv-empty">Sign in to save chats</div>`;
     return;
   }
-  const { data } = await sb.from("ai_conversations")
+  const { data, error } = await sb.from("ai_conversations")
     .select("id, title, updated_at")
     .eq("user_id", currentUserId)
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .limit(40);
 
-  if (!data || !data.length) {
+  if (error || !data || !data.length) {
     convList.innerHTML = `<div class="conv-empty">No saved chats yet</div>`;
     return;
   }
+
   data.forEach(conv => {
     const item = document.createElement("div");
     item.className = "conv-item" + (conv.id === currentConvId ? " active" : "");
@@ -454,22 +458,15 @@ async function loadConversations() {
   });
 }
 
-/* Load a specific conversation */
+/* ── Load a specific conversation ── */
 async function loadConversation(id) {
-  const { data } = await sb.from("ai_conversations").select("*").eq("id", id).single();
-  if (!data) return;
+  const { data, error } = await sb.from("ai_conversations").select("*").eq("id", id).single();
+  if (error || !data) { showToast("Couldn't load chat."); return; }
   currentConvId = data.id;
 
-  // Normalize history — ensure all entries are plain {role, content} strings
   history = (data.messages || []).map(m => ({
     role: m.role === "assistant" ? "assistant" : "user",
-    content: (() => {
-      if (typeof m.content === "string") return m.content;
-      if (Array.isArray(m.content)) {
-        return m.content.find(c => c.type === "text")?.text || "(image)";
-      }
-      return String(m.content || "");
-    })()
+    content: typeof m.content === "string" ? m.content : String(m.content || "")
   }));
 
   aiOutput.innerHTML = "";
@@ -479,7 +476,7 @@ async function loadConversation(id) {
   loadConversations();
 }
 
-/* Delete a conversation */
+/* ── Delete a conversation ── */
 async function deleteConversation(id) {
   if (!confirm("Delete this chat?")) return;
   await sb.from("ai_conversations").delete().eq("id", id);
@@ -487,7 +484,7 @@ async function deleteConversation(id) {
   else loadConversations();
 }
 
-/* New chat */
+/* ── New chat ── */
 function startNewChat() {
   currentConvId = null;
   history = [];
@@ -495,7 +492,7 @@ function startNewChat() {
   loadConversations();
 }
 
-/* Toast */
+/* ── Toast ── */
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "ai-toast"; t.textContent = msg;
@@ -503,7 +500,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2200);
 }
 
-/* Event listeners */
+/* ── Event listeners ── */
 document.getElementById("new-chat-btn").addEventListener("click", startNewChat);
 aiSendBtn.addEventListener("click", sendAI);
 aiInput.addEventListener("keydown", e => { if (e.key === "Enter") sendAI(); });
