@@ -676,6 +676,7 @@
     let activeFilter = 'all';
     let activeView   = 'home';
     let searchQuery  = '';
+    let selectedVideoFile = null;
 
     // ── DOM ──
     const grid         = document.getElementById('vidsGrid');
@@ -922,6 +923,7 @@
 
     function resetUploadForm() {
       document.getElementById('videoFile').value = '';
+      selectedVideoFile = null;
       document.getElementById('vidTitle').value = '';
       document.getElementById('vidDesc').value = '';
       document.getElementById('vidCategory').value = 'Other';
@@ -956,9 +958,10 @@
     function handleFileSelected(file) {
       if (!file.type.startsWith('video/')) { showToast('⚠️ Please select a video file.'); return; }
       if (file.size > 500 * 1024 * 1024) { showToast('⚠️ Max file size is 500MB.'); return; }
+      selectedVideoFile = file; // ✅ FIX
       fileChosen.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
       fileChosen.style.display = 'block';
-
+    
       // Auto-fill title if empty
       const titleInput = document.getElementById('vidTitle');
       if (!titleInput.value) {
@@ -969,7 +972,8 @@
     document.getElementById('submitUploadBtn').addEventListener('click', async () => {
       if (!currentUser) { showToast('Sign in first.'); return; }
 
-      const file     = document.getElementById('videoFile').files[0];
+      const inputFile = document.getElementById('videoFile').files[0];
+      const file = selectedVideoFile || inputFile;
       const title    = document.getElementById('vidTitle').value.trim();
       const desc     = document.getElementById('vidDesc').value.trim();
       const category = document.getElementById('vidCategory').value;
