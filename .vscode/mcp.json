@@ -1,0 +1,78 @@
+{
+	"servers": {
+		"com.supabase/mcp": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"--project-ref",
+				"${input:project-ref}",
+				"--read-only",
+				"${input:read-only}",
+				"--features",
+				"${input:features}",
+				"--api-url",
+				"${input:api-url}",
+				"--registry",
+				"https://registry.npmjs.org",
+				"@supabase/mcp-server-supabase@0.7.0"
+			],
+			"env": {
+				"SUPABASE_ACCESS_TOKEN": "${input:SUPABASE_ACCESS_TOKEN}"
+			},
+			"gallery": "https://api.mcp.github.com",
+			"version": "0.7.0"
+		},
+		"io.github.github/github-mcp-server": {
+			"type": "stdio",
+			"command": "docker",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"GITHUB_PERSONAL_ACCESS_TOKEN=${input:token}",
+				"ghcr.io/github/github-mcp-server:0.33.0"
+			],
+			"gallery": "https://api.mcp.github.com",
+			"version": "0.33.0"
+		}
+	},
+	"inputs": [
+		{
+			"id": "project-ref",
+			"type": "promptString",
+			"description": "Supabase project reference ID",
+			"password": false
+		},
+		{
+			"id": "read-only",
+			"type": "promptString",
+			"description": "Enable read-only mode",
+			"password": false
+		},
+		{
+			"id": "features",
+			"type": "promptString",
+			"description": "Comma-separated list of features to enable",
+			"password": false
+		},
+		{
+			"id": "api-url",
+			"type": "promptString",
+			"description": "Custom API URL",
+			"password": false
+		},
+		{
+			"id": "SUPABASE_ACCESS_TOKEN",
+			"type": "promptString",
+			"description": "Personal access token for Supabase API",
+			"password": true
+		},
+		{
+			"id": "token",
+			"type": "promptString",
+			"description": "",
+			"password": true
+		}
+	]
+}
