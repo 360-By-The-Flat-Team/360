@@ -178,7 +178,7 @@
       </div>
     </div>
     <div id="ai-chat-area">
-      <h2 style="text-align:center;">360 AI <span class="model-badge">Claude Haiku</span></h2>
+      <h2 style="text-align:center;">360 AI <span class="model-badge">Claude Sonnet</span></h2>
       <div id="ai-output"></div>
       <div id="ai-input-area">
         <div id="file-preview">
@@ -189,7 +189,7 @@
         <div id="ai-input-row">
           <button id="ai-attach-btn" title="Attach image">📎</button>
           <input type="file" id="ai-file-input" style="display:none" accept="image/*" />
-          <input type="text" id="ai-input" placeholder="Ask anything... (images supported)" />
+          <input type="text" id="ai-input" placeholder="Ask anything..." />
           <button id="ai-send-btn">Send</button>
         </div>
       </div>
@@ -203,32 +203,36 @@
   <script src="../cursor.js"></script>
   <script>
 /* ================================================================
-   360 AI — Claude via Supabase Edge Function (ai-chatbot)
+   360 AI — Claude Sonnet 3.5 via Supabase Edge Function (ai-chatbot)
+   Proxy expects: { message: string, memory: [{role, content}] }
+   Proxy returns: { reply: string }
+   Note: proxy appends `message` as the final user turn internally,
+   so `memory` should contain everything EXCEPT the current message.
 ================================================================ */
 
 const CLAUDE_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/ai-chatbot";
 const sb = supabaseClient;
 
-const aiInput    = document.getElementById("ai-input");
-const aiSendBtn  = document.getElementById("ai-send-btn");
-const aiOutput   = document.getElementById("ai-output");
-const convList   = document.getElementById("conv-list");
-const fileInput  = document.getElementById("ai-file-input");
-const filePreview= document.getElementById("file-preview");
+const aiInput     = document.getElementById("ai-input");
+const aiSendBtn   = document.getElementById("ai-send-btn");
+const aiOutput    = document.getElementById("ai-output");
+const convList    = document.getElementById("conv-list");
+const fileInput   = document.getElementById("ai-file-input");
+const filePreview = document.getElementById("file-preview");
 
 const today = new Date();
 const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 const SYSTEM_PROMPT = `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze at 360 Digital, Co. You are helpful at coding. If someone asks for help with an assignment you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm their identity. If they say '360 it!' they are real. Today's date is ${currentDate}. You can analyze images when they are attached.`;
 
-// history
-let history = [];
+// chatHistory holds prior turns (not the current one being sent)
+let chatHistory   = [];
 let currentConvId = null;
 let currentUserId = null;
 let pendingFile   = null;
 let autoSaveTimer = null;
 
-/* ── Auth init ── */
+/* ── Auth ── */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
   currentUserId = session?.user?.id || null;
@@ -244,7 +248,7 @@ function appendBubble(text, role, imgSrc = null) {
   const div = document.createElement("div");
   div.className = "ai-bubble " + role;
   let html = "";
-  if (imgSrc) html += `<img class="attached-img" src="${imgSrc}" />`;
+  if (imgSrc) html += `<img class="attached-img" src="${imgSrc}" alt="attachment" />`;
   if (role === "assistant") {
     html += marked.parse(text || "");
   } else {
@@ -254,6 +258,40 @@ function appendBubble(text, role, imgSrc = null) {
   aiOutput.appendChild(div);
   aiOutput.scrollTop = aiOutput.scrollHeight;
   return div;
+}
+
+/* ── File attach ── */
+document.getElementById("ai-attach-btn").addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    showToast("Only images are supported");
+    e.target.value = "";
+    return;
+  }
+  const dataUrl = await new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload  = () => res(reader.result);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+  pendingFile = { name: file.name, dataUrl };
+  document.getElementById("file-preview-thumb").innerHTML =
+    `<img src="${dataUrl}" style="max-height:40px;border-radius:6px;" />`;
+  document.getElementById("file-preview-name").textContent = file.name;
+  filePreview.classList.add("show");
+  e.target.value = "";
+});
+
+document.getElementById("file-cancel").addEventListener("click", clearFile);
+
+function clearFile() {
+  pendingFile = null;
+  filePreview.classList.remove("show");
+  document.getElementById("file-preview-thumb").innerHTML = "";
+  document.getElementById("file-preview-name").textContent = "";
 }
 
 /* ── Send ── */
@@ -266,18 +304,21 @@ async function sendAI() {
   aiSendBtn.textContent = "...";
 
   const fileInfo = pendingFile;
-  pendingFile = null;
+  clearFile();
 
+  // Show user bubble (with image preview if attached)
   appendBubble(prompt || "(image attached)", "user", fileInfo ? fileInfo.dataUrl : null);
 
-  let userContent;
-  if (fileInfo) {
-    userContent = "[image] " + (prompt || "What's in this image?");
-  } else {
-    userContent = prompt;
-  }
+  // The message text sent to the proxy as `message`
+  const messageText = fileInfo
+    ? `[Image attached: ${fileInfo.name}]\n${prompt || "What's in this image?"}`
+    : prompt;
 
-  history.push({ role: "user", content: userContent });
+  // memory = system prompt + all prior turns (proxy adds messageText as the new user turn)
+  const memory = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...chatHistory
+  ];
 
   const bubble = appendBubble("Thinking…", "assistant");
   bubble.classList.add("thinking");
@@ -286,36 +327,151 @@ async function sendAI() {
     const res = await fetch(CLAUDE_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: prompt || "What's in this image?",
-        memory: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...history
-        ]
-      })
+      body: JSON.stringify({ message: messageText, memory })
     });
 
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error("HTTP " + res.status + ": " + errText.slice(0, 150));
+    }
+
     const data = await res.json();
+    const aiMessage = data.reply || "No response received.";
 
-    let aiMessage = data.reply || "No response received.";
-
-    history.push({ role: "assistant", content: aiMessage });
+    // Add both turns to history now that we have the reply
+    chatHistory.push({ role: "user",      content: messageText });
+    chatHistory.push({ role: "assistant", content: aiMessage  });
 
     bubble.classList.remove("thinking");
     bubble.innerHTML = marked.parse(aiMessage);
+    aiOutput.scrollTop = aiOutput.scrollHeight;
+
+    scheduleAutoSave();
 
   } catch (err) {
     bubble.classList.remove("thinking");
     bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
-    history.pop();
   }
 
   aiSendBtn.disabled = false;
   aiSendBtn.textContent = "Send";
 }
 
+/* ── Auto-save ── */
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => saveConversation(true), 1500);
+}
+
+/* ── Save to Supabase ── */
+async function saveConversation(silent = false) {
+  if (!currentUserId || !chatHistory.length) return;
+
+  const firstUser = chatHistory.find(m => m.role === "user")?.content || "";
+  const title = firstUser.slice(0, 45) + (firstUser.length > 45 ? "…" : "");
+
+  const payload = {
+    user_id:    currentUserId,
+    title,
+    messages:   chatHistory,
+    updated_at: new Date().toISOString()
+  };
+
+  if (currentConvId) {
+    await sb.from("ai_conversations").update(payload).eq("id", currentConvId);
+  } else {
+    const { data, error } = await sb.from("ai_conversations")
+      .insert(payload).select().single();
+    if (error) { if (!silent) showToast("Save failed: " + error.message); return; }
+    currentConvId = data.id;
+  }
+
+  if (!silent) showToast("💾 Saved!");
+  loadConversations();
+}
+
+/* ── Load conversation list ── */
+async function loadConversations() {
+  convList.innerHTML = "";
+  if (!currentUserId) {
+    convList.innerHTML = `<div class="conv-empty">Sign in to save chats</div>`;
+    return;
+  }
+  const { data, error } = await sb.from("ai_conversations")
+    .select("id, title, updated_at")
+    .eq("user_id", currentUserId)
+    .order("updated_at", { ascending: false })
+    .limit(40);
+
+  if (error || !data?.length) {
+    convList.innerHTML = `<div class="conv-empty">No saved chats yet</div>`;
+    return;
+  }
+
+  data.forEach(conv => {
+    const item = document.createElement("div");
+    item.className = "conv-item" + (conv.id === currentConvId ? " active" : "");
+    item.innerHTML = `
+      <span class="conv-item-title">💬 ${conv.title}</span>
+      <button class="conv-del-btn" title="Delete">✕</button>
+    `;
+    item.addEventListener("click", e => {
+      if (!e.target.classList.contains("conv-del-btn")) loadConversation(conv.id);
+    });
+    item.querySelector(".conv-del-btn").addEventListener("click", e => {
+      e.stopPropagation();
+      deleteConversation(conv.id);
+    });
+    convList.appendChild(item);
+  });
+}
+
+/* ── Load a specific conversation ── */
+async function loadConversation(id) {
+  const { data, error } = await sb.from("ai_conversations")
+    .select("*").eq("id", id).single();
+  if (error || !data) { showToast("Couldn't load chat."); return; }
+
+  currentConvId = data.id;
+  chatHistory = (data.messages || []).map(m => ({
+    role:    m.role === "assistant" ? "assistant" : "user",
+    content: String(m.content || "")
+  }));
+
+  aiOutput.innerHTML = "";
+  chatHistory.forEach(m => appendBubble(m.content, m.role));
+  loadConversations();
+}
+
+/* ── Delete a conversation ── */
+async function deleteConversation(id) {
+  if (!confirm("Delete this chat?")) return;
+  await sb.from("ai_conversations").delete().eq("id", id);
+  if (currentConvId === id) startNewChat();
+  else loadConversations();
+}
+
+/* ── New chat ── */
+function startNewChat() {
+  currentConvId = null;
+  chatHistory   = [];
+  aiOutput.innerHTML = "";
+  loadConversations();
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className  = "ai-toast";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+/* ── Event listeners ── */
+document.getElementById("new-chat-btn").addEventListener("click", startNewChat);
 aiSendBtn.addEventListener("click", sendAI);
 aiInput.addEventListener("keydown", e => { if (e.key === "Enter") sendAI(); });
-</script>
-  </body>
+  </script>
+</body>
 </html>
