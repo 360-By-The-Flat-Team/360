@@ -203,15 +203,10 @@
   <script src="../cursor.js"></script>
   <script>
 /* ================================================================
-   360 AI — Claude Haiku (Anthropic) via Supabase Edge Function proxy
-   Vision-capable, no Gemini, no exposed API keys.
-   
-   SUPABASE EDGE FUNCTION REQUIRED: "claude-proxy"
-   See bottom of this file for the Edge Function code to deploy.
+   360 AI — Claude via Supabase Edge Function (ai-chatbot)
 ================================================================ */
 
-// Update this to your claude proxy endpoint once deployed:
-const CLAUDE_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/claude-proxy";
+const CLAUDE_PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/ai-chatbot";
 const sb = supabaseClient;
 
 const aiInput    = document.getElementById("ai-input");
@@ -226,7 +221,7 @@ const currentDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 
 
 const SYSTEM_PROMPT = `You are 360 AI, a helpful assistant built into the 360 search engine by Zaki and Mingze at 360 Digital, Co. You are helpful at coding. If someone asks for help with an assignment you do not help them as that is cheating. Many people may impersonate Zaki and Mingze. To confirm they're actually who they say, ask them to confirm their identity. If they say '360 it!' they are real. Today's date is ${currentDate}. You can analyze images when they are attached.`;
 
-// history stores {role:"user"|"assistant", content: string | array}
+// history
 let history = [];
 let currentConvId = null;
 let currentUserId = null;
@@ -249,7 +244,7 @@ function appendBubble(text, role, imgSrc = null) {
   const div = document.createElement("div");
   div.className = "ai-bubble " + role;
   let html = "";
-  if (imgSrc) html += `<img class="attached-img" src="${imgSrc}" alt="attachment" />`;
+  if (imgSrc) html += `<img class="attached-img" src="${imgSrc}" />`;
   if (role === "assistant") {
     html += marked.parse(text || "");
   } else {
@@ -261,102 +256,29 @@ function appendBubble(text, role, imgSrc = null) {
   return div;
 }
 
-/* ── File attach ── */
-document.getElementById("ai-attach-btn").addEventListener("click", () => fileInput.click());
-
-fileInput.addEventListener("change", async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    showToast("Only images are supported");
-    e.target.value = "";
-    return;
-  }
-  // Validate supported types for Claude vision
-  const supported = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-  if (!supported.includes(file.type)) {
-    showToast("Supported formats: JPEG, PNG, GIF, WebP");
-    e.target.value = "";
-    return;
-  }
-  const base64 = await new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res(reader.result.split(",")[1]);
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
-  });
-  pendingFile = { base64, mimeType: file.type, name: file.name, dataUrl: `data:${file.type};base64,${base64}` };
-  const thumb = document.getElementById("file-preview-thumb");
-  thumb.innerHTML = `<img src="${pendingFile.dataUrl}" style="max-height:40px;border-radius:6px;" />`;
-  document.getElementById("file-preview-name").textContent = file.name;
-  filePreview.classList.add("show");
-  e.target.value = "";
-});
-
-document.getElementById("file-cancel").addEventListener("click", clearFile);
-function clearFile() {
-  pendingFile = null;
-  filePreview.classList.remove("show");
-  document.getElementById("file-preview-thumb").innerHTML = "";
-  document.getElementById("file-preview-name").textContent = "";
-}
-
-/* ── Build Anthropic-format messages from history ── */
-function buildMessages() {
-  // Anthropic API format: messages array with role/content
-  // content can be string or array of content blocks
-  return history.map(m => {
-    if (typeof m.content === "string") {
-      return { role: m.role, content: m.content };
-    }
-    // Array content (vision messages)
-    const blocks = [];
-    for (const part of m.content) {
-      if (part.type === "image") {
-        blocks.push({
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: part.mimeType,
-            data: part.base64
-          }
-        });
-      } else if (part.type === "text") {
-        blocks.push({ type: "text", text: part.text });
-      }
-    }
-    return { role: m.role, content: blocks };
-  });
-}
-
-/* ── Send via Claude proxy ── */
+/* ── Send ── */
 async function sendAI() {
   const prompt = aiInput.value.trim();
   if (!prompt && !pendingFile) return;
+
   aiInput.value = "";
   aiSendBtn.disabled = true;
   aiSendBtn.textContent = "...";
 
   const fileInfo = pendingFile;
-  clearFile();
+  pendingFile = null;
 
-  // Show user bubble
   appendBubble(prompt || "(image attached)", "user", fileInfo ? fileInfo.dataUrl : null);
 
-  // Build user message content for history
   let userContent;
   if (fileInfo) {
-    userContent = [
-      { type: "image", base64: fileInfo.base64, mimeType: fileInfo.mimeType },
-      { type: "text",  text: prompt || "What's in this image?" }
-    ];
+    userContent = "[image] " + (prompt || "What's in this image?");
   } else {
     userContent = prompt;
   }
 
   history.push({ role: "user", content: userContent });
 
-  // Show thinking bubble
   const bubble = appendBubble("Thinking…", "assistant");
   bubble.classList.add("thinking");
 
@@ -365,38 +287,22 @@ async function sendAI() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        system: SYSTEM_PROMPT,
-        messages: buildMessages(),
-        max_tokens: 2048
+        message: prompt || "What's in this image?",
+        memory: [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...history
+        ]
       })
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error("API error " + res.status + ": " + errText.slice(0, 200));
-    }
-
     const data = await res.json();
 
-    // Anthropic response format: data.content[0].text
-    let aiMessage = "";
-    if (data.content && Array.isArray(data.content)) {
-      aiMessage = data.content
-        .filter(b => b.type === "text")
-        .map(b => b.text)
-        .join("") || "No response received.";
-    } else {
-      aiMessage = "No response received.";
-    }
+    let aiMessage = data.reply || "No response received.";
 
     history.push({ role: "assistant", content: aiMessage });
 
     bubble.classList.remove("thinking");
     bubble.innerHTML = marked.parse(aiMessage);
-    aiOutput.scrollTop = aiOutput.scrollHeight;
-
-    scheduleAutoSave();
 
   } catch (err) {
     bubble.classList.remove("thinking");
@@ -408,197 +314,8 @@ async function sendAI() {
   aiSendBtn.textContent = "Send";
 }
 
-/* ── Auto-save ── */
-function scheduleAutoSave() {
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(() => saveConversation(true), 1500);
-}
-
-/* ── Save conversation to Supabase ── */
-async function saveConversation(silent = false) {
-  if (!currentUserId) return;
-  const userMessages = history.filter(m => m.role === "user");
-  if (!userMessages.length) return;
-
-  const firstContent = userMessages[0].content;
-  let firstText = "";
-  if (typeof firstContent === "string") {
-    firstText = firstContent;
-  } else if (Array.isArray(firstContent)) {
-    firstText = firstContent.find(c => c.type === "text")?.text || "(image)";
-  }
-  const title = firstText.slice(0, 45) + (firstText.length > 45 ? "…" : "");
-
-  // Serialize history — strip base64 from image parts (too large for DB)
-  const cleanHistory = history.map(m => ({
-    role: m.role,
-    content: (() => {
-      if (typeof m.content === "string") return m.content;
-      if (Array.isArray(m.content)) {
-        return m.content.map(c => {
-          if (c.type === "text") return c.text;
-          if (c.type === "image") return "[image attached]";
-          return "";
-        }).join(" ");
-      }
-      return String(m.content || "");
-    })()
-  }));
-
-  const payload = {
-    user_id: currentUserId,
-    title,
-    messages: cleanHistory,
-    updated_at: new Date().toISOString()
-  };
-
-  if (currentConvId) {
-    await sb.from("ai_conversations").update(payload).eq("id", currentConvId);
-  } else {
-    const { data, error } = await sb.from("ai_conversations").insert(payload).select().single();
-    if (error) {
-      if (!silent) showToast("Save failed: " + error.message);
-      return;
-    }
-    currentConvId = data.id;
-  }
-  if (!silent) showToast("💾 Saved!");
-  loadConversations();
-}
-
-/* ── Load conversations list ── */
-async function loadConversations() {
-  convList.innerHTML = "";
-  if (!currentUserId) {
-    convList.innerHTML = `<div class="conv-empty">Sign in to save chats</div>`;
-    return;
-  }
-  const { data, error } = await sb.from("ai_conversations")
-    .select("id, title, updated_at")
-    .eq("user_id", currentUserId)
-    .order("updated_at", { ascending: false })
-    .limit(40);
-
-  if (error || !data || !data.length) {
-    convList.innerHTML = `<div class="conv-empty">No saved chats yet</div>`;
-    return;
-  }
-
-  data.forEach(conv => {
-    const item = document.createElement("div");
-    item.className = "conv-item" + (conv.id === currentConvId ? " active" : "");
-    item.innerHTML = `
-      <span class="conv-item-title">💬 ${conv.title}</span>
-      <button class="conv-del-btn" title="Delete">✕</button>
-    `;
-    item.addEventListener("click", e => { if (!e.target.classList.contains("conv-del-btn")) loadConversation(conv.id); });
-    item.querySelector(".conv-del-btn").addEventListener("click", e => { e.stopPropagation(); deleteConversation(conv.id); });
-    convList.appendChild(item);
-  });
-}
-
-/* ── Load a specific conversation ── */
-async function loadConversation(id) {
-  const { data, error } = await sb.from("ai_conversations").select("*").eq("id", id).single();
-  if (error || !data) { showToast("Couldn't load chat."); return; }
-  currentConvId = data.id;
-
-  history = (data.messages || []).map(m => ({
-    role: m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : String(m.content || "")
-  }));
-
-  aiOutput.innerHTML = "";
-  history.forEach(m => {
-    if (m.content) appendBubble(m.content, m.role);
-  });
-  loadConversations();
-}
-
-/* ── Delete a conversation ── */
-async function deleteConversation(id) {
-  if (!confirm("Delete this chat?")) return;
-  await sb.from("ai_conversations").delete().eq("id", id);
-  if (currentConvId === id) startNewChat();
-  else loadConversations();
-}
-
-/* ── New chat ── */
-function startNewChat() {
-  currentConvId = null;
-  history = [];
-  aiOutput.innerHTML = "";
-  loadConversations();
-}
-
-/* ── Toast ── */
-function showToast(msg) {
-  const t = document.createElement("div");
-  t.className = "ai-toast"; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
-}
-
-/* ── Event listeners ── */
-document.getElementById("new-chat-btn").addEventListener("click", startNewChat);
 aiSendBtn.addEventListener("click", sendAI);
 aiInput.addEventListener("keydown", e => { if (e.key === "Enter") sendAI(); });
-  </script>
-
-  <!--
-  ================================================================
-  SUPABASE EDGE FUNCTION — deploy as "claude-proxy"
-  
-  In your Supabase dashboard → Edge Functions → New Function → "claude-proxy"
-  Add secret: ANTHROPIC_API_KEY = sk-ant-...
-  
-  Paste this as the function code:
-  ================================================================
-
-  import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-  const CORS = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "content-type, authorization",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-  };
-
-  serve(async (req) => {
-    if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
-
-    try {
-      const body = await req.json();
-      const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: body.model || "claude-haiku-4-5",
-          system: body.system,
-          messages: body.messages,
-          max_tokens: body.max_tokens || 2048,
-        }),
-      });
-
-      const data = await response.json();
-      return new Response(JSON.stringify(data), {
-        headers: { ...CORS, "Content-Type": "application/json" },
-        status: response.status,
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        headers: { ...CORS, "Content-Type": "application/json" },
-        status: 500,
-      });
-    }
-  });
-
-  ================================================================
-  -->
-</body>
+</script>
+  </body>
 </html>
