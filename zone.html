@@ -254,7 +254,7 @@
     .math-panel { display: none; }
     .math-panel.show { display: block; }
 
-    /* Calculator grid */
+    /* ── Calculator ── */
     .calc-display {
       background: #0f172a;
       color: #f0f0f0;
@@ -288,7 +288,8 @@
     .cbtn.eq  { background: var(--accent); color: white; border-color: transparent; font-size: 1.1rem; }
     .cbtn.eq:hover { background: var(--accent-hover); }
     .cbtn.clr { color: #ef4444; }
-    .cbtn.s2  { grid-column: span 2; }
+    /* 0 button spans 2 columns */
+    .cbtn.span2 { grid-column: span 2; }
 
     /* Unit converter */
     .unit-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; margin-top: 1rem; }
@@ -350,7 +351,7 @@
   <div class="header">
     <h1>Zone <span>Essay & Math Helper</span></h1>
     <div class="header-actions">
-      <button class="hbtn" onclick="toggleDark()">🌙 Dark</button>
+      <button class="hbtn" id="darkBtn" onclick="toggleDark()">🌙 Dark</button>
       <a href="/" class="hbtn" style="text-decoration:none;">← Back to 360</a>
     </div>
   </div>
@@ -543,7 +544,7 @@
           <select id="uFrom"></select>
           <input id="uVal" type="number" placeholder="Value" style="margin-top:8px;" />
         </div>
-        <button class="unit-swap" onclick="swapUnits()" title="Swap">⇄</button>
+        <button class="unit-swap" onclick="swapUnits()" title="Swap">&#8644;</button>
         <div>
           <label>To</label>
           <select id="uTo"></select>
@@ -557,9 +558,9 @@
   </div>
 
   <script>
-  /* ═══════════════════════════════════════════════════════
+  /* =============================================================
      ZONE V2 — All systems operational
-  ═══════════════════════════════════════════════════════ */
+  ============================================================= */
 
   const PROXY = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/zone-groq-proxy";
   const MODEL = "llama-3.1-8b-instant";
@@ -567,7 +568,8 @@
   /* ── Theme ── */
   function toggleDark() {
     document.body.classList.toggle("dark");
-    document.querySelector(".hbtn").textContent = document.body.classList.contains("dark") ? "☀️ Light" : "🌙 Dark";
+    document.getElementById("darkBtn").textContent =
+      document.body.classList.contains("dark") ? "☀️ Light" : "🌙 Dark";
   }
 
   /* ── Tab switching ── */
@@ -755,60 +757,120 @@
   /* Mode switching */
   function mathMode(id, btn) {
     document.querySelectorAll(".math-panel").forEach(p => p.classList.remove("show"));
-    document.getElementById("mp" + id.charAt(0).toUpperCase() + id.slice(1)).classList.add("show");
+    const panelId = "mp" + id.charAt(0).toUpperCase() + id.slice(1);
+    document.getElementById(panelId).classList.add("show");
     document.querySelectorAll(".mth").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
   }
 
   /* ── Calculator ── */
   (function initCalc() {
+    // Each entry: [label, cssClass, value]
+    // Layout is a strict 4-column grid:
+    // Row 1: C  ±  %  ÷
+    // Row 2: 7  8  9  ×
+    // Row 3: 4  5  6  −
+    // Row 4: 1  2  3  +
+    // Row 5: 0(span2) . =
     const BTNS = [
-      {l:"C",  c:"clr", v:"C"}, {l:"±", c:"op",v:"±"}, {l:"%",c:"op",v:"%"}, {l:"÷",c:"op",v:"/"},
-      {l:"7",  c:"",    v:"7"}, {l:"8", c:"",  v:"8"}, {l:"9",c:"",  v:"9"}, {l:"×",c:"op",v:"*"},
-      {l:"4",  c:"",    v:"4"}, {l:"5", c:"",  v:"5"}, {l:"6",c:"",  v:"6"}, {l:"−",c:"op",v:"-"},
-      {l:"1",  c:"",    v:"1"}, {l:"2", c:"",  v:"2"}, {l:"3",c:"",  v:"3"}, {l:"+",c:"op",v:"+"},
-      {l:"0",  c:"s2",  v:"0"}, {l:".", c:"",  v:"."}, {l:"=",c:"eq",v:"="},
+      { l: "C",  cls: "clr",         v: "C"  },
+      { l: "\u00B1", cls: "op",      v: "PM" }, // ±
+      { l: "%",  cls: "op",          v: "%"  },
+      { l: "\u00F7", cls: "op",      v: "/"  }, // ÷
+      { l: "7",  cls: "",            v: "7"  },
+      { l: "8",  cls: "",            v: "8"  },
+      { l: "9",  cls: "",            v: "9"  },
+      { l: "\u00D7", cls: "op",      v: "*"  }, // ×
+      { l: "4",  cls: "",            v: "4"  },
+      { l: "5",  cls: "",            v: "5"  },
+      { l: "6",  cls: "",            v: "6"  },
+      { l: "\u2212", cls: "op",      v: "-"  }, // −
+      { l: "1",  cls: "",            v: "1"  },
+      { l: "2",  cls: "",            v: "2"  },
+      { l: "3",  cls: "",            v: "3"  },
+      { l: "+",  cls: "op",          v: "+"  },
+      { l: "0",  cls: "span2",       v: "0"  }, // spans 2 cols
+      { l: ".",  cls: "",            v: "."  },
+      { l: "=",  cls: "eq",          v: "="  },
     ];
-    let expr="", cur="0", evaled=false;
+
+    let expr = "", cur = "0", evaled = false;
+
     function render() {
       document.getElementById("cExpr").textContent = expr;
       document.getElementById("cVal").textContent  = cur;
     }
+
     function press(v) {
-      if (v==="C") { expr=""; cur="0"; evaled=false; render(); return; }
-      if (v==="±") { cur = cur.startsWith("-") ? cur.slice(1) : "-"+cur; render(); return; }
-      if (v==="%")  { try { cur = String(parseFloat(cur)/100); } catch{} render(); return; }
-      if (v==="=") {
-        const e = expr+cur; expr = e+" =";
-        try { cur = String(parseFloat(Function('"use strict";return('+e+')')().toFixed(10)).replace(/\.?0+$/,"")); }
-        catch { cur = "Error"; }
+      if (v === "C") {
+        expr = ""; cur = "0"; evaled = false; render(); return;
+      }
+      if (v === "PM") {
+        // toggle sign
+        if (cur !== "0") cur = cur.startsWith("-") ? cur.slice(1) : "-" + cur;
+        render(); return;
+      }
+      if (v === "%") {
+        try { cur = String(parseFloat(cur) / 100); } catch(e) {}
+        render(); return;
+      }
+      if (v === "=") {
+        const full = expr + cur;
+        expr = full + " =";
+        try {
+          const raw = Function('"use strict"; return (' + full + ')')();
+          cur = String(parseFloat(raw.toFixed(10)).toString());
+        } catch(e) {
+          cur = "Error";
+        }
         evaled = true; render(); return;
       }
-      const isOp = ["+","-","*","/"].includes(v);
-      if (isOp) { expr = (evaled?cur:expr+cur)+" "+v+" "; cur="0"; evaled=false; }
-      else {
-        if (evaled) { cur="0"; evaled=false; }
-        if (v==="." && cur.includes(".")) { render(); return; }
-        cur = cur==="0" && v!=="." ? v : cur+v;
+      const isOp = ["+", "-", "*", "/"].includes(v);
+      if (isOp) {
+        expr = (evaled ? cur : expr + cur) + " " + v + " ";
+        cur = "0";
+        evaled = false;
+      } else {
+        if (evaled) { cur = "0"; evaled = false; }
+        if (v === "." && cur.includes(".")) { render(); return; }
+        cur = (cur === "0") ? v : cur + v;
       }
       render();
     }
+
     const grid = document.getElementById("cGrid");
+    grid.innerHTML = ""; // clear any stale content
     BTNS.forEach(b => {
       const btn = document.createElement("button");
-      btn.className = "cbtn " + b.c;
+      btn.className = "cbtn " + b.cls;
       btn.textContent = b.l;
+      btn.setAttribute("type", "button");
       btn.addEventListener("click", () => press(b.v));
       grid.appendChild(btn);
     });
+
+    // Keyboard support
     document.addEventListener("keydown", e => {
-      if (document.getElementById("mpCalc").classList.contains("show")) {
-        if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
-        const map = {"0":"0","1":"1","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","+":"+","-":"-","*":"*","/":"/",".":".","Enter":"=","=":"=","Escape":"C","Backspace":"BS"};
-        if (e.key === "Backspace") { cur = cur.length>1?cur.slice(0,-1):"0"; render(); return; }
-        if (map[e.key]) { e.preventDefault(); press(map[e.key]); }
+      if (!document.getElementById("mpCalc").classList.contains("show")) return;
+      if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+      const map = {
+        "0":"0","1":"1","2":"2","3":"3","4":"4",
+        "5":"5","6":"6","7":"7","8":"8","9":"9",
+        "+":"+","-":"-","*":"*","/":"/",".":".",
+        "Enter":"=","=":"=","Escape":"C"
+      };
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        if (cur.length > 1) cur = cur.slice(0, -1);
+        else cur = "0";
+        render(); return;
+      }
+      if (map[e.key] !== undefined) {
+        e.preventDefault();
+        press(map[e.key]);
       }
     });
+
     render();
   })();
 
@@ -854,10 +916,7 @@
       units: ["Kilogram","Gram","Milligram","Metric Ton","Pound","Ounce","Stone","US Ton"],
       toBase: { "Kilogram":1,"Gram":0.001,"Milligram":1e-6,"Metric Ton":1000,"Pound":0.453592,"Ounce":0.0283495,"Stone":6.35029,"US Ton":907.185 }
     },
-    temp: {
-      units: ["Celsius","Fahrenheit","Kelvin"],
-      toBase: null // handled separately
-    },
+    temp: { units: ["Celsius","Fahrenheit","Kelvin"], toBase: null },
     area: {
       units: ["Square Meter","Square Kilometer","Square Mile","Square Foot","Square Inch","Hectare","Acre"],
       toBase: { "Square Meter":1,"Square Kilometer":1e6,"Square Mile":2.58999e6,"Square Foot":0.0929,"Square Inch":0.000645,"Hectare":10000,"Acre":4046.86 }
@@ -893,8 +952,8 @@
     const { units } = UNIT_DEFS[cat];
     const from  = document.getElementById("uFrom");
     const to    = document.getElementById("uTo");
-    from.innerHTML = units.map(u=>`<option>${u}</option>`).join("");
-    to.innerHTML   = units.map((u,i)=>`<option${i===1?" selected":""}>${u}</option>`).join("");
+    from.innerHTML = units.map(u => `<option>${u}</option>`).join("");
+    to.innerHTML   = units.map((u,i) => `<option${i===1?" selected":""}>${u}</option>`).join("");
     document.getElementById("uResult").style.display = "none";
   }
 
@@ -920,8 +979,7 @@
       result = convertTemp(val, from, to);
     } else {
       const { toBase } = UNIT_DEFS[cat];
-      const inBase = val * toBase[from];
-      result = inBase / toBase[to];
+      result = (val * toBase[from]) / toBase[to];
     }
 
     res.style.display = "block";
@@ -931,11 +989,11 @@
 
   function convertTemp(val, from, to) {
     let c;
-    if (from==="Celsius")    c = val;
-    else if (from==="Fahrenheit") c = (val-32)*5/9;
-    else                     c = val - 273.15;
-    if (to==="Celsius")    return c;
-    if (to==="Fahrenheit") return c*9/5+32;
+    if (from === "Celsius")     c = val;
+    else if (from === "Fahrenheit") c = (val - 32) * 5 / 9;
+    else                         c = val - 273.15;
+    if (to === "Celsius")    return c;
+    if (to === "Fahrenheit") return c * 9 / 5 + 32;
     return c + 273.15;
   }
 
