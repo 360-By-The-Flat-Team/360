@@ -16,4 +16,4 @@ These are the major versions supported for security updates. Anything prior is n
 ## Reporting a Vulnerability
 
 We appreciate that people take their time and effort to report vulnerabilities, so here is how to report them:
-Due to security policy, we urge users to try not to report vulnerablities in the discussions or any place public where others could abuse them. We kindly request that you take the time to email us <a href="mailto:admin@360-search.com"><em>here</em><> Thanks!
+Due to security policy, we urge users to try not to report vulnerablities in the discussions or any place public where others could abuse them. We kindly request that you take the time to email us <a href="mailto:admin@360-search.com"><em>here</em></a> Thanks!
