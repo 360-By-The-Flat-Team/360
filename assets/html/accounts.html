@@ -13,7 +13,7 @@
   <title>360 — Account</title>
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -25,8 +25,8 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="main.css" />
-  <link rel="stylesheet" href="cursor.css" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -255,7 +255,7 @@
       <div class="nav-item"        data-href="news">News</div>
       <div class="nav-item"        data-href="apps">Apps</div>
       <div class="nav-item"        data-href="games">Games</div>
-      <div class="nav-item active" data-href="accounts.html">Account</div>
+      <div class="nav-item active" data-href="/assets/html/accounts.html">Account</div>
     </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
   </aside>
@@ -312,8 +312,8 @@
     </div>
 
     <h3 style="margin-top:25px;">Legal</h3>
-    <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
-    <a href="tos.html" class="legal-link">📜 Terms of Service</a>
+    <a href="/assets/html/privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
+    <a href="/assets/html/tos.html" class="legal-link">📜 Terms of Service</a>
 
     <h3 style="margin-top:25px;">About</h3>
     <details class="about-dropdown">
@@ -334,9 +334,9 @@
   </div>
 
   <!-- SCRIPTS -->
-  <script src="main.js"></script>
-  <script src="cookie.js"></script>
-  <script src="cursor.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
 
   <!-- ACCOUNTS PAGE LOGIC -->
   <script>
@@ -385,7 +385,7 @@
             Continue with Google
           </button>
         </div>
-        <p class="ac-switch">Don't have an account? <a href="/accounts.html?signup">Sign Up</a></p>
+        <p class="ac-switch">Don't have an account? <a href="/assets/html/accounts.html?signup">Sign Up</a></p>
       `;
       document.getElementById("tabSI").onclick = () => { history.replaceState(null,"","/accounts.html?signin"); renderSignIn(); };
       document.getElementById("tabSU").onclick = () => { history.replaceState(null,"","/accounts.html?signup"); renderSignUp(); };
@@ -465,7 +465,7 @@
             Continue with Google
           </button>
         </div>
-        <p class="ac-switch">Already have an account? <a href="/accounts.html?signin">Sign In</a></p>
+        <p class="ac-switch">Already have an account? <a href="/assets/html/accounts.html?signin">Sign In</a></p>
       `;
       document.getElementById("tabSI").onclick = () => { history.replaceState(null,"","/accounts.html?signin"); renderSignIn(); };
       document.getElementById("tabSU").onclick = () => { history.replaceState(null,"","/accounts.html?signup"); renderSignUp(); };
@@ -554,7 +554,7 @@
         const b=document.getElementById("pgSignOut");
         b.textContent="Signing out…"; b.disabled=true;
         await sb.auth.signOut();
-        location.href="/accounts.html?login&from=logout";
+        location.href="/assets/html/accounts.html?login&from=logout";
       };
     }
 

@@ -14,7 +14,7 @@
   <title>360 (CANARY!!!1)</title>
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -26,10 +26,10 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/home.css" />
-  <link rel="stylesheet" href="assets/css/responsive.css" />
-  <link rel="stylesheet" href="assets/css/cursor.css" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/home.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -216,15 +216,15 @@
     </div>
     <nav class="nav-list">
   <div class="nav-item active" data-href="/">Home</div>
-  <div class="nav-item" data-href="assets/html/ai.html">AI</div>
-  <div class="nav-item" data-href="assets/html/weather.html">Weather</div>
-  <div class="nav-item" data-href="assets/html/translator.html">Translator</div>
-  <div class="nav-item" data-href="assets/html/stocks.html">Stocks</div>
-  <div class="nav-item" data-href="assets/html/url-shortener.html">URL Shortener</div>
-  <div class="nav-item" data-href="assets/html/chat.html">Chat</div>
-  <div class="nav-item" data-href="assets/html/news.html">News</div>
-  <div class="nav-item" data-href="assets/html/apps.html">Apps</div>
-  <div class="nav-item" data-href="assets/html/games.html">Games</div>
+  <div class="nav-item" data-href="/assets/html/ai.html">AI</div>
+  <div class="nav-item" data-href="/assets/html/weather.html">Weather</div>
+  <div class="nav-item" data-href="/assets/html/translator.html">Translator</div>
+  <div class="nav-item" data-href="/assets/html/stocks.html">Stocks</div>
+  <div class="nav-item" data-href="/assets/html/url-shortener.html">URL Shortener</div>
+  <div class="nav-item" data-href="/assets/html/chat.html">Chat</div>
+  <div class="nav-item" data-href="/assets/html/news.html">News</div>
+  <div class="nav-item" data-href="/assets/html/apps.html">Apps</div>
+  <div class="nav-item" data-href="/assets/html/games.html">Games</div>
 </nav>
     <div class="sidebar-footer">© 2026 360 INC. · V2.0.3</div>
   </aside>
@@ -287,8 +287,8 @@
     </div>
 
     <h3 style="margin-top:25px;">Legal</h3>
-    <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
-    <a href="tos.html" class="legal-link">📜 Terms of Service</a>
+    <a href="/assets/html/privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
+    <a href="/assets/html/tos.html" class="legal-link">📜 Terms of Service</a>
     <h3 style="margin-top:25px;">About</h3>
     <details class="about-dropdown">
       <summary>ℹ️ What is 360?</summary>
@@ -296,7 +296,7 @@
     </details>
 <!-- More settings redirect! -->
  
-   <div class="settings-more" onclick="window.location.href='settings.html'">
+   <div class="settings-more" onclick="window.location.href='/assets/html/settings.html'">
     <span>More Settings</span>
     <svg width="20" height="20" viewBox="0 0 24 24">
         <path fill="currentColor" d="M9 18l6-6l-6-6"/>
@@ -364,10 +364,10 @@
     <button id="musicToggle">Music: Off</button>
   </div>
 
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/home.js"></script>
-  <script src="assets/js/cookie.js"></script>
-  <script src="assets/js/cursor.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/home.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
 
   <!-- ── BOB SCRIPT ── -->
   <script>
@@ -523,6 +523,6 @@
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
   </script>
- <script src="news-preloader.js"></script>
+ <script src="/assets/js/news-preloader.js"></script>
 </body>
 </html>
