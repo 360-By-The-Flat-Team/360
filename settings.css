@@ -1,0 +1,69 @@
+/* Inherits theme variables from index.html */
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    padding: 20px;
+}
+
+/* Top Bar */
+.settings-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.settings-title {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.back-btn {
+    padding: 10px 16px;
+    background: var(--card);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    background: var(--card-hover);
+}
+
+/* Sections */
+.settings-section h2 {
+    margin-bottom: 15px;
+    font-size: 22px;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.stat-card {
+    background: var(--card);
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    transition: 0.2s;
+}
+
+.stat-card:hover {
+    background: var(--card-hover);
+}
+
+.stat-card h3 {
+    margin-bottom: 8px;
+    font-size: 18px;
+}
+
+.stat-card p {
+    opacity: 0.8;
+}
