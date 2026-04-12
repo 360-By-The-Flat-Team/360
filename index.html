@@ -38,6 +38,24 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
+  //* MORE SETTINGS STYLING *//
+   .settings-more {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--card);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    transition: 0.2s;
+}
+
+.settings-more:hover {
+    background: var(--card-hover);
+}
+
+   
     /* ── Search bar ── */
     #search-form {
       display: flex;
@@ -277,10 +295,14 @@
       <p>360 is a next-generation search engine and digital workspace. Search, chat, translate, check weather, monitor stocks, and interact with AI — all in one unified interface. Built by 360 Digital, Co.</p>
     </details>
 <!-- More settings redirect! -->
+ 
    <div class="settings-more" onclick="window.location.href='settings.html'">
     <span>More Settings</span>
-    <i class="ph ph-arrow-right"></i>
+    <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M9 18l6-6l-6-6"/>
+    </svg>
 </div>
+
 
   
   </div>
