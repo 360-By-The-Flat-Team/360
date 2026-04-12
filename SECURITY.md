@@ -2,8 +2,7 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+These are the major versions supported for security updates. Anything prior is not recommended for daily use but may ocasionally recieve bug fix updates, parity fix updates and security patches. In between the major updates (1.*.*) all minor updates (*.#.#) will likely recieve the same updates but always a related update (security related) soon. 
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -16,9 +15,5 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
-(We're still working on this...)
+We appreciate that people take their time and effort to report vulnerabilities, so here is how to report them:
+Due to security policy, we urge users to try not to report vulnerablities (We're still working on this...)
