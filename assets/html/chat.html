@@ -11,8 +11,10 @@
 
   <!-- Main app shell (theme, layout, global) -->
   <script src="/assets/js/main.js" defer></script>
-  <!-- Chat logic -->
+  <!-- Chat logic (v2.0.4: auth+init+switchRoom fixed) -->
   <script src="/assets/js/chat.js" defer></script>
+  <!-- Notifications bridge (sounds, badges, toasts, push) -->
+  <script src="/assets/js/notifications.js" defer></script>
 </head>
 <body class="chat-body">
 
@@ -26,7 +28,13 @@
 
       <section class="chat-section">
         <div class="chat-section-label">Public</div>
-        <button id="room-public" class="room-item room-item-active" data-room-type="public" data-room-id="public">
+        <button
+          id="room-public"
+          class="room-item room-item-active"
+          data-room-type="public"
+          data-room-id="public"
+          data-server-id="public"
+        >
           <span class="room-icon">🌐</span>
           <span class="room-name">General</span>
           <span class="room-unread-badge"></span>
@@ -112,7 +120,12 @@
         <div class="input-row">
           <button id="emoji-btn" class="input-icon-btn" type="button">😊</button>
           <div class="input-area">
-            <textarea id="message-input" class="message-input" rows="1" placeholder="Message"></textarea>
+            <textarea
+              id="message-input"
+              class="message-input"
+              rows="1"
+              placeholder="Message"
+            ></textarea>
             <div id="input-emoji-picker" class="emoji-picker-input"></div>
           </div>
           <button id="attach-btn" class="input-icon-btn" type="button">📎</button>
