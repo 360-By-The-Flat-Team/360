@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CQB SIM</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+:root{--bg:#0a0c0e;--bg2:#0e1214;--bg3:#141a1e;--panel:#111618;--border:#1e2830;--border2:#2a3840;--accent:#d4a843;--accent2:#e8c060;--red:#c73535;--red2:#e04040;--green:#3a8a5a;--green2:#4aaa6a;--text:#c8d4dc;--text2:#7a9aaa;--text3:#4a6070;--blue:#3a6a9a;--blue2:#5090c0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow:hidden;cursor:none;}
+#cursor{position:fixed;pointer-events:none;z-index:9999;}
+#cursor .c-ring{position:absolute;width:20px;height:20px;border:1px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);transition:width 0.1s,height 0.1s;}
+#cursor .c-dot{position:absolute;width:3px;height:3px;background:var(--accent);border-radius:50%;transform:translate(-50%,-50%);}
+#cursor.shoot .c-ring{width:32px;height:32px;border-color:var(--red2);}
+#scanlines{position:fixed;inset:0;pointer-events:none;z-index:8000;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:7999;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.7) 100%);}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;}
+.screen.active{display:flex;}
+.btn-tac{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;letter-spacing:3px;text-transform:uppercase;border:1px solid var(--border2);background:transparent;color:var(--text2);padding:12px 32px;cursor:none;transition:all 0.15s;position:relative;overflow:hidden;}
+.btn-tac::before{content:'';position:absolute;left:-100%;top:0;width:100%;height:100%;background:rgba(212,168,67,0.08);transition:left 0.2s;}
+.btn-tac:hover{color:var(--accent);border-color:var(--accent);}
+.btn-tac:hover::before{left:0;}
+.btn-tac.primary{border-color:var(--accent);color:var(--accent);background:rgba(212,168,67,0.05);}
+.btn-tac.primary:hover{background:rgba(212,168,67,0.12);}
+.btn-tac.danger{border-color:var(--red);color:var(--red2);}
+.btn-tac.danger:hover{background:rgba(199,53,53,0.1);}
+.btn-tac.disabled{opacity:0.3;pointer-events:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.topbar-logo{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:6px;color:var(--accent);}
+.topbar-logo span{color:var(--text3);}
+.topbar-status{display:flex;gap:24px;align-items:center;}
+.status-item{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.status-val{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text);}
+.tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;}
+
+/* MENU */
+#screen-menu{align-items:center;justify-content:center;}
+#screen-menu .bg-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:0.3;}
+#screen-menu .content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
+.menu-title{font-family:'Oswald',sans-serif;font-size:88px;font-weight:700;letter-spacing:16px;color:var(--text);line-height:1;text-align:center;}
+.menu-title .red{color:var(--red2);}
+.menu-subtitle{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:8px;color:var(--text3);margin:8px 0 48px;text-align:center;}
+.menu-line{width:320px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin-bottom:48px;}
+.menu-btns{display:flex;flex-direction:column;gap:12px;align-items:center;width:260px;}
+.menu-btns .btn-tac{width:100%;text-align:center;}
+.menu-version{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:40px;letter-spacing:3px;}
+
+/* BRIEFING */
+#screen-briefing{flex-direction:column;}
+.brief-body{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:hidden;}
+.brief-left{border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.brief-right{display:flex;flex-direction:column;}
+.brief-section{padding:20px 24px;border-bottom:1px solid var(--border);}
+.brief-section:last-child{border-bottom:none;flex:1;}
+.brief-section-title{font-family:'Oswald',sans-serif;font-size:11px;font-weight:500;letter-spacing:4px;color:var(--accent);margin-bottom:12px;}
+.brief-level-name{font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;color:var(--text);letter-spacing:3px;line-height:1;}
+.brief-level-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-top:6px;letter-spacing:2px;}
+.threat-level{display:flex;gap:6px;align-items:center;margin-top:12px;}
+.threat-pip{width:18px;height:6px;background:var(--border2);border-radius:1px;}
+.threat-pip.active.low{background:#4a8a5a;}
+.threat-pip.active.med{background:var(--accent);}
+.threat-pip.active.high{background:var(--red2);}
+.objective-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.objective-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--text);line-height:1.4;}
+.obj-icon{width:16px;height:16px;flex-shrink:0;border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--accent);margin-top:1px;font-family:'Share Tech Mono',monospace;}
+.obj-icon.sec{border-color:var(--text3);color:var(--text3);}
+.intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.intel-card{background:var(--bg3);border:1px solid var(--border);padding:12px;}
+.intel-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:4px;}
+.intel-val{font-family:'Oswald',sans-serif;font-size:20px;font-weight:600;color:var(--text);}
+.intel-val.warn{color:var(--accent);}
+.intel-val.danger{color:var(--red2);}
+.map-preview{flex:1;background:var(--bg3);margin:16px;border:1px solid var(--border);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.map-rooms{display:flex;flex-direction:column;gap:3px;align-items:center;width:85%;}
+.map-room{background:var(--bg2);border:1px solid var(--border2);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;width:100%;}
+.map-room-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:1px;}
+.map-room-stat{font-size:10px;color:var(--text3);font-family:'Share Tech Mono',monospace;}
+.map-arrow{width:2px;height:10px;background:var(--border2);align-self:center;}
+.brief-footer{padding:16px 24px;border-top:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+
+/* LOADOUT */
+#screen-loadout{flex-direction:column;}
+.loadout-body{display:grid;grid-template-columns:280px 1fr 320px;flex:1;overflow:hidden;}
+.loadout-col{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.loadout-col:last-child{border-right:none;}
+.loadout-col-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.loadout-col-title{font-family:'Oswald',sans-serif;font-size:12px;font-weight:500;letter-spacing:4px;color:var(--accent);}
+.class-card{padding:16px 20px;border-bottom:1px solid var(--border);cursor:none;transition:background 0.15s;position:relative;}
+.class-card:hover{background:var(--bg3);}
+.class-card.selected{background:rgba(212,168,67,0.06);border-left:2px solid var(--accent);}
+.class-name{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;letter-spacing:2px;color:var(--text);}
+.class-card.selected .class-name{color:var(--accent);}
+.class-role{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:8px;}
+.class-desc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;}
+.class-perks{display:flex;flex-direction:column;gap:4px;}
+.class-perk{font-size:11px;color:var(--green2);font-family:'Share Tech Mono',monospace;}
+.class-perk::before{content:'+ ';}
+.stat-bars{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
+.stat-row{display:flex;align-items:center;gap:8px;}
+.stat-name{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);width:50px;}
+.stat-track{flex:1;height:3px;background:var(--border);}
+.stat-fill{height:100%;background:var(--accent);transition:width 0.4s;}
+.stat-fill.high{background:var(--green2);}
+.stat-fill.low{background:var(--red);}
+.weapon-grid{padding:16px;display:flex;flex-direction:column;gap:8px;}
+.weapon-category{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:3px;margin:8px 0 4px;}
+.weapon-card{background:var(--bg3);border:1px solid var(--border);padding:14px 16px;cursor:none;transition:all 0.15s;}
+.weapon-card:hover{border-color:var(--border2);background:var(--panel);}
+.weapon-card.selected{border-color:var(--accent);background:rgba(212,168,67,0.04);}
+.weapon-card.locked{opacity:0.4;}
+.weapon-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.weapon-name{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;letter-spacing:1px;color:var(--text);}
+.weapon-card.selected .weapon-name{color:var(--accent);}
+.weapon-type{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;}
+.weapon-class-req{font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 6px;border:1px solid;}
+.weapon-class-req.breacher{border-color:#c06020;color:#c06020;}
+.weapon-class-req.assaulter{border-color:var(--blue2);color:var(--blue2);}
+.weapon-class-req.sniper{border-color:var(--green2);color:var(--green2);}
+.weapon-class-req.any{border-color:var(--text3);color:var(--text3);}
+.weapon-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.w-stat{display:flex;flex-direction:column;gap:2px;}
+.w-stat-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;}
+.w-stat-bar{height:3px;background:var(--border);}
+.w-stat-fill{height:100%;background:var(--accent);}
+.loadout-summary{padding:16px;display:flex;flex-direction:column;gap:12px;}
+.summary-slot{background:var(--bg3);border:1px solid var(--border);padding:12px 14px;}
+.slot-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;}
+.slot-content{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;color:var(--text);}
+.slot-content.empty{color:var(--border2);font-style:italic;font-size:13px;}
+.slot-stat{font-size:12px;color:var(--text3);margin-top:2px;}
+.loadout-footer{padding:16px 24px;border-top:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+
+/* GAME */
+#screen-game{position:relative;}
+#game-canvas{display:block;width:100%;height:100%;}
+#hud{position:absolute;top:0;left:0;right:0;pointer-events:none;}
+.hud-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;background:rgba(10,12,14,0.9);border-bottom:1px solid var(--border);}
+.hud-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.hud-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:2px;}
+.hud-val{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;color:var(--text);letter-spacing:1px;}
+#hp-track{width:90px;height:4px;background:var(--border);margin-top:3px;}
+#hp-fill{height:100%;background:var(--green2);transition:width 0.3s;}
+#ammo-pips{display:flex;gap:2px;flex-wrap:wrap;max-width:110px;margin-top:3px;}
+.pip{width:6px;height:10px;background:var(--accent);border-radius:1px;}
+.pip.spent{background:var(--border2);}
+.hud-class-badge{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;padding:3px 8px;border:1px solid var(--border);}
+#flash-msg{position:absolute;top:70px;left:50%;transform:translateX(-50%);font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:3px;color:var(--accent2);opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;text-align:center;}
+#tac-tip{position:absolute;top:90px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);opacity:0;transition:opacity 0.5s;pointer-events:none;white-space:nowrap;text-align:center;background:rgba(10,12,14,0.8);padding:4px 12px;border:1px solid var(--border);}
+#reload-bar-wrap{position:absolute;left:50%;transform:translateX(-50%);bottom:55px;display:none;align-items:center;gap:10px;}
+#reload-bar-wrap.show{display:flex;}
+.reload-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;}
+#reload-track{width:120px;height:3px;background:var(--border);}
+#reload-progress{height:100%;background:var(--accent);}
+#room-label{position:absolute;bottom:0;left:0;right:0;text-align:center;padding:6px;background:rgba(10,12,14,0.7);font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px;pointer-events:none;}
+#ff-warn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Oswald',sans-serif;font-size:22px;letter-spacing:4px;color:var(--red2);opacity:0;transition:opacity 0.15s;pointer-events:none;text-shadow:0 0 30px rgba(224,64,64,0.8);font-weight:700;}
+
+/* DEBRIEF */
+#screen-debrief{align-items:center;justify-content:center;}
+.db-panel{width:480px;background:var(--bg2);border:1px solid var(--border);}
+.db-header{padding:24px;border-bottom:1px solid var(--border);text-align:center;}
+.db-title{font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;letter-spacing:6px;}
+.db-title.success{color:var(--green2);}
+.db-title.fail{color:var(--red2);}
+.db-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px;margin-top:6px;}
+.db-stats{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--border);}
+.db-stat{background:var(--bg3);padding:12px;border:1px solid var(--border);}
+.db-stat-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;}
+.db-stat-val{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;color:var(--text);margin-top:4px;}
+.db-btns{padding:20px 24px;display:flex;gap:12px;}
+.db-btns .btn-tac{flex:1;text-align:center;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);}
+</style>
+</head>
+<body>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div id="cursor"><div class="c-ring"></div><div class="c-dot"></div></div>
+
+<!-- MENU -->
+<div id="screen-menu" class="screen active">
+  <div class="bg-grid"></div>
+  <div class="content">
+    <div class="menu-title">CQB<span class="red">.</span>SIM</div>
+    <div class="menu-subtitle">CLOSE QUARTERS BATTLE SIMULATOR // v3.1</div>
+    <div class="menu-line"></div>
+    <div class="menu-btns">
+      <button class="btn-tac primary" onclick="goTo('briefing')">DEPLOY</button>
+      <button class="btn-tac" onclick="goTo('loadout')">ARMORY</button>
+    </div>
+    <div class="menu-version">OPERATOR CLEARANCE: ALPHA // CLASSIFIED</div>
+  </div>
+</div>
+
+<!-- BRIEFING -->
+<div id="screen-briefing" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">CQB<span>.</span>SIM</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:4px;">MISSION BRIEFING</div>
+    <div class="topbar-status">
+      <div class="status-item"><span class="tag">LEVEL</span><span class="status-val" id="brief-level-num">01</span></div>
+      <div class="status-item"><span class="tag">THREAT</span><span class="status-val" id="brief-threat-val">MODERATE</span></div>
+    </div>
+  </div>
+  <div class="brief-body">
+    <div class="brief-left">
+      <div class="brief-section">
+        <div class="brief-section-title">OPERATION</div>
+        <div class="brief-level-name" id="brief-op-name">IRON ANVIL</div>
+        <div class="brief-level-sub" id="brief-op-sub">SUBURBAN STRUCTURE</div>
+        <div class="threat-level" id="brief-threat-pips"></div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-title">PRIMARY OBJECTIVES</div>
+        <ul class="objective-list" id="brief-pri-obj"></ul>
+      </div>
+      <div class="brief-section" style="flex:1">
+        <div class="brief-section-title">SECONDARY OBJECTIVES</div>
+        <ul class="objective-list" id="brief-sec-obj"></ul>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-title">INTEL</div>
+        <div class="intel-grid" id="brief-intel-grid"></div>
+      </div>
+    </div>
+    <div class="brief-right">
+      <div class="brief-section"><div class="brief-section-title">STRUCTURE LAYOUT</div></div>
+      <div class="map-preview" id="brief-map"></div>
+      <div class="brief-section" style="flex:0 0 auto">
+        <div class="brief-section-title">SITUATION REPORT</div>
+        <p id="brief-sitrep" style="font-size:13px;color:var(--text2);line-height:1.7;"></p>
+      </div>
+      <div class="brief-section" style="flex:0 0 auto;background:rgba(212,168,67,0.03);border:none;border-top:1px solid rgba(212,168,67,0.2);">
+        <div class="brief-section-title" style="color:var(--accent);">CQB REMINDER</div>
+        <p style="font-size:12px;color:var(--text3);line-height:1.8;" id="brief-cqb-tip"></p>
+      </div>
+    </div>
+  </div>
+  <div class="brief-footer">
+    <button class="btn-tac" onclick="goTo('menu')">← ABORT</button>
+    <div id="brief-level-dots" style="display:flex;gap:6px;"></div>
+    <button class="btn-tac primary" onclick="goTo('loadout')">PROCEED TO ARMORY →</button>
+  </div>
+</div>
+
+<!-- LOADOUT -->
+<div id="screen-loadout" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">CQB<span>.</span>SIM</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:4px;">ARMORY // LOADOUT</div>
+    <div class="topbar-status">
+      <div class="status-item"><span class="tag">CLASS</span><span class="status-val" id="top-class">—</span></div>
+      <div class="status-item"><span class="tag">PRIMARY</span><span class="status-val" id="top-weapon">—</span></div>
+    </div>
+  </div>
+  <div class="loadout-body">
+    <div class="loadout-col">
+      <div class="loadout-col-header"><div class="loadout-col-title">SELECT CLASS</div></div>
+      <div id="class-list"></div>
+    </div>
+    <div class="loadout-col">
+      <div class="loadout-col-header"><div class="loadout-col-title">SELECT WEAPONS</div></div>
+      <div class="weapon-grid" id="weapon-list"></div>
+    </div>
+    <div class="loadout-col">
+      <div class="loadout-col-header"><div class="loadout-col-title">OPERATOR PROFILE</div></div>
+      <div class="loadout-summary" id="loadout-summary"></div>
+    </div>
+  </div>
+  <div class="loadout-footer">
+    <button class="btn-tac" onclick="goTo('briefing')">← BACK</button>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;" id="loadout-warning"></div>
+    <button class="btn-tac primary" id="deploy-btn" onclick="startGame()">DEPLOY OPERATOR →</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <canvas id="game-canvas"></canvas>
+  <div id="hud">
+    <div class="hud-bar">
+      <div class="hud-item"><div class="hud-label">HEALTH</div><div id="hp-track"><div id="hp-fill"></div></div></div>
+      <div class="hud-item"><div class="hud-label">STANCE</div><div class="hud-val" id="hud-stance" style="font-size:11px;color:var(--text3)">STANDING</div></div>
+      <div class="hud-item"><div class="hud-label">LEVEL</div><div class="hud-val" id="hud-level">1/3</div></div>
+      <div class="hud-item"><div class="hud-label">ROOM</div><div class="hud-val" id="hud-room">1/4</div></div>
+      <div class="hud-item"><div class="hud-label">SCORE</div><div class="hud-val" id="hud-score">0</div></div>
+      <div class="hud-item"><div class="hud-label">AMMO</div><div id="ammo-pips"></div></div>
+      <div class="hud-item"><div class="hud-label">KILLS</div><div class="hud-val" id="hud-kills">0</div></div>
+      <div class="hud-item"><div class="hud-label">CLASS</div><div class="hud-class-badge" id="hud-class">—</div></div>
+      <button class="btn-tac danger" style="padding:6px 16px;font-size:11px;pointer-events:all" onclick="goTo('menu')">ABORT</button>
+    </div>
+  </div>
+  <div id="flash-msg"></div>
+  <div id="tac-tip"></div>
+  <div id="ff-warn">⚠ FATAL FUNNEL</div>
+  <div id="reload-bar-wrap"><span class="reload-label">RELOADING</span><div id="reload-track"><div id="reload-progress"></div></div></div>
+  <div id="room-label"></div>
+</div>
+
+<!-- DEBRIEF -->
+<div id="screen-debrief" class="screen">
+  <div class="db-panel">
+    <div class="db-header">
+      <div class="db-title" id="db-title">MISSION COMPLETE</div>
+      <div class="db-sub" id="db-sub">OPERATION SUCCESSFUL</div>
+    </div>
+    <div class="db-stats" id="db-stats"></div>
+    <div class="db-btns" id="db-btns">
+      <button class="btn-tac" onclick="goTo('menu')">MAIN MENU</button>
+      <button class="btn-tac primary" onclick="goTo('briefing')">NEXT MISSION</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Cursor
+const cursorEl=document.getElementById('cursor');
+let mouseX=0,mouseY=0;
+document.addEventListener('mousemove',e=>{cursorEl.style.left=e.clientX+'px';cursorEl.style.top=e.clientY+'px';mouseX=e.clientX;mouseY=e.clientY;});
+document.addEventListener('mousedown',()=>cursorEl.classList.add('shoot'));
+document.addEventListener('mouseup',()=>cursorEl.classList.remove('shoot'));
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  if(id==='briefing')buildBriefing();
+  if(id==='loadout')buildLoadout();
+}
+
+// Level Data
+const LEVELS=[
+  {num:1,op:'IRON ANVIL',sub:'SUBURBAN STRUCTURE — URBAN ENVIRONMENT',threat:'MODERATE',threatPips:2,
+   sitrep:'Intel reports a suspected criminal syndicate operating out of a residential property. Your unit is to breach and clear all rooms, neutralize all hostiles, and extract civilian hostages. Stack on the door — do not enter the fatal funnel.',
+   cqbTip:'Pie the corner before entry. Never stand in the doorway. Button-hook to the near wall, clear your corner, then move in.',
+   primaryObj:['Neutralize all hostile combatants','Extract all hostages alive'],
+   secondaryObj:['Zero friendly casualties','Avoid the fatal funnel','Sub-3-minute clear time'],
+   intel:[{l:'HOSTILES',v:'6–8',c:''},{l:'HOSTAGES',v:'2',c:'warn'},{l:'ROOMS',v:'4',c:''},{l:'ARMED',v:'LIGHT',c:'warn'}],
+   rooms:[{name:'ENTRY HALL',e:2,h:0,w:14,h2:9},{name:'LIVING ROOM',e:3,h:0,w:18,h2:11},{name:'KITCHEN',e:2,h:1,w:14,h2:9},{name:'MASTER BED',e:3,h:1,w:14,h2:11}],
+   enemySpeed:0.85,enemyAccuracy:0.012,enemyReaction:85,enemyHp:1},
+  {num:2,op:'COLD IRON',sub:'WAREHOUSE COMPOUND — INDUSTRIAL ZONE',threat:'HIGH',threatPips:3,
+   sitrep:'A terrorist cell has fortified a warehouse compound. Guards are armed with automatic weapons and have established defensive chokepoints. Expect coordinated flanks. Use cover and advance by bounds.',
+   cqbTip:'Limit exposure at every threshold. Cross-cover the fatal funnel with a partner. Suppress and move — never cross open space without covering fire.',
+   primaryObj:['Eliminate all hostile combatants','Rescue 2 confirmed hostages'],
+   secondaryObj:['No civilian casualties','Headshots for bonus score','Clear time under 5 min'],
+   intel:[{l:'HOSTILES',v:'14–16',c:'warn'},{l:'HOSTAGES',v:'2',c:'warn'},{l:'ROOMS',v:'4',c:''},{l:'ARMED',v:'HEAVY',c:'danger'}],
+   rooms:[{name:'LOADING BAY',e:3,h:0,w:22,h2:13},{name:'STORAGE',e:4,h:1,w:18,h2:13},{name:'OFFICES',e:4,h:0,w:20,h2:11},{name:'SECURITY',e:5,h:1,w:16,h2:13}],
+   enemySpeed:1.1,enemyAccuracy:0.018,enemyReaction:60,enemyHp:2},
+  {num:3,op:'OBSIDIAN STORM',sub:'FORTIFIED COMPLEX — HIGH-VALUE TARGET',threat:'CRITICAL',threatPips:5,
+   sitrep:'Black-site intelligence confirms a high-value target operating from a hardened compound. Elite guards with armored vests respond fast and shoot first. Dynamic entry is mandatory. Three hostages — one is the HVT\'s leverage. No-fail operation.',
+   cqbTip:'Armored contacts require double-taps or headshots. Flow through the room — stacking up lets enemies react. Clear corners in sequence: near, far, then deep.',
+   primaryObj:['Neutralize HVT in final room','Extract 3 hostages alive'],
+   secondaryObj:['Zero civilian casualties','Armored kill bonus','Sub-7-minute clear'],
+   intel:[{l:'HOSTILES',v:'22+',c:'danger'},{l:'HOSTAGES',v:'3',c:'warn'},{l:'ROOMS',v:'4',c:''},{l:'ARMED',v:'ELITE',c:'danger'}],
+   rooms:[{name:'GUARD POST',e:4,h:0,w:16,h2:11},{name:'BARRACKS',e:6,h:1,w:22,h2:15},{name:'COMMAND CTR',e:5,h:1,w:20,h2:13},{name:'VAULT',e:7,h:1,w:18,h2:15}],
+   enemySpeed:1.4,enemyAccuracy:0.025,enemyReaction:40,enemyHp:3}
+];
+let currentLevel=0;
+
+function buildBriefing(){
+  const lv=LEVELS[currentLevel];
+  document.getElementById('brief-level-num').textContent='0'+lv.num;
+  document.getElementById('brief-threat-val').textContent=lv.threat;
+  document.getElementById('brief-threat-val').style.color=lv.threatPips>=4?'var(--red2)':lv.threatPips>=3?'var(--accent)':'var(--green2)';
+  document.getElementById('brief-op-name').textContent=lv.op;
+  document.getElementById('brief-op-sub').textContent=lv.sub;
+  document.getElementById('brief-sitrep').textContent=lv.sitrep;
+  document.getElementById('brief-cqb-tip').textContent=lv.cqbTip;
+  const pc=document.getElementById('brief-threat-pips');
+  pc.innerHTML='';
+  for(let i=0;i<5;i++){const p=document.createElement('div');p.className='threat-pip'+(i<lv.threatPips?' active '+(lv.threatPips<=2?'low':lv.threatPips<=3?'med':'high'):'');pc.appendChild(p);}
+  document.getElementById('brief-pri-obj').innerHTML=lv.primaryObj.map(o=>`<li><div class="obj-icon">P</div><span>${o}</span></li>`).join('');
+  document.getElementById('brief-sec-obj').innerHTML=lv.secondaryObj.map(o=>`<li><div class="obj-icon sec">S</div><span>${o}</span></li>`).join('');
+  document.getElementById('brief-intel-grid').innerHTML=lv.intel.map(i=>`<div class="intel-card"><div class="intel-label">${i.l}</div><div class="intel-val ${i.c}">${i.v}</div></div>`).join('');
+  const map=document.getElementById('brief-map');
+  map.innerHTML='';
+  const rooms=document.createElement('div');rooms.className='map-rooms';
+  lv.rooms.forEach((r,i)=>{
+    if(i>0){const a=document.createElement('div');a.className='map-arrow';rooms.appendChild(a);}
+    const rd=document.createElement('div');rd.className='map-room';
+    rd.innerHTML=`<span class="map-room-name">${r.name}</span><span class="map-room-stat">${r.e} HOS${r.h?' · '+r.h+' HGE':''}</span>`;
+    rooms.appendChild(rd);
+  });
+  map.appendChild(rooms);
+  document.getElementById('brief-level-dots').innerHTML=LEVELS.map((_,i)=>`<div style="width:8px;height:8px;border-radius:50%;background:${i===currentLevel?'var(--accent)':'var(--border2)'}"></div>`).join('');
+}
+
+// Loadout Data
+const CLASSES=[
+  {id:'breacher',name:'BREACHER',role:'CLOSE ASSAULT // ENTRY SPECIALIST',
+   desc:'Explosive entry specialist. First through the door. Stuns all contacts on breach.',
+   perks:['Instant door breach (no delay)','Flashbang stun on dynamic entry','Shotgun bonus damage +35%'],
+   stats:{speed:70,armor:80,firepower:85,range:30,stealth:40},color:'#c06020'},
+  {id:'assaulter',name:'ASSAULTER',role:'GENERAL PURPOSE // FLEXIBLE OPERATOR',
+   desc:'Balanced operator. Faster reload, suppressed footsteps, adaptable in any room.',
+   perks:['Reload speed +25%','Reduced movement noise','Sidearm quick-draw'],
+   stats:{speed:75,armor:70,firepower:75,range:65,stealth:65},color:'var(--blue2)'},
+  {id:'sniper',name:'SNIPER',role:'PRECISION // OVERWATCH OPERATOR',
+   desc:'Precision shooter. Marks targets through walls. Headshot multiplier active.',
+   perks:['Enemy outlines visible near door','Headshot damage x2.5','Laser sight for corners'],
+   stats:{speed:55,armor:50,firepower:90,range:95,stealth:80},color:'var(--green2)'}
+];
+const WEAPONS=[
+  {id:'mp5',name:'MP5-SD',type:'SUBMACHINE GUN',classReq:'any',ammo:30,shootCd:7,stats:{damage:45,range:40,rof:85,accuracy:65},desc:'Suppressed SMG.'},
+  {id:'m4',name:'M4A1',type:'ASSAULT RIFLE',classReq:'assaulter',ammo:30,shootCd:8,stats:{damage:60,range:70,rof:70,accuracy:75},desc:'Standard issue AR.'},
+  {id:'ak',name:'AK-74U',type:'ASSAULT RIFLE',classReq:'any',ammo:30,shootCd:9,stats:{damage:65,range:60,rof:65,accuracy:60},desc:'Hard-hitting.'},
+  {id:'sg553',name:'SG553',type:'ASSAULT RIFLE',classReq:'assaulter',ammo:30,shootCd:8,stats:{damage:62,range:72,rof:68,accuracy:78},desc:'Swiss precision.'},
+  {id:'870',name:'M870 MCS',type:'SHOTGUN',classReq:'breacher',ammo:8,shootCd:20,stats:{damage:95,range:20,rof:30,accuracy:60},desc:'One-shot CQB.'},
+  {id:'spas',name:'SPAS-12',type:'SHOTGUN',classReq:'breacher',ammo:8,shootCd:16,stats:{damage:88,range:22,rof:35,accuracy:55},desc:'Semi-auto scatter.'},
+  {id:'awp',name:'AWP',type:'SNIPER RIFLE',classReq:'sniper',ammo:5,shootCd:30,stats:{damage:100,range:100,rof:15,accuracy:100},desc:'One-shot, any range.'},
+  {id:'sr25',name:'SR-25',type:'SNIPER RIFLE',classReq:'sniper',ammo:10,shootCd:20,stats:{damage:80,range:95,rof:35,accuracy:92},desc:'Semi-auto precision.'},
+  {id:'glock',name:'GLOCK-17',type:'SIDEARM',classReq:'any',ammo:17,shootCd:8,stats:{damage:35,range:35,rof:80,accuracy:60},desc:'Backup sidearm.'},
+  {id:'deagle',name:'DESERT EAGLE',type:'SIDEARM',classReq:'any',ammo:7,shootCd:14,stats:{damage:70,range:45,rof:45,accuracy:65},desc:'Hand cannon.'}
+];
+let selectedClass=null,selectedPrimary=null,selectedSidearm=null;
+
+function buildLoadout(){
+  document.getElementById('class-list').innerHTML=CLASSES.map(c=>`
+    <div class="class-card ${selectedClass===c.id?'selected':''}" onclick="selectClass('${c.id}')">
+      <div class="class-role">${c.role}</div>
+      <div class="class-name">${c.name}</div>
+      <div class="class-desc">${c.desc}</div>
+      <div class="class-perks">${c.perks.map(p=>`<div class="class-perk">${p}</div>`).join('')}</div>
+      <div class="stat-bars">${Object.entries(c.stats).map(([k,v])=>`<div class="stat-row"><div class="stat-name">${k.toUpperCase()}</div><div class="stat-track"><div class="stat-fill ${v>=80?'high':v<=40?'low':''}" style="width:${v}%"></div></div></div>`).join('')}</div>
+    </div>`).join('');
+  buildWeaponList();buildSummary();updateDeployBtn();
+}
+function buildWeaponList(){
+  const cats=['SUBMACHINE GUN','ASSAULT RIFLE','SHOTGUN','SNIPER RIFLE','SIDEARM'];
+  let html='';
+  cats.forEach(cat=>{
+    const ws=WEAPONS.filter(w=>w.type===cat);
+    if(!ws.length)return;
+    html+=`<div class="weapon-category">${cat}</div>`;
+    ws.forEach(w=>{
+      const ok=!selectedClass||w.classReq==='any'||w.classReq===selectedClass;
+      const isSide=w.type==='SIDEARM';
+      const isSel=isSide?selectedSidearm===w.id:selectedPrimary===w.id;
+      html+=`<div class="weapon-card ${isSel?'selected':''} ${!ok?'locked':''}" onclick="${ok?`selectWeapon('${w.id}')`:''}" title="${!ok?'Requires '+w.classReq.toUpperCase():''}">
+        <div class="weapon-header"><div><div class="weapon-type">${w.type}</div><div class="weapon-name">${w.name}</div></div><div class="weapon-class-req ${w.classReq}">${w.classReq.toUpperCase()}</div></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:'Share Tech Mono',monospace">${w.desc} · ${w.ammo}RND</div>
+        <div class="weapon-stats">${Object.entries(w.stats).map(([k,v])=>`<div class="w-stat"><div class="w-stat-label">${k.toUpperCase()}</div><div class="w-stat-bar"><div class="w-stat-fill" style="width:${v}%"></div></div></div>`).join('')}</div>
+      </div>`;
+    });
+  });
+  document.getElementById('weapon-list').innerHTML=html;
+}
+function selectClass(id){
+  selectedClass=id;
+  if(selectedPrimary){const w=WEAPONS.find(x=>x.id===selectedPrimary);if(w&&w.classReq!=='any'&&w.classReq!==id)selectedPrimary=null;}
+  document.getElementById('top-class').textContent=CLASSES.find(c=>c.id===id).name;
+  buildLoadout();
+}
+function selectWeapon(id){
+  const w=WEAPONS.find(x=>x.id===id);
+  if(w.type==='SIDEARM')selectedSidearm=id;
+  else selectedPrimary=id;
+  document.getElementById('top-weapon').textContent=w.name;
+  buildWeaponList();buildSummary();updateDeployBtn();
+}
+function buildSummary(){
+  const cl=selectedClass?CLASSES.find(c=>c.id===selectedClass):null;
+  const pw=selectedPrimary?WEAPONS.find(w=>w.id===selectedPrimary):null;
+  const sw=selectedSidearm?WEAPONS.find(w=>w.id===selectedSidearm):null;
+  let html=`
+    <div class="summary-slot"><div class="slot-label">OPERATOR CLASS</div><div class="slot-content ${cl?'':'empty'}">${cl?cl.name:'NOT SELECTED'}</div>${cl?`<div class="slot-stat">${cl.role}</div>`:''}</div>
+    <div class="summary-slot"><div class="slot-label">PRIMARY WEAPON</div><div class="slot-content ${pw?'':'empty'}">${pw?pw.name:'NOT SELECTED'}</div>${pw?`<div class="slot-stat">${pw.type} · ${pw.ammo}RND MAG</div>`:''}</div>
+    <div class="summary-slot"><div class="slot-label">SIDEARM</div><div class="slot-content ${sw?'':'empty'}">${sw?sw.name:'NONE'}</div>${sw?`<div class="slot-stat">${sw.type} · ${sw.ammo}RND</div>`:''}</div>`;
+  if(cl&&pw){
+    const spd=cl.stats.speed,armor=cl.stats.armor,fp=pw.stats.damage,acc=Math.round((pw.stats.accuracy+cl.stats.armor*0.2)/1.2);
+    html+=`<div class="summary-slot"><div class="slot-label">OPERATOR STATS</div><div class="stat-bars" style="margin-top:8px">
+      <div class="stat-row"><div class="stat-name">MOVE</div><div class="stat-track"><div class="stat-fill ${spd>=80?'high':spd<=40?'low':''}" style="width:${spd}%"></div></div></div>
+      <div class="stat-row"><div class="stat-name">ARMOR</div><div class="stat-track"><div class="stat-fill ${armor>=80?'high':''}" style="width:${armor}%"></div></div></div>
+      <div class="stat-row"><div class="stat-name">DMG</div><div class="stat-track"><div class="stat-fill ${fp>=80?'high':''}" style="width:${fp}%"></div></div></div>
+      <div class="stat-row"><div class="stat-name">ACC</div><div class="stat-track"><div class="stat-fill" style="width:${acc}%"></div></div></div>
+    </div></div>
+    <div class="summary-slot"><div class="slot-label">ACTIVE PERKS</div><div class="class-perks" style="margin-top:6px">${cl.perks.map(p=>`<div class="class-perk" style="font-size:11px;margin-bottom:3px">${p}</div>`).join('')}</div></div>`;
+  }
+  document.getElementById('loadout-summary').innerHTML=html;
+}
+function updateDeployBtn(){
+  const ok=selectedClass&&selectedPrimary;
+  document.getElementById('deploy-btn').className='btn-tac primary'+(ok?'':' disabled');
+  document.getElementById('loadout-warning').textContent=ok?'':'SELECT CLASS + PRIMARY TO DEPLOY';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// GAME ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+const canvas=document.getElementById('game-canvas');
+const ctx=canvas.getContext('2d');
+const TILE=48;
+const HUD_H=46;
+const PR=13;
+const ER=12;
+
+let mouseDown=false,keys={},shootCooldown=0,frameCount=0;
+let gameState='idle';
+let score=0,totalKills=0;
+let roomIdx=0;
+let player=null,enemies=[],bullets=[],hostages=[],covers=[],particles=[];
+let room=null;
+let startTime=0;
+let doorOpen=false;
+let ffWarnTimer=0;
+
+function rand(a,b){return Math.random()*(b-a)+a;}
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+
+function lineIntersectsRect(ax,ay,bx,by,rx,ry,rw,rh){
+  const dx=bx-ax,dy=by-ay;
+  let tmin=0,tmax=1;
+  const tests=[[dx,ax-rx,rw],[dy,ay-ry,rh]];
+  for(const[d,p,s]of tests){
+    if(Math.abs(d)<0.0001){if(p<0||p>s)return false;continue;}
+    let t1=-p/d,t2=(s-p)/d;
+    if(t1>t2){[t1,t2]=[t2,t1];}
+    tmin=Math.max(tmin,t1);tmax=Math.min(tmax,t2);
+    if(tmin>tmax)return false;
+  }
+  return true;
+}
+
+function canSee(ax,ay,bx,by,wallList){
+  for(const w of wallList){
+    if(lineIntersectsRect(ax,ay,bx,by,w.x,w.y,w.w,w.h))return false;
+  }
+  return true;
+}
+
+function circleRect(cx,cy,cr,rx,ry,rw,rh){
+  const nx=Math.max(rx,Math.min(cx,rx+rw)),ny=Math.max(ry,Math.min(cy,ry+rh));
+  return Math.hypot(cx-nx,cy-ny)<cr;
+}
+function resolveRect(e,r,rect){
+  if(!circleRect(e.x,e.y,r,rect.x,rect.y,rect.w,rect.h))return;
+  const nx=Math.max(rect.x,Math.min(e.x,rect.x+rect.w)),ny=Math.max(rect.y,Math.min(e.y,rect.y+rect.h));
+  const dx=e.x-nx,dy=e.y-ny,d=Math.hypot(dx,dy)||0.001;
+  e.x+=(dx/d)*(r-d);e.y+=(dy/d)*(r-d);
+}
+
+// ── GEOMETRY ─────────────────────────────────────────────────────────────────
+// Layout (all top-down, player approaches from bottom):
+//
+//  [EXTERIOR / STREET]   ← player spawns here, walks up a path to the front door
+//  [FRONT DOOR]          ← door in the south wall of the building
+//  [ROOM 1]              ← interior rooms, connected northward
+//
+// The building's south wall is near the vertical center of the canvas.
+// Player starts at bottom of screen and walks up.
+//
+// The door is a gap in the south wall of room 1.
+// A front path / steps are drawn between the spawn point and the door.
+
+function buildRoom(roomDef,levelDef){
+  const CW=canvas.width;
+  const CH=canvas.height;
+  const cx=CW/2;
+
+  // Room dimensions
+  const RW=roomDef.w*TILE;
+  const RH=roomDef.h2*TILE;
+
+  // Room sits in the upper 55% of the canvas (below HUD)
+  const usableTop=HUD_H+20;
+  const usableH=(CH-HUD_H)*0.55;
+  const ox=cx-RW/2;
+  const oy=usableTop+(usableH-RH)/2;
+
+  // Door: gap in the SOUTH wall of the room (bottom wall)
+  const DOOR_W=TILE*2;
+  const doorX=cx-DOOR_W/2; // centered
+  const doorWallY=oy+RH-TILE; // y of bottom wall row
+
+  // Walls — build south wall with door gap
+  const walls=[];
+  // Top wall (full)
+  for(let x=0;x<roomDef.w;x++) walls.push({x:ox+x*TILE,y:oy,w:TILE,h:TILE});
+  // Left wall
+  for(let y=1;y<roomDef.h2;y++) walls.push({x:ox,y:oy+y*TILE,w:TILE,h:TILE});
+  // Right wall
+  for(let y=1;y<roomDef.h2;y++) walls.push({x:ox+(roomDef.w-1)*TILE,y:oy+y*TILE,w:TILE,h:TILE});
+  // South wall — skip door gap
+  for(let x=1;x<roomDef.w-1;x++){
+    const tileX=ox+x*TILE;
+    const isDoor=(tileX>=doorX-2&&tileX<doorX+DOOR_W+2);
+    if(!isDoor) walls.push({x:tileX,y:doorWallY,w:TILE,h:TILE});
+  }
+
+  const door={
+    x:doorX, y:doorWallY, w:DOOR_W, h:TILE,
+    cx:doorX+DOOR_W/2, cy:doorWallY+TILE/2,
+    openY:doorWallY // y-threshold for entering room
+  };
+
+  // Exterior path — player spawns here
+  // Path leads from bottom of canvas up to the front door
+  const pathW=DOOR_W+TILE*2;
+  const pathX=cx-pathW/2;
+  const pathTop=doorWallY+TILE; // just below the door opening
+  const pathBot=CH-60; // near bottom of screen
+  const spawnX=cx;
+  const spawnY=pathBot-20;
+
+  // Stack positions — flanking the door, outside
+  const stackLeft ={x:doorX-TILE*0.8, y:doorWallY+TILE};
+  const stackRight={x:doorX+DOOR_W+TILE*0.8-8, y:doorWallY+TILE};
+
+  // Interior cover
+  const cvrs=[];
+  for(let i=0;i<randInt(3,6);i++){
+    let cx2,cy2,ok,t=0;
+    do{
+      cx2=ox+TILE+rand(20,RW-TILE*2-20);
+      cy2=oy+TILE+rand(20,RH-TILE*3-20);
+      ok=cvrs.every(c=>dist({x:cx2,y:cy2},{x:c.x,y:c.y})>TILE*1.8);
+      t++;
+    }while(!ok&&t<30);
+    if(ok) cvrs.push({x:cx2-16,y:cy2-16,w:32,h:32});
+  }
+
+  // Enemies — inside room
+  const enms=[];
+  for(let i=0;i<roomDef.e;i++){
+    let ex,ey,ok,t=0;
+    do{
+      ex=ox+TILE+rand(20,RW-TILE*2-20);
+      ey=oy+TILE+rand(20,RH-TILE*2-20);
+      ok=enms.every(e=>dist({x:ex,y:ey},{x:e.x,y:e.y})>45);
+      t++;
+    }while(!ok&&t<40);
+    const isArmored=currentLevel===2&&i%2===0;
+    enms.push({
+      x:ex,y:ey,vx:0,vy:0,
+      hp:isArmored?3:levelDef.enemyHp,
+      maxHp:isArmored?3:levelDef.enemyHp,
+      speed:levelDef.enemySpeed,accuracy:levelDef.enemyAccuracy,
+      shootTimer:randInt(60,130),
+      state:'patrol',angle:Math.random()*Math.PI*2,
+      alertTimer:0,stunTimer:0,suppressTimer:0,isArmored,
+      lastKnownX:ex,lastKnownY:ey,
+      patrolTarget:{x:ox+TILE+rand(20,RW-TILE*2-20),y:oy+TILE+rand(20,RH-TILE*2-20)},
+      los:false
+    });
+  }
+
+  // Hostages
+  const hsts=[];
+  for(let i=0;i<roomDef.h;i++){
+    let hx,hy,t=0;
+    do{
+      hx=ox+TILE+rand(20,RW-TILE*2-20);
+      hy=oy+TILE+rand(20,RH/2);
+      t++;
+    }while(enms.some(e=>dist({x:hx,y:hy},{x:e.x,y:e.y})<70)&&t<40);
+    hsts.push({x:hx,y:hy,rescued:false});
+  }
+
+  return{
+    walls,door,covers:cvrs,enemies:enms,hostages:hsts,
+    ox,oy,RW,RH,
+    doorX,doorWallY,DOOR_W,
+    pathX,pathW,pathTop,pathBot,
+    spawnX,spawnY,
+    stackLeft,stackRight,
+    rd:roomDef,
+    // Interior bounds (for player movement inside room)
+    roomLeft:ox+TILE+PR+2,
+    roomRight:ox+RW-TILE-PR-2,
+    roomTop:oy+TILE+PR+2,
+    roomBot:oy+RH-TILE-PR-2,
+    // Exterior bounds (path + flanking area)
+    extLeft:cx-TILE*4,
+    extRight:cx+TILE*4,
+    extTop:doorWallY+2, // just at door threshold (exterior side)
+    extBot:pathBot+PR
+  };
+}
+
+// ── Start / Load ──────────────────────────────────────────────────────────────
+function startGame(){
+  if(!selectedClass||!selectedPrimary)return;
+  goTo('game');
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  score=0;totalKills=0;roomIdx=0;startTime=Date.now();
+  currentLevel=0;
+  loadRoom();
+  gameState='playing';
+  if(!loopRunning)gameLoop();
+}
+
+function loadRoom(){
+  const lv=LEVELS[currentLevel];
+  const rd=lv.rooms[roomIdx];
+  const cls=CLASSES.find(c=>c.id===selectedClass);
+  const pw=WEAPONS.find(w=>w.id===selectedPrimary);
+
+  room=buildRoom(rd,lv);
+  covers=room.covers;
+  enemies=room.enemies;
+  hostages=room.hostages;
+  bullets=[];particles=[];
+  doorOpen=false;
+  ffWarnTimer=0;
+
+  const baseHp=60+cls.stats.armor/2;
+  player={
+    x:room.spawnX,
+    y:room.spawnY,
+    hp:player?Math.min(player.hp+25,baseHp):baseHp,
+    maxHp:baseHp,
+    ammo:pw.ammo,maxAmmo:pw.ammo,
+    reloading:false,reloadTimer:0,
+    speed:2.0+cls.stats.speed/100,
+    angle:-Math.PI/2, // facing up (toward the building)
+    class:selectedClass,
+    weapon:pw,
+    crouching:false,
+    prone:false,
+    insideRoom:false // track if player has entered the room
+  };
+
+  updateHUD();
+  const phase=roomIdx===0?'APPROACH THE STRUCTURE — [E] TO BREACH DOOR':'APPROACH THE DOOR — [E] TO BREACH';
+  document.getElementById('room-label').textContent=rd.name+' — '+phase;
+  flashMsg(roomIdx===0?`OPERATION ${lv.op} — APPROACH TARGET`:`NEXT ROOM: ${rd.name}`,2500);
+  showTacTip('APPROACH FROM THE SIDE — STACK ON DOOR — [E] BREACH',4000);
+}
+
+// ── HUD ──────────────────────────────────────────────────────────────────────
+function updateHUD(){
+  const lv=LEVELS[currentLevel];
+  document.getElementById('hud-level').textContent=`${currentLevel+1}/3`;
+  document.getElementById('hud-room').textContent=`${roomIdx+1}/${lv.rooms.length}`;
+  document.getElementById('hud-score').textContent=score;
+  document.getElementById('hud-kills').textContent=totalKills;
+  document.getElementById('hud-class').textContent=selectedClass?selectedClass.toUpperCase():'—';
+  if(player){
+    const pct=player.hp/player.maxHp*100;
+    document.getElementById('hp-fill').style.width=pct+'%';
+    document.getElementById('hp-fill').style.background=pct>60?'var(--green2)':pct>30?'var(--accent)':'var(--red2)';
+    const pips=document.getElementById('ammo-pips');
+    pips.innerHTML='';
+    for(let i=0;i<player.maxAmmo;i++){
+      const d=document.createElement('div');
+      d.className='pip'+(i<player.ammo?'':' spent');
+      pips.appendChild(d);
+    }
+    const stance=player.prone?'PRONE':player.crouching?'CROUCHED':'STANDING';
+    document.getElementById('hud-stance').textContent=stance;
+    document.getElementById('hud-stance').style.color=player.prone?'var(--green2)':player.crouching?'var(--accent)':'var(--text3)';
+  }
+}
+
+let flashTimeout;
+function flashMsg(txt,dur=2000){
+  const el=document.getElementById('flash-msg');el.textContent=txt;el.style.opacity='1';
+  clearTimeout(flashTimeout);flashTimeout=setTimeout(()=>el.style.opacity='0',dur);
+}
+let tipTimeout;
+function showTacTip(txt,dur=3000){
+  const el=document.getElementById('tac-tip');el.textContent=txt;el.style.opacity='1';
+  clearTimeout(tipTimeout);tipTimeout=setTimeout(()=>el.style.opacity='0',dur);
+}
+
+// ── Fatal Funnel ──────────────────────────────────────────────────────────────
+function isInFatalFunnel(px,py){
+  if(!room||!doorOpen)return false;
+  const{doorX,doorWallY,DOOR_W}=room;
+  const inX=px>doorX-2&&px<doorX+DOOR_W+2;
+  const inY=py>doorWallY-TILE*0.5&&py<doorWallY+TILE*2;
+  return inX&&inY;
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function tryShoot(){
+  if(gameState!=='playing'||!player||player.reloading||shootCooldown>0)return;
+  if(player.ammo<=0){flashMsg('MAGAZINE EMPTY — RELOAD [R]',1000);return;}
+  player.ammo--;
+  const pw=player.weapon;
+  const isShotgun=pw.type==='SHOTGUN';
+  const isSniper=pw.type==='SNIPER RIFLE';
+  const isCrouching=player.crouching||player.prone;
+  const baseSpread=isShotgun?0.28:isSniper?0.004:0.055;
+  const spread=isCrouching?baseSpread*0.5:baseSpread;
+  const pellets=isShotgun?7:1;
+  const bspd=isSniper?20:isShotgun?11:14;
+  const a=Math.atan2(mouseY-player.y,mouseX-player.x);
+  for(let i=0;i<pellets;i++){
+    const sa=a+rand(-spread,spread);
+    bullets.push({x:player.x,y:player.y,vx:Math.cos(sa)*bspd,vy:Math.sin(sa)*bspd,owner:'player',dmg:1,life:isSniper?140:75});
+  }
+  for(let i=0;i<7;i++) particles.push({x:player.x,y:player.y,vx:rand(-3,3)+Math.cos(a)*5,vy:rand(-3,3)+Math.sin(a)*5,life:10,color:'#f39c12',r:rand(2,5)});
+  shootCooldown=pw.shootCd;
+  updateHUD();
+}
+
+function startReload(){
+  if(!player||player.reloading||player.ammo===player.maxAmmo)return;
+  player.reloading=true;player.reloadTimer=100;
+  document.getElementById('reload-bar-wrap').classList.add('show');
+}
+
+function tryBreach(){
+  if(!room||doorOpen)return;
+  const d=room.door;
+  const distToDoor=dist(player,{x:d.cx,y:d.cy});
+  if(distToDoor<TILE*2.2){
+    doorOpen=true;
+    if(selectedClass==='breacher'){
+      enemies.forEach(e=>{e.state='stunned';e.stunTimer=90;});
+      flashMsg('DYNAMIC ENTRY — CONTACTS STUNNED',1500);
+      spawnFlashEffect(d.cx,d.cy-TILE);
+    } else {
+      flashMsg('BREACHED — CLEAR THE FATAL FUNNEL',1500);
+    }
+    showTacTip('BUTTON-HOOK TO THE NEAR WALL — DO NOT STAND IN THE DOORWAY',4000);
+    document.getElementById('room-label').textContent=room.rd.name+' — BREACH COMPLETE — CLEAR THE ROOM';
+  } else {
+    flashMsg(`APPROACH THE DOOR FIRST (${Math.round(distToDoor-TILE*2)}px away)`,1000);
+    showTacTip('WALK UP TO THE DOOR AND PRESS [E]',3000);
+  }
+}
+
+function spawnFlashEffect(fx,fy){
+  for(let i=0;i<40;i++){
+    const a=rand(0,Math.PI*2),s=rand(1,6);
+    particles.push({x:fx,y:fy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(10,25),color:'#fffbe0',r:rand(2,8)});
+  }
+}
+
+// ── Update ────────────────────────────────────────────────────────────────────
+function updateGame(){
+  if(gameState!=='playing'||!player||!room)return;
+  frameCount++;
+  const pw=player.weapon;
+  const isSniper=pw.type==='SNIPER RIFLE';
+  const spdMult=player.prone?0.35:player.crouching?0.6:1.0;
+  const spd=player.speed*spdMult*(isSniper?0.7:1)*(keys['shift']?1.5:1);
+
+  let dx=0,dy=0;
+  if(keys['w']||keys['arrowup'])dy-=1;
+  if(keys['s']||keys['arrowdown'])dy+=1;
+  if(keys['a']||keys['arrowleft'])dx-=1;
+  if(keys['d']||keys['arrowright'])dx+=1;
+  if(dx&&dy){dx*=0.707;dy*=0.707;}
+  player.x+=dx*spd;
+  player.y+=dy*spd;
+  player.angle=Math.atan2(mouseY-player.y,mouseX-player.x);
+
+  if(mouseDown&&shootCooldown<=0)tryShoot();
+  if(shootCooldown>0)shootCooldown--;
+
+  if(player.reloading){
+    player.reloadTimer--;
+    document.getElementById('reload-progress').style.width=((1-player.reloadTimer/100)*100)+'%';
+    if(player.reloadTimer<=0){
+      player.reloading=false;player.ammo=player.maxAmmo;
+      document.getElementById('reload-bar-wrap').classList.remove('show');
+      flashMsg('RELOADED',700);updateHUD();
+    }
+  }
+
+  // ── Boundary & zone logic ─────────────────────────────────────────────
+  const{doorX,doorWallY,DOOR_W}=room;
+  const doorCenterX=doorX+DOOR_W/2;
+
+  // Is player inside the room? (above the south wall)
+  const inRoom=player.y<doorWallY-2;
+
+  if(inRoom){
+    player.insideRoom=true;
+    // Clamp to room interior
+    player.x=Math.max(room.roomLeft,Math.min(room.roomRight,player.x));
+    player.y=Math.max(room.roomTop,Math.min(room.roomBot,player.y));
+    covers.forEach(c=>resolveRect(player,PR,c));
+  } else {
+    // Exterior / hallway zone
+    player.x=Math.max(room.extLeft,Math.min(room.extRight,player.x));
+    player.y=Math.max(HUD_H+PR,Math.min(room.extBot,player.y));
+
+    // Block player from entering room if door is closed
+    if(!doorOpen){
+      // Can't go above the south wall line
+      if(player.y<doorWallY+TILE+PR){
+        // Allow movement only if NOT in the door gap
+        const inDoorGap=player.x>doorX-PR&&player.x<doorX+DOOR_W+PR;
+        if(!inDoorGap){
+          player.y=doorWallY+TILE+PR;
+        } else {
+          // In door gap but door is closed — block too
+          player.y=doorWallY+TILE+PR;
+        }
+      }
+    } else {
+      // Door is open — player can pass through the gap
+      const inDoorGap=player.x>doorX+PR&&player.x<doorX+DOOR_W-PR;
+      if(!inDoorGap&&player.y<doorWallY+TILE-PR){
+        // Not in gap, trying to go through wall — block
+        player.y=Math.max(player.y,doorWallY+TILE-PR);
+      }
+      // If they are in the gap, let them move freely (y is not clamped)
+    }
+  }
+
+  // ── Fatal Funnel Warning ──────────────────────────────────────────────
+  const inFF=isInFatalFunnel(player.x,player.y);
+  if(inFF&&doorOpen&&enemies.some(e=>e.state==='attacking')) ffWarnTimer=30;
+  const ffEl=document.getElementById('ff-warn');
+  if(ffWarnTimer>0){ffWarnTimer--;ffEl.style.opacity=ffWarnTimer>20?'1':'0';}
+  else ffEl.style.opacity='0';
+
+  // ── Hostage rescue ────────────────────────────────────────────────────
+  hostages.forEach(h=>{
+    if(!h.rescued&&dist(player,h)<PR+18){
+      h.rescued=true;score+=200;
+      flashMsg('HOSTAGE RESCUED +200',1500);updateHUD();
+    }
+  });
+
+  // ── Room cleared ──────────────────────────────────────────────────────
+  if(enemies.length===0&&hostages.every(h=>h.rescued)){roomCleared();return;}
+  if(enemies.length===0&&room.rd.h===0){roomCleared();return;}
+
+  // ── Enemies ───────────────────────────────────────────────────────────
+  enemies.forEach(e=>updateEnemy(e));
+
+  // ── Bullets ───────────────────────────────────────────────────────────
+  bullets=bullets.filter(b=>{
+    b.x+=b.vx;b.y+=b.vy;b.life--;
+    if(b.life<=0)return false;
+    // Hit room walls (only apply when bullet is in room zone)
+    for(const w of room.walls){
+      if(circleRect(b.x,b.y,3,w.x,w.y,w.w,w.h)){spawnHit(b.x,b.y);return false;}
+    }
+    // Hit cover
+    for(const c of covers){
+      if(circleRect(b.x,b.y,3,c.x,c.y,c.w,c.h)){spawnHit(b.x,b.y);return false;}
+    }
+    if(b.owner==='enemy'){
+      if(dist(b,player)<PR){
+        const dmg=player.class==='breacher'?8:player.class==='sniper'?15:11;
+        const finalDmg=player.crouching?dmg*0.7:player.prone?dmg*0.5:dmg;
+        player.hp-=finalDmg;
+        if(player.hp<=0){player.hp=0;gameOver();}
+        spawnHit(player.x,player.y,'#e74c3c');updateHUD();return false;
+      }
+    }
+    if(b.owner==='player'){
+      for(let i=enemies.length-1;i>=0;i--){
+        const e=enemies[i];
+        if(dist(b,e)<ER){
+          const isHeadshot=(b.y<e.y-4);
+          const hsBonus=isHeadshot&&selectedClass==='sniper'?2.5:isHeadshot?1.8:1;
+          const dmg=Math.ceil(b.dmg*hsBonus);
+          e.hp-=dmg;e.state='attacking';
+          if(e.suppressTimer<=0)e.suppressTimer=40;
+          spawnHit(e.x,e.y,e.isArmored?'#6a9aaa':'#e74c3c');
+          if(isHeadshot) particles.push({x:e.x,y:e.y-16,vx:0,vy:-0.5,life:30,color:'#fff',r:2,label:'HS'});
+          if(e.hp<=0){
+            spawnDeath(e.x,e.y);enemies.splice(i,1);
+            score+=isHeadshot?150*(currentLevel+1):100*(currentLevel+1);
+            totalKills++;updateHUD();
+          }
+          return false;
+        }
+      }
+    }
+    return true;
+  });
+
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;p.vx*=0.9;p.vy*=0.9;return p.life>0;});
+  updateHUD();
+}
+
+function updateEnemy(e){
+  if(!room)return;
+  if(e.state==='stunned'){e.stunTimer--;if(e.stunTimer<=0)e.state='patrol';return;}
+  if(e.suppressTimer>0)e.suppressTimer--;
+
+  const allWalls=[...room.walls];
+  // Enemies can only see player if door is open AND they have LOS
+  e.los=doorOpen&&canSee(e.x,e.y,player.x,player.y,allWalls)&&dist(e,player)<340;
+
+  if(e.los){
+    e.state='attacking';e.alertTimer=150;
+    e.lastKnownX=player.x;e.lastKnownY=player.y;
+  } else if(e.alertTimer>0){
+    e.alertTimer--;
+    if(e.alertTimer>80)e.state='alert';
+    else if(e.alertTimer<=0)e.state='patrol';
+  }
+
+  const lv=LEVELS[currentLevel];
+
+  if(e.state==='attacking'){
+    const toDoor=dist(e,{x:room.door.cx,y:room.door.cy});
+    const wantsToHold=(toDoor>TILE*2.5&&e.suppressTimer>10);
+    if(!wantsToHold){
+      const a=Math.atan2(player.y-e.y,player.x-e.x);
+      const strafe=Math.sin(frameCount*0.05+e.x*0.01)*0.7;
+      const sa=a+Math.PI/2;
+      e.vx=Math.cos(a)*e.speed*0.5+Math.cos(sa)*strafe;
+      e.vy=Math.sin(a)*e.speed*0.5+Math.sin(sa)*strafe;
+      if(toDoor<TILE*2){e.vx*=-0.5;e.vy*=-0.5;}
+      if(dist(e,player)<90){e.vx-=Math.cos(a)*e.speed;e.vy-=Math.sin(a)*e.speed;}
+      e.angle=a;
+    } else {
+      e.vx*=0.7;e.vy*=0.7;
+      e.angle=Math.atan2(player.y-e.y,player.x-e.x);
+    }
+    e.shootTimer--;
+    if(e.shootTimer<=0&&e.los&&e.suppressTimer===0){
+      e.shootTimer=randInt(40,90);
+      const sp=lv.enemyAccuracy*40;
+      const fa=e.angle+rand(-sp,sp);
+      bullets.push({x:e.x,y:e.y,vx:Math.cos(fa)*7.5,vy:Math.sin(fa)*7.5,owner:'enemy',dmg:1,life:120});
+    }
+  } else if(e.state==='alert'){
+    const tdx=e.lastKnownX-e.x,tdy=e.lastKnownY-e.y;
+    const d=Math.hypot(tdx,tdy)||1;
+    e.vx=(tdx/d)*e.speed*0.6;e.vy=(tdy/d)*e.speed*0.6;
+    e.angle=Math.atan2(tdy,tdx);
+    if(d<30)e.state='patrol';
+  } else {
+    const tdx=e.patrolTarget.x-e.x,tdy=e.patrolTarget.y-e.y;
+    if(Math.hypot(tdx,tdy)<10){
+      e.patrolTarget={x:room.ox+TILE+rand(20,room.RW-TILE*2-20),y:room.oy+TILE+rand(20,room.RH-TILE*2-20)};
+    }
+    const pa=Math.atan2(tdy,tdx);
+    e.vx=Math.cos(pa)*e.speed*0.4;e.vy=Math.sin(pa)*e.speed*0.4;e.angle=pa;
+  }
+
+  e.x+=e.vx;e.y+=e.vy;
+  e.x=Math.max(room.ox+TILE+ER,Math.min(room.ox+room.RW-TILE-ER,e.x));
+  e.y=Math.max(room.oy+TILE+ER,Math.min(room.oy+room.RH-TILE-ER,e.y));
+  covers.forEach(c=>resolveRect(e,ER,c));
+}
+
+function spawnHit(x,y,col='#fff'){for(let i=0;i<4;i++) particles.push({x,y,vx:rand(-2,2),vy:rand(-2,2),life:12,color:col,r:rand(2,4)});}
+function spawnDeath(x,y){for(let i=0;i<18;i++){const a=rand(0,Math.PI*2);particles.push({x,y,vx:Math.cos(a)*rand(1,6),vy:Math.sin(a)*rand(1,6),life:rand(15,32),color:'#c73535',r:rand(2,7)});}}
+
+// ── Transitions ───────────────────────────────────────────────────────────────
+function roomCleared(){
+  gameState='transition';
+  score+=500*(currentLevel+1);
+  flashMsg(`ROOM CLEAR +${500*(currentLevel+1)}`,2000);
+  updateHUD();
+  setTimeout(()=>{
+    roomIdx++;
+    if(roomIdx>=LEVELS[currentLevel].rooms.length)levelComplete();
+    else{loadRoom();gameState='playing';}
+  },2200);
+}
+function levelComplete(){
+  currentLevel++;
+  if(currentLevel>=LEVELS.length)showDebrief(true);
+  else{roomIdx=0;showDebrief(true,true);}
+}
+function gameOver(){
+  gameState='over';
+  setTimeout(()=>showDebrief(false),700);
+}
+function showDebrief(success,nextLevel=false){
+  goTo('debrief');
+  document.getElementById('db-title').textContent=success?(nextLevel?'LEVEL CLEAR':'MISSION COMPLETE'):'OPERATOR DOWN';
+  document.getElementById('db-title').className='db-title '+(success?'success':'fail');
+  document.getElementById('db-sub').textContent=success?(nextLevel?`Advancing to ${LEVELS[currentLevel]?.op||'END'}...`:'All objectives completed'):'KIA in action';
+  const el=Math.round((Date.now()-startTime)/1000);
+  document.getElementById('db-stats').innerHTML=`
+    <div class="db-stat"><div class="db-stat-label">FINAL SCORE</div><div class="db-stat-val">${score}</div></div>
+    <div class="db-stat"><div class="db-stat-label">TOTAL KILLS</div><div class="db-stat-val">${totalKills}</div></div>
+    <div class="db-stat"><div class="db-stat-label">TIME</div><div class="db-stat-val">${Math.floor(el/60)}:${String(el%60).padStart(2,'0')}</div></div>
+    <div class="db-stat"><div class="db-stat-label">CLASS</div><div class="db-stat-val" style="font-size:16px;color:var(--accent)">${selectedClass?.toUpperCase()||'—'}</div></div>`;
+  if(nextLevel){
+    document.getElementById('db-btns').innerHTML=`<button class="btn-tac" onclick="goTo('menu')">MAIN MENU</button><button class="btn-tac primary" onclick="continueGame()">CONTINUE →</button>`;
+  } else if(!success){
+    document.getElementById('db-btns').innerHTML=`<button class="btn-tac" onclick="goTo('menu')">MAIN MENU</button><button class="btn-tac primary" onclick="retryMission()">RETRY</button>`;
+  }
+}
+function continueGame(){roomIdx=0;loadRoom();gameState='playing';goTo('game');}
+function retryMission(){currentLevel=0;goTo('loadout');}
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function drawGame(){
+  if(!room||!player)return;
+  const{ox,oy,RW,RH,doorX,doorWallY,DOOR_W,pathX,pathW,pathTop,pathBot}=room;
+  const CW=canvas.width,CH=canvas.height;
+
+  ctx.clearRect(0,0,CW,CH);
+
+  // Sky / exterior background
+  ctx.fillStyle='#07090b';
+  ctx.fillRect(0,0,CW,CH);
+
+  // Background grid
+  ctx.strokeStyle='rgba(18,28,38,0.8)';ctx.lineWidth=0.5;
+  for(let x=0;x<CW;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke();}
+  for(let y=0;y<CH;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke();}
+
+  // ── Exterior ground ────────────────────────────────────────────────────
+  // Draw street/yard below the building
+  ctx.fillStyle='#0a0f13';
+  ctx.fillRect(0,oy+RH,CW,CH-(oy+RH));
+
+  // Approach path (concrete/stone path leading to front door)
+  ctx.fillStyle='#0f161e';
+  ctx.fillRect(pathX,pathTop,pathW,pathBot-pathTop);
+
+  // Path border lines
+  ctx.strokeStyle='rgba(30,48,62,0.7)';ctx.lineWidth=1;
+  ctx.strokeRect(pathX,pathTop,pathW,pathBot-pathTop);
+
+  // Path tile marks
+  ctx.strokeStyle='rgba(22,36,48,0.6)';ctx.lineWidth=0.5;
+  for(let y=pathTop;y<pathBot;y+=TILE){
+    ctx.beginPath();ctx.moveTo(pathX,y);ctx.lineTo(pathX+pathW,y);ctx.stroke();
+  }
+
+  // Approach distance indicator (arrows pointing toward door)
+  if(!player.insideRoom){
+    const dToDoor=dist(player,{x:room.door.cx,y:doorWallY+TILE});
+    const arrowOpacity=Math.max(0,Math.min(0.5,(dToDoor-20)/150));
+    ctx.strokeStyle=`rgba(212,168,67,${arrowOpacity})`;ctx.lineWidth=1;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(room.door.cx,pathTop+20);ctx.lineTo(room.door.cx,pathBot-30);ctx.stroke();
+    ctx.setLineDash([]);
+    // Arrowhead
+    ctx.fillStyle=`rgba(212,168,67,${arrowOpacity})`;
+    ctx.beginPath();ctx.moveTo(room.door.cx,pathTop+10);
+    ctx.lineTo(room.door.cx-6,pathTop+22);
+    ctx.lineTo(room.door.cx+6,pathTop+22);
+    ctx.closePath();ctx.fill();
+  }
+
+  // Stack zone markers
+  if(!doorOpen){
+    [room.stackLeft,room.stackRight].forEach(s=>{
+      ctx.strokeStyle='rgba(212,168,67,0.2)';ctx.lineWidth=1;ctx.setLineDash([2,4]);
+      ctx.beginPath();ctx.arc(s.x,s.y,16,0,Math.PI*2);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(212,168,67,0.35)';ctx.font='8px Share Tech Mono';ctx.textAlign='center';
+      ctx.fillText('STACK',s.x,s.y-20);
+    });
+  }
+
+  // ── Building exterior facade ───────────────────────────────────────────
+  // The building exterior (south-facing wall) is below the room interior
+  // It's the strip between the bottom of the interior and the door row
+  const facadeTop=doorWallY; // south wall y
+  const facadeH=TILE;
+  // Draw a facade strip
+  ctx.fillStyle='#111820';
+  ctx.fillRect(ox+TILE,facadeTop,RW-TILE*2,facadeH);
+
+  // Facade details — window-like slots left and right of door
+  ctx.fillStyle='#0d131a';
+  const winW=TILE*1.5,winH=TILE*0.6;
+  const winY=facadeTop+(facadeH-winH)/2;
+  // Left window of facade
+  if(doorX-ox-TILE>winW+TILE*0.4){
+    ctx.fillRect(ox+TILE+8,winY,winW,winH);
+    ctx.strokeStyle='#1e2c38';ctx.lineWidth=1;ctx.strokeRect(ox+TILE+8,winY,winW,winH);
+  }
+  // Right window of facade
+  const rightWinX=doorX+DOOR_W+TILE*0.4;
+  if(ox+RW-TILE-rightWinX>winW){
+    ctx.fillRect(rightWinX,winY,winW,winH);
+    ctx.strokeStyle='#1e2c38';ctx.lineWidth=1;ctx.strokeRect(rightWinX,winY,winW,winH);
+  }
+
+  // Door frame / threshold indicator
+  ctx.strokeStyle=doorOpen?'rgba(61,40,16,0.8)':'rgba(80,55,20,0.9)';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(doorX-2,doorWallY);ctx.lineTo(doorX-2,doorWallY+facadeH);
+  ctx.moveTo(doorX+DOOR_W+2,doorWallY);ctx.lineTo(doorX+DOOR_W+2,doorWallY+facadeH);
+  ctx.stroke();
+
+  // Steps / threshold at door
+  ctx.fillStyle='#0f1a22';
+  ctx.fillRect(doorX-TILE*0.3,doorWallY+facadeH-4,DOOR_W+TILE*0.6,8);
+  ctx.strokeStyle='#1e2c38';ctx.lineWidth=1;ctx.strokeRect(doorX-TILE*0.3,doorWallY+facadeH-4,DOOR_W+TILE*0.6,8);
+
+  // ── Room interior ──────────────────────────────────────────────────────
+  // Floor
+  ctx.fillStyle='#0e1418';
+  ctx.fillRect(ox+TILE,oy+TILE,RW-TILE*2,RH-TILE*2);
+  ctx.strokeStyle='rgba(22,36,48,0.9)';ctx.lineWidth=0.5;
+  for(let x=TILE;x<RW-TILE;x+=TILE){ctx.beginPath();ctx.moveTo(ox+x,oy+TILE);ctx.lineTo(ox+x,oy+RH-TILE);ctx.stroke();}
+  for(let y=TILE;y<RH-TILE;y+=TILE){ctx.beginPath();ctx.moveTo(ox+TILE,oy+y);ctx.lineTo(ox+RW-TILE,oy+y);ctx.stroke();}
+
+  // Room walls
+  room.walls.forEach(w=>{
+    ctx.fillStyle='#141c22';ctx.fillRect(w.x,w.y,w.w,w.h);
+    ctx.strokeStyle='#1e2c38';ctx.lineWidth=1;ctx.strokeRect(w.x,w.y,w.w,w.h);
+    ctx.fillStyle='#0f1620';ctx.fillRect(w.x+3,w.y+4,w.w-6,8);
+    ctx.fillRect(w.x+3,w.y+w.h-12,w.w-6,8);
+  });
+
+  // ── Door rendering ─────────────────────────────────────────────────────
+  if(!doorOpen){
+    // Closed door
+    ctx.fillStyle='#3d2810';ctx.fillRect(doorX,doorWallY,DOOR_W,TILE);
+    ctx.strokeStyle='#6b4820';ctx.lineWidth=2;ctx.strokeRect(doorX+3,doorWallY+3,DOOR_W-6,TILE-6);
+    ctx.fillStyle='#d4a843';ctx.beginPath();ctx.arc(doorX+DOOR_W-12,doorWallY+TILE/2,5,0,Math.PI*2);ctx.fill();
+    // [E] prompt
+    if(dist(player,{x:room.door.cx,y:room.door.cy})<TILE*2.2){
+      ctx.fillStyle='#d4a843';ctx.font='bold 12px Share Tech Mono';ctx.textAlign='center';
+      ctx.fillText('[E] BREACH',room.door.cx,doorWallY-8);
+    }
+  } else {
+    // Open door — draw as open threshold
+    ctx.fillStyle='#050709';ctx.fillRect(doorX,doorWallY,DOOR_W,TILE);
+    ctx.strokeStyle='#3d2810';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(doorX,doorWallY);ctx.lineTo(doorX,doorWallY+TILE);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(doorX+DOOR_W,doorWallY);ctx.lineTo(doorX+DOOR_W,doorWallY+TILE);ctx.stroke();
+
+    // Fatal funnel visualization — cone from inside room through doorway
+    const funnelTop=doorWallY-TILE*0.5;
+    const funnelBot=doorWallY+TILE*2;
+    const funnelSpread=TILE*0.8;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(doorX,funnelTop);
+    ctx.lineTo(doorX+DOOR_W,funnelTop);
+    ctx.lineTo(doorX+DOOR_W+funnelSpread,funnelBot);
+    ctx.lineTo(doorX-funnelSpread,funnelBot);
+    ctx.closePath();
+    const anyAttacking=enemies.some(e=>e.state==='attacking');
+    ctx.fillStyle=anyAttacking?'rgba(224,64,64,0.16)':'rgba(224,64,64,0.07)';
+    ctx.fill();
+    ctx.strokeStyle=anyAttacking?'rgba(224,64,64,0.25)':'rgba(224,64,64,0.1)';
+    ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+
+    // Fatal funnel label
+    ctx.fillStyle='rgba(224,64,64,0.45)';ctx.font='8px Share Tech Mono';ctx.textAlign='center';
+    ctx.fillText('FATAL FUNNEL',room.door.cx,doorWallY+TILE*1.4);
+  }
+
+  // ── Sniper: enemy outlines ─────────────────────────────────────────────
+  if(selectedClass==='sniper'&&doorOpen){
+    enemies.forEach(e=>{
+      if(dist(e,room.door)<TILE*4){
+        ctx.strokeStyle='rgba(64,180,100,0.35)';ctx.lineWidth=2;
+        ctx.beginPath();ctx.arc(e.x,e.y,ER+4,0,Math.PI*2);ctx.stroke();
+      }
+    });
+  }
+
+  // ── Cover ─────────────────────────────────────────────────────────────
+  covers.forEach(c=>{
+    ctx.fillStyle='#1a2430';ctx.fillRect(c.x,c.y,c.w,c.h);
+    ctx.strokeStyle='#2a3c50';ctx.lineWidth=1.5;ctx.strokeRect(c.x,c.y,c.w,c.h);
+    ctx.fillStyle='#1e2e40';ctx.fillRect(c.x+3,c.y+3,c.w-6,6);
+  });
+
+  // ── Hostages ──────────────────────────────────────────────────────────
+  hostages.forEach(h=>{
+    if(h.rescued)return;
+    const pulse=0.5+0.5*Math.sin(frameCount*0.08);
+    ctx.strokeStyle=`rgba(212,168,67,${pulse})`;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(h.x,h.y,18,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#d4a843';ctx.beginPath();ctx.arc(h.x,h.y,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0a0c0e';ctx.font='bold 10px Oswald';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('H',h.x,h.y);ctx.textBaseline='alphabetic';
+    if(dist(player,h)<65){ctx.fillStyle='#d4a843';ctx.font='10px Share Tech Mono';ctx.textAlign='center';ctx.fillText('RESCUE',h.x,h.y-26);}
+  });
+
+  // ── Enemies ───────────────────────────────────────────────────────────
+  enemies.forEach(e=>{
+    ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.angle);
+    ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.ellipse(2,3,13,10,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=e.isArmored?'#263240':e.state==='attacking'?'#5a1010':'#3a1010';
+    ctx.beginPath();ctx.arc(0,0,ER,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=e.isArmored?'#4a7090':'#8a2020';ctx.lineWidth=e.suppressTimer>0?2:1;ctx.stroke();
+    if(e.suppressTimer>0){ctx.strokeStyle='rgba(255,220,80,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,ER+3,0,Math.PI*2);ctx.stroke();}
+    ctx.fillStyle=e.isArmored?'#364858':'#6a1818';ctx.fillRect(4,-4,10,8);
+    ctx.fillStyle='#111';ctx.fillRect(12,-2,13,4);
+    ctx.restore();
+    if(e.maxHp>1){
+      const bw=28;
+      ctx.fillStyle='#1a2028';ctx.fillRect(e.x-bw/2,e.y-22,bw,4);
+      ctx.fillStyle=e.isArmored?'#4a80a0':'#c73535';
+      ctx.fillRect(e.x-bw/2,e.y-22,bw*(e.hp/e.maxHp),4);
+    }
+    if(e.state==='attacking'){ctx.fillStyle='#c73535';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText('!',e.x,e.y-20);}
+    else if(e.state==='alert'){ctx.fillStyle='#d4a843';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('?',e.x,e.y-20);}
+  });
+
+  // ── Player ────────────────────────────────────────────────────────────
+  ctx.save();ctx.translate(player.x,player.y);
+  const scaleY=player.prone?0.5:player.crouching?0.75:1.0;
+  ctx.scale(1,scaleY);ctx.rotate(player.angle);
+  ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.ellipse(2,3,14,11,0,0,Math.PI*2);ctx.fill();
+  const classColors={breacher:'#703818',assaulter:'#1a4a7a',sniper:'#1a4a2a'};
+  const classLight={breacher:'#c06020',assaulter:'#4080b0',sniper:'#40906a'};
+  ctx.fillStyle=classColors[player.class]||'#1a3050';
+  ctx.beginPath();ctx.arc(0,0,PR,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=classLight[player.class]||'#3a6080';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=classLight[player.class];ctx.fillRect(-6,-5,12,10);
+  ctx.fillStyle='rgba(255,255,255,0.65)';ctx.font='bold 7px Oswald';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(player.class==='breacher'?'BR':player.class==='sniper'?'SN':'AS',0,0);
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#222';ctx.fillRect(PR-1,-2,14,5);ctx.fillRect(PR+10,-1,5,3);
+  ctx.restore();
+
+  if(player.weapon.type==='SNIPER RIFLE'){
+    ctx.strokeStyle='rgba(64,144,106,0.25)';ctx.lineWidth=1;ctx.setLineDash([4,6]);
+    ctx.beginPath();ctx.moveTo(player.x,player.y);
+    ctx.lineTo(player.x+Math.cos(player.angle)*450,player.y+Math.sin(player.angle)*450);
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  if(player.crouching||player.prone){
+    ctx.strokeStyle=player.prone?'rgba(64,180,100,0.4)':'rgba(212,168,67,0.3)';
+    ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.arc(player.x,player.y,PR+5,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ── Bullets ───────────────────────────────────────────────────────────
+  bullets.forEach(b=>{
+    ctx.fillStyle=b.owner==='player'?'#ffe066':'#ff5555';
+    ctx.beginPath();ctx.arc(b.x,b.y,b.owner==='player'?3:2.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=b.owner==='player'?'rgba(255,220,100,0.2)':'rgba(255,80,80,0.2)';
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-b.vx*4,b.y-b.vy*4);ctx.stroke();
+  });
+
+  // ── Particles ─────────────────────────────────────────────────────────
+  particles.forEach(p=>{
+    if(p.label){
+      ctx.globalAlpha=p.life/30;ctx.fillStyle='#fff';ctx.font='bold 10px Share Tech Mono';ctx.textAlign='center';
+      ctx.fillText(p.label,p.x,p.y);
+    } else {
+      ctx.globalAlpha=p.life/28;ctx.fillStyle=p.color;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    }
+  });
+  ctx.globalAlpha=1;
+
+  // ── Tactical overlay ──────────────────────────────────────────────────
+  const panelH=hostages.filter(h=>!h.rescued).length>0?56:32;
+  ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(ox+TILE+1,oy+TILE+1,145,panelH);
+  ctx.strokeStyle='rgba(30,40,50,0.8)';ctx.lineWidth=0.5;ctx.strokeRect(ox+TILE+1,oy+TILE+1,145,panelH);
+  ctx.font='11px Share Tech Mono';ctx.textAlign='left';
+  ctx.fillStyle=enemies.length>0?'#c73535':'#3a8a5a';
+  ctx.fillText(`HOSTILES: ${enemies.length}`,ox+TILE+8,oy+TILE+20);
+  const unr=hostages.filter(h=>!h.rescued).length;
+  if(unr>0){ctx.fillStyle='#d4a843';ctx.fillText(`HOSTAGES: ${unr}`,ox+TILE+8,oy+TILE+40);}
+
+  // Phase indicator
+  const phase=player.insideRoom?'INSIDE — CLEAR':'OUTSIDE — APPROACH';
+  ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(ox+RW-TILE-165,oy+TILE+1,165,32);
+  ctx.font='9px Share Tech Mono';ctx.textAlign='right';
+  ctx.fillStyle=player.insideRoom?'#e04040':'#4a6070';
+  ctx.fillText(doorOpen?phase:'CLOSED — [E] TO BREACH',ox+RW-TILE-6,oy+TILE+20);
+
+  // Distance to door (exterior only)
+  if(!player.insideRoom&&!doorOpen){
+    const dToDoor=Math.max(0,Math.round(dist(player,{x:room.door.cx,y:doorWallY+TILE})));
+    if(dToDoor>10){
+      ctx.fillStyle='rgba(212,168,67,0.7)';ctx.font='9px Share Tech Mono';ctx.textAlign='center';
+      ctx.fillText(`${dToDoor}px TO DOOR`,room.door.cx,doorWallY+TILE*2.5);
+    }
+  }
+}
+
+// ── Loop ──────────────────────────────────────────────────────────────────────
+let loopRunning=false;
+function gameLoop(){
+  if(loopRunning)return;
+  loopRunning=true;
+  function tick(){
+    if(document.getElementById('screen-game').classList.contains('active')){
+      updateGame();drawGame();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+const pressedKeys=new Set();
+document.addEventListener('keydown',e=>{
+  if(pressedKeys.has(e.key))return;
+  pressedKeys.add(e.key);
+  keys[e.key.toLowerCase()]=true;
+  if(gameState!=='playing')return;
+  if(e.key.toLowerCase()==='r')startReload();
+  if(e.key.toLowerCase()==='e')tryBreach();
+  if(e.key.toLowerCase()==='c'){player.crouching=!player.crouching;if(player.crouching)player.prone=false;}
+  if(e.key.toLowerCase()==='z'){player.prone=!player.prone;if(player.prone)player.crouching=false;}
+  e.preventDefault();
+});
+document.addEventListener('keyup',e=>{pressedKeys.delete(e.key);keys[e.key.toLowerCase()]=false;});
+canvas.addEventListener('mousedown',e=>{if(e.button===0){mouseDown=true;tryShoot();}});
+canvas.addEventListener('mouseup',e=>{if(e.button===0)mouseDown=false;});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('resize',()=>{
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  if(gameState==='playing')loadRoom();
+});
+updateDeployBtn();
+</script>
+</body>
+</html>
