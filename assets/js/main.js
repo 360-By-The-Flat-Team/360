@@ -1,5 +1,5 @@
 /* ============================================================
-   360 — MAIN.JS V2.2 (AUTH FIXED)
+   360 — MAIN.JS V2.3 (AUTH + CHAT + GRAVATAR)
    ============================================================ */
 
 const $ = s => document.querySelector(s);
@@ -83,6 +83,9 @@ const supabaseClient = (window.supabase && typeof window.supabase.createClient =
       })
     };
 
+// expose for chat.js (fixes chat history + auth)
+window.sb = supabaseClient;
+
 /* ============================================================
    AUTH SYSTEM
    ============================================================ */
@@ -92,7 +95,7 @@ const signInBtn  = $("#signInBtn");
 const signUpBtn  = $("#signUpBtn");
 const signOutBtn = $("#signOutBtn");
 
-// Old inline auth-popup (legacy, kept for compat but hidden by default)
+// Old inline auth-popup (legacy)
 const authPopup    = $("#auth-popup");
 const authEmail    = $("#auth-email");
 const authPassword = $("#auth-password");
@@ -101,7 +104,14 @@ const authSignupBtn= $("#auth-signup-btn");
 const authCloseBtn = $("#auth-close-btn");
 const authError    = $("#auth-error");
 
-function openAuth()  { if (authPopup) authPopup.classList.remove("hidden"); }
+// New behavior: prefer redirect to accounts; only use popup if it actually exists
+function openAuth(mode = "signin") {
+  if (!authPopup) {
+    location.href = `/assets/html/accounts?${mode}`;
+    return;
+  }
+  authPopup.classList.remove("hidden");
+}
 function closeAuth() {
   if (authPopup) authPopup.classList.add("hidden");
   if (authError) authError.textContent = "";
@@ -116,7 +126,7 @@ if (signOutBtn) signOutBtn.style.display = "none";
 if (authPopup) authPopup.addEventListener("click", e => { if (e.target === authPopup) closeAuth(); });
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
-// Legacy inline auth handlers (used on pages that still have the old popup)
+// Legacy inline auth handlers (for old pages that still have popup)
 if (authSignupBtn) {
   authSignupBtn.onclick = async () => {
     const email = authEmail?.value.trim(), password = authPassword?.value.trim();
@@ -161,7 +171,135 @@ if (googleBtn) {
 function getInitials(name) {
   if (!name) return "?";
   const p = name.trim().split(/\s+/);
-  return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
+  return p[0][0].toUpperCase();
+}
+
+/* ── tiny MD5 (for Gravatar) ── */
+function md5(str) {
+  function L(x, c) { return (x << c) | (x >>> (32 - c)); }
+  function K(x, y, z) { return (x & y) | (~x & z); }
+  function G(x, y, z) { return (x & z) | (y & ~z); }
+  function H(x, y, z) { return x ^ y ^ z; }
+  function I(x, y, z) { return y ^ (x | ~z); }
+  function FF(a, b, c, d, x, s, t) { return (b + L((a + K(b, c, d) + x + t) | 0, s)) | 0; }
+  function GG(a, b, c, d, x, s, t) { return (b + L((a + G(b, c, d) + x + t) | 0, s)) | 0; }
+  function HH(a, b, c, d, x, s, t) { return (b + L((a + H(b, c, d) + x + t) | 0, s)) | 0; }
+  function II(a, b, c, d, x, s, t) { return (b + L((a + I(b, c, d) + x + t) | 0, s)) | 0; }
+
+  function toBlocks(str) {
+    const n = (((str.length + 8) >> 6) + 1) * 16;
+    const blocks = new Array(n).fill(0);
+    for (let i = 0; i < str.length; i++) {
+      blocks[i >> 2] |= str.charCodeAt(i) << ((i % 4) * 8);
+    }
+    blocks[str.length >> 2] |= 0x80 << ((str.length % 4) * 8);
+    blocks[n - 2] = str.length * 8;
+    return blocks;
+  }
+
+  const x = toBlocks(unescape(encodeURIComponent(str)));
+  let a = 1732584193, b = -271733879, c = -1732584194, d = 271733878;
+
+  for (let i = 0; i < x.length; i += 16) {
+    const oa = a, ob = b, oc = c, od = d;
+
+    a = FF(a, b, c, d, x[i+0], 7, -680876936);
+    d = FF(d, a, b, c, x[i+1], 12, -389564586);
+    c = FF(c, d, a, b, x[i+2], 17, 606105819);
+    b = FF(b, c, d, a, x[i+3], 22, -1044525330);
+    a = FF(a, b, c, d, x[i+4], 7, -176418897);
+    d = FF(d, a, b, c, x[i+5], 12, 1200080426);
+    c = FF(c, d, a, b, x[i+6], 17, -1473231341);
+    b = FF(b, c, d, a, x[i+7], 22, -45705983);
+    a = FF(a, b, c, d, x[i+8], 7, 1770035416);
+    d = FF(d, a, b, c, x[i+9], 12, -1958414417);
+    c = FF(c, d, a, b, x[i+10], 17, -42063);
+    b = FF(b, c, d, a, x[i+11], 22, -1990404162);
+    a = FF(a, b, c, d, x[i+12], 7, 1804603682);
+    d = FF(d, a, b, c, x[i+13], 12, -40341101);
+    c = FF(c, d, a, b, x[i+14], 17, -1502002290);
+    b = FF(b, c, d, a, x[i+15], 22, 1236535329);
+
+    a = GG(a, b, c, d, x[i+1], 5, -165796510);
+    d = GG(d, a, b, c, x[i+6], 9, -1069501632);
+    c = GG(c, d, a, b, x[i+11], 14, 643717713);
+    b = GG(b, c, d, a, x[i+0], 20, -373897302);
+    a = GG(a, b, c, d, x[i+5], 5, -701558691);
+    d = GG(d, a, b, c, x[i+10], 9, 38016083);
+    c = GG(c, d, a, b, x[i+15], 14, -660478335);
+    b = GG(b, c, d, a, x[i+4], 20, -405537848);
+    a = GG(a, b, c, d, x[i+9], 5, 568446438);
+    d = GG(d, a, b, c, x[i+14], 9, -1019803690);
+    c = GG(c, d, a, b, x[i+3], 14, -187363961);
+    b = GG(b, c, d, a, x[i+8], 20, 1163531501);
+    a = GG(a, b, c, d, x[i+13], 5, -1444681467);
+    d = GG(d, a, b, c, x[i+2], 9, -51403784);
+    c = GG(c, d, a, b, x[i+7], 14, 1735328473);
+    b = GG(b, c, d, a, x[i+12], 20, -1926607734);
+
+    a = HH(a, b, c, d, x[i+5], 4, -378558);
+    d = HH(d, a, b, c, x[i+8], 11, -2022574463);
+    c = HH(c, d, a, b, x[i+11], 16, 1839030562);
+    b = HH(b, c, d, a, x[i+14], 23, -35309556);
+    a = HH(a, b, c, d, x[i+1], 4, -1530992060);
+    d = HH(d, a, b, c, x[i+4], 11, 1272893353);
+    c = HH(c, d, a, b, x[i+7], 16, -155497632);
+    b = HH(b, c, d, a, x[i+10], 23, -1094730640);
+    a = HH(a, b, c, d, x[i+13], 4, 681279174);
+    d = HH(d, a, b, c, x[i+0], 11, -358537222);
+    c = HH(c, d, a, b, x[i+3], 16, -722521979);
+    b = HH(b, c, d, a, x[i+6], 23, 76029189);
+    a = HH(a, b, c, d, x[i+9], 4, -640364487);
+    d = HH(d, a, b, c, x[i+12], 11, -421815835);
+    c = HH(c, d, a, b, x[i+15], 16, 530742520);
+    b = HH(b, c, d, a, x[i+2], 23, -995338651);
+
+    a = II(a, b, c, d, x[i+0], 6, -198630844);
+    d = II(d, a, b, c, x[i+7], 10, 1126891415);
+    c = II(c, d, a, b, x[i+14], 15, -1416354905);
+    b = II(b, c, d, a, x[i+5], 21, -57434055);
+    a = II(a, b, c, d, x[i+12], 6, 1700485571);
+    d = II(d, a, b, c, x[i+3], 10, -1894986606);
+    c = II(c, d, a, b, x[i+10], 15, -1051523);
+    b = II(b, c, d, a, x[i+1], 21, -2054922799);
+    a = II(a, b, c, d, x[i+8], 6, 1873313359);
+    d = II(d, a, b, c, x[i+15], 10, -30611744);
+    c = II(c, d, a, b, x[i+6], 15, -1560198380);
+    b = II(b, c, d, a, x[i+13], 21, 1309151649);
+    a = II(a, b, c, d, x[i+4], 6, -145523070);
+    d = II(d, a, b, c, x[i+11], 10, -1120210379);
+    c = II(c, d, a, b, x[i+2], 15, 718787259);
+    b = II(b, c, d, a, x[i+9], 21, -343485551);
+
+    a = (a + oa) | 0;
+    b = (b + ob) | 0;
+    c = (c + oc) | 0;
+    d = (d + od) | 0;
+  }
+
+  function toHex(x) {
+    let s = "", v;
+    for (let i = 0; i < 4; i++) {
+      v = (x >> (i * 8)) & 255;
+      s += ("0" + v.toString(16)).slice(-2);
+    }
+    return s;
+  }
+  return toHex(a) + toHex(b) + toHex(c) + toHex(d);
+}
+
+/* ── Gravatar link helper ── */
+async function linkGravatarForUser(user) {
+  if (!user?.email) return;
+  const email = user.email.trim().toLowerCase();
+  const hash = md5(email);
+  const url = `https://www.gravatar.com/avatar/${hash}?s=256&d=identicon`;
+  try {
+    await supabaseClient.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+  } catch (e) {
+    console.warn("Gravatar link failed:", e);
+  }
+  return url;
 }
 
 /* ── Build user chip ── */
@@ -224,7 +362,7 @@ function buildUserChip(user, profile) {
   const dd = document.createElement("div");
   dd.style.cssText = `
     display:none;position:absolute;top:calc(100% + 8px);right:0;
-    min-width:175px;border-radius:12px;overflow:hidden;z-index:200;
+    min-width:190px;border-radius:12px;overflow:hidden;z-index:200;
     background:${isDark ? "rgba(9,9,20,0.98)" : "rgba(255,255,255,0.98)"};
     border:1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(148,163,184,0.3)"};
     box-shadow:0 8px 32px rgba(0,0,0,0.18);
@@ -248,18 +386,38 @@ function buildUserChip(user, profile) {
   signedInAs.addEventListener("mouseenter", () => signedInAs.style.background = "");
 
   const profileItem = makeItem("👤 My Account");
-  profileItem.onclick = e => { e.stopPropagation(); location.href = "/accounts.html"; };
+  profileItem.onclick = e => { e.stopPropagation(); location.href = "/assets/html/accounts?profile"; };
+
+  const gravatarItem = makeItem("🔗 Link Gravatar");
+  gravatarItem.onclick = async e => {
+    e.stopPropagation();
+    gravatarItem.textContent = "Linking…";
+    const url = await linkGravatarForUser(user);
+    if (url) {
+      // refresh chip avatar immediately
+      av.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = url; img.alt = username;
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;";
+      img.onerror = () => { img.remove(); av.textContent = getInitials(username); };
+      av.appendChild(img);
+      gravatarItem.textContent = "Gravatar linked";
+    } else {
+      gravatarItem.textContent = "Link Gravatar";
+    }
+  };
 
   const signOutItem = makeItem("Sign Out", true);
   signOutItem.onclick = async e => {
     e.stopPropagation();
     signOutItem.textContent = "Signing out…";
     await supabaseClient.auth.signOut();
-    location.href = "/accounts.html?login&from=logout";
+    location.href = "/assets/html/accounts?signin&from=logout";
   };
 
   dd.appendChild(signedInAs);
   dd.appendChild(profileItem);
+  dd.appendChild(gravatarItem);
   dd.appendChild(signOutItem);
 
   chip.appendChild(av);
@@ -592,4 +750,4 @@ window.addEventListener("beforeinstallprompt", e => {
 });
 if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
 
-console.log("%c360 V2.2 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
+console.log("%c360 V2.3 — main.js loaded", "color:#4ade80;font-weight:bold;font-size:14px;");
