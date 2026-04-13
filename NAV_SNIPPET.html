@@ -1,0 +1,98 @@
+<!-- ============================================================
+     360 STANDARD NAV — V2.2
+     Copy this <nav> block into every page's <aside class="sidebar">.
+
+     ROOT PAGES (index.html, accounts.html, apps.html, find.html, etc.):
+     Use paths WITHOUT "../" prefix.
+
+     SUBDIRECTORY PAGES (ai.html inside /ai/, games/spaceGlider, etc.):
+     Use paths WITH "../" prefix.
+
+     The JS in main.js auto-marks the active item by matching
+     the current pathname — no need to manually add "active" class.
+     ============================================================ -->
+
+<!-- ── ROOT PAGE NAV (index.html, accounts.html, etc.) ── -->
+<nav class="nav-list">
+  <div class="nav-item" data-href="/">Home</div>
+  <div class="nav-item" data-href="/ai">AI</div>
+  <div class="nav-item" data-href="/weather">Weather</div>
+  <div class="nav-item" data-href="/translator">Translator</div>
+  <div class="nav-item" data-href="/stocks">Stocks</div>
+  <div class="nav-item" data-href="/url-shortener">URL Shortener</div>
+  <div class="nav-item" data-href="/chat">Chat</div>
+  <div class="nav-item" data-href="/news">News</div>
+  <div class="nav-item" data-href="/apps">Apps</div>
+  <div class="nav-item" data-href="/games">Games</div>
+</nav>
+
+<!-- ── SUBDIRECTORY PAGE NAV (ai.html, weather.html, etc.) ── -->
+<nav class="nav-list">
+  <div class="nav-item" data-href="../">Home</div>
+  <div class="nav-item" data-href="../ai">AI</div>
+  <div class="nav-item" data-href="../weather">Weather</div>
+  <div class="nav-item" data-href="../translator">Translator</div>
+  <div class="nav-item" data-href="../stocks">Stocks</div>
+  <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
+  <div class="nav-item" data-href="../chat">Chat</div>
+  <div class="nav-item" data-href="../news">News</div>
+  <div class="nav-item" data-href="../apps">Apps</div>
+  <div class="nav-item" data-href="../games">Games</div>
+</nav>
+
+<!--
+  ============================================================
+  WHAT CHANGED — V2.2 PATCH NOTES
+  ============================================================
+
+  main.css
+  --------
+  - --glass-card / --glass-cardd variables: bumped opacity from
+    ~0.6 to 0.88 so content is always readable over any bg image
+  - Sidebar now uses cubic-bezier transition (.4,0,.2,1) matching
+    Material Design standard for drawers
+  - Nav items get staggered slide-in animation when sidebar opens
+    (nth-child delays from 40ms → 340ms)
+  - Nav items have overflow:hidden + .nav-ripple for click ripple
+  - .user-chip / .user-chip-dropdown: new component replacing the
+    raw Sign Out button — shows PFP initials or image + @username
+  - .ac-tabs::before sliding pill for smooth sign-in/sign-up tab
+    transition (no more flicker)
+  - All glass backgrounds bumped to .88 opacity minimum
+  - body { animation: pageFadeIn } for soft cross-page fade
+
+  main.js
+  -------
+  - Prefetch: hovers on nav items and <a> tags trigger
+    <link rel="prefetch"> injections; all nav hrefs also
+    prefetched 300ms after DOMContentLoaded
+  - updateAuthUI(): builds .user-chip when signed in, removes it
+    when signed out — fetches Supabase profile for username/avatar
+  - markActiveNav(): normalizes "../" and "/" paths so the active
+    class is set correctly on every page regardless of directory depth
+  - syncTabSlider(): injects a dynamic <style> tag to position the
+    ::before sliding pill in .ac-tabs — fires on tab click and on
+    DOMContentLoaded
+  - Nav ripple: separate from global button ripple — uses
+    .nav-ripple class with CSS @keyframes navRipple
+  - closeSidebar(): resets nav-item animation="" so stagger replays
+    on next open
+
+  manifest.json
+  -------------
+  - Fixed missing comma after "theme_color" (broke PWA install)
+
+  404.html
+  --------
+  - New page with animated fade-up, gradient 404, back button
+
+  games.html
+  ----------
+  - Fixed double-quote bug on starfallrng href
+
+  All nav lists
+  -------------
+  - Apps added as 9th item everywhere
+  - Active class removed from HTML (JS sets it dynamically)
+  ============================================================
+-->
