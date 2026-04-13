@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -8,6 +9,7 @@
     gtag('js', new Date());
     gtag('config', 'G-89NN1P6CEV');
   </script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360 — Account</title>
@@ -47,7 +49,6 @@
       z-index: 1;
     }
 
-    /* Card */
     .ac-card {
       background: rgba(255,255,255,.97);
       backdrop-filter: blur(22px);
@@ -69,7 +70,6 @@
       to   { opacity: 1; transform: translateY(0)    scale(1);   }
     }
 
-    /* Logo row inside card */
     .ac-logo {
       display: flex; align-items: center; gap: 10px;
       margin-bottom: 20px;
@@ -85,7 +85,6 @@
     }
     body.dark .ac-logo-text { color: var(--txtd); }
 
-    /* Tabs */
     .ac-tabs {
       display: flex;
       background: rgba(148,163,184,.12);
@@ -106,7 +105,6 @@
     }
     .ac-tab:not(.active):hover { background: rgba(148,163,184,.15); }
 
-    /* Fields */
     .ac-field {
       display: flex; flex-direction: column; gap: 5px;
       margin-bottom: 12px;
@@ -138,13 +136,11 @@
       box-shadow: 0 0 0 3px rgba(239,68,68,.12);
     }
 
-    /* Hints */
     .ac-hint { font-size: 11px; color: var(--mut); margin-top: 3px; min-height: 14px; }
     body.dark .ac-hint { color: var(--mutd); }
     .ac-hint.err { color: #ef4444; }
     .ac-hint.ok  { color: #10b981; }
 
-    /* Primary button */
     .ac-btn {
       width: 100%; padding: 12px;
       border-radius: 10px; border: none;
@@ -157,12 +153,10 @@
     .ac-btn:active:not(:disabled) { transform: translateY(0); }
     .ac-btn:disabled { opacity: .45; cursor: not-allowed; }
 
-    /* Message */
     .ac-msg { font-size: 13px; text-align: center; min-height: 18px; margin-top: 10px; }
     .ac-msg.err { color: #ef4444; }
     .ac-msg.ok  { color: #10b981; }
 
-    /* Divider */
     .ac-divider {
       display: flex; align-items: center; gap: 10px;
       color: var(--mut); font-size: 12px;
@@ -171,7 +165,6 @@
     body.dark .ac-divider { color: var(--mutd); }
     .ac-divider::before, .ac-divider::after { content: ""; flex: 1; height: 1px; background: var(--br); }
 
-    /* OAuth */
     .ac-oauth { display: flex; flex-direction: column; gap: 8px; }
     .ac-oauth-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -184,26 +177,24 @@
     body.dark .ac-oauth-btn { background: rgba(255,255,255,.05); color: var(--txtd); border-color: rgba(255,255,255,.1); }
     .ac-oauth-btn:hover { background: rgba(148,163,184,.18); transform: translateY(-1px); }
 
-    /* Switch link */
     .ac-switch { font-size: 13px; text-align: center; margin-top: 14px; color: var(--mut); }
     body.dark .ac-switch { color: var(--mutd); }
     .ac-switch a { color: var(--a); font-weight: 600; text-decoration: none; }
     .ac-switch a:hover { text-decoration: underline; }
 
-    /* Profile */
     .ac-profile { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0; text-align: center; }
     .ac-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--a), var(--a2)); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; }
     .ac-pname  { font-size: 19px; font-weight: 700; color: var(--txt); }
     body.dark .ac-pname { color: var(--txtd); }
     .ac-pemail { font-size: 13px; color: var(--mut); }
     body.dark .ac-pemail { color: var(--mutd); }
+
     .ac-sec-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--br); background: rgba(148,163,184,.12); color: var(--txt); font-weight: 600; font-size: 14px; cursor: pointer; transition: .18s; }
     body.dark .ac-sec-btn { color: var(--txtd); border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.05); }
     .ac-sec-btn:hover { background: rgba(148,163,184,.22); }
     .ac-signout-btn { background: rgba(239,68,68,.09) !important; border-color: rgba(239,68,68,.28) !important; color: #ef4444 !important; }
     .ac-signout-btn:hover { background: rgba(239,68,68,.17) !important; }
 
-    /* Logout */
     .ac-logout { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0; text-align: center; }
     .ac-logout-icon { font-size: 44px; }
     .ac-logout-title { font-size: 19px; font-weight: 700; color: var(--txt); }
@@ -218,7 +209,6 @@
   </style>
 </head>
 <body>
-
   <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
@@ -338,7 +328,6 @@
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
 
-  <!-- ACCOUNTS PAGE LOGIC -->
   <script>
     const sb = supabaseClient;
 
@@ -355,9 +344,7 @@
       else                    renderSignIn();
     })();
 
-    /* ════════════════
-       SIGN IN
-    ════════════════ */
+    /* SIGN IN */
     function renderSignIn() {
       content.innerHTML = `
         <div class="ac-tabs">
@@ -420,13 +407,17 @@
         btn.disabled=false; btn.textContent="Sign In";
       } else {
         setMsg(msg,"Signed in! Redirecting…","ok");
-        setTimeout(() => location.href="/", 800);
+        const redirect = sessionStorage.getItem("360_auth_redirect");
+        if (redirect && !redirect.includes("accounts.html")) {
+          sessionStorage.removeItem("360_auth_redirect");
+          setTimeout(() => location.href = redirect, 800);
+        } else {
+          setTimeout(() => location.href="/", 800);
+        }
       }
     }
 
-    /* ════════════════
-       SIGN UP
-    ════════════════ */
+    /* SIGN UP */
     function renderSignUp() {
       content.innerHTML = `
         <div class="ac-tabs">
@@ -517,8 +508,8 @@
       if (!email||!username||!password||!confirm) { setMsg(msg,"All fields are required.","err"); return; }
       if (!email.includes("@"))                   { setMsg(msg,"Please enter a valid email address.","err"); return; }
       if (!/^[a-zA-Z0-9_]{3,32}$/.test(username)) { setMsg(msg,"Username must be 3–32 chars, letters/numbers/underscores only.","err"); return; }
-      if (password.length<6)                       { setMsg(msg,"Password must be at least 6 characters.","err"); return; }
-      if (password!==confirm)                      { setMsg(msg,"Passwords do not match.","err"); return; }
+      if (password.length<6)                      { setMsg(msg,"Password must be at least 6 characters.","err"); return; }
+      if (password!==confirm)                     { setMsg(msg,"Passwords do not match.","err"); return; }
       const { data: existing } = await sb.from("profiles").select("id").eq("username",username).maybeSingle();
       if (existing) { setMsg(msg,"That username is already taken.","err"); return; }
       btn.disabled=true; btn.textContent="Creating account…"; setMsg(msg,"","");
@@ -532,9 +523,7 @@
       btn.textContent="Check your email ✓";
     }
 
-    /* ════════════════
-       PROFILE
-    ════════════════ */
+    /* PROFILE */
     async function showProfile(user) {
       const { data: profile } = await sb.from("profiles").select("username,avatar_url").eq("id",user.id).maybeSingle();
       const username = profile?.username || user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
@@ -558,9 +547,7 @@
       };
     }
 
-    /* ════════════════
-       LOGOUT
-    ════════════════ */
+    /* LOGOUT */
     function showLogout() {
       content.innerHTML = `
         <div class="ac-logout">
@@ -573,9 +560,7 @@
       `;
     }
 
-    /* ════════════════
-       OAUTH
-    ════════════════ */
+    /* OAUTH */
     async function oAuth(provider) {
       const { error } = await sb.auth.signInWithOAuth({
         provider,
@@ -584,9 +569,7 @@
       if (error) alert("OAuth error: " + error.message);
     }
 
-    /* ════════════════
-       UTILS
-    ════════════════ */
+    /* UTILS */
     function setMsg(el,text,type)  { if(!el)return; el.textContent=text; el.className="ac-msg"+(type?" "+type:""); }
     function setHint(el,text,type) { if(!el)return; el.textContent=text; el.className="ac-hint"+(type?" "+type:""); }
     function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
