@@ -1,0 +1,239 @@
+/*
+  360 Custom Theme for SearXNG
+  ─────────────────────────────────────────────────────
+  Paste this entire block into SearXNG's admin panel at:
+    Settings → General → Custom CSS
+  OR save as a file and reference it in settings.yml:
+    ui:
+      static_use_hash: true
+      custom_css: /path/to/360-searxng.css
+  ─────────────────────────────────────────────────────
+*/
+
+/* ── Variables ── */
+:root {
+  --s360-blue:    #3b82f6;
+  --s360-cyan:    #06b6d4;
+  --s360-bg:      #f3f4f7;
+  --s360-card:    rgba(255,255,255,0.82);
+  --s360-border:  rgba(148,163,184,0.35);
+  --s360-txt:     #111827;
+  --s360-mut:     #6b7280;
+  --s360-radius:  14px;
+  --s360-grad:    linear-gradient(120deg, #3b82f6, #06b6d4);
+}
+
+/* ── Page background ── */
+html, body {
+  background: var(--s360-bg) !important;
+  color: var(--s360-txt) !important;
+  font-family: "Inter", system-ui, -apple-system, sans-serif !important;
+}
+
+/* ── Hide SearXNG header / branding ── */
+header,
+#main_preferences_url,
+.searxng-header,
+#search_url,
+.navbar,
+nav.navbar {
+  display: none !important;
+}
+
+/* ── Center the search box & results ── */
+#main_search_box,
+#search,
+.search-bar,
+form#search {
+  max-width: 660px !important;
+  margin: 0 auto 24px !important;
+}
+
+/* ── Search input pill ── */
+#q,
+input[name="q"] {
+  width: 100% !important;
+  padding: 13px 20px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid var(--s360-border) !important;
+  background: rgba(255,255,255,0.85) !important;
+  backdrop-filter: blur(10px) !important;
+  color: var(--s360-txt) !important;
+  font-size: 16px !important;
+  font-family: inherit !important;
+  outline: none !important;
+  box-shadow: 0 4px 24px rgba(59,130,246,0.08) !important;
+  transition: border-color .2s, box-shadow .2s !important;
+}
+
+#q:focus,
+input[name="q"]:focus {
+  border-color: var(--s360-blue) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 4px 24px rgba(59,130,246,0.1) !important;
+}
+
+/* ── Search button ── */
+input[type="submit"],
+button[type="submit"],
+.search_submit {
+  border-radius: 999px !important;
+  border: none !important;
+  background: var(--s360-grad) !important;
+  color: #050816 !important;
+  font-weight: 700 !important;
+  padding: 11px 24px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
+  transition: opacity .2s !important;
+}
+input[type="submit"]:hover,
+button[type="submit"]:hover,
+.search_submit:hover {
+  opacity: .85 !important;
+}
+
+/* ── Result items — glass cards ── */
+article.result,
+.result,
+.result-default {
+  background: var(--s360-card) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid var(--s360-border) !important;
+  border-radius: var(--s360-radius) !important;
+  padding: 16px 18px !important;
+  margin-bottom: 14px !important;
+  transition: border-color .18s, transform .18s, box-shadow .18s !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05) !important;
+}
+
+article.result:hover,
+.result:hover {
+  border-color: var(--s360-blue) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 28px rgba(59,130,246,0.12) !important;
+}
+
+/* ── Result title links ── */
+article.result h3 a,
+.result_header a,
+h4.result_title a,
+.result h3 a {
+  color: var(--s360-blue) !important;
+  text-decoration: none !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+}
+article.result h3 a:hover,
+.result h3 a:hover {
+  text-decoration: underline !important;
+}
+
+/* ── Result URL ── */
+.result_url,
+article.result .url_wrapper,
+.result .url {
+  color: var(--s360-mut) !important;
+  font-size: 12px !important;
+  margin-bottom: 5px !important;
+}
+
+/* ── Result snippet ── */
+.result_content,
+article.result p,
+.result-content {
+  color: var(--s360-mut) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+}
+
+/* ── Category tabs ── */
+.category_header,
+#categories,
+#categories_as_tabs {
+  display: flex !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 18px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.category_header button,
+#categories_as_tabs button,
+.search-filter-button {
+  padding: 7px 16px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--s360-border) !important;
+  background: rgba(255,255,255,0.7) !important;
+  color: var(--s360-mut) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: .18s !important;
+  font-family: inherit !important;
+}
+
+.category_header button.active,
+#categories_as_tabs button.active,
+.category_header button:hover,
+#categories_as_tabs button:hover {
+  background: var(--s360-grad) !important;
+  color: #050816 !important;
+  border-color: transparent !important;
+}
+
+/* ── Pagination ── */
+.pagination,
+#pagination {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin-top: 28px !important;
+}
+
+.pagination a,
+#pagination a,
+.page_with_num a {
+  padding: 7px 14px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--s360-border) !important;
+  background: rgba(255,255,255,0.7) !important;
+  color: var(--s360-txt) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: .15s !important;
+}
+
+.pagination .current,
+.pagination a:hover,
+#pagination a:hover,
+.page_with_num a:hover {
+  background: var(--s360-grad) !important;
+  color: #050816 !important;
+  border-color: transparent !important;
+}
+
+/* ── Infobox / sidebar ── */
+.infobox {
+  background: rgba(255,255,255,0.82) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid var(--s360-border) !important;
+  border-radius: var(--s360-radius) !important;
+  padding: 18px !important;
+  font-size: 14px !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--s360-border); border-radius: 999px; }
+
+/* ── Remove footer / powered by ── */
+footer, #footer_about, .footer_about {
+  display: none !important;
+}

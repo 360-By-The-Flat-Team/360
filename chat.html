@@ -1,0 +1,1931 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head><script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push(i)})
+(window,'GTM-NZHQGS65','google_tags_first_party');</script><script>(function(w,d,s,l){w[l]=w[l]||[];(function(){w[l].push(arguments);})('set', 'developer_id.dYzg1YT', true);
+		w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s);j.async=true;j.src='/uw4z/';
+		f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer');</script>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-89NN1P6CEV');
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Chat</title>
+  <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../main.css" />
+  <link rel="stylesheet" href="../responsive.css" />
+  <link rel="stylesheet" href="../cursor.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="chat.css">
+  <style>
+    .unread-badge {
+      min-width: 18px; height: 18px; border-radius: 999px;
+      background: var(--a); color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px; margin-left: auto; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(59,130,246,.4);
+      animation: badgePop .2s ease;
+    }
+    @keyframes badgePop { from{transform:scale(0)} to{transform:scale(1)} }
+  </style>
+</head>
+<body>
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="../">Home</div>
+      <div class="nav-item" data-href="../ai.html">AI</div>
+      <div class="nav-item" data-href="../weather.html">Weather</div>
+      <div class="nav-item" data-href="../translator.html">Translator</div>
+      <div class="nav-item" data-href="../stocks.html">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener.html">URL Shortener</div>
+      <div class="nav-item active" data-href="../chat.html">Chat</div>
+	  <div class="nav-item" data-href="../news.html">News</div>
+      <div class="nav-item" data-href="../games.html">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+  </div>
+
+  <div id="auth-popup" class="auth-popup hidden">
+    <div class="auth-box">
+      <h2>Account</h2>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+      <button id="auth-login-btn">Log In</button>
+      <button id="auth-signup-btn">Sign Up</button>
+      <button id="github-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>Sign in with GitHub</span>
+      </button>
+      <button id="google-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-close-btn" class="close-btn">Close</button>
+    </div>
+  </div>
+
+  <div class="auth-top-right">
+    <button id="signInBtn" class="auth-btn">Sign In</button>
+    <button id="signUpBtn" class="auth-btn">Sign Up</button>
+    <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
+  </div>
+
+  <!-- Profile popup -->
+  <div id="profile-popup">
+    <div class="pp-avatar" id="pp-avatar"></div>
+    <div class="pp-name"  id="pp-name"></div>
+    <div class="pp-email" id="pp-email"></div>
+    <button class="pp-dm-btn" id="pp-dm-btn">💬 Send DM</button>
+  </div>
+
+  <div id="lightbox"><img id="lightbox-img" src="" alt="" /></div>
+  <button class="rooms-toggle" id="roomsToggle">💬 Rooms</button>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="createCommunityModal">
+    <div class="modal-box">
+      <h3>Create Community</h3>
+      <p>Leave passcode blank for a public community.</p>
+      <input class="modal-input" id="cc-name" placeholder="Community name" maxlength="32" />
+      <input class="modal-input" id="cc-passcode" placeholder="Passcode (optional)" type="password" />
+      <p class="modal-error" id="cc-error"></p>
+      <div class="modal-btn-row">
+        <button class="modal-btn secondary" id="cc-cancel">Cancel</button>
+        <button class="modal-btn primary"   id="cc-create">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="joinCommunityModal">
+    <div class="modal-box">
+      <h3 id="jc-title">Join Community</h3>
+      <p  id="jc-desc">Enter the passcode to join.</p>
+      <input class="modal-input" id="jc-passcode" placeholder="Passcode" type="password" />
+      <p class="modal-error" id="jc-error"></p>
+      <div class="modal-btn-row">
+        <button class="modal-btn secondary" id="jc-cancel">Cancel</button>
+        <button class="modal-btn primary"   id="jc-join">Join</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startDmModal">
+    <div class="modal-box">
+      <h3>New Direct Message</h3>
+      <p>Enter the email address of the person you want to message.</p>
+      <input class="modal-input" id="dm-email" placeholder="their@email.com" type="email" />
+      <p class="modal-error" id="dm-error"></p>
+      <div class="modal-btn-row">
+        <button class="modal-btn secondary" id="dm-cancel">Cancel</button>
+        <button class="modal-btn primary"   id="dm-start">Start DM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat layout -->
+  <div class="chat-root">
+    <div class="chat-left" id="chatLeft">
+      <div style="padding:8px 14px 4px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);">360 Chat</span>
+        <span id="online-counter" style="font-size:11px;color:#22c55e;font-weight:600;display:flex;align-items:center;gap:4px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+          <span id="online-count">0</span> online
+        </span>
+      </div>
+      <div class="panel-section">
+        <div class="panel-label">Public</div>
+        <div class="room-item active" id="publicRoomItem">
+          <span class="room-icon">🌐</span><span class="room-name">General</span>
+        </div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-label">Communities</div>
+        <div id="communities-list"></div>
+        <button class="add-room-btn" id="createCommunityBtn">＋ Create community</button>
+        <button class="add-room-btn" id="browseCommunityBtn">🔍 Browse communities</button>
+      </div>
+      <div class="panel-section">
+        <div class="panel-label">Direct Messages</div>
+        <div id="dm-list"></div>
+        <button class="add-room-btn" id="startDmBtn">＋ New message</button>
+      </div>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <span class="chat-header-icon" id="hdr-icon">🌐</span>
+        <span class="chat-header-name" id="hdr-name">General</span>
+        <span class="chat-header-desc" id="hdr-desc">Public chat · everyone is here</span>
+        <button id="notif-btn" title="Enable notifications" style="margin-left:auto;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:inherit;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">🔔 Notify</button>
+      </div>
+      <div id="chat-window"></div>
+      <div class="chat-input-wrap">
+        <div id="reply-bar">
+          <span class="rb-label">Replying to</span>
+          <span class="rb-author" id="rb-author"></span>
+          <span class="rb-text"   id="rb-text"></span>
+          <button id="reply-cancel">✕</button>
+        </div>
+        <div id="upload-preview">
+          <span id="up-thumb"></span>
+          <span class="up-name" id="up-name"></span>
+          <button id="upload-cancel">✕</button>
+        </div>
+        <div class="upload-progress" id="upload-progress">
+          <div class="upload-progress-bar" id="upload-progress-bar"></div>
+        </div>
+        <div style="position:relative;">
+          <div id="mention-popup"></div>
+          <div id="slash-popup"></div>
+        </div>
+        <div id="typing-indicator"></div>
+        <div id="chat-input-row">
+          <button class="input-action-btn" id="attachBtn" title="Attach">📎</button>
+          <input type="file" id="fileInput" style="display:none" />
+          <textarea id="message-input" rows="1" placeholder="Message General..." maxlength="4000"></textarea>
+          <div style="position:relative;">
+            <button class="input-action-btn" id="emojiBtn">😊</button>
+            <div class="emoji-picker" id="inputEmojiPicker"></div>
+          </div>
+          <button id="send-button">Send</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 4px 0;gap:8px;">
+          <div style="font-size:11px;opacity:.35;">Shortcodes: :fire: :skull: :heart: :rocket: · Enter to send · Shift+Enter for newline</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="font-size:11px;opacity:.5;">Auto-translate:</span>
+            <select id="translateLang" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--br);background:transparent;color:inherit;font-family:inherit;cursor:pointer;">
+              <option value="">Off</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="it">🇮🇹 Italian</option>
+              <option value="pt">🇧🇷 Portuguese</option>
+              <option value="ru">🇷🇺 Russian</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+              <option value="zh">🇨🇳 Chinese</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="hi">🇮🇳 Hindi</option>
+              <option value="tr">🇹🇷 Turkish</option>
+              <option value="pl">🇵🇱 Polish</option>
+              <option value="nl">🇳🇱 Dutch</option>
+              <option value="sv">🇸🇪 Swedish</option>
+              <option value="uk">🇺🇦 Ukrainian</option>
+              <option value="th">🇹🇭 Thai</option>
+              <option value="vi">🇻🇳 Vietnamese</option>
+              <option value="id">🇮🇩 Indonesian</option>
+              <option value="tl">🇵🇭 Filipino</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
+  <script src="../main.js"></script>
+  <script src="../cookie.js"></script>
+  <script src="../cursor.js"></script>
+  <script>
+  /* ════════════════════════════════════════════════════════
+     360 CHAT V3.1
+     Fixes: community join (maybeSingle + enterCommunity),
+            lag (batched reactions), upload+send (isSending guard),
+            direct replies, PFP popup with email, DM by email
+  ════════════════════════════════════════════════════════ */
+
+  function openAuth() { document.getElementById("auth-popup")?.classList.remove("hidden"); }
+
+  const sb = supabaseClient;
+
+  let currentUserId   = null;
+  let currentProfile  = null;
+  let activeRoom      = { type:"public", id:"public", name:"General", icon:"🌐" };
+  let pendingFile     = null;
+  let replyingTo      = null;
+  let typingTimeouts  = {};
+  let typingUsers     = {};
+  let realtimeChannel = null;
+  let typingChannel   = null;
+  let lastMsgUserId   = null;
+  let lastMsgDate     = null;
+  let joinPending     = null;
+  let isSending       = false;
+
+  const SHORTCODES = {
+    ':skull:':'💀',':fire:':'🔥',':heart:':'❤️',':thumbsup:':'👍',':thumbsdown:':'👎',
+    ':laugh:':'😂',':cry:':'😢',':wow:':'😮',':clap:':'👏',':rose:':'🥀',
+    ':sparkles:':'✨',':100:':'💯',':rocket:':'🚀',':eyes:':'👀',':ok:':'👌',
+    ':wave:':'👋',':pray:':'🙏',':muscle:':'💪',':star:':'⭐',':check:':'✅',
+    ':x:':'❌',':warning:':'⚠️',':zap:':'⚡',':rainbow:':'🌈',':sun:':'☀️',
+    ':moon:':'🌙',':trophy:':'🏆',':crown:':'👑',':diamond:':'💎',':robot:':'🤖',
+    ':nerd:':'🤓',':360:':'🔵',':gg:':'🎮',':bruh:':'😑',
+  };
+  const EMOJIS = ['👍','❤️','😂','💀','🔥','😮','😢','👏','🥀','✨','💯','🚀','⭐','🎉','👀'];
+
+  function applyShortcodes(t) { return t.replace(/:[a-z0-9_]+:/g, m => SHORTCODES[m] || m); }
+
+  /* ════════════════════════════════════════
+     PROFANITY FILTER
+     Catches every common spelling, leet-speak
+     substitution, spacing trick, and abbreviation.
+  ════════════════════════════════════════ */
+  let PROFANITY_PATTERNS = [];
+  try { PROFANITY_PATTERNS = (()=>{
+    /* Normalise leet/spacing/punctuation so "f.u.c.k", "f u c k",
+       "f*ck", "ph4ck", etc. all collapse to the same base word      */
+    function leet(word) {
+      return word
+        .split("")
+        .map(c => {
+          switch(c) {
+            case "a": return "[a4@]";
+            case "b": return "[b8]";
+            case "c": return "[ck(]";
+            case "e": return "[e3]";
+            case "f": return "[f]";
+            case "g": return "[g9]";
+            case "h": return "[h#]";
+            case "i": return "[i1!|]";
+            case "k": return "[kc]";
+            case "l": return "[l1|]";
+            case "n": return "[n]";
+            case "o": return "[o0]";
+            case "p": return "[p]";
+            case "r": return "[r]";
+            case "s": return "[s5$]";
+            case "t": return "[t7+]";
+            case "u": return "[uv]";
+            case "v": return "[vu]";
+            case "x": return "[x]";
+            default:  return c;
+          }
+        })
+        /* allow optional separator (space, dot, dash, underscore, *) between every char */
+        .join("[\\s_.\\-*]*");
+    }
+
+    /* Optionally wrap in a word-boundary-ish check so "classic" isn't caught */
+    function pat(word, opts={}) {
+      const core = leet(word);
+      const prefix = opts.noPrefix ? "(?<![a-z])" : "(?<![a-z])";
+      const suffix = opts.noSuffix ? "(?![a-z])"  : "(?![a-z])";
+      return new RegExp(prefix + core + suffix, "gi");
+    }
+
+    return [
+      /* ── The F-word and variants ── */
+      pat("fuck"),   pat("fuk"),   pat("fck"),
+      /ph[uv][ck]+/gi,
+      /f+[uv]+[ck]+[e]*/gi,
+      /f[\s\-_.]*u[\s\-_.]*c[\s\-_.]*k/gi,
+      /* ── Shit ── */
+      pat("shit"),  pat("sht"),  /sh[i1!]t/gi,
+      /* ── Ass / arse ── */
+      /a+[s$][s$]+/gi,
+      /a+r+[s$][e]?/gi,
+      /as+hole/gi,  /a[s$]+h[o0]l[e3]/gi,
+      /* ── Bitch ── */
+      pat("bitch"),  /b[i1!][t7]ch/gi,  /b1tch/gi,
+      /* ── Cunt ── */
+      pat("cunt"),  /c[uv]n[t7]/gi,
+      /* ── Dick ── */
+      /d[i1!][ck]+/gi,  /d[i1!]ck?h[e3]a[d]/gi,
+      /* ── Cock ── */
+      /c[o0][ck]+/gi,  /c[o0][ck]su[ck]/gi,
+      /* ── Pussy ── */
+      /p[uv][s$][s$][yi1!]/gi,
+      /* ── Bastard ── */
+      pat("bastard"),  /b[a4][s$][t7][a4]r[d]/gi,
+      /* ── Damn / damnit ── */
+      /d[a4@]mn[i1!][t7]/gi,
+      /* ── Whore ── */
+      /wh[o0]r[e3]?/gi,  /h[o0]r[e3]?/gi,
+      /* ── Slut ── */
+      /sl[uv][t7]/gi,
+      /* ── Nigger / nigga and variants ── */
+      /n[i1!][g9][g9][e3]r/gi,  /n[i1!][g9][g9][a4]/gi,
+      /n[i1!]gg[a4@]/gi,  /n[i1!]g+[a4@]?/gi,
+      /* ── Faggot / fag ── */
+      /f[a4][g9][g9][o0][t7]/gi,  /f[a4][g9][s$]?/gi,
+      /* ── Retard ── */
+      /r[e3][t7][a4]r[d][e3]?[d]?/gi,
+      /* ── Twat ── */
+      /[t7]w[a4@][t7]/gi,
+      /* ── Prick ── */
+      /pr[i1!][ck]+/gi,
+      /* ── Wank ── */
+      /w[a4@]nk[e3]?r?/gi,
+      /* ── Common abbreviations / acronyms ── */
+      /wtf/gi,  /stfu/gi,  /ffs/gi,
+      /fuq/gi,  /fml/gi,
+      /* ── Motherfucker ── */
+      /m[o0][t7]h[e3]r[\s\-_.]*f[uv][ck]/gi,
+      /mf+/gi,
+      /* ── Son of a bitch ── */
+      /s[o0]n[\s\-_.]*[o0]f[\s\-_.]*a[\s\-_.]*b[i1!][t7]ch/gi,
+      /* ── Goon ── */
+      /g[o0][o0]n/gi,
+
+      /* SPANISH */
+      /\bputa\b/gi, /\bputo\b/gi, /\bpinche\b/gi, /\bchinga[r]?\b/gi,
+      /\bchingada\b/gi, /\bchingado\b/gi, /\bcabron\b/gi,
+      /\bcono\b/gi, /\bjoder\b/gi, /\bhdp\b/gi,
+      /\bpendejo\b/gi, /\bculero\b/gi, /\bverga\b/gi, /\bcarajo\b/gi,
+      /\bmaricon\b/gi, /\bculo\b/gi,
+
+      /* FRENCH */
+      /\bmerde\b/gi, /\bputain\b/gi, /\bsalope\b/gi, /\bconnard\b/gi,
+      /\bconne\b/gi, /\bencule\b/gi, /\bfoutre\b/gi, /\bbatard\b/gi,
+      /\bniquer\b/gi, /\bnique\b/gi, /\btrouduc\b/gi,
+
+      /* GERMAN */
+      /\bscheisse\b/gi, /\bficken\b/gi, /\bfick\b/gi,
+      /\bwichser\b/gi, /\bhurensohn\b/gi, /\bhure\b/gi,
+      /\barschloch\b/gi, /\barsch\b/gi, /\bschlampe\b/gi, /\bkacke\b/gi,
+
+      /* PORTUGUESE */
+      /\bporra\b/gi, /\bmerda\b/gi, /\bfoda\b/gi, /\bfoder\b/gi,
+      /\bfdp\b/gi, /\bviado\b/gi, /\bbuceta\b/gi, /\bvadia\b/gi,
+      /\bcaralho\b/gi,
+
+      /* ITALIAN */
+      /\bcazzo\b/gi, /\bvaffanculo\b/gi, /\bvaffa\b/gi,
+      /\bstronzo\b/gi, /\bstronza\b/gi, /\bputtana\b/gi,
+      /\btroia\b/gi, /\bminchia\b/gi, /\bcoglione\b/gi,
+
+      /* DUTCH */
+      /\bkut\b/gi, /\bklootzak\b/gi, /\bhoer\b/gi, /\bkanker\b/gi,
+      /\bteef\b/gi, /\bflikker\b/gi, /\bgodverdomme\b/gi,
+
+      /* RUSSIAN (transliterated) */
+      /\bkhuy\b/gi, /\bkhui\b/gi, /\bpizda\b/gi, /\bpizdets\b/gi,
+      /\bblyad\b/gi, /\bsuka\b/gi, /\byebat\b/gi, /\bgovno\b/gi,
+      /\bmudak\b/gi, /\bpidor\b/gi, /\bzalupa\b/gi, /\bdolboyob\b/gi,
+
+      /* ARABIC (transliterated) */
+      /\bkuss\b/gi, /\bkahba\b/gi, /\bsharmuta\b/gi, /\bkhawal\b/gi,
+      /\bniik\b/gi, /\byinak\b/gi,
+
+      /* HINDI/URDU (transliterated) */
+      /\bbhenchod\b/gi, /\bmadarchod\b/gi, /\bbhosdike\b/gi,
+      /\bchutiya\b/gi, /\bchut\b/gi, /\bgaand\b/gi, /\bbhosda\b/gi,
+      /\brandi\b/gi, /\bharami\b/gi,
+
+      /* CHINESE (pinyin) */
+      /\btmd\b/gi, /\bcnm\b/gi, /\bdiu\b/gi,
+
+      /* JAPANESE (transliterated) */
+      /\bkuso\b/gi, /\bchikusho\b/gi, /\bbaka\b/gi, /\bmanko\b/gi,
+      /\byariman\b/gi,
+
+      /* KOREAN (transliterated) */
+      /\bssibal\b/gi, /\bsibal\b/gi, /\bshibal\b/gi, /\bboji\b/gi,
+      /\bjiral\b/gi, /\bsaekki\b/gi, /\bgaesaekki\b/gi,
+
+      /* TURKISH */
+      /\borospu\b/gi, /\bpezeveng\b/gi, /\bserefsiz\b/gi,
+
+      /* POLISH */
+      /\bkurwa\b/gi, /\bchuj\b/gi, /\bjebac\b/gi, /\bspierdolic\b/gi,
+      /\bsrac\b/gi, /\bpedal\b/gi, /\bcwel\b/gi,
+
+      /* SCANDINAVIAN */
+      /\bjavla\b/gi, /\bskit\b/gi, /\bfitta\b/gi, /\bhora\b/gi,
+      /\bluder\b/gi, /\bfaen\b/gi, /\brovhul\b/gi,
+
+      /* GREEK (transliterated) */
+      /\bgamoto\b/gi, /\bmalaka\b/gi, /\bpoustis\b/gi, /\bskata\b/gi,
+
+      /* HEBREW (transliterated) */
+      /\bzayin\b/gi, /\bkoos\b/gi, /\bzona\b/gi, /\btipesh\b/gi,
+
+      /* INDONESIAN/MALAY */
+      /\bkontol\b/gi, /\bmemek\b/gi, /\bpantek\b/gi, /\bjancok\b/gi,
+      /\bbangsat\b/gi, /\banjing\b/gi,
+
+      /* TAGALOG */
+      /\btangina\b/gi, /\bgago\b/gi, /\btanga\b/gi,
+      /\bulol\b/gi, /\bkantot\b/gi,
+
+    ];
+  })(); } catch(e) { console.warn("Profanity filter init error:", e); }
+
+  function filterProfanity(text) {
+    if (!text) return text;
+    let out = text;
+    for (const pat of PROFANITY_PATTERNS) {
+      try { out = out.replace(pat, match => "*".repeat(match.length)); }
+      catch(e) { /* bad pattern — skip */ }
+    }
+    return out;
+  }
+  function getInitials(n) { if (!n) return "?"; const p=n.trim().split(" "); return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[1][0]).toUpperCase(); }
+  function formatTime(ts) { return new Date(ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}); }
+  function formatDate(ts) {
+    const d=new Date(ts),t=new Date(),y=new Date(t);y.setDate(t.getDate()-1);
+    if(d.toDateString()===t.toDateString()) return "Today";
+    if(d.toDateString()===y.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([],{month:"long",day:"numeric",year:"numeric"});
+  }
+  function isImage(url) { return /\.(jpe?g|png|gif|webp|svg|bmp)(\?|$)/i.test(url); }
+
+  /* Profile cache — avoids repeat DB hits for same user */
+  const profileCache = {};
+  /* Message element Map — O(1) lookup instead of querySelector per message */
+  const msgElMap = new Map();
+
+  async function getProfile(uid) {
+    if (!uid) return {username:"Unknown",avatar_url:null,role:"user",tag:null,email:null};
+    if (profileCache[uid]) return profileCache[uid];
+    try {
+      const { data } = await sb.from("profiles").select("username,avatar_url,role,tag,email").eq("id",uid).single();
+      const p = data || {username:"Unknown",avatar_url:null,role:"user",tag:null,email:null};
+      profileCache[uid] = p; return p;
+    } catch { return {username:"Unknown",avatar_url:null,role:"user",tag:null,email:null}; }
+  }
+
+  /* ════════════════ COMMUNITIES ════════════════ */
+  async function loadCommunities() {
+    const { data, error } = await sb.from("servers").select("*").order("name");
+    const list = document.getElementById("communities-list");
+    list.innerHTML = "";
+    if (error) {
+      console.error("loadCommunities error:", error.message, error.code);
+      list.innerHTML = `<div style="font-size:11px;color:#ef4444;padding:6px 10px;">Error loading: ${error.message}</div>`;
+      return;
+    }
+    if (!data || !data.length) {
+      list.innerHTML = `<div style="font-size:11px;opacity:.4;padding:6px 10px;">No communities yet</div>`;
+      return;
+    }
+    data.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "room-item";
+      div.dataset.serverId = s.id;
+      div.innerHTML = `<span class="room-icon">${s.passcode?"🔒":"🌐"}</span><span class="room-name">${s.name}</span>`;
+      div.addEventListener("click", () => handleCommunityClick(s));
+      list.appendChild(div);
+    });
+  }
+
+  async function handleCommunityClick(server) {
+    if (!currentUserId) { openAuth(); return; }
+    const { data: membership } = await sb.from("server_members")
+      .select("id").eq("server_id", server.id).eq("user_id", currentUserId).maybeSingle();
+    if (membership) {
+      await enterCommunity(server);
+    } else if (server.passcode) {
+      /* Go straight into the chat but show a passcode gate overlay */
+      await enterCommunity(server, true);
+    } else {
+      await joinAndEnter(server);
+    }
+  }
+
+  async function enterCommunity(server, locked=false) {
+    /* Try to find a channel first; if none, use the server itself as the room */
+    const { data: channels } = await sb.from("channels")
+      .select("*").eq("server_id", server.id).order("name").limit(1);
+    const hasChannel = channels && channels.length > 0;
+    const roomId   = hasChannel ? channels[0].id   : server.id;
+    const roomName = hasChannel ? channels[0].name  : server.name;
+    const roomType = hasChannel ? "channel"         : "server";
+    switchRoom({ type:roomType, id:roomId, name:roomName, icon:server.passcode?"🔒":"🌐", serverName:server.name, serverId:server.id });
+    document.querySelectorAll(".room-item,.dm-item").forEach(el => el.classList.remove("active"));
+    document.querySelector(`[data-server-id="${server.id}"]`)?.classList.add("active");
+    if (locked) showPasscodeGate(server);
+  }
+
+  function showPasscodeGate(server) {
+    document.getElementById("passcode-gate")?.remove();
+    const isDark = document.body.classList.contains("dark");
+    const gate = document.createElement("div");
+    gate.id = "passcode-gate";
+    gate.style.cssText = `position:absolute;inset:0;z-index:100;background:${isDark?"rgba(5,8,22,.93)":"rgba(255,255,255,.93)"};backdrop-filter:blur(18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;`;
+    gate.innerHTML = `
+      <div style="font-size:40px">🔒</div>
+      <div style="font-size:20px;font-weight:800">${server.name}</div>
+      <div style="font-size:13px;opacity:.55;margin-bottom:4px;">This community requires a passcode.</div>
+      <input id="gate-input" type="password" placeholder="Enter passcode"
+        style="padding:11px 18px;border-radius:12px;border:1px solid var(--br);background:transparent;
+               font-size:15px;outline:none;width:260px;color:inherit;text-align:center;
+               font-family:inherit;" />
+      <p id="gate-error" style="color:#ef4444;font-size:12px;min-height:16px;margin:0;"></p>
+      <button id="gate-btn"
+        style="padding:11px 36px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:700;
+               background:linear-gradient(110deg,var(--a),var(--a2));color:#050816;font-family:inherit;">
+        Unlock
+      </button>
+      <button id="gate-back"
+        style="background:none;border:none;cursor:pointer;font-size:13px;opacity:.5;font-family:inherit;color:inherit;">
+        ← Go back
+      </button>`;
+    const chatMain = document.querySelector(".chat-main");
+    chatMain.style.position = "relative";
+    chatMain.appendChild(gate);
+    const inp = gate.querySelector("#gate-input");
+    inp.focus();
+    gate.querySelector("#gate-back").addEventListener("click", () => {
+      gate.remove();
+      document.getElementById("publicRoomItem").click();
+    });
+    async function tryUnlock() {
+      const passcode = inp.value.trim();
+      if (!passcode) { gate.querySelector("#gate-error").textContent = "Enter the passcode."; return; }
+      if (passcode !== server.passcode) {
+        gate.querySelector("#gate-error").textContent = "Wrong passcode. Try again.";
+        inp.value = ""; inp.focus(); return;
+      }
+      const { error } = await sb.from("server_members").insert({ server_id: server.id, user_id: currentUserId });
+      if (error && !error.message.includes("unique")) { gate.querySelector("#gate-error").textContent = error.message; return; }
+      gate.remove();
+      chatMain.style.position = "";
+      await loadCommunities();
+      await loadHistory();
+    }
+    gate.querySelector("#gate-btn").addEventListener("click", tryUnlock);
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
+  }
+
+  async function joinAndEnter(server) {
+    const { error } = await sb.from("server_members").insert({ server_id: server.id, user_id: currentUserId });
+    if (error && !error.message.includes("unique")) { alert(error.message); return; }
+    await loadCommunities();
+    await enterCommunity(server);
+  }
+
+  /* ════════════════ DMs ════════════════ */
+  async function loadDMs() {
+    if (!currentUserId) return;
+    const { data } = await sb.from("direct_messages")
+      .select("*").or(`user_a.eq.${currentUserId},user_b.eq.${currentUserId}`)
+      .order("updated_at",{ascending:false});
+    const list = document.getElementById("dm-list");
+    list.innerHTML = "";
+    if (!data || !data.length) return;
+    /* Fetch all other-user profiles in ONE parallel batch */
+    const otherIds = data.map(dm => dm.user_a === currentUserId ? dm.user_b : dm.user_a);
+    const profiles = await Promise.all(otherIds.map(id => getProfile(id)));
+    data.forEach((dm, i) => {
+      const other = profiles[i];
+      const otherId = otherIds[i];
+      const div = document.createElement("div");
+      div.className = "dm-item"; div.dataset.dmId = dm.id;
+      div.innerHTML = `<div class="dm-avatar">${getInitials(other.username)}</div><span class="dm-name">${other.username}</span>`;
+      div.addEventListener("click", () => switchRoom({type:"dm",id:dm.id,name:other.username,icon:"💬",otherId}));
+      list.appendChild(div);
+    });
+  }
+
+  /* DM by email — checks profiles.email, falls back to auth.users email match */
+  async function startDMByEmail(email) {
+    if (!email) { document.getElementById("dm-error").textContent = "Enter an email."; return; }
+    /* Try profiles table first */
+    let profile;
+    const { data: p1 } = await sb.from("profiles")
+      .select("id,username,email").eq("email", email.toLowerCase()).maybeSingle();
+    if (p1) { profile = p1; }
+    else {
+      /* Fall back: match by auth email stored in profiles.id via auth.users */
+      const { data: { users } } = await sb.auth.admin?.listUsers?.() || { data:{users:[]} };
+      const match = (users||[]).find(u => u.email?.toLowerCase() === email.toLowerCase());
+      if (match) {
+        const { data: p2 } = await sb.from("profiles").select("id,username,email").eq("id", match.id).maybeSingle();
+        profile = p2;
+      }
+    }
+    if (!profile) { document.getElementById("dm-error").textContent = "No user found with that email."; return; }
+    if (profile.id === currentUserId) { document.getElementById("dm-error").textContent = "That's you!"; return; }
+
+    const { data: existing } = await sb.from("direct_messages").select("id")
+      .or(`and(user_a.eq.${currentUserId},user_b.eq.${profile.id}),and(user_a.eq.${profile.id},user_b.eq.${currentUserId})`)
+      .maybeSingle();
+    let dmId;
+    if (existing) {
+      dmId = existing.id;
+    } else {
+      const { data: newDm, error: dmErr } = await sb.from("direct_messages")
+        .insert({user_a:currentUserId,user_b:profile.id}).select().single();
+      if (dmErr) { document.getElementById("dm-error").textContent = dmErr.message; return; }
+      dmId = newDm.id;
+    }
+    document.getElementById("startDmModal").classList.remove("open");
+    switchRoom({type:"dm",id:dmId,name:profile.username,icon:"💬",otherId:profile.id});
+    loadDMs();
+  }
+
+  /* ════════════════ PROFILE POPUP ════════════════ */
+  const profilePopup = document.getElementById("profile-popup");
+  async function showProfilePopup(userId, anchorEl) {
+    if (!userId) return;
+    const p = await getProfile(userId);
+    /* email: stored in profiles.email; for self always available from session */
+    let email = p.email || "";
+    if (!email && userId === currentUserId) {
+      const { data:{session} } = await sb.auth.getSession();
+      email = session?.user?.email || "";
+    }
+    /* If still no email, try reading it from auth.users metadata (stored by Supabase) */
+    if (!email) {
+      const { data: userData } = await sb.auth.admin?.getUserById?.(userId) || {};
+      email = userData?.user?.email || "";
+    }
+    const av = document.getElementById("pp-avatar");
+    av.innerHTML = p.avatar_url ? `<img src="${p.avatar_url}" alt="" />` : getInitials(p.username);
+    document.getElementById("pp-name").textContent  = p.username || "Unknown";
+    document.getElementById("pp-email").textContent = email || "No email on record";
+    const dmBtn = document.getElementById("pp-dm-btn");
+    dmBtn.style.display = userId === currentUserId ? "none" : "block";
+    dmBtn.onclick = async () => {
+      profilePopup.classList.remove("open");
+      if (!email) { alert("Can't DM — no email on record for this user."); return; }
+      document.getElementById("dm-email").value = email;
+      await startDMByEmail(email);
+    };
+    const rect = anchorEl.getBoundingClientRect();
+    profilePopup.style.top  = Math.min(rect.bottom+6, window.innerHeight-210)+"px";
+    profilePopup.style.left = Math.min(rect.right+6,  window.innerWidth -230)+"px";
+    profilePopup.classList.add("open");
+  }
+  document.addEventListener("click", e => { if(!profilePopup.contains(e.target)) profilePopup.classList.remove("open"); });
+
+  /* ════════════════ SWITCH ROOM ════════════════ */
+  function switchRoom(room) {
+    activeRoom=room; lastMsgUserId=null; lastMsgDate=null; replyingTo=null;
+    document.getElementById("reply-bar").classList.remove("show");
+    document.getElementById("hdr-icon").textContent = room.icon;
+    document.getElementById("hdr-name").textContent = room.name;
+    document.getElementById("hdr-desc").textContent =
+      room.type==="public"?"Public chat · everyone is here":
+      room.type==="dm"?"Direct Message":
+      room.serverName?`Community · ${room.serverName}`:"Community";
+    document.getElementById("message-input").placeholder = `Message ${room.name}...`;
+    document.querySelectorAll(".room-item,.dm-item").forEach(el=>el.classList.remove("active"));
+    if (room.type==="public")  document.getElementById("publicRoomItem").classList.add("active");
+    else if (room.type==="dm") document.querySelector(`[data-dm-id="${room.id}"]`)?.classList.add("active");
+
+    if (realtimeChannel) sb.removeChannel(realtimeChannel);
+    if (typingChannel)   sb.removeChannel(typingChannel);
+    typingUsers={}; renderTyping();
+    loadHistory();
+
+    const tbl = room.type==="dm"?"dm_messages":"messages";
+    /* Unique channel key per room switch */
+    const rtKey = `rt-${room.type}-${String(room.id).replace(/-/g,"")}-${Date.now()}`;
+    /* Build a Postgres filter so only relevant rows come through */
+    let pgFilter = undefined;
+    if      (room.type==="channel") pgFilter = `channel_id=eq.${room.id}`;
+    else if (room.type==="server")  pgFilter = `server_id=eq.${room.id}`;
+    else if (room.type==="dm")      pgFilter = `dm_id=eq.${room.id}`;
+
+    const rtChan = sb.channel(rtKey);
+    if (room.type === "channel") {
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"messages",
+        filter:`channel_id=eq.${room.id}`
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else if (room.type === "server") {
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"messages",
+        filter:`server_id=eq.${room.id}`
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else if (room.type === "dm") {
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"dm_messages",
+        filter:`dm_id=eq.${room.id}`
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    } else {
+      /* Public — server-side filter isn't reliable for NULL checks,
+         so we use the client-side guard in renderMessage instead */
+      rtChan.on("postgres_changes", {
+        event:"INSERT", schema:"public", table:"messages"
+      }, payload => { renderMessage(payload.new, true); scrollBottom(); });
+    }
+    realtimeChannel = rtChan.subscribe();
+
+    typingChannel = sb.channel(`typing-${room.type}-${room.id}`)
+      .on("broadcast",{event:"typing"}, payload=>{
+        const{username,avatar_url,uid}=payload.payload;
+        if(uid===currentUserId) return;
+        typingUsers[uid]={username,avatar_url}; renderTyping();
+        clearTimeout(typingTimeouts[uid]);
+        typingTimeouts[uid]=setTimeout(()=>{delete typingUsers[uid];renderTyping();},2500);
+      }).subscribe();
+
+    document.getElementById("chatLeft").classList.remove("mobile-open");
+  }
+
+  /* ════════════════ LOAD HISTORY — paginated ════════════════ */
+  let historyExhausted = false;
+  let oldestMsgDate    = null;
+  let isLoadingMore    = false;
+  
+  async function loadHistory() {
+    document.getElementById("chat-window").innerHTML = "";
+    msgElMap.clear();
+    lastMsgUserId = null; lastMsgDate = null;
+    historyExhausted = false; oldestMsgDate = null;
+    await fetchMessages(null);
+    scrollBottom();
+    setTimeout(scrollBottom, 80);
+  }
+  
+  async function fetchMessages(beforeDate) {
+    let query;
+    const LIMIT = 50;
+  
+    if      (activeRoom.type === "dm")      query = sb.from("dm_messages").select("*").eq("dm_id", activeRoom.id);
+    else if (activeRoom.type === "channel") query = sb.from("messages").select("*").eq("channel_id", activeRoom.id).is("deleted_at", null);
+    else if (activeRoom.type === "server")  query = sb.from("messages").select("*").eq("server_id", activeRoom.id).is("deleted_at", null);
+    else query = sb.from("messages").select("*").is("channel_id", null).is("dm_id", null).is("server_id", null).is("deleted_at", null);  
+    
+    if (beforeDate) query = query.lt("created_at", beforeDate);
+  
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(LIMIT);
+    if (error) { console.error("fetchMessages:", error.message); return; }
+    if (!data || !data.length) { historyExhausted = true; return; }
+    if (data.length < LIMIT) historyExhausted = true;
+  
+    const msgs = data.reverse();
+    oldestMsgDate = msgs[0].created_at;
+  
+    const win = document.getElementById("chat-window");
+    const prevScrollHeight = win.scrollHeight;
+  
+    /* Prepend older messages above existing ones */
+    if (beforeDate) {
+      /* Render into a temporary container then insert at top */
+      const savedLastUserId = lastMsgUserId;
+      const savedLastDate   = lastMsgDate;
+      lastMsgUserId = null; lastMsgDate = null;
+  
+      const frag = document.createDocumentFragment();
+      const tempWin = { appendChild: el => frag.appendChild(el), scrollTop: 0, scrollHeight: 0 };
+  
+      /* We need date dividers rendered in order, so render to a temp array */
+      const tempEls = [];
+      const origAppend = win.appendChild.bind(win);
+  
+      /* Temporarily redirect appendChild to collect elements */
+      msgs.forEach(m => renderMessageToFrag(m, tempEls));
+  
+      /* Insert collected elements at the top */
+      const firstChild = win.firstChild;
+      tempEls.reverse().forEach(el => win.insertBefore(el, firstChild));
+  
+      lastMsgUserId = savedLastUserId;
+      lastMsgDate   = savedLastDate;
+  
+      /* Maintain scroll position so user doesn't jump */
+      win.scrollTop = win.scrollHeight - prevScrollHeight;
+    } else {
+      msgs.forEach(m => renderMessage(m, false));
+  
+      /* Batch load reactions */
+      if (msgs.length && activeRoom.type !== "dm") {
+        const ids = msgs.map(m => m.id);
+        const { data: rxns } = await sb.from("reactions").select("emoji,user_id,message_id").in("message_id", ids);
+        if (rxns) {
+          const byMsg = {};
+          rxns.forEach(r => { (byMsg[r.message_id] = byMsg[r.message_id] || []).push(r); });
+          Object.entries(byMsg).forEach(([mid, rList]) => renderReactions(mid, rList));
+        }
+      }
+    }
+  }
+  
+  /* Renders a message and pushes its DOM element(s) into an array instead of the window */
+  function renderMessageToFrag(msg, arr) {
+    /* Room guard */
+    const r = activeRoom;
+    if (r.type === "public") { if (msg.channel_id || msg.dm_id || msg.server_id) return; }
+    else if (r.type === "channel") { if (String(msg.channel_id) !== String(r.id)) return; }
+    else if (r.type === "server")  { if (String(msg.server_id)  !== String(r.id)) return; }
+    else if (r.type === "dm")      { if (String(msg.dm_id)       !== String(r.id)) return; }
+    if (msgElMap.has(String(msg.id))) return;
+  
+    const win = document.getElementById("chat-window");
+    const msgDate = formatDate(msg.created_at);
+    if (msgDate !== lastMsgDate) {
+      const d = document.createElement("div");
+      d.className = "date-divider"; d.textContent = msgDate;
+      arr.push(d); lastMsgDate = msgDate; lastMsgUserId = null;
+    }
+  
+    const grouped = msg.user_id === lastMsgUserId; lastMsgUserId = msg.user_id;
+    const el = document.createElement("div");
+    el.className = "chat-message" + (grouped ? " grouped" : "");
+    el.dataset.msgId = msg.id; el.dataset.userId = msg.user_id || "";
+  
+    const roleBadge = msg.role && msg.role !== "user" ? `<span class="role-badge role-${msg.role}">${msg.role}</span>` : "";
+    const tagBadge  = msg.tag ? `<span class="user-tag">[${msg.tag}]</span>` : "";
+    const rawText   = (msg.text || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const safeText  = rawText.replace(/@(\w+)/g, (match, name) => {
+      const isMe = currentProfile && name.toLowerCase() === (currentProfile.username || "").toLowerCase();
+      return `<span class="mention-highlight${isMe ? " mine" : ""}">${match}</span>`;
+    });
+  
+    let replyHTML = "";
+    if (msg.reply_to_id && msg.reply_to_text) {
+      const sr = (msg.reply_to_text || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      replyHTML = `<div class="reply-quote" data-jump="${msg.reply_to_id}"><span class="rq-author">${msg.reply_to_username || "Unknown"}</span><span class="rq-text">${sr}</span></div>`;
+    }
+  
+    const avatarHTML = msg.avatar_url
+      ? `<img class="chat-avatar" src="${msg.avatar_url}" data-uid="${msg.user_id}" alt="" onerror="this.outerHTML='<div class=\\'chat-avatar initials\\' data-uid=\\'${msg.user_id}\\'>${getInitials(msg.username)}</div>'">`
+      : `<div class="chat-avatar initials" data-uid="${msg.user_id}">${getInitials(msg.username)}</div>`;
+  
+    let attachHTML = "";
+    if (msg.file_url) {
+      if (isImage(msg.file_url)) attachHTML = `<img class="msg-image" src="${msg.file_url}" alt="image" loading="lazy" />`;
+      else { const fn = decodeURIComponent(msg.file_url.split("/").pop().split("?")[0]); attachHTML = `<a class="msg-file" href="${msg.file_url}" target="_blank">📎 ${fn}</a>`; }
+    }
+  
+    el.innerHTML = `
+      ${avatarHTML}
+      <div class="msg-body">
+        ${!grouped ? `<div class="msg-meta"><span class="msg-username">${msg.username || "Unknown"}${tagBadge}${roleBadge}</span><span class="msg-time">${formatTime(msg.created_at)}</span></div>` : ""}
+        ${replyHTML}
+        ${safeText ? `<div class="msg-text">${safeText}</div>` : ""}
+        ${attachHTML}
+        <div class="reactions-row" id="reactions-${msg.id}"></div>
+      </div>
+      <div class="msg-actions">
+        <button class="msg-action-btn" data-reply="${msg.id}" title="Reply">↩️</button>
+        <button class="msg-action-btn" data-react="${msg.id}" title="React">😊</button>
+        ${currentUserId === msg.user_id ? `<button class="msg-action-btn" data-delete="${msg.id}" title="Delete">🗑️</button>` : ""}
+      </div>`;
+  
+    el.querySelectorAll(".chat-avatar").forEach(av => {
+      av.addEventListener("click", e => { e.stopPropagation(); showProfilePopup(av.dataset.uid, av); });
+    });
+    el.querySelectorAll(".reply-quote").forEach(q => {
+      q.addEventListener("click", () => {
+        const t = msgElMap.get(String(q.dataset.jump));
+        if (t) { t.scrollIntoView({ behavior:"smooth", block:"center" }); t.style.background = "rgba(59,130,246,.15)"; setTimeout(() => t.style.background = "", 1500); }
+      });
+    });
+  
+    const replyBtn = el.querySelector(`[data-reply="${msg.id}"]`);
+    if (replyBtn) replyBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      replyingTo = { id: msg.id, username: msg.username, text: msg.text || (msg.file_url ? "📎 file" : "") };
+      document.getElementById("rb-author").textContent = msg.username;
+      document.getElementById("rb-text").textContent = replyingTo.text;
+      document.getElementById("reply-bar").classList.add("show");
+      document.getElementById("message-input").focus();
+    });
+  
+    const reactBtn = el.querySelector(`[data-react="${msg.id}"]`);
+    const picker = buildMsgEmojiPicker(msg.id);
+    reactBtn.style.position = "relative"; reactBtn.appendChild(picker);
+    reactBtn.addEventListener("click", e => { e.stopPropagation(); picker.classList.toggle("open"); });
+  
+    const delBtn = el.querySelector(`[data-delete="${msg.id}"]`);
+    if (delBtn) delBtn.addEventListener("click", () => deleteMessage(msg.id));
+  
+    const img = el.querySelector(".msg-image");
+    if (img) img.addEventListener("click", () => { document.getElementById("lightbox-img").src = img.src; document.getElementById("lightbox").classList.add("open"); });
+  
+    msgElMap.set(String(msg.id), el);
+    arr.push(el);
+  
+    /* Load reactions */
+    loadReactionsSingle(msg.id);
+    if (msg.text) maybeTranslateMessage(el, msg.text);
+  }
+  
+  /* ── Scroll-up listener for infinite load ── */
+  document.getElementById("chat-window").addEventListener("scroll", async function() {
+    if (this.scrollTop > 120) return;          /* not near top */
+    if (isLoadingMore || historyExhausted) return;
+    if (!oldestMsgDate) return;
+  
+    isLoadingMore = true;
+  
+    /* Show a subtle loading indicator */
+    const loader = document.createElement("div");
+    loader.id = "history-loader";
+    loader.style.cssText = "text-align:center;padding:8px;font-size:12px;opacity:.45;";
+    loader.textContent = "Loading more…";
+    this.prepend(loader);
+  
+    await fetchMessages(oldestMsgDate);
+  
+    document.getElementById("history-loader")?.remove();
+    isLoadingMore = false;
+  });
+  /* ════════════════ RENDER MESSAGE ════════════════ */
+  function renderMessage(msg, loadRxn=true) {
+    /* ── Room isolation guard ── */
+    const r = activeRoom;
+    if (r.type === "public") {
+      if (msg.channel_id || msg.dm_id || msg.server_id) return;
+    } else if (r.type === "channel") {
+      if (String(msg.channel_id) !== String(r.id)) return;
+    } else if (r.type === "server") {
+      if (String(msg.server_id) !== String(r.id)) return;
+    } else if (r.type === "dm") {
+      if (String(msg.dm_id) !== String(r.id)) return;
+    }
+    if (msgElMap.has(String(msg.id))) return;
+    const win=document.getElementById("chat-window");
+    const msgDate=formatDate(msg.created_at);
+    if (msgDate!==lastMsgDate) {
+      const d=document.createElement("div"); d.className="date-divider"; d.textContent=msgDate;
+      win.appendChild(d); lastMsgDate=msgDate; lastMsgUserId=null;
+    }
+    const grouped=msg.user_id===lastMsgUserId; lastMsgUserId=msg.user_id;
+    const el=document.createElement("div");
+    el.className="chat-message"+(grouped?" grouped":"");
+    el.dataset.msgId=msg.id; el.dataset.userId=msg.user_id||"";
+
+    const roleBadge=msg.role&&msg.role!=="user"?`<span class="role-badge role-${msg.role}">${msg.role}</span>`:"";
+    const tagBadge =msg.tag?`<span class="user-tag">[${msg.tag}]</span>`:"";
+    const rawText = (msg.text||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    /* Highlight @mentions — bold blue, extra highlight if it's the current user */
+    const safeText = rawText.replace(/@(\w+)/g, (match, name) => {
+      const isMe = currentProfile && name.toLowerCase() === (currentProfile.username||"").toLowerCase();
+      return `<span class="mention-highlight${isMe?" mine":""}">${match}</span>`;
+    });
+
+    let replyHTML="";
+    if (msg.reply_to_id&&msg.reply_to_text) {
+      const sr=(msg.reply_to_text||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      replyHTML=`<div class="reply-quote" data-jump="${msg.reply_to_id}"><span class="rq-author">${msg.reply_to_username||"Unknown"}</span><span class="rq-text">${sr}</span></div>`;
+    }
+
+    const avatarHTML=msg.avatar_url
+      ?`<img class="chat-avatar" src="${msg.avatar_url}" data-uid="${msg.user_id}" alt="" onerror="this.outerHTML='<div class=\\'chat-avatar initials\\' data-uid=\\'${msg.user_id}\\'>${getInitials(msg.username)}</div>'">`
+      :`<div class="chat-avatar initials" data-uid="${msg.user_id}">${getInitials(msg.username)}</div>`;
+
+    let attachHTML="";
+    if (msg.file_url) {
+      if (isImage(msg.file_url)) attachHTML=`<img class="msg-image" src="${msg.file_url}" alt="image" loading="lazy" />`;
+      else { const fn=decodeURIComponent(msg.file_url.split("/").pop().split("?")[0]); attachHTML=`<a class="msg-file" href="${msg.file_url}" target="_blank">📎 ${fn}</a>`; }
+    }
+
+    el.innerHTML=`
+      ${avatarHTML}
+      <div class="msg-body">
+        ${!grouped?`<div class="msg-meta"><span class="msg-username">${msg.username||"Unknown"}${tagBadge}${roleBadge}</span><span class="msg-time">${formatTime(msg.created_at)}</span></div>`:""}
+        ${replyHTML}
+        ${safeText?`<div class="msg-text">${safeText}</div>`:""}
+        ${attachHTML}
+        <div class="reactions-row" id="reactions-${msg.id}"></div>
+      </div>
+      <div class="msg-actions">
+        <button class="msg-action-btn" data-reply="${msg.id}" title="Reply">↩️</button>
+        <button class="msg-action-btn" data-react="${msg.id}" title="React">😊</button>
+        ${currentUserId===msg.user_id?`<button class="msg-action-btn" data-delete="${msg.id}" title="Delete">🗑️</button>`:""}
+      </div>`;
+
+    el.querySelectorAll(".chat-avatar").forEach(av=>{
+      av.addEventListener("click",e=>{e.stopPropagation();showProfilePopup(av.dataset.uid,av);});
+    });
+    el.querySelectorAll(".reply-quote").forEach(q=>{
+      q.addEventListener("click",()=>{
+        const t=msgElMap.get(String(q.dataset.jump));
+        if(t){t.scrollIntoView({behavior:"smooth",block:"center"});t.style.background="rgba(59,130,246,.15)";setTimeout(()=>t.style.background="",1500);}
+      });
+    });
+
+    const replyBtn=el.querySelector(`[data-reply="${msg.id}"]`);
+    if(replyBtn) replyBtn.addEventListener("click",e=>{
+      e.stopPropagation();
+      replyingTo={id:msg.id,username:msg.username,text:msg.text||(msg.file_url?"📎 file":"")};
+      document.getElementById("rb-author").textContent=msg.username;
+      document.getElementById("rb-text").textContent=replyingTo.text;
+      document.getElementById("reply-bar").classList.add("show");
+      document.getElementById("message-input").focus();
+    });
+
+    const reactBtn=el.querySelector(`[data-react="${msg.id}"]`);
+    const picker=buildMsgEmojiPicker(msg.id);
+    reactBtn.style.position="relative"; reactBtn.appendChild(picker);
+    reactBtn.addEventListener("click",e=>{e.stopPropagation();picker.classList.toggle("open");});
+
+    const delBtn=el.querySelector(`[data-delete="${msg.id}"]`);
+    if(delBtn) delBtn.addEventListener("click",()=>deleteMessage(msg.id));
+
+    const img=el.querySelector(".msg-image");
+    if(img) img.addEventListener("click",()=>{document.getElementById("lightbox-img").src=img.src;document.getElementById("lightbox").classList.add("open");});
+
+    win.appendChild(el);
+    msgElMap.set(String(msg.id), el);
+    /* Ping sound if current user is @mentioned */
+    if (loadRxn && msg.text && currentProfile) {
+      const mentioned = new RegExp("@"+currentProfile.username+"\\b","i").test(msg.text);
+      if (mentioned && msg.user_id !== currentUserId) {
+        const pingAudio = new Audio("../click-sound.mp3");
+        pingAudio.volume = 0.6;
+        pingAudio.play().catch(()=>{});
+        /* Flash tab title */
+        const origTitle = document.title;
+        let flash = 0;
+        const fi = setInterval(()=>{ document.title = flash++%2===0?"🔔 Mentioned!" : origTitle; if(flash>6){clearInterval(fi);document.title=origTitle;} }, 500);
+      }
+    }
+    /* Auto-translate if enabled */
+    if (msg.text) maybeTranslateMessage(el, msg.text);
+    if(loadRxn) {
+      loadReactionsSingle(msg.id);
+      /* Auto-scroll — only if user is near the bottom */
+      const w=document.getElementById("chat-window");
+      if(w.scrollHeight - w.scrollTop - w.clientHeight < 300) scrollBottom();
+    }
+  }
+
+  /* ════════════════ REACTIONS ════════════════ */
+  function buildMsgEmojiPicker(msgId) {
+    const p=document.createElement("div"); p.className="emoji-picker";
+    EMOJIS.forEach(em=>{
+      const b=document.createElement("button"); b.className="emoji-opt"; b.textContent=em;
+      b.addEventListener("click",e=>{e.stopPropagation();toggleReaction(msgId,em);p.classList.remove("open");});
+      p.appendChild(b);
+    }); return p;
+  }
+  async function loadReactionsSingle(msgId) {
+    const{data}=await sb.from("reactions").select("emoji,user_id").eq("message_id",msgId);
+    if(data) renderReactions(msgId,data);
+  }
+  function renderReactions(msgId,reactions) {
+    const el=msgElMap.get(String(msgId));
+    const row=el?.querySelector(`#reactions-${msgId}`) || document.getElementById(`reactions-${msgId}`);
+    if(!row) return;
+    const g={}; reactions.forEach(r=>{(g[r.emoji]=g[r.emoji]||[]).push(r.user_id);});
+    row.innerHTML="";
+    Object.entries(g).forEach(([em,users])=>{
+      const pill=document.createElement("div");
+      pill.className="reaction-pill"+(users.includes(currentUserId)?" mine":"");
+      pill.innerHTML=`${em}<span class="r-count">${users.length}</span>`;
+      pill.addEventListener("click",()=>toggleReaction(msgId,em));
+      row.appendChild(pill);
+    });
+  }
+  async function toggleReaction(msgId,emoji) {
+    if(!currentUserId){openAuth();return;}
+    const{data:ex}=await sb.from("reactions").select("id").eq("message_id",msgId).eq("user_id",currentUserId).eq("emoji",emoji).maybeSingle();
+    if(ex) await sb.from("reactions").delete().eq("message_id",msgId).eq("user_id",currentUserId).eq("emoji",emoji);
+    else   await sb.from("reactions").insert({message_id:msgId,user_id:currentUserId,emoji});
+    loadReactionsSingle(msgId);
+  }
+
+  /* ════════════════ TYPING ════════════════ */
+  function renderTyping() {
+    const el=document.getElementById("typing-indicator");
+    const users=Object.values(typingUsers);
+    if(!users.length){el.innerHTML="";return;}
+    const names=users.map(u=>u.username).join(", ");
+    const label=users.length===1?`${names} is typing`:users.length<=3?`${names} are typing`:`${users.length} people are typing`;
+    const avHTML=users.slice(0,3).map(u=>`<div class="typing-avatar">${getInitials(u.username)}</div>`).join("");
+    el.innerHTML=`<div class="typing-avatars">${avHTML}</div><div class="typing-dots"><span></span><span></span><span></span></div><span>${label}</span>`;
+  }
+
+  /* ════════════════ FILE UPLOAD ════════════════ */
+  document.getElementById("attachBtn").addEventListener("click",()=>document.getElementById("fileInput").click());
+  document.getElementById("fileInput").addEventListener("change",e=>{
+    const file=e.target.files[0]; if(!file) return;
+    pendingFile=file;
+    document.getElementById("up-name").textContent=file.name;
+    const thumb=document.getElementById("up-thumb");
+    if(file.type.startsWith("image/")){const r=new FileReader();r.onload=ev=>{thumb.innerHTML=`<img src="${ev.target.result}" style="max-height:48px;border-radius:6px;" />`;};r.readAsDataURL(file);}
+    else thumb.innerHTML="📎";
+    document.getElementById("upload-preview").classList.add("show");
+    e.target.value="";
+  });
+  document.getElementById("upload-cancel").addEventListener("click",clearUpload);
+  function clearUpload(){
+    pendingFile=null;
+    document.getElementById("upload-preview").classList.remove("show");
+    document.getElementById("up-thumb").innerHTML="";
+    document.getElementById("up-name").textContent="";
+  }
+  async function uploadFile(file) {
+    const ext=file.name.split(".").pop().toLowerCase();
+    /* Include user_id in path — satisfies Supabase default storage RLS */
+    const uid=currentUserId||"anon";
+    const path=`${uid}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const prog=document.getElementById("upload-progress"),bar=document.getElementById("upload-progress-bar");
+    prog.classList.add("show"); bar.style.width="40%";
+    const{error}=await sb.storage.from("chat-uploads").upload(path,file,{cacheControl:"3600",upsert:false});
+    bar.style.width="100%"; setTimeout(()=>{prog.classList.remove("show");bar.style.width="0%";},500);
+    if(error){alert("Upload failed: "+error.message);return null;}
+    const{data:urlData}=sb.storage.from("chat-uploads").getPublicUrl(path);
+    return urlData?.publicUrl||null;
+  }
+
+  /* ════════════════ REPLY BAR ════════════════ */
+  document.getElementById("reply-cancel").addEventListener("click",()=>{
+    replyingTo=null; document.getElementById("reply-bar").classList.remove("show");
+  });
+
+  /* ════════════════ INPUT EMOJI PICKER ════════════════ */
+  const inputPicker=document.getElementById("inputEmojiPicker");
+  ['😀','😂','😍','🥰','😎','🤔','😢','😡','👍','👎','❤️','🔥','💀','🎉','✨','💯','🚀','⭐','👀','🙏','💪','🤖','😊','🥺','🤣','😅','😱'].forEach(em=>{
+    const b=document.createElement("button");b.className="emoji-opt";b.textContent=em;
+    b.addEventListener("click",e=>{
+      e.stopPropagation();
+      const inp=document.getElementById("message-input"),pos=inp.selectionStart;
+      inp.value=inp.value.slice(0,pos)+em+inp.value.slice(pos);
+      inp.focus(); inputPicker.classList.remove("open");
+    }); inputPicker.appendChild(b);
+  });
+  document.getElementById("emojiBtn").addEventListener("click",e=>{e.stopPropagation();inputPicker.classList.toggle("open");});
+  document.addEventListener("click",()=>{inputPicker.classList.remove("open");document.querySelectorAll(".emoji-picker.open").forEach(p=>p.classList.remove("open"));});
+
+  /* Auto-resize */
+  const msgInput=document.getElementById("message-input");
+  msgInput.addEventListener("input",()=>{msgInput.style.height="auto";msgInput.style.height=Math.min(msgInput.scrollHeight,120)+"px";});
+
+  /* Typing broadcast */
+  let typingDebounce;
+  msgInput.addEventListener("input",()=>{
+    if(!currentUserId||!typingChannel) return;
+    clearTimeout(typingDebounce);
+    typingDebounce=setTimeout(()=>{
+      const p=currentProfile; if(!p) return;
+      typingChannel.send({type:"broadcast",event:"typing",payload:{username:p.username,avatar_url:p.avatar_url,uid:currentUserId}});
+    },200);
+  });
+
+  /* ════════════════ SEND — with isSending guard ════════════════ */
+  async function sendMessage() {
+    if (isSending) return;
+    /* Slow mode check */
+    if (slowModeSeconds > 0) {
+      const elapsed = (Date.now() - lastSentTime) / 1000;
+      if (elapsed < slowModeSeconds) {
+        showToast(`🐌 Slow mode — wait ${Math.ceil(slowModeSeconds - elapsed)}s`);
+        return;
+      }
+    }
+    const text=msgInput.value.trim();
+    if (!text&&!pendingFile) return;
+    const{data:{session}}=await sb.auth.getSession();
+    if (!session){openAuth();return;}
+    const p=currentProfile||await getProfile(session.user.id);
+    if (text.startsWith("/")) { await runCommand(text,p); msgInput.value=""; msgInput.style.height="auto"; return; }
+
+    isSending=true; document.getElementById("send-button").disabled=true;
+    try {
+      let fileUrl=null;
+      if (pendingFile) {
+        fileUrl=await uploadFile(pendingFile);
+        if (fileUrl===null) return; /* upload failed, stop */
+        clearUpload();
+      }
+      const payload={
+        user_id:session.user.id, username:p.username||session.user.email,
+        avatar_url:p.avatar_url||null, tag:p.tag||null, role:p.role||"user",
+        text:filterProfanity(applyShortcodes(text)), file_url:fileUrl,
+      };
+      if (replyingTo) {
+        payload.reply_to_id=replyingTo.id;
+        payload.reply_to_username=replyingTo.username;
+        payload.reply_to_text=(replyingTo.text||"").slice(0,100);
+        replyingTo=null; document.getElementById("reply-bar").classList.remove("show");
+      }
+      if (activeRoom.type==="dm") {
+        payload.dm_id=activeRoom.id;
+        const{error}=await sb.from("dm_messages").insert(payload);
+        if(error){console.error("Send:",error.message);alert("Error: "+error.message);return;}
+        await sb.from("direct_messages").update({updated_at:new Date().toISOString()}).eq("id",activeRoom.id);
+      } else {
+        if(activeRoom.type==="channel") payload.channel_id=activeRoom.id;
+        /* server_id only set if the column exists — safe to attempt, Supabase ignores unknown keys */
+        if(activeRoom.type==="server") {
+          try { payload.server_id=activeRoom.id; } catch(e) {}
+        }
+        const{error}=await sb.from("messages").insert(payload);
+        if(error){console.error("Send:",error.message);alert("Error: "+error.message);return;}
+      }
+      msgInput.value=""; msgInput.style.height="auto";
+      lastSentTime = Date.now();
+    } finally { isSending=false; document.getElementById("send-button").disabled=false; }
+  }
+
+  /* ════════════════ DELETE ════════════════ */
+  async function deleteMessage(msgId) {
+    if(!confirm("Delete this message?")) return;
+    if(activeRoom.type==="dm") await sb.from("dm_messages").delete().eq("id",msgId);
+    else await sb.from("messages").update({deleted_at:new Date().toISOString()}).eq("id",msgId);
+    msgElMap.get(String(msgId))?.remove();
+    msgElMap.delete(String(msgId));
+  }
+
+  /* ════════════════ SLASH COMMANDS ════════════════ */
+  const SLASH_COMMANDS = [
+    /* ── All users ── */
+    { cmd:"/me",        args:"<action>",           desc:"Send an action message",       adminOnly:false, modAllowed:false },
+    { cmd:"/shrug",     args:"",                   desc:"¯\\_(ツ)_/¯",                  adminOnly:false, modAllowed:false },
+    { cmd:"/tableflip", args:"",                   desc:"(╯°□°）╯︵ ┻━┻",              adminOnly:false, modAllowed:false },
+    { cmd:"/unflip",    args:"",                   desc:"┬─┬ ノ( ゜-゜ノ)",             adminOnly:false, modAllowed:false },
+    { cmd:"/lenny",     args:"",                   desc:"( ͡° ͜ʖ ͡°)",                 adminOnly:false, modAllowed:false },
+    { cmd:"/clear",     args:"",                   desc:"Clear your local chat view",   adminOnly:false, modAllowed:false },
+    { cmd:"/help",      args:"",                   desc:"Show available commands",      adminOnly:false, modAllowed:false },
+    /* ── Mod + Admin ── */
+    { cmd:"/warn",      args:"<user> <msg>|<msg>", desc:"Warn a user or broadcast",     adminOnly:true,  modAllowed:true  },
+    { cmd:"/mute",      args:"<user> <time> <s|m>",desc:"Mute a user",                  adminOnly:true,  modAllowed:true  },
+    /* ── Admin only ── */
+    { cmd:"/promote",   args:"<user>",             desc:"Promote user to mod",          adminOnly:true,  modAllowed:false },
+    { cmd:"/demote",    args:"<user>",             desc:"Demote user to member",        adminOnly:true,  modAllowed:false },
+    { cmd:"/ban",       args:"<user>",             desc:"Ban a user",                   adminOnly:true,  modAllowed:false },
+    { cmd:"/unban",     args:"<user>",             desc:"Unban a user",                 adminOnly:true,  modAllowed:false },
+    { cmd:"/tag",       args:"<user> <tag>",       desc:"Set a custom tag on a user",   adminOnly:true,  modAllowed:false },
+    { cmd:"/role",      args:"<user> <role>",      desc:"Set role (user/mod/admin)",    adminOnly:true,  modAllowed:false },
+    { cmd:"/delete",    args:"<message_id>",       desc:"Delete a message by ID",       adminOnly:true,  modAllowed:false },
+    { cmd:"/announce",  args:"<message>",          desc:"Send a bold announcement",     adminOnly:true,  modAllowed:false },
+    { cmd:"/kick",      args:"<user>",             desc:"Remove user from community",   adminOnly:true,  modAllowed:false },
+    { cmd:"/slow",      args:"<seconds>",          desc:"Set slow mode (0 to disable)", adminOnly:true,  modAllowed:false },
+  ];
+
+  let slowModeSeconds = 0;
+  let lastSentTime    = 0;
+
+  async function runCommand(text, profile) {
+    const parts = text.trim().split(" ");
+    const cmd   = parts[0].toLowerCase();
+    const args  = parts.slice(1);
+  
+    const isAdmin = profile.role === "admin";
+    const isMod   = profile.role === "mod" || isAdmin;
+  
+    const userCommands  = ["/me","/shrug","/tableflip","/unflip","/lenny","/clear","/help"];
+    const modCommands   = ["/warn","/mute"];
+    const adminCommands = ["/promote","/demote","/ban","/unban","/tag","/role","/delete","/announce","/kick","/slow"];
+  
+    if (userCommands.includes(cmd)) {
+      /* allowed for everyone — fall through */
+    } else if (modCommands.includes(cmd)) {
+      if (!isMod) { showToast("❌ Mods and admins only."); return; }
+    } else if (adminCommands.includes(cmd)) {
+      if (!isAdmin) { showToast("❌ Admins only."); return; }
+    } else {
+      showToast("❌ Unknown command. Type /help for a list.");
+      return;
+    }
+  
+    /* ── All-user commands ── */
+    if (cmd === "/me") {
+      if (!args.length) return;
+      const { data:{session} } = await sb.auth.getSession();
+      await sb.from("messages").insert({
+        user_id: session.user.id, username: profile.username,
+        avatar_url: profile.avatar_url||null, role: profile.role||"user",
+        text: `_${profile.username} ${filterProfanity(args.join(" "))}_`,
+        ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+      });
+      return;
+    }
+    if (cmd === "/shrug")     { msgInput.value = "¯\\_(ツ)_/¯";     return; }
+    if (cmd === "/tableflip") { msgInput.value = "(╯°□°）╯︵ ┻━┻"; return; }
+    if (cmd === "/unflip")    { msgInput.value = "┬─┬ ノ( ゜-゜ノ)"; return; }
+    if (cmd === "/lenny")     { msgInput.value = "( ͡° ͜ʖ ͡°)";     return; }
+    if (cmd === "/clear")     { document.getElementById("chat-window").innerHTML=""; msgElMap.clear(); return; }
+    if (cmd === "/help") {
+      const list = SLASH_COMMANDS
+        .filter(c => !c.adminOnly || isAdmin || (isMod && c.modAllowed))
+        .map(c => `${c.cmd} ${c.args} — ${c.desc}`).join("\n");
+      alert("Available commands:\n\n" + list);
+      return;
+    }
+  
+    /* ── Mod + Admin commands ── */
+    if (cmd === "/warn") {
+      if (!args[0]) { showToast("Usage: /warn <user> <message>  or  /warn <message>"); return; }
+      const { data: matched } = await sb.from("profiles").select("username").eq("username", args[0]).maybeSingle();
+      if (matched) {
+        const warnMsg = args.slice(1).join(" ");
+        if (!warnMsg) { showToast("Usage: /warn <user> <message>"); return; }
+        await sb.from("messages").insert({
+          user_id:"system", username:"System", avatar_url:null, tag:"warn",
+          text:`⚠️ Warning to ${args[0]}: ${warnMsg} — issued by ${profile.username}`, role:"admin",
+          ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+        });
+        showToast(`⚠️ Warning issued to ${args[0]}`);
+      } else {
+        await sb.from("messages").insert({
+          user_id:"system", username:"System", avatar_url:null, tag:"warn",
+          text:`⚠️ Warning to all: ${args.join(" ")} — issued by ${profile.username}`, role:"admin",
+          ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+        });
+        showToast("⚠️ Broadcast warning sent");
+      }
+      return;
+    }
+  
+    if (cmd === "/mute") {
+      const targetUser = args[0], timeVal = parseInt(args[1]), unit = (args[2]||"s").toLowerCase();
+      if (!targetUser || isNaN(timeVal)) { showToast("Usage: /mute <user> <time> <s|m>"); return; }
+      if (!["s","m"].includes(unit))     { showToast("Unit must be 's' or 'm'."); return; }
+      const durationMs   = unit === "m" ? timeVal * 60000 : timeVal * 1000;
+      const mutedUntilTs = new Date(Date.now() + durationMs).toISOString();
+      const { error } = await sb.from("profiles").update({ muted_until: mutedUntilTs }).eq("username", targetUser);
+      if (error) { showToast(`Error: ${error.message}`); return; }
+      const dur = unit === "m" ? `${timeVal}m` : `${timeVal}s`;
+      await sb.from("messages").insert({
+        user_id:"system", username:"System", avatar_url:null, tag:null,
+        text:`🔇 ${targetUser} muted for ${dur} by ${profile.username}`, role:"admin",
+        ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+      });
+      showToast(`🔇 Muted ${targetUser} for ${dur}`);
+      return;
+    }
+  
+    /* ── Admin-only commands ── */
+    if (cmd === "/promote")  { await sb.from("profiles").update({role:"mod"}).eq("username",args[0]);   showToast(`✅ Promoted ${args[0]} to mod`); }
+    else if (cmd === "/demote")   { await sb.from("profiles").update({role:"user"}).eq("username",args[0]);  showToast(`✅ Demoted ${args[0]}`); }
+    else if (cmd === "/ban")      { await sb.from("profiles").update({banned:true}).eq("username",args[0]);  showToast(`🚫 Banned ${args[0]}`); }
+    else if (cmd === "/unban")    { await sb.from("profiles").update({banned:false}).eq("username",args[0]); showToast(`✅ Unbanned ${args[0]}`); }
+    else if (cmd === "/tag")      { const tag=args.slice(1).join(" "); await sb.from("profiles").update({tag}).eq("username",args[0]); showToast(`🏷️ Tagged ${args[0]}: ${tag}`); }
+    else if (cmd === "/role") {
+      const [targetUser, newRole] = args;
+      if (!targetUser || !newRole) { showToast("Usage: /role <user> <role>"); return; }
+      const valid = ["user","mod","admin"];
+      if (!valid.includes(newRole.toLowerCase())) { showToast(`Invalid role. Valid: ${valid.join(", ")}`); return; }
+      const { error } = await sb.from("profiles").update({role:newRole.toLowerCase()}).eq("username",targetUser);
+      if (error) { showToast(`Error: ${error.message}`); return; }
+      showToast(`✅ Set ${targetUser}'s role to ${newRole.toLowerCase()}`);
+    }
+    else if (cmd === "/delete") {
+      const id = parseInt(args[0]); if (!id) { showToast("Usage: /delete <message_id>"); return; }
+      await sb.from("messages").update({deleted_at:new Date().toISOString()}).eq("id",id);
+      msgElMap.get(String(id))?.remove(); msgElMap.delete(String(id));
+      showToast("🗑️ Message deleted");
+    }
+    else if (cmd === "/announce") {
+      const { data:{session} } = await sb.auth.getSession();
+      await sb.from("messages").insert({
+        user_id:session.user.id, username:profile.username,
+        avatar_url:profile.avatar_url||null, role:profile.role,
+        text:`📢 **${args.join(" ")}**`,
+        ...(activeRoom.type==="channel"?{channel_id:activeRoom.id}:{})
+      });
+    }
+    else if (cmd === "/kick") {
+      await sb.from("server_members").delete().eq("user_id",args[0]).eq("server_id",activeRoom.serverId||activeRoom.id);
+      showToast(`👢 Kicked ${args[0]}`);
+    }
+    else if (cmd === "/slow") {
+      slowModeSeconds = parseInt(args[0]) || 0;
+      showToast(slowModeSeconds ? `🐌 Slow mode: ${slowModeSeconds}s` : "✅ Slow mode disabled");
+    }
+  }
+  /* ── Toast notification ── */
+  function showToast(msg) {
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:rgba(15,23,42,.95);color:#fff;padding:8px 18px;border-radius:999px;
+      font-size:13px;font-weight:600;z-index:9999;pointer-events:none;
+      animation:toastIn .2s ease;`;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 2500);
+  }
+
+  /* ════════════════════════════════════════
+     AUTO-TRANSLATE
+     Uses MyMemory free API — no key needed.
+     Translates incoming messages if user has
+     a target language selected.
+  ════════════════════════════════════════ */
+  const translateCache = {};
+
+  async function translateText(text, targetLang) {
+    if (!text || !targetLang) return null;
+    const key = `${targetLang}:${text}`;
+    if (translateCache[key]) return translateCache[key];
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=autodetect|${targetLang}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const translated = data?.responseData?.translatedText;
+      /* MyMemory returns the original if it can't translate */
+      if (!translated || translated === text) return null;
+      translateCache[key] = translated;
+      return translated;
+    } catch { return null; }
+  }
+
+  async function maybeTranslateMessage(el, originalText) {
+    const lang = document.getElementById("translateLang")?.value;
+    if (!lang || !originalText) return;
+    /* Don't translate very short strings or pure emoji */
+    if (originalText.trim().length < 3) return;
+    const translated = await translateText(originalText, lang);
+    if (!translated) return;
+    /* Find the msg-text div inside this element */
+    const textDiv = el.querySelector(".msg-text");
+    if (!textDiv) return;
+    /* Add translation below in a muted pill */
+    if (el.querySelector(".msg-translation")) return;
+    const pill = document.createElement("div");
+    pill.className = "msg-translation";
+    pill.style.cssText = "font-size:12px;color:var(--mut);margin-top:3px;font-style:italic;";
+    pill.textContent = "⟳ " + translated;
+    textDiv.after(pill);
+  }
+
+  /* Re-translate all visible messages when language changes */
+  document.getElementById("translateLang")?.addEventListener("change", () => {
+    const lang = document.getElementById("translateLang").value;
+    if (!lang) {
+      /* Remove all existing translations */
+      document.querySelectorAll(".msg-translation").forEach(el => el.remove());
+      return;
+    }
+    /* Translate all currently visible messages */
+    msgElMap.forEach((el, msgId) => {
+      const textDiv = el.querySelector(".msg-text");
+      if (textDiv) {
+        el.querySelector(".msg-translation")?.remove();
+        maybeTranslateMessage(el, textDiv.textContent);
+      }
+    });
+  });
+
+  function scrollBottom() {
+    /* Double rAF: first frame lets browser finish layout,
+       second frame measures the final scrollHeight after paint */
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        const w=document.getElementById("chat-window");
+        w.scrollTop=w.scrollHeight;
+      });
+    });
+  }
+
+  document.getElementById("send-button").addEventListener("click",sendMessage);
+  msgInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  document.getElementById("lightbox").addEventListener("click",()=>document.getElementById("lightbox").classList.remove("open"));
+
+  /* ════════════════ COMMUNITY MODALS ════════════════ */
+  document.getElementById("createCommunityBtn").addEventListener("click",()=>{if(!currentUserId){openAuth();return;}document.getElementById("cc-name").value="";document.getElementById("cc-passcode").value="";document.getElementById("cc-error").textContent="";document.getElementById("createCommunityModal").classList.add("open");});
+  document.getElementById("cc-cancel").addEventListener("click",()=>document.getElementById("createCommunityModal").classList.remove("open"));
+  document.getElementById("cc-create").addEventListener("click",async()=>{
+    const name=document.getElementById("cc-name").value.trim(),passcode=document.getElementById("cc-passcode").value.trim();
+    if(!name){document.getElementById("cc-error").textContent="Name required.";return;}
+    const{data:server,error}=await sb.from("servers").insert({name,passcode:passcode||null,owner_id:currentUserId}).select().single();
+    if(error){document.getElementById("cc-error").textContent=error.message;return;}
+    /* Try to create a default channel; if it fails just use the server as the room */
+    await sb.from("channels").insert({name:"general",server_id:server.id,is_public:true});
+    await sb.from("server_members").insert({server_id:server.id,user_id:currentUserId});
+    document.getElementById("createCommunityModal").classList.remove("open");
+    await loadCommunities();
+    await enterCommunity(server);
+  });
+
+  document.getElementById("browseCommunityBtn").addEventListener("click",async()=>{
+    if(!currentUserId){openAuth();return;}
+    const{data}=await sb.from("servers").select("*").order("name");
+    if(!data||!data.length){alert("No communities yet!");return;}
+    const names=data.map((s,i)=>`${i+1}. ${s.name}${s.passcode?" 🔒":""}`).join("\n");
+    const pick=prompt(`Communities:\n${names}\n\nEnter number:`);
+    const idx=parseInt(pick)-1;
+    if(isNaN(idx)||!data[idx]) return;
+    await handleCommunityClick(data[idx]);
+  });
+
+  document.getElementById("jc-cancel").addEventListener("click",()=>{document.getElementById("joinCommunityModal").classList.remove("open");joinPending=null;});
+  document.getElementById("jc-join").addEventListener("click",async()=>{if(!joinPending)return;await joinCommunity(joinPending,document.getElementById("jc-passcode").value.trim());});
+  document.getElementById("jc-passcode").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("jc-join").click();});
+
+  /* ════════════════ DM MODAL ════════════════ */
+  document.getElementById("startDmBtn").addEventListener("click",()=>{if(!currentUserId){openAuth();return;}document.getElementById("dm-email").value="";document.getElementById("dm-error").textContent="";document.getElementById("startDmModal").classList.add("open");});
+  document.getElementById("dm-cancel").addEventListener("click",()=>document.getElementById("startDmModal").classList.remove("open"));
+  document.getElementById("dm-start").addEventListener("click",async()=>await startDMByEmail(document.getElementById("dm-email").value.trim()));
+  document.getElementById("dm-email").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("dm-start").click();});
+
+  document.getElementById("roomsToggle").addEventListener("click",()=>document.getElementById("chatLeft").classList.toggle("mobile-open"));
+
+  /* ════════════════════════════════════════
+     @MENTION AUTOCOMPLETE + /SLASH HELPER
+  ════════════════════════════════════════ */
+  let mentionQuery     = null;
+  let mentionStart     = 0;
+  let mentionSelIndex  = 0;
+  let slashSelIndex    = 0;
+  const knownUsers     = [];   /* populated from message senders we see */
+
+  function registerUser(username) {
+    if (username && !knownUsers.includes(username)) knownUsers.push(username);
+  }
+
+  function showMentionPopup(query) {
+    const popup = document.getElementById("mention-popup");
+    const matches = knownUsers.filter(u => u.toLowerCase().startsWith(query.toLowerCase())).slice(0,8);
+    if (!matches.length) { popup.classList.remove("open"); return; }
+    popup.innerHTML = matches.map((u,i) =>
+      `<div class="mention-option${i===mentionSelIndex?" selected":""}" data-user="${u}">
+        <div class="mention-avatar">${u[0].toUpperCase()}</div>
+        <span>@${u}</span>
+      </div>`).join("");
+    popup.classList.add("open");
+    popup.querySelectorAll(".mention-option").forEach(opt => {
+      opt.addEventListener("mousedown", e => { e.preventDefault(); insertMention(opt.dataset.user); });
+    });
+  }
+
+  function insertMention(username) {
+    const val = msgInput.value;
+    msgInput.value = val.slice(0, mentionStart) + "@" + username + " " + val.slice(msgInput.selectionStart);
+    mentionQuery = null;
+    document.getElementById("mention-popup").classList.remove("open");
+    msgInput.focus();
+  }
+
+  function showSlashPopup(query) {
+    const popup   = document.getElementById("slash-popup");
+    const isAdmin = currentProfile?.role === "admin";
+    const isMod   = currentProfile?.role === "mod" || isAdmin;
+  
+    const show = SLASH_COMMANDS
+      .filter(c => {
+        if (!c.adminOnly) return c.cmd.startsWith("/" + query);
+        if (isAdmin)      return c.cmd.startsWith("/" + query);
+        if (isMod && c.modAllowed) return c.cmd.startsWith("/" + query);
+        return false;
+      })
+      .slice(0, 8);
+  
+    if (!show.length) { popup.classList.remove("open"); return; }
+  
+    popup.innerHTML = show.map((c,i) =>
+      `<div class="slash-option${i===slashSelIndex?" selected":""}" data-cmd="${c.cmd}">
+        <span class="slash-cmd">${c.cmd} <small style="opacity:.5;font-weight:400;">${c.args}</small></span>
+        <span class="slash-desc">${c.desc}</span>
+      </div>`).join("");
+    popup.classList.add("open");
+    popup.querySelectorAll(".slash-option").forEach(opt => {
+      opt.addEventListener("mousedown", e => {
+        e.preventDefault();
+        msgInput.value = opt.dataset.cmd + " ";
+        popup.classList.remove("open");
+        msgInput.focus();
+      });
+    });
+  }
+  
+  msgInput.addEventListener("input", () => {
+    const val = msgInput.value;
+    const pos = msgInput.selectionStart;
+
+    /* Slash command helper */
+    if (val.startsWith("/") && !val.includes(" ")) {
+      slashSelIndex = 0;
+      showSlashPopup(val.slice(1));
+      document.getElementById("mention-popup").classList.remove("open");
+      return;
+    }
+    document.getElementById("slash-popup").classList.remove("open");
+
+    /* @mention autocomplete */
+    const textBefore = val.slice(0, pos);
+    const atMatch    = textBefore.match(/@(\w*)$/);
+    if (atMatch) {
+      mentionQuery  = atMatch[1];
+      mentionStart  = textBefore.lastIndexOf("@");
+      mentionSelIndex = 0;
+      showMentionPopup(mentionQuery);
+    } else {
+      mentionQuery = null;
+      document.getElementById("mention-popup").classList.remove("open");
+    }
+  });
+
+  /* Keyboard navigation for popups */
+  msgInput.addEventListener("keydown", e => {
+    const mp = document.getElementById("mention-popup");
+    const sp = document.getElementById("slash-popup");
+    if (mp.classList.contains("open")) {
+      const opts = mp.querySelectorAll(".mention-option");
+      if (e.key === "ArrowDown")  { e.preventDefault(); mentionSelIndex = Math.min(mentionSelIndex+1, opts.length-1); showMentionPopup(mentionQuery); }
+      if (e.key === "ArrowUp")    { e.preventDefault(); mentionSelIndex = Math.max(mentionSelIndex-1, 0); showMentionPopup(mentionQuery); }
+      if (e.key === "Tab"||e.key==="Enter") { e.preventDefault(); const sel=mp.querySelector(".selected"); if(sel) insertMention(sel.dataset.user); return; }
+      if (e.key === "Escape")     { mp.classList.remove("open"); mentionQuery=null; }
+    }
+    if (sp.classList.contains("open")) {
+      const opts = sp.querySelectorAll(".slash-option");
+      if (e.key === "ArrowDown")  { e.preventDefault(); slashSelIndex = Math.min(slashSelIndex+1, opts.length-1); showSlashPopup(msgInput.value.slice(1)); }
+      if (e.key === "ArrowUp")    { e.preventDefault(); slashSelIndex = Math.max(slashSelIndex-1, 0); showSlashPopup(msgInput.value.slice(1)); }
+      if (e.key === "Tab")        { e.preventDefault(); const sel=sp.querySelector(".selected"); if(sel){msgInput.value=sel.dataset.cmd+" ";sp.classList.remove("open");} }
+      if (e.key === "Escape")     { sp.classList.remove("open"); }
+    }
+  });
+
+  /* ════════════════════════════════════════
+     ONLINE PRESENCE — Supabase broadcast
+  ════════════════════════════════════════ */
+  const onlineUsers = new Set();
+
+  function updateOnlineCount() {
+    document.getElementById("online-count").textContent = onlineUsers.size;
+  }
+
+  function startPresence() {
+    try {
+    if (!currentUserId || !currentProfile) return;
+    const presenceChan = sb.channel("presence-global", {
+      config: { presence: { key: currentUserId } }
+    });
+    presenceChan
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChan.presenceState();
+        onlineUsers.clear();
+        Object.values(state).forEach(presences => {
+          presences.forEach(p => onlineUsers.add(p.user_id||p.presence_ref));
+        });
+        updateOnlineCount();
+      })
+      .on("presence", { event: "join" }, ({ newPresences }) => {
+        newPresences.forEach(p => onlineUsers.add(p.user_id||p.presence_ref));
+        updateOnlineCount();
+      })
+      .on("presence", { event: "leave" }, ({ leftPresences }) => {
+        leftPresences.forEach(p => onlineUsers.delete(p.user_id||p.presence_ref));
+        updateOnlineCount();
+      })
+      .subscribe(async status => {
+        if (status === "SUBSCRIBED") {
+          await presenceChan.track({
+            user_id:  currentUserId,
+            username: currentProfile.username,
+            online_at: new Date().toISOString()
+          });
+        }
+      });
+    } catch(e) { console.warn("Presence error:", e); }
+  }
+
+  /* ════════════════ INIT ════════════════ */
+  (async()=>{
+    try {
+    const{data:{session}}=await sb.auth.getSession();
+    currentUserId=session?.user?.id||null;
+    if(currentUserId) currentProfile=await getProfile(currentUserId);
+    await loadCommunities();
+    await loadDMs();
+    /* Wire General room click */
+    document.getElementById("publicRoomItem").addEventListener("click", () => {
+      switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
+    });
+    switchRoom({type:"public",id:"public",name:"General",icon:"🌐"});
+    startPresence();
+
+    sb.channel("reactions-global")
+      .on("postgres_changes",{event:"*",schema:"public",table:"reactions"},payload=>{
+        const mid=payload.new?.message_id||payload.old?.message_id;
+        if(mid&&document.getElementById(`reactions-${mid}`)) loadReactionsSingle(mid);
+      }).subscribe();
+
+    sb.auth.onAuthStateChange(async(_,session)=>{
+      currentUserId=session?.user?.id||null;
+      currentProfile=currentUserId?await getProfile(currentUserId):null;
+      loadDMs();
+      startPresence();
+    });
+    } catch(e) { console.error("Init error:", e); }
+  })();
+
+  /* ══════════════════════════════════════════
+     BROWSER NOTIFICATIONS
+  ══════════════════════════════════════════ */
+  let notificationsEnabled = Notification?.permission === "granted";
+
+  document.getElementById("notif-btn")?.addEventListener("click", async () => {
+    const btn = document.getElementById("notif-btn");
+    if (!("Notification" in window)) { btn.textContent = "❌ N/A"; return; }
+    if (Notification.permission === "granted") {
+      notificationsEnabled = true;
+      btn.textContent = "🔔 On"; btn.style.color = "#22c55e"; return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      notificationsEnabled = true;
+      btn.textContent = "🔔 On"; btn.style.color = "#22c55e";
+      new Notification("360 Chat", { body: "Notifications on! You'll get pinged for @mentions & DMs.", icon: "../favicon-32x32.png" });
+    } else {
+      btn.textContent = "🔕 Off"; btn.style.opacity = ".5";
+    }
+  });
+
+  // Init notif button state
+  (function() {
+    const btn = document.getElementById("notif-btn");
+    if (!btn) return;
+    if (Notification?.permission === "granted") { notificationsEnabled = true; btn.textContent = "🔔 On"; btn.style.color = "#22c55e"; }
+    else if (Notification?.permission === "denied") { btn.textContent = "🔕 Off"; btn.style.opacity = ".5"; }
+  })();
+
+  function maybePushNotif(msg) {
+    if (!notificationsEnabled || Notification?.permission !== "granted") return;
+    if (document.hasFocus()) return;
+    const isMention = currentProfile && new RegExp("@" + currentProfile.username + "\\b", "i").test(msg.text || "");
+    const isDM = activeRoom.type === "dm";
+    if (!isMention && !isDM) return;
+    const n = new Notification(isDM ? `DM from ${msg.username}` : `${msg.username} mentioned you`, {
+      body: (msg.text || "📎 file").slice(0, 100),
+      icon: msg.avatar_url || "../favicon-32x32.png",
+      tag: "360-chat-" + (msg.dm_id || msg.channel_id || "public"),
+      renotify: true
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+  }
+
+  /* ══════════════════════════════════════════
+     UNREAD BADGE SYSTEM
+  ══════════════════════════════════════════ */
+  const unreadCounts = {};
+
+  function getRoomKey(room) { return `${room.type}:${room.id}`; }
+
+  function renderUnreadBadge(room, count) {
+    let el = null;
+    if (room.type === "public")  el = document.getElementById("publicRoomItem");
+    else if (room.type === "dm") el = document.querySelector(`[data-dm-id="${room.id}"]`);
+    else                         el = document.querySelector(`[data-server-id="${room.id}"]`);
+    if (!el) return;
+    el.querySelector(".unread-badge")?.remove();
+    if (count > 0) {
+      const badge = document.createElement("div");
+      badge.className = "unread-badge";
+      badge.textContent = count > 99 ? "99+" : String(count);
+      el.appendChild(badge);
+    }
+  }
+
+  async function markRoomRead(room) {
+    if (!currentUserId) return;
+    const key = getRoomKey(room);
+    unreadCounts[key] = 0;
+    renderUnreadBadge(room, 0);
+    try {
+      await sb.from("last_read").upsert({
+        user_id: currentUserId, room_type: room.type, room_id: String(room.id),
+        last_read_at: new Date().toISOString()
+      }, { onConflict: "user_id,room_type,room_id" });
+    } catch(e) { /* non-critical */ }
+  }
+
+  async function loadUnreadCounts() {
+    if (!currentUserId) return;
+    try {
+      const { data: reads } = await sb.from("last_read").select("room_type,room_id,last_read_at").eq("user_id", currentUserId);
+      const readMap = {};
+      (reads || []).forEach(r => { readMap[`${r.room_type}:${r.room_id}`] = r.last_read_at; });
+
+      // Public
+      const pubReadAt = readMap["public:public"] || new Date(0).toISOString();
+      const { count: pc } = await sb.from("messages")
+        .select("*", { count:"exact", head:true })
+        .is("channel_id", null).is("dm_id", null).is("server_id", null)
+        .is("deleted_at", null).neq("user_id", currentUserId).gt("created_at", pubReadAt);
+      if (pc) { unreadCounts["public:public"] = pc; renderUnreadBadge({type:"public",id:"public"}, pc); }
+
+      // DMs
+      const { data: dms } = await sb.from("direct_messages").select("id").or(`user_a.eq.${currentUserId},user_b.eq.${currentUserId}`);
+      for (const dm of (dms || [])) {
+        const at = readMap[`dm:${dm.id}`] || new Date(0).toISOString();
+        const { count } = await sb.from("dm_messages").select("*",{count:"exact",head:true}).eq("dm_id",dm.id).neq("user_id",currentUserId).gt("created_at",at);
+        if (count) { unreadCounts[`dm:${dm.id}`] = count; renderUnreadBadge({type:"dm",id:dm.id}, count); }
+      }
+
+      // Servers
+      const { data: mems } = await sb.from("server_members").select("server_id").eq("user_id", currentUserId);
+      for (const m of (mems || [])) {
+        const at = readMap[`server:${m.server_id}`] || new Date(0).toISOString();
+        const { count } = await sb.from("messages").select("*",{count:"exact",head:true}).eq("server_id",m.server_id).is("deleted_at",null).neq("user_id",currentUserId).gt("created_at",at);
+        if (count) { unreadCounts[`server:${m.server_id}`] = count; renderUnreadBadge({type:"server",id:m.server_id}, count); }
+      }
+    } catch(e) { console.warn("loadUnreadCounts:", e); }
+  }
+
+  /* Hook: track incoming messages for unread + push notif */
+  const _origHandleIncoming = (msg, isRealtime) => {
+    if (!isRealtime) return;
+    maybePushNotif(msg);
+    // Track unread for rooms we're not in
+    const msgRoomType = msg.channel_id ? "channel" : msg.server_id ? "server" : msg.dm_id ? "dm" : "public";
+    const msgRoomId   = msg.channel_id || msg.server_id || msg.dm_id || "public";
+    const msgKey = `${msgRoomType}:${msgRoomId}`;
+    const curKey = getRoomKey(activeRoom);
+    if (msgKey !== curKey && msg.user_id !== currentUserId) {
+      unreadCounts[msgKey] = (unreadCounts[msgKey] || 0) + 1;
+      renderUnreadBadge({ type: msgRoomType, id: msgRoomId }, unreadCounts[msgKey]);
+      if (!document.hasFocus()) {
+        const orig = document.title; let f = 0;
+        const fi = setInterval(() => { document.title = f++%2===0?"💬 New message!":orig; if(f>6){clearInterval(fi);document.title=orig;} }, 600);
+      }
+    }
+  };
+
+  /* Patch the realtime subscriptions to call _origHandleIncoming */
+  /* We do this by wrapping switchRoom to inject our hook into the channel callbacks */
+  const _baseSwitchRoom = switchRoom;
+  switchRoom = function(room) {
+    _baseSwitchRoom(room);
+    markRoomRead(room);
+  };
+
+  /* Load counts 1.5s after init so auth is settled */
+  setTimeout(() => { if (currentUserId) loadUnreadCounts(); }, 1500);
+
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e0f1c953e1fa02c',t:'MTc3NDI4NjQ3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"ff0a2d9a55154fa7bec0287a68d6f56f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
