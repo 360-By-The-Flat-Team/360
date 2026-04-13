@@ -5,14 +5,83 @@
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const body = document.body;
+const ROUTE_ALIASES = new Set([
+  "accounts","ai","apps","chat","find","games","mail","new-tab","news",
+  "privacypolicy","settings","spaceGlider","stocks","tos","translator",
+  "url-shortener","weather","zone","360vids","404"
+]);
+
+function normalizeInternalPath(rawPath = "/") {
+  if (!rawPath) return "/";
+  let path = String(rawPath).trim();
+  if (path === "." || path === "./" || path === ".." || path === "../") return "/index.html";
+
+  if (/^https?:\/\//i.test(path)) {
+    try { path = new URL(path).pathname; } catch (_) { return "/"; }
+  } else if (!path.startsWith("/")) {
+    try { path = new URL(path, window.location.href).pathname; } catch (_) {}
+  }
+  if (!path.startsWith("/")) path = "/" + path;
+  path = path.replace(/\/{2,}/g, "/");
+  if (path === "/") return "/index.html";
+
+  const clean = path.replace(/\/+$/, "");
+  if (clean === "/index.html") return "/index.html";
+
+  const dotHtml = clean.match(/^\/assets\/html\/([^/]+)\.html$/i);
+  if (dotHtml) return `/assets/html/${dotHtml[1]}`;
+
+  const rootHtml = clean.match(/^\/([^/]+)\.html$/i);
+  if (rootHtml && ROUTE_ALIASES.has(rootHtml[1])) return `/assets/html/${rootHtml[1]}`;
+
+  const shortAssets = clean.match(/^\/assets\/([^/]+)$/i);
+  if (shortAssets && ROUTE_ALIASES.has(shortAssets[1])) return `/assets/html/${shortAssets[1]}`;
+  const shortAssetsIndex = clean.match(/^\/assets\/([^/]+)\/index\.html$/i);
+  if (shortAssetsIndex && ROUTE_ALIASES.has(shortAssetsIndex[1])) return `/assets/html/${shortAssetsIndex[1]}`;
+
+  const rootSlug = clean.match(/^\/([^/]+)$/i);
+  if (rootSlug && ROUTE_ALIASES.has(rootSlug[1])) return `/assets/html/${rootSlug[1]}`;
+
+  return clean || "/";
+}
+
+(function applyCanonicalRoute() {
+  const normalized = normalizeInternalPath(window.location.pathname || "/");
+  const current = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
+  if (normalized !== current) {
+    if (normalized.startsWith("/assets/html/") && current.startsWith("/assets/html/") && current.endsWith(".html")) {
+      history.replaceState(null, "", normalized + (window.location.search || "") + (window.location.hash || ""));
+    } else {
+      window.location.replace(normalized + (window.location.search || "") + (window.location.hash || ""));
+    }
+  }
+})();
 
 /* ============================================================
    SUPABASE CLIENT
    ============================================================ */
-const supabaseClient = supabase.createClient(
-  "https://wiswfpfsjiowtrdyqpxy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
-);
+const supabaseClient = (window.supabase && typeof window.supabase.createClient === "function")
+  ? window.supabase.createClient(
+      "https://wiswfpfsjiowtrdyqpxy.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
+    )
+  : {
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        onAuthStateChange: () => {},
+        signUp: async () => ({ error: { message: "Auth unavailable." } }),
+        signInWithPassword: async () => ({ error: { message: "Auth unavailable." } }),
+        signInWithOAuth: async () => ({ error: { message: "Auth unavailable." } }),
+        signOut: async () => ({})
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: null })
+          })
+        })
+      })
+    };
 
 /* ============================================================
    AUTH SYSTEM
@@ -39,8 +108,8 @@ function closeAuth() {
 }
 
 // Redirect sign in/up buttons to accounts page
-if (signInBtn)  signInBtn.onclick  = () => location.href = "/accounts.html?signin";
-if (signUpBtn)  signUpBtn.onclick  = () => location.href = "/accounts.html?signup";
+if (signInBtn)  signInBtn.onclick  = () => location.href = "/assets/html/accounts?signin";
+if (signUpBtn)  signUpBtn.onclick  = () => location.href = "/assets/html/accounts?signup";
 if (signOutBtn) signOutBtn.style.display = "none";
 
 // Close popup on backdrop click
@@ -321,7 +390,10 @@ document.querySelectorAll(".nav-item").forEach(item => {
     item.appendChild(rip);
     rip.addEventListener("animationend", () => rip.remove());
     const href = item.dataset.href;
-    if (href) setTimeout(() => { window.location.href = href; }, 180);
+    if (href) {
+      const target = normalizeInternalPath(href);
+      setTimeout(() => { window.location.href = target; }, 180);
+    }
     closeSidebar();
   });
 });
@@ -330,11 +402,11 @@ document.querySelectorAll(".nav-item").forEach(item => {
    NAV ACTIVE STATE
    ============================================================ */
 (function markActiveNav() {
-  const path = location.pathname.replace(/\/$/, "") || "/";
+  const path = normalizeInternalPath(location.pathname || "/");
+  document.querySelectorAll(".nav-item[data-href]").forEach(item => item.classList.remove("active"));
   document.querySelectorAll(".nav-item[data-href]").forEach(item => {
-    let href = "/" + (item.dataset.href || "").replace(/^\/+/, "").replace(/^\.\.\//, "");
-    if (href === "/" && (path === "/" || path === "/index.html")) item.classList.add("active");
-    else if (href !== "/" && path.startsWith(href)) item.classList.add("active");
+    const href = normalizeInternalPath(item.dataset.href || "/");
+    if (href === path) item.classList.add("active");
   });
 })();
 
