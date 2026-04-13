@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- 360 Chat v2.0.4 — 360Digital, Co. -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>360 Chat</title>
@@ -9,77 +8,85 @@
   <link rel="icon" href="/favicon-32x32.png" />
   <link rel="stylesheet" href="/assets/css/chat.css" />
 
-  <!-- Main app shell (theme, layout, global) -->
+  <!-- Global app shell -->
   <script src="/assets/js/main.js" defer></script>
-  <!-- Chat logic (v2.0.4: auth+init+switchRoom fixed) -->
+
+  <!-- Chat engine (modernized v2.0.4) -->
   <script src="/assets/js/chat.js" defer></script>
-  <!-- Notifications bridge (sounds, badges, toasts, push) -->
+
+  <!-- Notifications bridge -->
   <script src="/assets/js/notifications.js" defer></script>
 </head>
+
 <body class="chat-body">
 
   <div id="chat-app" class="chat-app">
-    <!-- Sidebar -->
-    <aside id="chat-sidebar" class="chat-sidebar">
+
+    <!-- SIDEBAR -->
+    <aside id="chatLeft" class="chat-sidebar">
+
       <header class="chat-sidebar-header">
         <div class="chat-logo">360</div>
         <div class="chat-title">Chat</div>
       </header>
 
+      <!-- PUBLIC -->
       <section class="chat-section">
         <div class="chat-section-label">Public</div>
-        <button
-          id="room-public"
-          class="room-item room-item-active"
-          data-room-type="public"
-          data-room-id="public"
-          data-server-id="public"
-        >
+
+        <button id="publicRoomItem" class="room-item active">
           <span class="room-icon">🌐</span>
           <span class="room-name">General</span>
-          <span class="room-unread-badge"></span>
+          <div class="unread-badge"></div>
         </button>
       </section>
 
+      <!-- COMMUNITIES -->
       <section class="chat-section">
         <div class="chat-section-label">
           Communities
-          <button id="btn-create-community" class="section-action" title="Create community">＋</button>
-          <button id="btn-browse-community" class="section-action" title="Browse communities">🔍</button>
+          <button id="createCommunityBtn" class="section-action">＋</button>
+          <button id="browseCommunityBtn" class="section-action">🔍</button>
         </div>
-        <div id="community-list" class="room-list"></div>
+        <div id="communities-list" class="room-list"></div>
       </section>
 
+      <!-- DIRECT MESSAGES -->
       <section class="chat-section">
         <div class="chat-section-label">
           Direct Messages
-          <button id="btn-start-dm" class="section-action" title="Start DM">✉️</button>
+          <button id="startDmBtn" class="section-action">✉️</button>
         </div>
         <div id="dm-list" class="room-list"></div>
       </section>
 
+      <!-- FOOTER -->
       <footer class="chat-sidebar-footer">
         <div class="online-indicator">
           <span class="dot"></span>
           <span><span id="online-count">0</span> online</span>
         </div>
-        <button id="notif-btn" class="notif-btn" type="button">🔔 Enable</button>
+        <button id="notif-btn" class="notif-btn">🔔 Enable</button>
       </footer>
+
     </aside>
 
-    <!-- Main pane -->
+    <!-- MAIN CHAT PANE -->
     <main class="chat-main">
+
+      <!-- HEADER -->
       <header class="chat-main-header">
         <div class="room-header-left">
-          <button id="rooms-toggle" class="rooms-toggle">☰</button>
-          <div id="room-icon" class="room-icon-main">🌐</div>
+          <button id="roomsToggle" class="rooms-toggle">☰</button>
+          <div id="hdr-icon" class="room-icon-main">🌐</div>
           <div class="room-meta">
-            <div id="room-name" class="room-name-main">General</div>
-            <div id="room-subtitle" class="room-subtitle">Public chat</div>
+            <div id="hdr-name" class="room-name-main">General</div>
+            <div id="hdr-desc" class="room-subtitle">Public chat · everyone is here</div>
           </div>
         </div>
+
         <div class="room-header-right">
-          <select id="translate-lang" class="translate-select">
+          <select id="translateLang" class="translate-select">
             <option value="">Translate: Off</option>
             <option value="en">English</option>
             <option value="es">Spanish</option>
@@ -93,12 +100,13 @@
         </div>
       </header>
 
+      <!-- CHAT WINDOW -->
       <section class="chat-window-wrap">
         <div id="chat-window" class="chat-window"></div>
         <div id="typing-indicator" class="typing-indicator"></div>
       </section>
 
-      <!-- Reply bar -->
+      <!-- REPLY BAR -->
       <div id="reply-bar" class="reply-bar">
         <div class="reply-bar-left">
           <span class="reply-label">Replying to</span>
@@ -108,49 +116,48 @@
         <button id="reply-cancel" class="reply-cancel">✕</button>
       </div>
 
-      <!-- Upload preview -->
+      <!-- UPLOAD PREVIEW -->
       <div id="upload-preview" class="upload-preview">
         <div id="up-thumb" class="upload-thumb"></div>
         <div id="up-name" class="upload-name"></div>
         <button id="upload-cancel" class="upload-cancel">✕</button>
       </div>
 
-      <!-- Input area -->
+      <!-- INPUT AREA -->
       <footer class="chat-input-wrap">
         <div class="input-row">
-          <button id="emoji-btn" class="input-icon-btn" type="button">😊</button>
+          <button id="emojiBtn" class="input-icon-btn">😊</button>
+
           <div class="input-area">
-            <textarea
-              id="message-input"
-              class="message-input"
-              rows="1"
-              placeholder="Message"
-            ></textarea>
-            <div id="input-emoji-picker" class="emoji-picker-input"></div>
+            <textarea id="message-input" class="message-input" rows="1" placeholder="Message..."></textarea>
+            <div id="inputEmojiPicker" class="emoji-picker-input"></div>
           </div>
-          <button id="attach-btn" class="input-icon-btn" type="button">📎</button>
-          <button id="send-button" class="send-btn" type="button">➤</button>
+
+          <button id="attachBtn" class="input-icon-btn">📎</button>
+          <button id="send-button" class="send-btn">➤</button>
         </div>
-        <input id="file-input" type="file" class="hidden-file-input" />
+
+        <input id="fileInput" type="file" class="hidden-file-input" />
+
         <div id="upload-progress" class="upload-progress">
           <div id="upload-progress-bar" class="upload-progress-bar"></div>
         </div>
       </footer>
+
     </main>
   </div>
 
-  <!-- Lightbox -->
+  <!-- LIGHTBOX -->
   <div id="lightbox" class="lightbox">
     <img id="lightbox-img" class="lightbox-img" alt="preview" />
   </div>
 
-  <!-- Mention popup -->
+  <!-- POPUPS -->
   <div id="mention-popup" class="mention-popup"></div>
-  <!-- Slash popup -->
   <div id="slash-popup" class="slash-popup"></div>
 
-  <!-- Create community modal -->
-  <div id="create-community-modal" class="modal">
+  <!-- CREATE COMMUNITY MODAL -->
+  <div id="createCommunityModal" class="modal">
     <div class="modal-dialog">
       <div class="modal-header">
         <h2>Create community</h2>
@@ -169,8 +176,8 @@
     </div>
   </div>
 
-  <!-- Join community modal -->
-  <div id="join-community-modal" class="modal">
+  <!-- JOIN COMMUNITY MODAL -->
+  <div id="joinCommunityModal" class="modal">
     <div class="modal-dialog">
       <div class="modal-header">
         <h2>Join community</h2>
@@ -188,8 +195,8 @@
     </div>
   </div>
 
-  <!-- Start DM modal -->
-  <div id="start-dm-modal" class="modal">
+  <!-- START DM MODAL -->
+  <div id="startDmModal" class="modal">
     <div class="modal-dialog">
       <div class="modal-header">
         <h2>Start DM</h2>
