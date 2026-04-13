@@ -420,7 +420,7 @@ body.dark .auth-btn {
   background: rgba(0,0,0,.6);
   backdrop-filter: blur(4px);
   display: flex; justify-content: center; align-items: center;
-  z-index: 999;
+  z-index: 100000;
 }
 .auth-popup.hidden { display: none; }
 
@@ -429,6 +429,7 @@ body.dark .auth-btn {
   backdrop-filter: blur(24px);
   padding: 28px; border-radius: 16px;
   width: 320px; text-align: center;
+  max-height: 90vh; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 24px 60px rgba(0,0,0,.2);
   border: 1px solid var(--br);
@@ -560,9 +561,7 @@ body.dark .weather-chip {
   box-shadow: 0 20px 54px rgba(15,23,42,.18);
 }
 .logo-main span {
-  background: linear-gradient(120deg, var(--a), var(--a2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--txt);
 }
 
 .search-shell { width: 100%; max-width: 600px; display: flex; align-items: center; }
@@ -593,8 +592,7 @@ body.dark #musicToggle {
 .translator-page h2, .stocks-page h2,
 .shortener-page h2, .games-page h2 {
   font-size: 22px; font-weight: 700; margin-bottom: 20px;
-  background: linear-gradient(120deg, var(--a), var(--a2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  color: var(--txt);
 }
 
 /* ============================================================
