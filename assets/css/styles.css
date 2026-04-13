@@ -342,7 +342,9 @@ body.dark .weather-chip {
 }
 
 .logo-main span {
-  color: var(--txt);
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .search-shell {
