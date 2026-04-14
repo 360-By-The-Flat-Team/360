@@ -1,12 +1,12 @@
 # 360
-![Version](https://img.shields.io/badge/version-2.0.4-blue)
+![Version](https://img.shields.io/badge/version-2.0.2-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Web-lightgrey)
 ![Reddit](https://img.shields.io/badge/Reddit-r%2F360Search-orange)
 
 A multi-tool browser and search engine.
 Our Reddit: https://www.reddit.com/r/360Search/
 
-360 is a multi-tool browser (search engine) that has more tools to outperform any search engine through conveniently organized UIs — so your work doesn't need to be done on 50+ tabs.
+360 is a multi-tool browser (search engine) that has more tools to outperform any browser through conveniently organized UIs — so your work doesn't need to be done on 50+ tabs.
 
 With many search engines and browsers losing trust from core users, this is a great opportunity to switch to a fully private, fully open source search engine. Using 360 supports 360 Digital, Co. and every contribution counts. Switch to 360 now! (if you want — we're humble and will not be pushy)
 

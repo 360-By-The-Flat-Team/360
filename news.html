@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-89NN1P6CEV');
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — News</title>
+  <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="stylesheet" href="../main.css" />
+  <link rel="stylesheet" href="../responsive.css" />
+  <link rel="stylesheet" href="../cursor.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --news-bg: #07080f;
+      --news-surface: #0e1018;
+      --news-border: rgba(255,255,255,0.07);
+      --news-card: #12151f;
+      --news-card-hover: #181c2a;
+      --news-accent: #3b82f6;
+      --news-accent2: #8b5cf6;
+      --news-text: #f0f2ff;
+      --news-muted: rgba(240,242,255,0.45);
+      --news-pill-bg: rgba(255,255,255,0.05);
+    }
+
+    .news-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 24px 60px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── HEADER ── */
+    .news-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .news-header-left h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0 0 4px;
+      background: linear-gradient(110deg, #fff 30%, var(--news-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .news-header-left p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--news-muted);
+    }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--news-border);
+      background: var(--news-pill-bg);
+      color: var(--news-text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .refresh-btn:hover {
+      border-color: var(--news-accent);
+      background: rgba(59,130,246,0.1);
+      transform: none;
+      box-shadow: none;
+    }
+    .refresh-btn.spinning .icon { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CATEGORY PILLS ── */
+    .news-cats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .news-cat {
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--news-border);
+      background: var(--news-pill-bg);
+      color: var(--news-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      white-space: nowrap;
+    }
+    .news-cat:hover { border-color: var(--news-accent); color: var(--news-text); transform: none; box-shadow: none; }
+    .news-cat.active {
+      background: linear-gradient(110deg, var(--news-accent), var(--news-accent2));
+      color: #fff;
+      border-color: transparent;
+    }
+
+    /* ── SEARCH ── */
+    .news-search {
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .news-search .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      opacity: .5;
+      pointer-events: none;
+    }
+    #news-search-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 16px 11px 40px;
+      border-radius: 12px;
+      border: 1px solid var(--news-border);
+      background: var(--news-surface);
+      color: var(--news-text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #news-search-input:focus { border-color: var(--news-accent); }
+    #news-search-input::placeholder { color: var(--news-muted); }
+
+    /* ── HERO ── */
+    .news-hero {
+      display: none;
+      text-decoration: none;
+      color: inherit;
+      margin-bottom: 24px;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      height: 340px;
+      border: 1px solid var(--news-border);
+    }
+    .news-hero.visible { display: block; }
+    .news-hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .news-hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(7,8,15,.95) 0%, rgba(7,8,15,.3) 60%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 28px;
+    }
+    .news-hero-source {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--news-accent);
+      margin-bottom: 8px;
+    }
+    .news-hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+    .news-hero-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── GRID ── */
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .news-card {
+      background: var(--news-card);
+      border: 1px solid var(--news-border);
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform .2s, border-color .2s, background .2s;
+      animation: fadeUp .4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .news-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(59,130,246,0.4);
+      background: var(--news-card-hover);
+      box-shadow: 0 8px 32px rgba(59,130,246,0.1);
+    }
+
+    .news-card-img {
+      width: 100%;
+      height: 168px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--news-surface);
+      display: block;
+    }
+
+    .news-card-placeholder {
+      width: 100%;
+      height: 168px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.1));
+    }
+
+    .news-card-body {
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 1;
+    }
+    .news-card-source {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--news-accent);
+    }
+    .news-card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14.5px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--news-text);
+    }
+    .news-card-desc {
+      font-size: 12.5px;
+      color: var(--news-muted);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .news-card-date {
+      font-size: 11px;
+      color: var(--news-muted);
+      margin-top: auto;
+      padding-top: 4px;
+    }
+
+    /* ── STATUS ── */
+    .news-status {
+      text-align: center;
+      padding: 70px 20px;
+      color: var(--news-muted);
+      font-size: 14px;
+      grid-column: 1 / -1;
+    }
+    .news-status .spinner {
+      width: 30px; height: 30px;
+      border: 2.5px solid var(--news-border);
+      border-top-color: var(--news-accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    /* ── API SOURCE BADGE ── */
+    #api-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--news-border);
+      color: var(--news-muted);
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    #api-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+    }
+    #api-badge.offline .dot { background: #ef4444; }
+
+    @media (max-width: 600px) {
+      .news-grid { grid-template-columns: 1fr; }
+      .news-header { flex-direction: column; align-items: flex-start; }
+      .news-hero { height: 240px; }
+      .news-hero-title { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <button class="back-btn" onclick="window.location.href='../'">← Back</button>
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="../">Home</div>
+      <div class="nav-item" data-href="../ai">AI</div>
+      <div class="nav-item" data-href="../weather">Weather</div>
+      <div class="nav-item" data-href="../translator">Translator</div>
+      <div class="nav-item" data-href="../stocks">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="../chat">Chat</div>
+      <div class="nav-item active" data-href="../news">News</div>
+      <div class="nav-item" data-href="../games">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+  </div>
+
+  <div id="auth-popup" class="auth-popup hidden">
+    <div class="auth-box">
+      <h2>Account</h2>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+      <button id="auth-login-btn">Log In</button>
+      <button id="auth-signup-btn">Sign Up</button>
+      <button id="github-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>Sign in with GitHub</span>
+      </button>
+      <button id="google-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-close-btn" class="close-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ PAGE ══════════════ -->
+  <div class="news-page">
+
+    <div class="news-header">
+      <div class="news-header-left">
+        <h2>360 News <span id="api-badge"><span class="dot"></span><span id="api-label">Loading</span></span></h2>
+        <p id="news-timestamp"></p>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadNews()">
+        <span class="icon">↻</span> Refresh
+      </button>
+    </div>
+
+    <!-- Category pills -->
+    <div class="news-cats">
+      <button class="news-cat active"
+        data-primary="https://feeds.bbci.co.uk/news/rss.xml"
+        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+        data-label="Top Stories" data-emoji="📰"
+        onclick="switchCat(this)">📰 Top Stories</button>
+
+      <button class="news-cat"
+        data-primary="https://feeds.bbci.co.uk/news/technology/rss.xml"
+        data-backup="https://techcrunch.com/feed/"
+        data-label="Tech" data-emoji="💻"
+        onclick="switchCat(this)">💻 Tech</button>
+
+      <button class="news-cat"
+        data-primary="https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+        data-backup="https://www.nasa.gov/rss/dyn/breaking_news.rss"
+        data-label="Science" data-emoji="🔬"
+        onclick="switchCat(this)">🔬 Science</button>
+
+      <button class="news-cat"
+        data-primary="https://feeds.bbci.co.uk/news/business/rss.xml"
+        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/Business.xml"
+        data-label="Business" data-emoji="📈"
+        onclick="switchCat(this)">📈 Business</button>
+
+      <button class="news-cat"
+        data-primary="https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"
+        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml"
+        data-label="Entertainment" data-emoji="🎬"
+        onclick="switchCat(this)">🎬 Entertainment</button>
+
+      <button class="news-cat"
+        data-primary="https://feeds.bbci.co.uk/sport/rss.xml"
+        data-backup="https://www.espn.com/espn/rss/news"
+        data-label="Sports" data-emoji="⚽"
+        onclick="switchCat(this)">⚽ Sports</button>
+
+      <button class="news-cat"
+        data-primary="https://feeds.bbci.co.uk/news/world/rss.xml"
+        data-backup="https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+        data-label="World" data-emoji="🌍"
+        onclick="switchCat(this)">🌍 World</button>
+    </div>
+
+    <!-- Search -->
+    <div class="news-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="news-search-input" placeholder="Search articles..." oninput="filterNews()" />
+    </div>
+
+    <!-- Hero -->
+    <a class="news-hero" id="news-hero" target="_blank" rel="noopener noreferrer"></a>
+
+    <!-- Grid -->
+    <div class="news-grid" id="news-grid">
+      <div class="news-status">
+        <div class="spinner"></div>
+        Loading news…
+      </div>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
+  <script src="../main.js"></script>
+  <script src="../cookie.js"></script>
+  <script src="../cursor.js"></script>
+
+  <script>
+  // ─── CONFIG ───────────────────────────────────────────────────────────────
+  // Three proxy options tried in order:
+  const PROXIES = [
+    url => `https://api.rss2json.com/v1/api.json?count=25&rss_url=${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+  ];
+
+  // Cache: avoid re-fetching the same feed within 5 minutes
+  const CACHE = {};
+  const CACHE_TTL = 5 * 60 * 1000;
+
+  let allArticles = [];
+  let currentBtn  = null;
+
+  // ─── IMAGE EXTRACTION ────────────────────────────────────────────────────
+  function extractImage(item) {
+    // 1. rss2json enclosure
+    if (item.enclosure?.link) return item.enclosure.link;
+    // 2. thumbnail from rss2json
+    if (item.thumbnail && !item.thumbnail.includes("blank")) return item.thumbnail;
+    // 3. media:thumbnail / media:content in raw XML
+    const media = item["media:thumbnail"] || item["media:content"];
+    if (media?.url) return media.url;
+    // 4. og:image scraped from description HTML
+    const m = (item.description || item.content || "").match(/src="([^"]+\.(jpg|jpeg|png|webp))"/i);
+    if (m) return m[1];
+    return null;
+  }
+
+  // ─── TIME AGO ────────────────────────────────────────────────────────────
+  function timeAgo(dateStr) {
+    if (!dateStr) return "";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (m < 1)  return "Just now";
+    if (m < 60) return `${m}m ago`;
+    if (h < 24) return `${h}h ago`;
+    return `${d}d ago`;
+  }
+
+  // ─── FETCH WITH FALLBACKS ────────────────────────────────────────────────
+  async function fetchFeed(url) {
+    // Check cache
+    if (CACHE[url] && Date.now() - CACHE[url].ts < CACHE_TTL) {
+      return CACHE[url].data;
+    }
+
+    for (let i = 0; i < PROXIES.length; i++) {
+      try {
+        const res = await fetch(PROXIES[i](url), { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+
+        const json = await res.json();
+
+        // rss2json format
+        if (json.items) {
+          CACHE[url] = { ts: Date.now(), data: json.items };
+          return json.items;
+        }
+
+        // allorigins / corsproxy — parse XML manually
+        const rawText = json.contents || await res.text();
+        const items   = parseXML(rawText, url);
+        if (items.length) {
+          CACHE[url] = { ts: Date.now(), data: items };
+          return items;
+        }
+      } catch { /* try next proxy */ }
+    }
+    return [];
+  }
+
+  // ─── XML PARSER (fallback) ────────────────────────────────────────────────
+  function parseXML(text, sourceUrl) {
+    try {
+      const doc   = new DOMParser().parseFromString(text, "text/xml");
+      const nodes = [...doc.querySelectorAll("item")];
+      return nodes.map(n => {
+        const raw   = n.querySelector("description")?.textContent || "";
+        const imgM  = raw.match(/src="([^"]+\.(jpg|jpeg|png|webp))"/i);
+        const media = n.querySelector("thumbnail,content");
+        return {
+          title:       n.querySelector("title")?.textContent?.trim() || "Untitled",
+          link:        n.querySelector("link")?.textContent?.trim() || "#",
+          description: raw.replace(/<[^>]*>/g, "").slice(0, 200),
+          pubDate:     n.querySelector("pubDate")?.textContent || "",
+          author:      n.querySelector("author,creator")?.textContent?.trim() || "",
+          enclosure:   { link: media?.getAttribute("url") || imgM?.[1] || "" },
+          thumbnail:   media?.getAttribute("url") || imgM?.[1] || ""
+        };
+      });
+    } catch { return []; }
+  }
+
+  // ─── RENDER HERO ─────────────────────────────────────────────────────────
+  function renderHero(a, emoji) {
+    const el = document.getElementById("news-hero");
+    if (!a) { el.classList.remove("visible"); return; }
+
+    const img = extractImage(a);
+    el.href = a.link;
+    el.classList.add("visible");
+
+    el.innerHTML = img
+      ? `<img class="news-hero-img" src="${img}" alt="" onerror="this.style.display='none'">`
+      : `<div style="width:100%;height:100%;background:linear-gradient(135deg,rgba(59,130,246,.3),rgba(139,92,246,.2));display:flex;align-items:center;justify-content:center;font-size:64px">${emoji}</div>`;
+
+    el.innerHTML += `
+      <div class="news-hero-overlay">
+        <div class="news-hero-source">${a.author || "Top Story"}</div>
+        <div class="news-hero-title">${a.title}</div>
+        <div class="news-hero-desc">${(a.description||"").replace(/<[^>]*>/g,"").slice(0,180)}</div>
+      </div>`;
+  }
+
+  // ─── RENDER CARDS ────────────────────────────────────────────────────────
+  function renderCards(list, emoji) {
+    const grid = document.getElementById("news-grid");
+    if (!list.length) {
+      grid.innerHTML = `<div class="news-status">No articles found.</div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map((a, i) => {
+      const img  = extractImage(a);
+      const imgEl = img
+        ? `<img class="news-card-img" src="${img}" alt=""
+             onerror="this.outerHTML='<div class=\\'news-card-placeholder\\'>${emoji}</div>'">`
+        : `<div class="news-card-placeholder">${emoji}</div>`;
+
+      const desc   = (a.description || a.content || "").replace(/<[^>]*>/g, "").trim();
+      const source = a.author || "News";
+      const date   = timeAgo(a.pubDate);
+
+      return `
+        <a class="news-card" href="${a.link}" target="_blank" rel="noopener noreferrer"
+           style="animation-delay:${i * 0.04}s">
+          ${imgEl}
+          <div class="news-card-body">
+            <div class="news-card-source">${source}</div>
+            <div class="news-card-title">${a.title}</div>
+            ${desc ? `<div class="news-card-desc">${desc}</div>` : ""}
+            <div class="news-card-date">${date}</div>
+          </div>
+        </a>`;
+    }).join("");
+  }
+
+  // ─── LOAD NEWS ────────────────────────────────────────────────────────────
+  async function loadNews() {
+    const grid     = document.getElementById("news-grid");
+    const badge    = document.getElementById("api-badge");
+    const label    = document.getElementById("api-label");
+    const btn      = document.getElementById("refreshBtn");
+    const ts       = document.getElementById("news-timestamp");
+
+    grid.innerHTML = `<div class="news-status"><div class="spinner"></div>Loading news…</div>`;
+    document.getElementById("news-hero").classList.remove("visible");
+    document.getElementById("news-search-input").value = "";
+    btn.classList.add("spinning");
+    badge.className = ""; label.textContent = "Loading";
+
+    // Get active category
+    const active = document.querySelector(".news-cat.active");
+    const primary = active?.dataset.primary || "https://feeds.bbci.co.uk/news/rss.xml";
+    const backup  = active?.dataset.backup  || "";
+    const emoji   = active?.dataset.emoji   || "📰";
+
+    // Try primary first, then backup
+    let items = await fetchFeed(primary);
+    let source = "BBC";
+
+    if (!items.length && backup) {
+      items = await fetchFeed(backup);
+      source = "Backup";
+    }
+
+    btn.classList.remove("spinning");
+
+    if (!items.length) {
+      grid.innerHTML = `<div class="news-status">❌ Failed to load news. Try refreshing or check your connection.</div>`;
+      badge.className = "offline"; label.textContent = "Offline";
+      return;
+    }
+
+    badge.className = ""; label.textContent = source;
+    ts.textContent = `Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+
+    allArticles = items.slice(0, 28);
+    renderHero(allArticles[0], emoji);
+    renderCards(allArticles.slice(1), emoji);
+  }
+
+  // ─── FILTER ───────────────────────────────────────────────────────────────
+  function filterNews() {
+    const q = document.getElementById("news-search-input").value.toLowerCase().trim();
+    const emoji = document.querySelector(".news-cat.active")?.dataset.emoji || "📰";
+    if (!q) {
+      renderHero(allArticles[0], emoji);
+      renderCards(allArticles.slice(1), emoji);
+      return;
+    }
+    document.getElementById("news-hero").classList.remove("visible");
+    const filtered = allArticles.filter(a =>
+      (a.title       || "").toLowerCase().includes(q) ||
+      (a.description || "").toLowerCase().includes(q)
+    );
+    renderCards(filtered, emoji);
+  }
+
+  // ─── SWITCH CATEGORY ──────────────────────────────────────────────────────
+  function switchCat(btn) {
+    document.querySelectorAll(".news-cat").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    loadNews();
+  }
+
+  // ─── AUTO-REFRESH every 5 min ─────────────────────────────────────────────
+  setInterval(loadNews, 5 * 60 * 1000);
+
+  // ─── INIT ─────────────────────────────────────────────────────────────────
+  loadNews();
+  </script>
+</body>
+</html>
