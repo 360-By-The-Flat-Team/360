@@ -105,70 +105,85 @@ async function updateAuthUI() {
 updateAuthUI();
 
 /* ============================================================
-   SIDEBAR — click outside to close
+   SIDEBAR
    ============================================================ */
-const sidebar = document.querySelector(".sidebar");
-const settingsPanel = document.querySelector(".settings-panel");
-const overlay = document.querySelector(".overlay");
-const sidebarToggle = document.querySelector(".sidebar-toggle");
-const settingsBtn = document.getElementById("settingsBtn");
+const sidebar       = $(".sidebar");
+const settingsPanel = $(".settings-panel");
+const overlay       = $(".overlay");
+const sidebarToggle = $(".sidebar-toggle");
+const settingsBtn   = $("#settingsBtn");
 
-/* Helper: update overlay based on open panels */
 function updateOverlay() {
-  const anyOpen =
-    sidebar.classList.contains("open") ||
-    settingsPanel.classList.contains("open");
-
-  if (anyOpen) {
-    overlay.classList.add("active");
-  } else {
-    overlay.classList.remove("active");
-  }
+  const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
+  overlay?.classList.toggle("active", !!anyOpen);
 }
 
-/* Sidebar toggle */
-sidebarToggle?.addEventListener("click", e => {
-  e.stopPropagation();
-  sidebar.classList.toggle("open");
+function closeSidebar() {
+  sidebar?.classList.remove("open");
+  sidebar?.classList.add("sidebar-closed");
   updateOverlay();
-});
+}
 
-/* Settings toggle */
-settingsBtn?.addEventListener("click", e => {
-  e.stopPropagation();
-  settingsPanel.classList.toggle("open");
-  updateOverlay();
-});
+if (sidebarToggle) {
+  sidebarToggle.addEventListener("click", e => {
+    e.stopPropagation();
+    if (sidebar?.classList.contains("open")) {
+      closeSidebar();
+    } else {
+      sidebar?.classList.remove("sidebar-closed");
+      sidebar?.classList.add("open");
+      updateOverlay();
+    }
+  });
+}
 
-/* Clicking overlay closes everything */
-overlay?.addEventListener("click", () => {
-  sidebar.classList.remove("open");
-  settingsPanel.classList.remove("open");
-  updateOverlay();
-});
+if (settingsBtn) {
+  settingsBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    settingsPanel?.classList.toggle("open");
+    updateOverlay();
+  });
+}
 
-/* Clicking anywhere outside closes everything */
+if (overlay) {
+  overlay.addEventListener("click", () => {
+    closeSidebar();
+    settingsPanel?.classList.remove("open");
+    updateOverlay();
+  });
+}
+
 document.addEventListener("click", e => {
-  const insideSidebar = e.target.closest(".sidebar");
-  const insideSettings = e.target.closest(".settings-panel");
-  const onToggle = e.target.closest(".sidebar-toggle");
-  const onSettingsBtn = e.target.closest("#settingsBtn");
-
-  if (!insideSidebar && !insideSettings && !onToggle && !onSettingsBtn) {
-    sidebar.classList.remove("open");
-    settingsPanel.classList.remove("open");
+  if (!e.target.closest(".sidebar") && !e.target.closest(".settings-panel") &&
+      !e.target.closest(".sidebar-toggle") && !e.target.closest("#settingsBtn")) {
+    closeSidebar();
+    settingsPanel?.classList.remove("open");
     updateOverlay();
   }
 });
 
-/* Nav items */
-$$(".nav-item").forEach(item => {
-  item.onclick = e => {
+/* ── Nav item click + ripple ── */
+document.querySelectorAll(".nav-item").forEach(item => {
+  item.addEventListener("click", e => {
     e.stopPropagation();
+    const rect = item.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const rip = document.createElement("span");
+    rip.className = "nav-ripple";
+    Object.assign(rip.style, {
+      width: size + "px", height: size + "px",
+      left: (e.clientX - rect.left - size / 2) + "px",
+      top:  (e.clientY - rect.top  - size / 2) + "px",
+    });
+    item.appendChild(rip);
+    rip.addEventListener("animationend", () => rip.remove());
     const href = item.dataset.href;
-    if (href) window.location.href = href;
+    if (href) {
+      const target = normalizeInternalPath(href);
+      setTimeout(() => { window.location.href = target; }, 180);
+    }
     closeSidebar();
-  };
+  });
 });
 
 /* ============================================================
