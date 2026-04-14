@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360 Settings</title>
+    <link rel="stylesheet" href="/assets/css/settings.css">
+</head>
+
+<body>
+
+    <div class="settings-topbar">
+        <div class="settings-title">System Settings</div>
+        <button class="back-btn" onclick="window.location.href='/'">← Back to 360</button>
+    </div>
+
+    <div class="settings-container">
+
+        <section class="settings-section">
+            <h2>Hardware Overview</h2>
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <h3>CPU Cores</h3>
+                    <p id="cpuCores">Loading...</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Memory</h3>
+                    <p id="memoryInfo">Loading...</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Battery</h3>
+                    <p id="batteryInfo">Loading...</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>GPU</h3>
+                    <p id="gpuInfo">Loading...</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Network</h3>
+                    <p id="networkInfo">Loading...</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Storage</h3>
+                    <p id="storageInfo">Loading...</p>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <script src="/assets/js/settings.js"></script>
+</body>
+</html>
