@@ -90,12 +90,6 @@ window.sb = supabaseClient;
    AUTH SYSTEM
    ============================================================ */
 
-// These buttons exist on every page in auth-top-right
-const signInBtn  = $("#signInBtn");
-const signUpBtn  = $("#signUpBtn");
-const signOutBtn = $("#signOutBtn");
-
-// Old inline auth-popup (legacy)
 const authPopup    = $("#auth-popup");
 const authEmail    = $("#auth-email");
 const authPassword = $("#auth-password");
@@ -103,45 +97,44 @@ const authLoginBtn = $("#auth-login-btn");
 const authSignupBtn= $("#auth-signup-btn");
 const authCloseBtn = $("#auth-close-btn");
 const authError    = $("#auth-error");
+const signInBtn    = $("#signInBtn");
+const signUpBtn    = $("#signUpBtn");
+const signOutBtn   = $("#signOutBtn");
 
-// New behavior: prefer redirect to accounts; only use popup if it actually exists
-function openAuth(mode = "signin") {
-  if (!authPopup) {
-    location.href = `/assets/html/accounts?${mode}`;
-    return;
-  }
-  authPopup.classList.remove("hidden");
-}
+function openAuth()  { if (authPopup) authPopup.classList.remove("hidden"); }
 function closeAuth() {
   if (authPopup) authPopup.classList.add("hidden");
   if (authError) authError.textContent = "";
 }
 
-// Redirect sign in/up buttons to accounts page
-if (signInBtn)  signInBtn.onclick  = () => location.href = "/assets/html/accounts?signin";
-if (signUpBtn)  signUpBtn.onclick  = () => location.href = "/assets/html/accounts?signup";
-if (signOutBtn) signOutBtn.style.display = "none";
-
-// Close popup on backdrop click
-if (authPopup) authPopup.addEventListener("click", e => { if (e.target === authPopup) closeAuth(); });
+if (signInBtn) signInBtn.onclick = () => location.href = "/accounts.html?signin";
+if (signUpBtn) signUpBtn.onclick = () => location.href = "/accounts.html?signup";
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
-// Legacy inline auth handlers (for old pages that still have popup)
+/* Click backdrop to close auth popup */
+if (authPopup) {
+  authPopup.addEventListener("click", e => {
+    if (e.target === authPopup) closeAuth();
+  });
+}
+
 if (authSignupBtn) {
   authSignupBtn.onclick = async () => {
-    const email = authEmail?.value.trim(), password = authPassword?.value.trim();
-    if (!email || !password) { if (authError) authError.textContent = "Email and password required."; return; }
+    const email    = authEmail?.value.trim();
+    const password = authPassword?.value.trim();
+    if (!email || !password) { authError.textContent = "Email and password required."; return; }
     const { error } = await supabaseClient.auth.signUp({ email, password });
-    if (authError) authError.textContent = error ? error.message : "Check your email to confirm!";
+    authError.textContent = error ? error.message : "Check your email to confirm your account!";
   };
 }
 
 if (authLoginBtn) {
   authLoginBtn.onclick = async () => {
-    const email = authEmail?.value.trim(), password = authPassword?.value.trim();
-    if (!email || !password) { if (authError) authError.textContent = "Email and password required."; return; }
+    const email    = authEmail?.value.trim();
+    const password = authPassword?.value.trim();
+    if (!email || !password) { authError.textContent = "Email and password required."; return; }
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { if (authError) authError.textContent = error.message; }
+    if (error) authError.textContent = error.message;
     else { closeAuth(); updateAuthUI(); }
   };
 }
@@ -153,9 +146,10 @@ if (githubBtn) {
       provider: "github",
       options: { redirectTo: window.location.origin }
     });
-    if (error) console.error("GitHub OAuth:", error.message);
+    if (error) console.error("GitHub OAuth error:", error.message);
   };
 }
+
 const googleBtn = $("#google-login");
 if (googleBtn) {
   googleBtn.onclick = async () => {
@@ -163,9 +157,24 @@ if (googleBtn) {
       provider: "google",
       options: { redirectTo: window.location.origin }
     });
-    if (error) console.error("Google OAuth:", error.message);
+    if (error) console.error("Google OAuth error:", error.message);
   };
 }
+
+if (signOutBtn) {
+  signOutBtn.onclick = async () => {
+    await supabaseClient.auth.signOut();
+    location.href = "/accounts.html?login&from=logout";
+  };
+}
+
+async function updateAuthUI() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (signInBtn)  signInBtn.style.display  = session ? "none"         : "inline-block";
+  if (signUpBtn)  signUpBtn.style.display  = session ? "none"         : "inline-block";
+  if (signOutBtn) signOutBtn.style.display = session ? "inline-block" : "none";
+}
+updateAuthUI();
 
 /* ── Helpers ── */
 function getInitials(name) {
