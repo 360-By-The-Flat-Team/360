@@ -6,6 +6,36 @@
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const body = document.body;
+const ROUTE_ALIASES = new Set([
+  "accounts","ai","apps","chat","find","games","mail","new-tab","news",
+  "privacypolicy","settings","spaceGlider","stocks","tos","translator",
+  "url-shortener","weather","zone","360vids","404"
+]);
+
+function normalizeInternalPath(rawPath = "/") {
+  if (!rawPath) return "/";
+  let path = String(rawPath).trim();
+
+  if (/^https?:\/\//i.test(path)) {
+    try { path = new URL(path).pathname; } catch (_) { return "/"; }
+  } else if (!path.startsWith("/")) {
+    try { path = new URL(path, window.location.href).pathname; } catch (_) {}
+  }
+
+  if (!path.startsWith("/")) path = "/" + path;
+  path = path.replace(/\/{2,}/g, "/");
+
+  if (path === "/") return "/index.html";
+
+  const clean = path.replace(/\/+$/, "");
+
+  const rootSlug = clean.match(/^\/([^/]+)$/i);
+  if (rootSlug && ROUTE_ALIASES.has(rootSlug[1])) {
+    return `/assets/html/${rootSlug[1]}`;
+  }
+
+  return clean || "/";
+}
 
 /* ============================================================
    SUPABASE CLIENT
@@ -185,6 +215,24 @@ document.querySelectorAll(".nav-item").forEach(item => {
     closeSidebar();
   });
 });
+
+/* ============================================================
+   NAV ACTIVE STATE (animation + highlight)
+   ============================================================ */
+(function markActiveNav() {
+  const path = normalizeInternalPath(location.pathname || "/");
+
+  document.querySelectorAll(".nav-item[data-href]").forEach(item => {
+    item.classList.remove("active");
+  });
+
+  document.querySelectorAll(".nav-item[data-href]").forEach(item => {
+    const href = normalizeInternalPath(item.dataset.href || "/");
+    if (href === path) {
+      item.classList.add("active");
+    }
+  });
+})();
 
 /* ============================================================
    THEME SYSTEM
