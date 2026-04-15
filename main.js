@@ -1,41 +1,11 @@
 /* ============================================================
-   360 — MAIN.JS V2.1 
+   360 — MAIN.JS V2.1.1
    Fixes: Ripple, click-outside menus, OAuth SVG icons
    ============================================================ */
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const body = document.body;
-const ROUTE_ALIASES = new Set([
-  "accounts","ai","apps","chat","find","games","mail","new-tab","news",
-  "privacypolicy","settings","spaceGlider","stocks","tos","translator",
-  "url-shortener","weather","zone","360vids","404"
-]);
-
-function normalizeInternalPath(rawPath = "/") {
-  if (!rawPath) return "/";
-  let path = String(rawPath).trim();
-
-  if (/^https?:\/\//i.test(path)) {
-    try { path = new URL(path).pathname; } catch (_) { return "/"; }
-  } else if (!path.startsWith("/")) {
-    try { path = new URL(path, window.location.href).pathname; } catch (_) {}
-  }
-
-  if (!path.startsWith("/")) path = "/" + path;
-  path = path.replace(/\/{2,}/g, "/");
-
-  if (path === "/") return "/index.html";
-
-  const clean = path.replace(/\/+$/, "");
-
-  const rootSlug = clean.match(/^\/([^/]+)$/i);
-  if (rootSlug && ROUTE_ALIASES.has(rootSlug[1])) {
-    return `/assets/html/${rootSlug[1]}`;
-  }
-
-  return clean || "/";
-}
 
 /* ============================================================
    SUPABASE CLIENT
@@ -135,104 +105,71 @@ async function updateAuthUI() {
 updateAuthUI();
 
 /* ============================================================
-   SIDEBAR
+   SIDEBAR — click outside to close
    ============================================================ */
-const sidebar       = $(".sidebar");
-const settingsPanel = $(".settings-panel");
-const overlay       = $(".overlay");
-const sidebarToggle = $(".sidebar-toggle");
-const settingsBtn   = $("#settingsBtn");
+const sidebar = document.querySelector(".sidebar");
+const settingsPanel = document.querySelector(".settings-panel");
+const overlay = document.querySelector(".overlay");
+const sidebarToggle = document.querySelector(".sidebar-toggle");
+const settingsBtn = document.getElementById("settingsBtn");
 
+/* Helper: update overlay based on open panels */
 function updateOverlay() {
-  const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
-  overlay?.classList.toggle("active", !!anyOpen);
+  const anyOpen =
+    sidebar.classList.contains("open") ||
+    settingsPanel.classList.contains("open");
+
+  if (anyOpen) {
+    overlay.classList.add("active");
+  } else {
+    overlay.classList.remove("active");
+  }
 }
 
-function closeSidebar() {
-  sidebar?.classList.remove("open");
-  sidebar?.classList.add("sidebar-closed");
+/* Sidebar toggle */
+sidebarToggle?.addEventListener("click", e => {
+  e.stopPropagation();
+  sidebar.classList.toggle("open");
   updateOverlay();
-}
+});
 
-if (sidebarToggle) {
-  sidebarToggle.addEventListener("click", e => {
-    e.stopPropagation();
-    if (sidebar?.classList.contains("open")) {
-      closeSidebar();
-    } else {
-      sidebar?.classList.remove("sidebar-closed");
-      sidebar?.classList.add("open");
-      updateOverlay();
-    }
-  });
-}
+/* Settings toggle */
+settingsBtn?.addEventListener("click", e => {
+  e.stopPropagation();
+  settingsPanel.classList.toggle("open");
+  updateOverlay();
+});
 
-if (settingsBtn) {
-  settingsBtn.addEventListener("click", e => {
-    e.stopPropagation();
-    settingsPanel?.classList.toggle("open");
-    updateOverlay();
-  });
-}
+/* Clicking overlay closes everything */
+overlay?.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  settingsPanel.classList.remove("open");
+  updateOverlay();
+});
 
-if (overlay) {
-  overlay.addEventListener("click", () => {
-    closeSidebar();
-    settingsPanel?.classList.remove("open");
-    updateOverlay();
-  });
-}
-
+/* Clicking anywhere outside closes everything */
 document.addEventListener("click", e => {
-  if (!e.target.closest(".sidebar") && !e.target.closest(".settings-panel") &&
-      !e.target.closest(".sidebar-toggle") && !e.target.closest("#settingsBtn")) {
-    closeSidebar();
-    settingsPanel?.classList.remove("open");
+  const insideSidebar = e.target.closest(".sidebar");
+  const insideSettings = e.target.closest(".settings-panel");
+  const onToggle = e.target.closest(".sidebar-toggle");
+  const onSettingsBtn = e.target.closest("#settingsBtn");
+
+  if (!insideSidebar && !insideSettings && !onToggle && !onSettingsBtn) {
+    sidebar.classList.remove("open");
+    settingsPanel.classList.remove("open");
     updateOverlay();
   }
 });
 
-/* ── Nav item click + ripple ── */
-document.querySelectorAll(".nav-item").forEach(item => {
-  item.addEventListener("click", e => {
+/* Nav items */
+$$(".nav-item").forEach(item => {
+  item.onclick = e => {
     e.stopPropagation();
-    const rect = item.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const rip = document.createElement("span");
-    rip.className = "nav-ripple";
-    Object.assign(rip.style, {
-      width: size + "px", height: size + "px",
-      left: (e.clientX - rect.left - size / 2) + "px",
-      top:  (e.clientY - rect.top  - size / 2) + "px",
-    });
-    item.appendChild(rip);
-    rip.addEventListener("animationend", () => rip.remove());
     const href = item.dataset.href;
-    if (href) {
-      const target = normalizeInternalPath(href);
-      setTimeout(() => { window.location.href = target; }, 180);
-    }
+    if (href) window.location.href = href;
     closeSidebar();
-  });
+  };
 });
-
-/* ============================================================
-   NAV ACTIVE STATE (animation + highlight)
-   ============================================================ */
-(function markActiveNav() {
-  const path = normalizeInternalPath(location.pathname || "/");
-
-  document.querySelectorAll(".nav-item[data-href]").forEach(item => {
-    item.classList.remove("active");
-  });
-
-  document.querySelectorAll(".nav-item[data-href]").forEach(item => {
-    const href = normalizeInternalPath(item.dataset.href || "/");
-    if (href === path) {
-      item.classList.add("active");
-    }
-  });
-})();
 
 /* ============================================================
    THEME SYSTEM
