@@ -16,9 +16,9 @@
   <link rel="icon" type="image/png" href="../favicon-32x32.png" />
   <link rel="manifest" href="../manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
-  <link rel="stylesheet" href="../main.css" />
-  <link rel="stylesheet" href="../responsive.css" />
-  <link rel="stylesheet" href="../cursor.css" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -194,13 +194,12 @@
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
 
-  <button class="back-btn" onclick="window.location.href='../'">← Back</button>
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
     <nav class="nav-list">
-      <div class="nav-item" data-href="../">Home</div>
+      <div class="nav-item" data-href="/">Home</div>
       <div class="nav-item" data-href="../ai">AI</div>
       <div class="nav-item" data-href="../weather">Weather</div>
       <div class="nav-item active" data-href="../translator">Translator</div>
@@ -210,7 +209,7 @@
       <div class="nav-item" data-href="../news">News</div>
       <div class="nav-item" data-href="../games">Games</div>
     </nav>
-    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.1.1</div>
   </aside>
 
   <div class="overlay" id="overlay"></div>
@@ -308,9 +307,9 @@
   </div>
 
   <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
-  <script src="../main.js"></script>
-  <script src="../cookie.js"></script>
-  <script src="../cursor.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
