@@ -97,11 +97,17 @@ Support: zakii@360-search.com
 
 ## CREDITS:
 
-Lead Developers & Founders: @Zakii360, @mingzew2 (@MingzeMC)
-Analytics Advisor and Feature Designer: @GreatesSoup
-Lead Games Developer: @UntitledAngel (@TheAngleV1)
+Lead Developers & Founders: <a href="https://github.com/Zakii360">Zakii360</a>, <a href="https://github.com/mingzew2">mingzew2</a> <a href="https://github.com/MingzeMC">(MingzeMC)</a>
+
+
+Analytics Advisor and Feature Designer: <a href="https://github.com/GreatesSoup">GreatesSoup</a>
+
+
+Lead Games Developer: <a href="https://github.com/UntitledAngel">UntitledAngel</a> <a href="https://github.com/TheAngelV1">TheAngelV1</a>
+
+---
 
 The rest is for you to find out :) 
 Enjoy 360!!
 
-© 2026 360 Digital, Co.
+© 2026 360Digital, Co.
