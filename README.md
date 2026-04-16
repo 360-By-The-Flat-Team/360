@@ -6,8 +6,6 @@
 A multi-tool browser and search engine.
 Our Reddit: https://www.reddit.com/r/360Search/
 
-Made by: Mingze and Zaki, Games (mostly) by: Dan
-
 360 is a multi-tool browser (search engine) that has more tools to outperform any browser through conveniently organized UIs — so your work doesn't need to be done on 50+ tabs.
 
 With many search engines and browsers losing trust from core users, this is a great opportunity to switch to a fully private, fully open source search engine. Using 360 supports 360 Digital, Co. and every contribution counts. Switch to 360 now! (if you want — we're humble and will not be pushy)
@@ -95,7 +93,13 @@ Support: mingze@360-search.com
 
 Support: zakii@360-search.com
 
+---
 
+## CREDITS:
+
+Lead Developers & Founders: @Zakii360, @mingzew2 (@MingzeMC)
+Analytics Advisor and Feature Designer: @GreatesSoup
+Lead Games Developer: @UntitledAngel (@TheAngleV1)
 
 The rest is for you to find out :) 
 Enjoy 360!!
