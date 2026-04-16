@@ -93,19 +93,9 @@ Support: mingze@360-search.com
 
 Support: zakii@360-search.com
 
----
 
-## Screenshots
 
-### Light Mode
-![360 Light Mode](360lightmode.png)
-
-### Dark Mode
-![360 Dark Mode](360darkmode.png)
-
-### Settings
-![360 Settings](360settings.png)
-
-The rest is for you to find out :) Enjoy 360!!
+The rest is for you to find out :) 
+Enjoy 360!!
 
 © 2026 360 Digital, Co.
