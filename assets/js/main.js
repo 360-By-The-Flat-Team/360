@@ -96,13 +96,117 @@ if (signOutBtn) {
   };
 }
 
+/* ============================================================
+   AUTH CHIP — drop this into main.js replacing the updateAuthUI
+   function and adding the chip CSS to main.css
+   ============================================================ */
+
+/* ── Gravatar helper ── */
+async function getGravatarUrl(email) {
+  const clean = email.trim().toLowerCase();
+  const msgBuffer = new TextEncoder().encode(clean);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `https://www.gravatar.com/avatar/${hashHex}?d=404&s=80`;
+}
+
 async function updateAuthUI() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (signInBtn)  signInBtn.style.display  = session ? "none"         : "inline-block";
-  if (signUpBtn)  signUpBtn.style.display  = session ? "none"         : "inline-block";
-  if (signOutBtn) signOutBtn.style.display = session ? "inline-block" : "none";
+  const topRight = document.querySelector(".auth-top-right");
+  if (!topRight) return;
+
+  if (session) {
+    const user = session.user;
+    const email = user.email || "";
+
+    // Fetch profile for username
+    let username = user.user_metadata?.username || email.split("@")[0] || "User";
+    try {
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", user.id)
+        .single();
+      if (profile?.username) username = profile.username;
+    } catch {}
+
+    // Try Gravatar
+    let avatarHtml = "";
+    const initials = username.slice(0, 2).toUpperCase();
+    try {
+      const gravatarUrl = await getGravatarUrl(email);
+      const res = await fetch(gravatarUrl, { method: "HEAD" });
+      if (res.ok) {
+        avatarHtml = `<img src="${gravatarUrl}" alt="${username}" class="user-chip-avatar" />`;
+      } else {
+        avatarHtml = `<span class="user-chip-initials">${initials}</span>`;
+      }
+    } catch {
+      avatarHtml = `<span class="user-chip-initials">${initials}</span>`;
+    }
+
+    // Build chip
+    topRight.innerHTML = `
+      <div class="user-chip" id="userChip" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
+        <div class="user-chip-avatar-wrap">${avatarHtml}</div>
+        <span class="user-chip-name">@${username}</span>
+        <span class="user-chip-caret">▾</span>
+        <div class="user-chip-dropdown" id="userChipDropdown" role="menu">
+          <div class="ucd-header">
+            <div class="ucd-avatar-wrap">${avatarHtml}</div>
+            <div>
+              <div class="ucd-username">@${username}</div>
+              <div class="ucd-email">${email}</div>
+            </div>
+          </div>
+          <div class="ucd-divider"></div>
+          <a class="ucd-item" href="/accounts.html">
+            <span>👤</span> My Account
+          </a>
+          <a class="ucd-item" href="https://gravatar.com" target="_blank" rel="noopener noreferrer">
+            <span>🖼️</span> Edit Avatar (Gravatar)
+          </a>
+          <div class="ucd-divider"></div>
+          <button class="ucd-item ucd-signout" id="chipSignOut">
+            <span>🚪</span> Sign Out
+          </button>
+        </div>
+      </div>
+    `;
+
+    const chip = document.getElementById("userChip");
+    const dropdown = document.getElementById("userChipDropdown");
+
+    // Toggle dropdown
+    chip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = chip.classList.contains("open");
+      chip.classList.toggle("open", !isOpen);
+      chip.setAttribute("aria-expanded", String(!isOpen));
+    });
+
+    // Close on outside click
+    document.addEventListener("click", () => {
+      chip.classList.remove("open");
+      chip.setAttribute("aria-expanded", "false");
+    });
+
+    // Sign out
+    document.getElementById("chipSignOut").onclick = async (e) => {
+      e.stopPropagation();
+      await supabaseClient.auth.signOut();
+      location.href = "/accounts.html?login&from=logout";
+    };
+
+  } else {
+    // Not signed in — show original buttons
+    topRight.innerHTML = `
+      <button id="signInBtn" class="auth-btn" onclick="location.href='/accounts.html?signin'">Sign In</button>
+      <button id="signUpBtn" class="auth-btn" onclick="location.href='/accounts.html?signup'">Sign Up</button>
+    `;
+  }
 }
-updateAuthUI();
 
 /* ============================================================
    SIDEBAR — click outside to close
