@@ -103,7 +103,7 @@ Lead Developers & Founders: <a href="https://github.com/Zakii360">Zakii360</a>, 
 Analytics Advisor and Feature Designer: <a href="https://github.com/GreatesSoup">GreatesSoup</a>
 
 
-Lead Games Developer: <a href="https://github.com/UntitledAngel">UntitledAngel</a> <a href="https://github.com/TheAngelV1">TheAngelV1</a>
+Lead Games Developer: <a href="https://github.com/UntitledAngel">UntitledAngel</a> <a href="https://github.com/TheAngelV1">(TheAngelV1)</a>
 
 ---
 
