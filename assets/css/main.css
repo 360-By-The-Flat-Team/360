@@ -367,6 +367,183 @@ body.dark .oauth-btn { background: rgba(255,255,255,.05); color: var(--txtd); }
 }
 body.dark .auth-btn { color: var(--txtd); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); }
 .auth-btn:hover { background: linear-gradient(120deg, var(--a), var(--a2)); color: #050816; }
+/* ============================================================
+   USER CHIP — paste into main.css under "TOP-RIGHT AUTH BUTTONS"
+   ============================================================ */
+
+/* ── Chip container ── */
+.user-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--br);
+  background: rgba(255,255,255,.15);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: border-color .18s, background .18s;
+  user-select: none;
+  font-size: 13px;
+  color: var(--txt);
+}
+body.dark .user-chip {
+  background: rgba(255,255,255,.07);
+  color: var(--txtd);
+}
+.user-chip:hover {
+  border-color: var(--a);
+  background: rgba(255,255,255,.22);
+}
+body.dark .user-chip:hover {
+  background: rgba(255,255,255,.12);
+}
+
+/* Avatar + initials */
+.user-chip-avatar-wrap {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--a), var(--a2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.user-chip-avatar-wrap img.user-chip-avatar {
+  width: 26px;
+  height: 26px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.user-chip-initials {
+  font-size: 10px;
+  font-weight: 700;
+  color: #050816;
+  letter-spacing: .03em;
+}
+.user-chip-name {
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-chip-caret {
+  font-size: 9px;
+  opacity: .5;
+  transition: transform .2s;
+}
+.user-chip.open .user-chip-caret {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown ── */
+.user-chip-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: rgba(255,255,255,.97);
+  border: 1px solid var(--br);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.14);
+  z-index: 9000;
+  overflow: hidden;
+  animation: chipDropIn .18s ease;
+}
+body.dark .user-chip-dropdown {
+  background: rgba(9,9,22,.97);
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+@keyframes chipDropIn {
+  from { opacity: 0; transform: translateY(-6px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+.user-chip.open .user-chip-dropdown {
+  display: block;
+}
+
+/* Dropdown header */
+.ucd-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+}
+.ucd-avatar-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--a), var(--a2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ucd-avatar-wrap img.user-chip-avatar {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.ucd-avatar-wrap .user-chip-initials {
+  font-size: 14px;
+}
+.ucd-username {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--txt);
+}
+body.dark .ucd-username { color: var(--txtd); }
+.ucd-email {
+  font-size: 11px;
+  color: var(--mut);
+  word-break: break-all;
+}
+body.dark .ucd-email { color: var(--mutd); }
+
+/* Divider */
+.ucd-divider {
+  height: 1px;
+  background: var(--br);
+  margin: 0;
+}
+
+/* Items */
+.ucd-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--txt);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .12s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+body.dark .ucd-item { color: var(--txtd); }
+.ucd-item:hover { background: rgba(148,163,184,.1); }
+.ucd-item span { font-size: 15px; flex-shrink: 0; }
+
+.ucd-signout {
+  color: #ef4444 !important;
+}
+.ucd-signout:hover { background: rgba(239,68,68,.08) !important; }
 
 /* ============================================================
    BACK BUTTON
