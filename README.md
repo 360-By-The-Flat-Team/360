@@ -14,11 +14,11 @@ With many search engines and browsers losing trust from core users, this is a gr
 
 ## Features
 
-- 🔍 **Search** — Private, fast search | Other search engines create a profile for you and sell your data for targeted ads. Even DuckDuckGo has a sneaky deal with Microsoft!
-- 🤖 **AI** — Built-in AI assistant with conversation history and file uploads. | An AI that's fast and can actually DO things.
-- 💬 **Chat** — Real-time global chat with communities, DMs, reactions and moderation | A fully moderated chat with privacy. **TEENS AND ABOVE!!**
-- 📰 **News** — Live news feed across multiple categories | News that actually loads instantly and isn't biased.
-- 🎮 **Games** — Built-in games including Space Glider, StarBlasted and NYC Dream | The highest quality games our developers can programe after long periods of researching.
+- 🔍 **Search** — Private, fast search | <em>Other search engines create a profile for you and sell your data for targeted ads. Even DuckDuckGo has a sneaky deal with Microsoft!</em>
+- 🤖 **AI** — Built-in AI assistant with conversation history and file uploads. | <em>An AI that's fast and can actually DO things.</em>
+- 💬 **Chat** — Real-time global chat with communities, DMs, reactions and moderation | <em>A fully moderated chat with privacy. **TEENS AND ABOVE!!**</em>
+- 📰 **News** — Live news feed across multiple categories | <em>News that actually loads instantly and isn't biased.</em>
+- 🎮 **Games** — <em>Built-in games including Space Glider, StarBlasted and NYC Dream | The highest quality games our developers can programe after long periods of researching.</em>
 - 🌦️ **Weather** — Live weather with map view | Compare how our forecasts are to Google's and then you'll switch.
 - 📈 **Stocks** — Real-time stock quotes | Real stocks, real Bitcoin, real data. All realtime.
 - 🌍 **Translator** — Translate between 80+ languages | Instant translation when you need it most.
