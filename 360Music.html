@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>360Music</title>
+  <link rel="stylesheet" href="assets/css/music.css">
+</head>
+
+<body>
+
+<h1>360Music</h1>
+
+<div class="upload-box">
+  <input type="file" id="fileInput" accept=".mp3">
+  <button id="uploadBtn">Upload</button>
+  <pre id="status"></pre>
+</div>
+
+<hr>
+
+<h2>Your Music</h2>
+<div id="songs"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const supabase = supabase.createClient(
+    "https://wiswfpfsjiowtrdyqpxy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
+  );
+</script>
+
+<script src="assets/js/music.js"></script>
+
+</body>
+</html>
