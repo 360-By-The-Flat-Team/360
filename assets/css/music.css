@@ -1,0 +1,17 @@
+body {
+  font-family: "Courier New", monospace;
+  background: #f4f4f4;
+  padding: 20px;
+}
+
+h1, h2 {
+  margin-bottom: 10px;
+}
+
+.upload-box {
+  margin-bottom: 20px;
+}
+
+.song {
+  margin-bottom: 20px;
+}
