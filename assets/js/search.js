@@ -4,6 +4,34 @@ const searchBox = document.getElementById("searchBox");
 const resultsDiv = document.getElementById("results");
 const paginationDiv = document.getElementById("pagination");
 
+// Loading animation frames
+let loadingInterval = null;
+let loadingFrames = ["loading.", "loading..", "loading...", "loading..", "loading."];
+let loadingIndex = 0;
+
+function startLoadingTitle() {
+  stopLoadingTitle();
+  loadingInterval = setInterval(() => {
+    document.title = loadingFrames[loadingIndex] + " – 360";
+    loadingIndex = (loadingIndex + 1) % loadingFrames.length;
+  }, 300);
+}
+
+function stopLoadingTitle() {
+  if (loadingInterval) {
+    clearInterval(loadingInterval);
+    loadingInterval = null;
+  }
+}
+
+function updateTitle(q) {
+  if (!q) {
+    document.title = "360";
+  } else {
+    document.title = `${q} – 360`;
+  }
+}
+
 function getParam(name) {
   return new URL(location.href).searchParams.get(name);
 }
@@ -16,9 +44,14 @@ async function runSearch() {
 
   searchBox.value = q;
 
+  startLoadingTitle(); // start animated title
+
   const url = `${API}?q=${encodeURIComponent(q)}&page=${page}`;
   const res = await fetch(url);
   const data = await res.json();
+
+  stopLoadingTitle();  // stop animation
+  updateTitle(q);      // set final title
 
   renderResults(data.results || []);
   renderPagination(Number(page));
