@@ -326,15 +326,26 @@
       const qMatch = hash.match(/gsc\.q=([^&]*)/);
       const tabMatch = hash.match(/gsc\.tab=([^&]*)/);
   
-      if (!qMatch) return;
+      const url = new URL(window.location.href);
+  
+      // If no query (e.g. X button pressed), strip back to bare /search
+      if (!qMatch || !qMatch[1]) {
+        url.search = '';
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+        return;
+      }
   
       const gscQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).trim();
-      if (!gscQuery) return;
   
-      // gsc.tab=0 = Web, gsc.tab=1 = Images (pass through directly)
+      if (!gscQuery) {
+        url.search = '';
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+        return;
+      }
+  
       const tab = tabMatch ? tabMatch[1] : '0';
-  
-      const url = new URL(window.location.href);
       const currentQ = url.searchParams.get('q') || '';
       const currentTab = url.searchParams.get('tab') || '0';
   
@@ -344,13 +355,11 @@
         url.hash = '';
         window.history.replaceState(null, '', url.toString());
       } else {
-        // Query already matches, just strip the hash
         url.hash = '';
         window.history.replaceState(null, '', url.toString());
       }
     }
   
-    // Use MutationObserver to detect GCS updating the hash live
     const _origPushState = history.pushState.bind(history);
     const _origReplaceState = history.replaceState.bind(history);
   
@@ -359,7 +368,6 @@
       setTimeout(syncGcsQuery, 50);
     };
     history.replaceState = function(...args) {
-      // Ignore our own replaceState calls to avoid infinite loop
       if (args[2] && String(args[2]).includes('gsc.')) {
         _origReplaceState(...args);
         setTimeout(syncGcsQuery, 50);
