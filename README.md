@@ -14,17 +14,17 @@ With many search engines and browsers losing trust from core users, this is a gr
 
 ## Features
 
-- 🔍 **Search** — Private, fast search
-- 🤖 **AI** — Built-in AI assistant with conversation history and file uploads
-- 💬 **Chat** — Real-time global chat with communities, DMs, reactions and moderation
-- 📰 **News** — Live news feed across multiple categories
-- 🎮 **Games** — Built-in games including Space Glider, StarBlasted and NYC Dream
-- 🌦️ **Weather** — Live weather with map view
-- 📈 **Stocks** — Real-time stock quotes
-- 🌍 **Translator** — Translate between 80+ languages
-- 🔗 **URL Shortener** — Shorten any link instantly
-- 🎨 **Themes** — 6 color themes, dark mode, and custom cursor styles
-- 🖥️ **Desktop App** — Native app for Windows and Linux
+- 🔍 **Search** — Private, fast search | Other search engines create a profile for you and sell your data for targeted ads. Even DuckDuckGo has a sneaky deal with Microsoft!
+- 🤖 **AI** — Built-in AI assistant with conversation history and file uploads. | An AI that's fast and can actually DO things.
+- 💬 **Chat** — Real-time global chat with communities, DMs, reactions and moderation | A fully moderated chat with privacy. **TEENS AND ABOVE!!**
+- 📰 **News** — Live news feed across multiple categories | News that actually loads instantly and isn't biased.
+- 🎮 **Games** — Built-in games including Space Glider, StarBlasted and NYC Dream | The highest quality games our developers can programe after long periods of researching.
+- 🌦️ **Weather** — Live weather with map view | Compare how our forecasts are to Google's and then you'll switch.
+- 📈 **Stocks** — Real-time stock quotes | Real stocks, real Bitcoin, real data. All realtime.
+- 🌍 **Translator** — Translate between 80+ languages | Instant translation when you need it most.
+- 🔗 **URL Shortener** — Shorten any link instantly | No more memorizing links for your friends! Just this short URL.
+- 🎨 **Themes** — 6 color themes, dark mode, and custom cursor styles | For people who actually NEED personalization!
+- 🖥️ **Desktop App** — Native app for Windows and Linux | Searching in a private search engine isn't so private in any browser...
 
 ---
 
