@@ -68,7 +68,7 @@ body.dark {
   flex-direction: column;
   transform: translateX(-100%);
   transition: .3s;
-  z-index: 60;
+  z-index: calc(infinity - 2);
 }
 body.dark .sidebar { background: rgba(9,9,11,.97); }
 .sidebar.open { transform: translateX(0); }
@@ -122,7 +122,7 @@ body.dark .sidebar-footer { color: var(--mutd); }
 .sidebar-toggle {
   position: fixed;
   top: 10px; left: 10px;
-  z-index: 70;
+  z-index: calc(infinity - 1);
   padding: 6px 14px;
   border-radius: 999px;
   background: rgba(15,23,42,.94);
@@ -144,7 +144,7 @@ body.dark .sidebar-footer { color: var(--mutd); }
   visibility: hidden;
   pointer-events: none;
   transition: .3s;
-  z-index: 55;
+  z-index: calc(infinity - 2);
 }
 .overlay.active {
   opacity: 1;
@@ -166,7 +166,7 @@ body.dark .sidebar-footer { color: var(--mutd); }
   padding: 20px 16px;
   transform: translateX(100%);
   transition: transform .3s;
-  z-index: 65;
+  z-index: calc(infinity - 2);
   overflow-y: auto;
 }
 body.dark .settings-panel { background: rgba(15,23,42,.98); }
@@ -274,7 +274,7 @@ body.dark .swatch.active { border-color: #fff; }
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: calc(infinity - 3);
 }
 .auth-popup.hidden { display: none; }
 
@@ -353,7 +353,7 @@ body.dark .oauth-btn { background: rgba(255,255,255,.05); color: var(--txtd); }
   top: 12px; right: 12px;
   display: flex;
   gap: 10px;
-  z-index: 50;
+  z-index: calc(infinity - 3);
 }
 .auth-btn {
   padding: 8px 14px;
@@ -453,7 +453,7 @@ body.dark .user-chip:hover {
   border: 1px solid var(--br);
   border-radius: 14px;
   box-shadow: 0 12px 40px rgba(0,0,0,.14);
-  z-index: 9000;
+  z-index: calc(infinity - 3);
   overflow: hidden;
   animation: chipDropIn .18s ease;
 }
@@ -557,7 +557,7 @@ body.dark .ucd-item { color: var(--txtd); }
   border: 1px solid var(--br);
   cursor: pointer;
   font-size: 13px;
-  z-index: 50;
+  z-index: calc(infinity - 3);
   transition: .2s;
   color: var(--txt);
 }
@@ -1151,7 +1151,7 @@ body.dark .about-dropdown { color: var(--txtd); }
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  z-index: 80;
+  z-index: calc(infinity - 3);
   box-shadow: 0 8px 24px rgba(0,0,0,.15);
 }
 
