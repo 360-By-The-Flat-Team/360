@@ -15,16 +15,26 @@ With many search engines and browsers losing trust from core users, this is a gr
 ## Features
 
 - 🔍 **Search** — Private, fast search | <em>Other search engines create a profile for you and sell your data for targeted ads. Even DuckDuckGo has a sneaky deal with Microsoft!</em>
+
 - 🤖 **AI** — Built-in AI assistant with conversation history and file uploads. | <em>An AI that's fast and can actually DO things.</em>
+
 - 💬 **Chat** — Real-time global chat with communities, DMs, reactions and moderation | <em>A fully moderated chat with privacy. **TEENS AND ABOVE!!**</em>
+
 - 📰 **News** — Live news feed across multiple categories | <em>News that actually loads instantly and isn't biased.</em>
+
 - 🎮 **Games** — <em>Built-in games including Space Glider, StarBlasted and NYC Dream | The highest quality games our developers can programe after long periods of researching.</em>
-- 🌦️ **Weather** — Live weather with map view | Compare how our forecasts are to Google's and then you'll switch.
-- 📈 **Stocks** — Real-time stock quotes | Real stocks, real Bitcoin, real data. All realtime.
-- 🌍 **Translator** — Translate between 80+ languages | Instant translation when you need it most.
-- 🔗 **URL Shortener** — Shorten any link instantly | No more memorizing links for your friends! Just this short URL.
-- 🎨 **Themes** — 6 color themes, dark mode, and custom cursor styles | For people who actually NEED personalization!
-- 🖥️ **Desktop App** — Native app for Windows and Linux | Searching in a private search engine isn't so private in any browser...
+
+- 🌦️ **Weather** — Live weather with map view | <em>Compare how our forecasts are to Google's and then you'll switch.</em>
+
+- 📈 **Stocks** — Real-time stock quotes | <em>Real stocks, real Bitcoin, real data. All realtime.</em>
+
+- 🌍 **Translator** — Translate between 80+ languages | <em>Instant translation when you need it most.</em>
+
+- 🔗 **URL Shortener** — Shorten any link instantly | <em>No more memorizing links for your friends! Just this short URL.</em>
+
+- 🎨 **Themes** — 6 color themes, dark mode, and custom cursor styles | <em>For people who actually NEED personalization!</em>
+
+- 🖥️ **Desktop App** — Native app for Windows and Linux | <em>Searching in a private search engine isn't so private in any browser...</em>
 
 ---
 
