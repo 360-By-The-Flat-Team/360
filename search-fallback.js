@@ -1,11 +1,11 @@
 /* ============================================================
    360 — SEARCH FALLBACK V2
-   Tries Google CSE first. On quota/error falls back to Vyntr.
+   On error falls back to Vyntr.
    Results styled to match 360's glassmorphism UI exactly.
    ============================================================ */
 
 (function () {
-  const VYNTR_KEY = "vyntr_dVZQQztzpWQZiKpsuwpCdStcNiyTnSfooWrKPUyFFDqGvSkETpjtpyuuzBJzwQSf";
+  const VYNTR_KEY = " ";
   const VYNTR_URL = "https://vyntr.com/api/v1/search";
   let cseWorking = true;
   let vyntrActive = false;
