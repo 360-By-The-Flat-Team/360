@@ -19,8 +19,8 @@
   <meta name="apple-mobile-web-app-title" content="360" />
   <link rel="icon" type="image/png" href="favicon-32x32.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/cursor.css" />
+  <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -283,18 +283,18 @@
     </div>
     <nav class="nav-list">
       <div class="nav-item"        data-href="/">Home</div>
-      <div class="nav-item"        data-href="ai">AI</div>
-      <div class="nav-item"        data-href="weather">Weather</div>
-      <div class="nav-item"        data-href="translator">Translator</div>
-      <div class="nav-item"        data-href="stocks">Stocks</div>
-      <div class="nav-item"        data-href="url-shortener">URL Shortener</div>
-      <div class="nav-item"        data-href="chat">Chat</div>
-      <div class="nav-item"        data-href="news">News</div>
-      <div class="nav-item"        data-href="apps">Apps</div>
-      <div class="nav-item"        data-href="games">Games</div>
-      <div class="nav-item active" data-href="accounts.html">Accounts</div>
+      <div class="nav-item"        data-href="../ai">AI</div>
+      <div class="nav-item"        data-href="../weather">Weather</div>
+      <div class="nav-item"        data-href="../translator">Translator</div>
+      <div class="nav-item"        data-href="../stocks">Stocks</div>
+      <div class="nav-item"        data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item"        data-href="../chat">Chat</div>
+      <div class="nav-item"        data-href="../news">News</div>
+      <div class="nav-item"        data-href="../apps">Apps</div>
+      <div class="nav-item"        data-href="../games">Games</div>
+      <div class="nav-item active" data-href="../accounts">Accounts</div>
     </nav>
-    <div class="sidebar-footer">© 2026 360 INC. · V2.0.1</div>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.1.1</div>
   </aside>
 
   <div class="overlay" id="overlay"></div>
@@ -381,9 +381,9 @@
     </div>
   </div>
 
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/cookie.js"></script>
-  <script src="assets/js/cursor.js"></script>
+  <script src="main.js"></script>
+  <script src="cookie.js"></script>
+  <script src="cursor.js"></script>
 
   <script>
     const sb = supabaseClient;
@@ -520,7 +520,6 @@
           <label>Username or Email</label>
           <input id="siLogin" type="text" placeholder="your_username or email@example.com" autocomplete="username" />
         </div>
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAAC-tyOMhPrQ10IBB"></div>
         <div class="ac-field">
           <label>Password</label>
           <input id="siPass" type="password" placeholder="••••••••" autocomplete="current-password" />
@@ -590,12 +589,6 @@
           <label>Email</label>
           <input id="suEmail" type="email" placeholder="you@example.com" autocomplete="email" />
         </div>
-        <p style="font-size:11px;color:var(--mut);margin:-6px 0 8px;display:flex;align-items:center;gap:4px;">
-    🖼️ Your profile picture is pulled from
-    <a href="https://gravatar.com" target="_blank" rel="noopener noreferrer"
-       style="color:var(--a);font-weight:600;text-decoration:none;">Gravatar</a>
-    — sign up there with the same email to set a photo.
-  </p>
         <div class="ac-field">
           <label>Username</label>
           <input id="suUser" type="text" placeholder="your_username" autocomplete="username" maxlength="32" />
