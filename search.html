@@ -319,6 +319,35 @@
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
+  <script>
+    function syncGcsQuery() {
+      const hash = window.location.hash; // e.g. #gsc.tab=1&gsc.q=Hi&gsc.sort=
+      const match = hash.match(/gsc\.q=([^&]*)/);
+      if (!match) return;
   
+      const gscQuery = decodeURIComponent(match[1].replace(/\+/g, ' ')).trim();
+      if (!gscQuery) return;
+  
+      const url = new URL(window.location.href);
+      const currentQ = url.searchParams.get('q') || '';
+  
+      // Only update if the query actually changed
+      if (gscQuery !== currentQ) {
+        url.searchParams.set('q', gscQuery);
+        url.hash = ''; // remove the gsc hash
+        window.history.replaceState(null, '', url.toString());
+      } else if (hash.includes('gsc.q=')) {
+        // Query matches but hash is still there — clean it up
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      }
+    }
+  
+    // Run on load in case GCS sets hash immediately
+    window.addEventListener('load', syncGcsQuery);
+  
+    // Watch for hash changes (GCS updates the hash on every search)
+    window.addEventListener('hashchange', syncGcsQuery);
+  </script>
 </body>
 </html>
