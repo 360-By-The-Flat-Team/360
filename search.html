@@ -321,33 +321,55 @@
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
   <script>
     function syncGcsQuery() {
-      const hash = window.location.hash; // e.g. #gsc.tab=1&gsc.q=Hi&gsc.sort=
-      const match = hash.match(/gsc\.q=([^&]*)/);
-      if (!match) return;
+      const hash = window.location.hash;
   
-      const gscQuery = decodeURIComponent(match[1].replace(/\+/g, ' ')).trim();
+      const qMatch = hash.match(/gsc\.q=([^&]*)/);
+      const tabMatch = hash.match(/gsc\.tab=([^&]*)/);
+  
+      if (!qMatch) return;
+  
+      const gscQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).trim();
       if (!gscQuery) return;
+  
+      // gsc.tab=0 = Web, gsc.tab=1 = Images (pass through directly)
+      const tab = tabMatch ? tabMatch[1] : '0';
   
       const url = new URL(window.location.href);
       const currentQ = url.searchParams.get('q') || '';
+      const currentTab = url.searchParams.get('tab') || '0';
   
-      // Only update if the query actually changed
-      if (gscQuery !== currentQ) {
+      if (gscQuery !== currentQ || tab !== currentTab) {
         url.searchParams.set('q', gscQuery);
-        url.hash = ''; // remove the gsc hash
+        url.searchParams.set('tab', tab);
+        url.hash = '';
         window.history.replaceState(null, '', url.toString());
-      } else if (hash.includes('gsc.q=')) {
-        // Query matches but hash is still there — clean it up
+      } else {
+        // Query already matches, just strip the hash
         url.hash = '';
         window.history.replaceState(null, '', url.toString());
       }
     }
   
-    // Run on load in case GCS sets hash immediately
-    window.addEventListener('load', syncGcsQuery);
+    // Use MutationObserver to detect GCS updating the hash live
+    const _origPushState = history.pushState.bind(history);
+    const _origReplaceState = history.replaceState.bind(history);
   
-    // Watch for hash changes (GCS updates the hash on every search)
+    history.pushState = function(...args) {
+      _origPushState(...args);
+      setTimeout(syncGcsQuery, 50);
+    };
+    history.replaceState = function(...args) {
+      // Ignore our own replaceState calls to avoid infinite loop
+      if (args[2] && String(args[2]).includes('gsc.')) {
+        _origReplaceState(...args);
+        setTimeout(syncGcsQuery, 50);
+      } else {
+        _origReplaceState(...args);
+      }
+    };
+  
     window.addEventListener('hashchange', syncGcsQuery);
+    window.addEventListener('load', () => setTimeout(syncGcsQuery, 300));
   </script>
 </body>
 </html>
