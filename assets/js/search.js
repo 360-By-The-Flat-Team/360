@@ -1,113 +1,103 @@
-const API = "https://api.360-search.com/search";
+const API_URL = "https://api.360-search.com/search?q=";
 
-const searchBox = document.getElementById("searchBox");
-const resultsDiv = document.getElementById("results");
-const paginationDiv = document.getElementById("pagination");
+const input = document.getElementById("strip-search-input");
+const form = document.getElementById("strip-search-form");
+const container = document.getElementById("results-container");
 
-// Loading animation frames
-let loadingInterval = null;
-let loadingFrames = ["loading.", "loading..", "loading...", "loading..", "loading."];
-let loadingIndex = 0;
-
-function startLoadingTitle() {
-  stopLoadingTitle();
-  loadingInterval = setInterval(() => {
-    document.title = loadingFrames[loadingIndex] + " – 360";
-    loadingIndex = (loadingIndex + 1) % loadingFrames.length;
-  }, 300);
-}
-
-function stopLoadingTitle() {
-  if (loadingInterval) {
-    clearInterval(loadingInterval);
-    loadingInterval = null;
-  }
-}
-
-function updateTitle(q) {
-  if (!q) {
-    document.title = "360";
-  } else {
-    document.title = `${q} – 360`;
-  }
-}
-
-function getParam(name) {
-  return new URL(location.href).searchParams.get(name);
-}
-
-async function runSearch() {
-  const q = getParam("q") || "";
-  const page = getParam("page") || "1";
-
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const q = input.value.trim();
   if (!q) return;
+  history.replaceState({}, "", "?q=" + encodeURIComponent(q));
+  loadResults(q);
+});
 
-  searchBox.value = q;
-
-  startLoadingTitle(); // start animated title
-
-  const url = `${API}?q=${encodeURIComponent(q)}&page=${page}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  stopLoadingTitle();  // stop animation
-  updateTitle(q);      // set final title
-
-  renderResults(data.results || []);
-  renderPagination(Number(page));
-}
-
-function renderResults(items) {
-  resultsDiv.innerHTML = "";
-
-  items.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <div class="card-title">
-        <a href="${item.url}" target="_blank">${item.title || "Untitled"}</a>
-      </div>
-      <div class="card-snippet">${item.content || ""}</div>
-      <div class="card-url">${item.url}</div>
-    `;
-
-    resultsDiv.appendChild(card);
-  });
-}
-
-function renderPagination(current) {
-  paginationDiv.innerHTML = "";
-
-  const prev = document.createElement("button");
-  prev.className = "page-btn";
-  prev.textContent = "Previous";
-  prev.disabled = current <= 1;
-  prev.onclick = () => goToPage(current - 1);
-
-  const next = document.createElement("button");
-  next.className = "page-btn";
-  next.textContent = "Next";
-  next.onclick = () => goToPage(current + 1);
-
-  paginationDiv.appendChild(prev);
-  paginationDiv.appendChild(next);
-}
-
-function goToPage(page) {
-  const q = searchBox.value;
-  const newUrl = `/search.html?q=${encodeURIComponent(q)}&page=${page}`;
-  history.pushState({}, "", newUrl);
-  runSearch();
-}
-
-searchBox.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    const q = searchBox.value;
-    const newUrl = `/search.html?q=${encodeURIComponent(q)}&page=1`;
-    history.pushState({}, "", newUrl);
-    runSearch();
+window.addEventListener("load", () => {
+  const params = new URLSearchParams(location.search);
+  const q = params.get("q");
+  if (q) {
+    input.value = q;
+    loadResults(q);
   }
 });
 
-runSearch();
+async function loadResults(q) {
+  container.innerHTML = skeletonSet();
+
+  let data;
+  try {
+    const res = await fetch(API_URL + encodeURIComponent(q));
+    data = await res.json();
+  } catch {
+    return renderErrorCards();
+  }
+
+  if (!data || !data.results || data.results.length === 0) {
+    return container.innerHTML = `<div class="error-card">No results found.</div>`;
+  }
+
+  renderHybrid(data.results);
+}
+
+function renderHybrid(results) {
+  const web = results.filter(r => r.type === "web");
+  const media = results.filter(r => r.type === "image" || r.type === "video");
+
+  container.innerHTML = "";
+
+  if (web.length) {
+    web.forEach(r => container.appendChild(webCard(r)));
+  }
+
+  if (media.length) {
+    const wrap = document.createElement("div");
+    wrap.className = "grid-wrap";
+    media.forEach(r => wrap.appendChild(mediaCard(r)));
+    container.appendChild(wrap);
+  }
+}
+
+function webCard(r) {
+  const div = document.createElement("div");
+  div.className = "result-card";
+  div.innerHTML = `
+    <div class="result-title">${r.title || "Untitled"}</div>
+    <div class="result-desc">${r.description || ""}</div>
+    <div class="result-url">${r.url || ""}</div>
+  `;
+  return div;
+}
+
+function mediaCard(r) {
+  const div = document.createElement("div");
+  div.className = "grid-card";
+  div.innerHTML = `
+    <img src="${r.image || r.thumbnail || ""}" onerror="this.style.display='none'">
+    <div class="grid-card-body">
+      <div class="grid-card-title">${r.title || "Untitled"}</div>
+    </div>
+  `;
+  return div;
+}
+
+function skeletonSet() {
+  return `
+    <div class="result-card">
+      <div class="skel" style="width:60%"></div>
+      <div class="skel" style="width:90%;margin-top:8px"></div>
+      <div class="skel" style="width:40%;margin-top:8px"></div>
+    </div>
+    <div class="result-card">
+      <div class="skel" style="width:50%"></div>
+      <div class="skel" style="width:80%;margin-top:8px"></div>
+      <div class="skel" style="width:30%;margin-top:8px"></div>
+    </div>
+  `;
+}
+
+function renderErrorCards() {
+  container.innerHTML = `
+    <div class="result-card error-card">⚠ Worker offline — showing cached layout</div>
+    <div class="result-card error-card">⚠ Could not load results</div>
+  `;
+}
