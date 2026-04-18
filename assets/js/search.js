@@ -18,6 +18,17 @@ const acList = document.getElementById("autocompleteList");
 const loader = document.getElementById("frame-loader");
 const noResults = document.getElementById("no-query");
 
+// Read ?q= from URL
+const params = new URLSearchParams(window.location.search);
+const q = params.get("q");
+
+if (q) {
+  const input = document.getElementById("strip-search-input");
+  input.value = q;
+  runSearch(q); // the existing search function
+}
+
+
 // Recommended popup
 const recommendedBox = document.getElementById("recommendedBox");
 const recommendedList = document.getElementById("recommendedList");
