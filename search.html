@@ -1,7 +1,3 @@
-<!-- ===============================
-  SEARCH.HTML V3 — 360 SEARCH
-================================ -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,16 +133,28 @@
       </div>
     </div>
 
-    <div id="resultsContainer" class="results list-view"></div>
+    <div class="search-main-layout">
+      <div class="search-left">
+        <div class="search-tabs">
+          <button class="tab-btn active" data-tab="all">All</button>
+          <button class="tab-btn" data-tab="images">Images</button>
+        </div>
 
-    <div id="frame-loader" class="loading">
-      <div class="loader-spinner"></div>
-      <p>Searching…</p>
-    </div>
+        <div id="resultsContainer" class="results list-view"></div>
+        <div id="imageResults" class="results images-view hidden"></div>
 
-    <div id="no-query" class="no-results">
-      <div class="big-emoji">🔍</div>
-      <p>No results found.</p>
+        <div id="frame-loader" class="loading">
+          <div class="loader-spinner"></div>
+          <p>Searching…</p>
+        </div>
+
+        <div id="no-query" class="no-results">
+          <div class="big-emoji">🔍</div>
+          <p>No results found.</p>
+        </div>
+      </div>
+
+      <aside id="knowledgePanel" class="knowledge-panel hidden"></aside>
     </div>
 
   </div>
