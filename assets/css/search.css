@@ -18,7 +18,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  padding-left: 60px; /* ⭐ SHIFT RIGHT FIX */
+  padding-left: 145px; /* SHIFT RIGHT FIX */
   background: rgba(255,255,255,0.9);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--br);
