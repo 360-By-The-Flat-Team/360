@@ -30,13 +30,14 @@
 </head>
 <body>
 
+  <!-- Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
 
+  <!-- Sidebar -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
-
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo-mark"></div>
@@ -58,6 +59,7 @@
 
   <div class="overlay" id="overlay"></div>
 
+  <!-- Settings panel -->
   <div class="settings-panel" id="settingsPanel">
     <h3>Appearance</h3>
     <div class="settings-label">Theme</div>
@@ -91,6 +93,7 @@
     </div>
   </div>
 
+  <!-- Auth popup -->
   <div id="auth-popup" class="auth-popup hidden">
     <div class="auth-box">
       <h2>Account</h2>
@@ -117,7 +120,7 @@
     <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
   </div>
 
-  <!-- SEARCH RESULTS PAGE -->
+  <!-- SEARCH PAGE -->
   <div class="search-results-page">
 
     <div class="search-bar-strip">
@@ -136,12 +139,12 @@
 
     <div id="resultsContainer" class="results list-view"></div>
 
-    <div id="frame-loader" class="loading hidden">
+    <div id="frame-loader" class="loading">
       <div class="loader-spinner"></div>
       <p>Searching…</p>
     </div>
 
-    <div id="no-query" class="no-results hidden">
+    <div id="no-query" class="no-results">
       <div class="big-emoji">🔍</div>
       <p>No results found.</p>
     </div>
