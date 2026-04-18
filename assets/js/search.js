@@ -1,6 +1,8 @@
-// 360 Search V3 — Frontend Engine
-// Matches EXACT HTML + CSS provided by Z
+// ===============================
+// 360 SEARCH V3 — FINAL JS
+// ===============================
 
+// DOM
 const form = document.getElementById("strip-search-form");
 const input = document.getElementById("strip-search-input");
 const resultsContainer = document.getElementById("resultsContainer");
@@ -16,31 +18,36 @@ const acList = document.getElementById("autocompleteList");
 const loader = document.getElementById("frame-loader");
 const noResults = document.getElementById("no-query");
 
-let typingTimer;
-let acTimer;
+// Autocomplete state
 let acIndex = -1;
 let acItems = [];
+let acTimer;
+let searchTimer;
 
-/* ===============================
-   VIEW TOGGLE
-=============================== */
-listBtn?.addEventListener("click", () => {
+// Supabase function URLs
+const SEARCH_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search";
+const AC_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete";
+
+// ===============================
+// VIEW TOGGLE
+// ===============================
+listBtn.addEventListener("click", () => {
   listBtn.classList.add("active");
   gridBtn.classList.remove("active");
   resultsContainer.classList.add("list-view");
   resultsContainer.classList.remove("grid-view");
 });
 
-gridBtn?.addEventListener("click", () => {
+gridBtn.addEventListener("click", () => {
   gridBtn.classList.add("active");
   listBtn.classList.remove("active");
   resultsContainer.classList.add("grid-view");
   resultsContainer.classList.remove("list-view");
 });
 
-/* ===============================
-   TABS
-=============================== */
+// ===============================
+// TABS
+// ===============================
 tabButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     tabButtons.forEach(b => b.classList.remove("active"));
@@ -51,17 +58,17 @@ tabButtons.forEach(btn => {
     if (tab === "all") {
       resultsContainer.classList.remove("hidden");
       imageResults.classList.add("hidden");
-    } else if (tab === "images") {
+    } else {
       resultsContainer.classList.add("hidden");
       imageResults.classList.remove("hidden");
     }
   });
 });
 
-/* ===============================
-   FORM SUBMIT
-=============================== */
-form?.addEventListener("submit", (e) => {
+// ===============================
+// FORM SUBMIT
+// ===============================
+form.addEventListener("submit", e => {
   e.preventDefault();
   const q = input.value.trim();
   if (!q) return;
@@ -70,16 +77,16 @@ form?.addEventListener("submit", (e) => {
 
   const url = new URL(window.location.href);
   url.searchParams.set("q", q);
-  url.searchParams.set("safe", getSafeLevel());
+  url.searchParams.set("safe", safeSelect.value);
   window.history.replaceState(null, "", url.toString());
 });
 
-/* ===============================
-   INSTANT SEARCH + AUTOCOMPLETE
-=============================== */
-input?.addEventListener("input", () => {
+// ===============================
+// INPUT LISTENER (INSTANT SEARCH + AC)
+// ===============================
+input.addEventListener("input", () => {
   const q = input.value.trim();
-  clearTimeout(typingTimer);
+  clearTimeout(searchTimer);
   clearTimeout(acTimer);
 
   if (!q) {
@@ -87,14 +94,14 @@ input?.addEventListener("input", () => {
     return;
   }
 
-  typingTimer = setTimeout(() => runSearch(q), 300);
+  searchTimer = setTimeout(() => runSearch(q), 300);
   acTimer = setTimeout(() => fetchAutocomplete(q), 150);
 });
 
-/* ===============================
-   AUTOCOMPLETE KEYBOARD NAV
-=============================== */
-input?.addEventListener("keydown", (e) => {
+// ===============================
+// AUTOCOMPLETE KEYBOARD NAV
+// ===============================
+input.addEventListener("keydown", e => {
   if (!acList.classList.contains("visible")) return;
 
   if (e.key === "ArrowDown") {
@@ -116,39 +123,25 @@ input?.addEventListener("keydown", (e) => {
   }
 });
 
-/* ===============================
-   ON LOAD
-=============================== */
+// ===============================
+// ON LOAD
+// ===============================
 window.addEventListener("load", () => {
   const url = new URL(window.location.href);
   const q = url.searchParams.get("q") || "";
   const safe = url.searchParams.get("safe") || "moderate";
 
-  if (safeSelect) safeSelect.value = safe;
+  safeSelect.value = safe;
 
   if (q) {
     input.value = q;
     runSearch(q);
-  } else {
-    showLoading(false);
-    showNoResults(false);
   }
 });
 
-/* ===============================
-   SAFESEARCH
-=============================== */
-function getSafeLevel() {
-  if (!safeSelect) return "moderate";
-  const val = safeSelect.value || "moderate";
-  if (val === "off") return "off";
-  if (val === "strict") return "strict";
-  return "moderate";
-}
-
-/* ===============================
-   MAIN SEARCH
-=============================== */
+// ===============================
+// MAIN SEARCH
+// ===============================
 async function runSearch(q) {
   resultsContainer.innerHTML = "";
   imageResults.innerHTML = "";
@@ -166,11 +159,9 @@ async function runSearch(q) {
   let paa = [];
 
   try {
-    const safe = getSafeLevel();
     const res = await fetch(
-  `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safe)}`
-);
-
+      `${SEARCH_URL}?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safeSelect.value)}`
+    );
 
     if (!res.ok) throw new Error("Backend error");
 
@@ -179,8 +170,8 @@ async function runSearch(q) {
     images = data.images || [];
     entity = data.entity || null;
     paa = data.paa || [];
-  } catch (e) {
-    console.warn("Search error", e);
+  } catch (err) {
+    console.error("Search error:", err);
   }
 
   showLoading(false);
@@ -190,9 +181,9 @@ async function runSearch(q) {
     return;
   }
 
-  /* ===============================
-     WEB RESULTS
-  =============================== */
+  // ===============================
+  // WEB RESULTS
+  // ===============================
   results.forEach(r => {
     const card = document.createElement("div");
     card.className = "result-card";
@@ -242,9 +233,9 @@ async function runSearch(q) {
     resultsContainer.appendChild(card);
   });
 
-  /* ===============================
-     IMAGE RESULTS
-  =============================== */
+  // ===============================
+  // IMAGE RESULTS
+  // ===============================
   images.forEach(r => {
     const card = document.createElement("a");
     card.className = "image-card";
@@ -264,14 +255,14 @@ async function runSearch(q) {
     imageResults.appendChild(card);
   });
 
-  /* ===============================
-     KNOWLEDGE PANEL
-  =============================== */
+  // ===============================
+  // KNOWLEDGE PANEL
+  // ===============================
   if (entity) buildKnowledgePanel(entity);
 
-  /* ===============================
-     PEOPLE ALSO ASK
-  =============================== */
+  // ===============================
+  // PEOPLE ALSO ASK
+  // ===============================
   if (paa.length) {
     paaSection.classList.remove("hidden");
     paaList.innerHTML = "";
@@ -290,29 +281,25 @@ async function runSearch(q) {
       aEl.textContent = item.a;
       wrap.appendChild(aEl);
 
-      qEl.addEventListener("click", () => {
-        wrap.classList.toggle("open");
-      });
+      qEl.addEventListener("click", () => wrap.classList.toggle("open"));
 
       paaList.appendChild(wrap);
     });
   }
 }
 
-/* ===============================
-   AUTOCOMPLETE
-=============================== */
+// ===============================
+// AUTOCOMPLETE
+// ===============================
 async function fetchAutocomplete(q) {
   try {
-    const res = await fetch(
-  `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete?q=${encodeURIComponent(q)}`
-);
-
+    const res = await fetch(`${AC_URL}?q=${encodeURIComponent(q)}`);
     if (!res.ok) throw new Error("AC error");
+
     const data = await res.json();
     renderAutocomplete(data.suggestions || []);
-  } catch (e) {
-    console.warn("Autocomplete error", e);
+  } catch (err) {
+    console.error("Autocomplete error:", err);
   }
 }
 
@@ -344,7 +331,7 @@ function renderAutocomplete(items) {
     div.appendChild(text);
     div.appendChild(src);
 
-    div.addEventListener("mousedown", (e) => {
+    div.addEventListener("mousedown", e => {
       e.preventDefault();
       input.value = s.text;
       hideAutocomplete();
@@ -360,6 +347,7 @@ function renderAutocomplete(items) {
 
 function moveAc(delta) {
   if (!acItems.length) return;
+
   acIndex += delta;
   if (acIndex < 0) acIndex = acItems.length - 1;
   if (acIndex >= acItems.length) acIndex = 0;
@@ -376,9 +364,9 @@ function hideAutocomplete() {
   acIndex = -1;
 }
 
-/* ===============================
-   KNOWLEDGE PANEL
-=============================== */
+// ===============================
+// KNOWLEDGE PANEL
+// ===============================
 async function buildKnowledgePanel(title) {
   try {
     const summary = await fetch(
@@ -422,14 +410,14 @@ async function buildKnowledgePanel(title) {
     knowledgePanel.appendChild(link);
 
     knowledgePanel.classList.remove("hidden");
-  } catch (e) {
-    console.warn("KP error", e);
+  } catch (err) {
+    console.error("KP error:", err);
   }
 }
 
-/* ===============================
-   HELPERS
-=============================== */
+// ===============================
+// HELPERS
+// ===============================
 function showLoading(on) {
   loader.classList.toggle("visible", on);
 }
