@@ -1,445 +1,344 @@
 // ===============================
-// 360 SEARCH V3 — FINAL JS
+// 360 SEARCH V3 — FULL REWRITE
 // ===============================
 
-// DOM
-const form = document.getElementById("strip-search-form");
-const input = document.getElementById("strip-search-input");
+// DOM refs
 const resultsContainer = document.getElementById("resultsContainer");
 const imageResults = document.getElementById("imageResults");
 const knowledgePanel = document.getElementById("knowledgePanel");
+const stripSearchInput = document.getElementById("strip-search-input");
+const stripSearchForm = document.getElementById("strip-search-form");
+const safeSelect = document.getElementById("safeSelect");
 const paaSection = document.getElementById("paaSection");
 const paaList = document.getElementById("paaList");
-const listBtn = document.getElementById("listViewBtn");
-const gridBtn = document.getElementById("gridViewBtn");
-const tabButtons = document.querySelectorAll(".tab-btn");
-const safeSelect = document.getElementById("safeSelect");
-const acList = document.getElementById("autocompleteList");
 const loader = document.getElementById("frame-loader");
-const noResults = document.getElementById("no-query");
+const noQueryBox = document.getElementById("no-query");
+const tabAll = document.getElementById("tabAll");
+const tabImages = document.getElementById("tabImages");
+const listViewBtn = document.getElementById("listViewBtn");
+const gridViewBtn = document.getElementById("gridViewBtn");
 
-// Read ?q= from URL
+// SPEED TEST DOM
+const speedModule = document.getElementById("speedTestModule");
+const speedCanvas = document.getElementById("speedometer");
+const pingEl = document.getElementById("pingResult");
+const downEl = document.getElementById("downloadResult");
+const upEl = document.getElementById("uploadResult");
+const unitLabel = document.getElementById("unitLabel");
+const unitLabel2 = document.getElementById("unitLabel2");
+const speedFeedback = document.getElementById("speedFeedback");
+const speedResultsBox = document.getElementById("speedResults");
+const startSpeedTestBtn = document.getElementById("startSpeedTest");
+const unitSelect = document.getElementById("unitSelect");
+
+// ===============================
+// URL QUERY → INPUT + AUTO SEARCH
+// ===============================
 const params = new URLSearchParams(window.location.search);
-const q = params.get("q");
+const initialQ = params.get("q");
 
-if (q) {
-  const input = document.getElementById("strip-search-input");
-  input.value = q;
-  runSearch(q); // the existing search function
+if (initialQ) {
+  stripSearchInput.value = initialQ;
+  runSearch(initialQ);
 }
 
+// ===============================
+// MAIN SEARCH HANDLER
+// ===============================
+stripSearchForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = stripSearchInput.value.trim();
+  if (!q) return;
+  runSearch(q);
+});
 
-// Recommended popup
-const recommendedBox = document.getElementById("recommendedBox");
-const recommendedList = document.getElementById("recommendedList");
+// ===============================
+// TAB SWITCHING
+// ===============================
+tabAll.addEventListener("click", () => {
+  tabAll.classList.add("active");
+  tabImages.classList.remove("active");
+  resultsContainer.classList.remove("hidden");
+  imageResults.classList.add("hidden");
+});
 
-// Autocomplete state
-let acIndex = -1;
-let acItems = [];
-let acTimer;
-let searchTimer;
-
-// Supabase function URLs
-const SEARCH_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search";
-const AC_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete";
-const TREND_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/trending";
+tabImages.addEventListener("click", () => {
+  tabImages.classList.add("active");
+  tabAll.classList.remove("active");
+  resultsContainer.classList.add("hidden");
+  imageResults.classList.remove("hidden");
+});
 
 // ===============================
 // VIEW TOGGLE
 // ===============================
-listBtn.addEventListener("click", () => {
-  listBtn.classList.add("active");
-  gridBtn.classList.remove("active");
+listViewBtn.addEventListener("click", () => {
+  listViewBtn.classList.add("active");
+  gridViewBtn.classList.remove("active");
   resultsContainer.classList.add("list-view");
   resultsContainer.classList.remove("grid-view");
 });
 
-gridBtn.addEventListener("click", () => {
-  gridBtn.classList.add("active");
-  listBtn.classList.remove("active");
-  resultsContainer.classList.add("grid-view");
+gridViewBtn.addEventListener("click", () => {
+  gridViewBtn.classList.add("active");
+  listViewBtn.classList.remove("active");
   resultsContainer.classList.remove("list-view");
+  resultsContainer.classList.add("grid-view");
 });
 
 // ===============================
-// TABS
+// SPEED KEYWORD DETECTION
 // ===============================
-tabButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    tabButtons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+const speedKeywords = [
+  "speed test", "speedtest", "internet speed", "wifi speed",
+  "network speed", "ping test", "latency test", "speed check"
+];
 
-    const tab = btn.dataset.tab;
-
-    if (tab === "all") {
-      resultsContainer.classList.remove("hidden");
-      imageResults.classList.add("hidden");
-    } else {
-      resultsContainer.classList.add("hidden");
-      imageResults.classList.remove("hidden");
-    }
-  });
-});
-
-// ===============================
-// FORM SUBMIT
-// ===============================
-form.addEventListener("submit", e => {
-  e.preventDefault();
-  const q = input.value.trim();
-  if (!q) return;
-  hideAutocomplete();
-  recommendedBox.classList.add("hidden");
-  runSearch(q);
-
-  const url = new URL(window.location.href);
-  url.searchParams.set("q", q);
-  url.searchParams.set("safe", safeSelect.value);
-  window.history.replaceState(null, "", url.toString());
-});
-
-// ===============================
-// INPUT LISTENER (INSTANT SEARCH + AC + RECOMMENDED)
-// ===============================
-input.addEventListener("focus", () => {
-  if (!input.value.trim()) loadRecommended();
-});
-
-input.addEventListener("input", () => {
-  const q = input.value.trim();
-
-  if (!q) {
-    hideAutocomplete();
-    loadRecommended();
-    return;
-  }
-
-  recommendedBox.classList.add("hidden");
-
-  clearTimeout(searchTimer);
-  clearTimeout(acTimer);
-
-  searchTimer = setTimeout(() => runSearch(q), 300);
-  acTimer = setTimeout(() => fetchAutocomplete(q), 150);
-});
-
-// ===============================
-// CLICK OUTSIDE → HIDE POPUPS
-// ===============================
-document.addEventListener("click", (e) => {
-  if (!form.contains(e.target)) {
-    recommendedBox.classList.add("hidden");
-    hideAutocomplete();
-  }
-});
-
-// ===============================
-// LOAD RECOMMENDED (TRENDING)
-// ===============================
-async function loadRecommended() {
-  recommendedList.innerHTML = "";
-  recommendedBox.classList.remove("hidden");
-
-  try {
-    const res = await fetch(TREND_URL);
-    const data = await res.json();
-
-    data.trending.forEach((row) => {
-      const div = document.createElement("div");
-      div.className = "recommended-item";
-
-      const fire = document.createElement("img");
-      fire.src = "/assets/icons/fire.svg";
-      fire.className = "fire-icon";
-
-      const text = document.createElement("span");
-      text.textContent = row.term;
-
-      div.appendChild(fire);
-      div.appendChild(text);
-
-      div.addEventListener("mousedown", () => {
-        input.value = row.term;
-        recommendedBox.classList.add("hidden");
-        runSearch(row.term);
-      });
-
-      recommendedList.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error("Trending error:", err);
-  }
+function shouldShowSpeedTest(query) {
+  const q = query.toLowerCase();
+  return speedKeywords.some(k => q.includes(k));
 }
 
 // ===============================
-// AUTOCOMPLETE
+// RUN SEARCH (HOOK TO YOUR EDGE FUNCTION)
 // ===============================
-async function fetchAutocomplete(q) {
-  try {
-    const res = await fetch(`${AC_URL}?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    renderAutocomplete(data.suggestions || []);
-  } catch (err) {
-    console.error("Autocomplete error:", err);
-  }
-}
-
-function renderAutocomplete(items) {
-  acList.innerHTML = "";
-  acItems = [];
-  acIndex = -1;
-
-  if (!items.length) {
-    acList.classList.remove("visible");
-    return;
+async function runSearch(query) {
+  // Speed test visibility
+  if (shouldShowSpeedTest(query)) {
+    speedModule.classList.remove("hidden");
+  } else {
+    speedModule.classList.add("hidden");
   }
 
-  items.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "ac-item";
-    div.dataset.value = s.text;
-
-    const text = document.createElement("span");
-    text.textContent = s.text;
-
-    const src = document.createElement("span");
-    src.className = "ac-source";
-    src.textContent =
-      s.source === "ddg" ? "Web" :
-      s.source === "wiki" ? "Wiki" :
-      s.source === "trending" ? "Trending" : "";
-
-    div.appendChild(text);
-    div.appendChild(src);
-
-    div.addEventListener("mousedown", e => {
-      e.preventDefault();
-      input.value = s.text;
-      hideAutocomplete();
-      runSearch(s.text);
-    });
-
-    acList.appendChild(div);
-    acItems.push(div);
-  });
-
-  acList.classList.add("visible");
-}
-
-function hideAutocomplete() {
-  acList.classList.remove("visible");
-  acList.innerHTML = "";
-  acItems = [];
-  acIndex = -1;
-}
-
-// ===============================
-// MAIN SEARCH
-// ===============================
-async function runSearch(q) {
+  loader.classList.add("visible");
+  noQueryBox.classList.remove("visible");
   resultsContainer.innerHTML = "";
   imageResults.innerHTML = "";
-  knowledgePanel.innerHTML = "";
   knowledgePanel.classList.add("hidden");
-  paaList.innerHTML = "";
   paaSection.classList.add("hidden");
 
-  showLoading(true);
-  showNoResults(false);
-
-  let results = [];
-  let images = [];
-  let entity = null;
-  let paa = [];
-
   try {
-    const res = await fetch(
-      `${SEARCH_URL}?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safeSelect.value)}`
-    );
+    // TODO: Replace with your real backend call
+    // const res = await fetch("/functions/v1/search", { ... });
+    // const data = await res.json();
 
-    const data = await res.json();
-    results = data.results || [];
-    images = data.images || [];
-    entity = data.entity || null;
-    paa = data.paa || [];
+    const data = { results: [], images: [], kp: null, paa: [] }; // placeholder
 
+    renderResults(data.results);
+    renderImages(data.images);
+    renderKP(data.kp);
+    renderPAA(data.paa);
+
+    if (!data.results.length && !data.images.length) {
+      noQueryBox.classList.add("visible");
+    }
   } catch (err) {
-    console.error("Search error:", err);
+    console.error(err);
+    noQueryBox.classList.add("visible");
+  } finally {
+    loader.classList.remove("visible");
   }
+}
 
-  showLoading(false);
-
-  if (!results.length) {
-    showNoResults(true);
-    return;
-  }
-
-  // WEB RESULTS
-  results.forEach(r => {
-    const card = document.createElement("div");
+// ===============================
+// RENDER HELPERS
+// ===============================
+function renderResults(items) {
+  resultsContainer.innerHTML = "";
+  items.forEach(item => {
+    const card = document.createElement("article");
     card.className = "result-card";
-
-    if (r.img) {
-      const img = document.createElement("img");
-      img.className = "result-img";
-      img.src = r.img;
-      img.loading = "lazy";
-      card.appendChild(img);
-    }
-
-    const header = document.createElement("div");
-    header.className = "result-header";
-
-    const domain = safeDomain(r.url);
-    if (domain) {
-      const icon = document.createElement("img");
-      icon.className = "result-favicon";
-      icon.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-      icon.loading = "lazy";
-      header.appendChild(icon);
-    }
-
-    const title = document.createElement("div");
-    title.className = "result-title";
-    title.textContent = r.title || r.url;
-    header.appendChild(title);
-
-    card.appendChild(header);
-
-    if (r.desc) {
-      const desc = document.createElement("div");
-      desc.className = "result-desc";
-      desc.textContent = r.desc;
-      card.appendChild(desc);
-    }
-
-    const link = document.createElement("a");
-    link.className = "result-url";
-    link.href = r.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = r.url;
-    card.appendChild(link);
-
+    card.innerHTML = `
+      <div class="result-header">
+        ${item.favicon ? `<img class="result-favicon" src="${item.favicon}" />` : ""}
+        <div class="result-title">${item.title || "Untitled"}</div>
+      </div>
+      <div class="result-url">${item.url || ""}</div>
+      <div class="result-desc">${item.snippet || ""}</div>
+    `;
     resultsContainer.appendChild(card);
   });
+}
 
-  // IMAGE RESULTS
-  images.forEach(r => {
-    const card = document.createElement("a");
+function renderImages(items) {
+  imageResults.innerHTML = "";
+  items.forEach(item => {
+    const card = document.createElement("div");
     card.className = "image-card";
-    card.href = r.url || "#";
-    card.target = "_blank";
-
-    const img = document.createElement("img");
-    img.src = r.img;
-    img.loading = "lazy";
-    card.appendChild(img);
-
-    const cap = document.createElement("div");
-    cap.className = "image-card-caption";
-    cap.textContent = r.title || safeDomain(r.url);
-    card.appendChild(cap);
-
+    card.innerHTML = `
+      <img src="${item.src}" alt="${item.title || ""}" />
+      <div class="image-card-caption">${item.title || ""}</div>
+    `;
     imageResults.appendChild(card);
   });
+}
 
-  // KNOWLEDGE PANEL
-  if (entity) buildKnowledgePanel(entity);
+function renderKP(kp) {
+  if (!kp) {
+    knowledgePanel.classList.add("hidden");
+    return;
+  }
+  knowledgePanel.classList.remove("hidden");
+  knowledgePanel.innerHTML = `
+    <div class="kp-title">${kp.title || ""}</div>
+    <div class="kp-subtitle">${kp.subtitle || ""}</div>
+    ${kp.image ? `<img class="kp-thumb" src="${kp.image}" />` : ""}
+    <div class="kp-extract">${kp.extract || ""}</div>
+    ${kp.url ? `<a class="kp-link" href="${kp.url}" target="_blank">More info</a>` : ""}
+  `;
+}
 
-  // PAA
-  if (paa.length) {
-    paaSection.classList.remove("hidden");
-    paaList.innerHTML = "";
-
-    paa.forEach(item => {
-      const wrap = document.createElement("div");
-      wrap.className = "paa-item";
-
-      const qEl = document.createElement("div");
-      qEl.className = "paa-question";
-      qEl.innerHTML = `<span>${item.q}</span><span class="chevron">›</span>`;
-      wrap.appendChild(qEl);
-
-      const aEl = document.createElement("div");
-      aEl.className = "paa-answer";
-      aEl.textContent = item.a;
-      wrap.appendChild(aEl);
-
-      qEl.addEventListener("click", () => wrap.classList.toggle("open"));
-
-      paaList.appendChild(wrap);
+function renderPAA(items) {
+  if (!items || !items.length) {
+    paaSection.classList.add("hidden");
+    return;
+  }
+  paaSection.classList.remove("hidden");
+  paaList.innerHTML = "";
+  items.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "paa-item";
+    row.innerHTML = `
+      <div class="paa-question">
+        <span>${item.question}</span>
+        <span class="chevron">›</span>
+      </div>
+      <div class="paa-answer">${item.answer}</div>
+    `;
+    row.addEventListener("click", () => {
+      row.classList.toggle("open");
     });
+    paaList.appendChild(row);
+  });
+}
+
+// ===============================
+// SPEEDOMETER CANVAS
+// ===============================
+const ctx = speedCanvas.getContext("2d");
+let needleValue = 0;
+
+function drawSpeedometer(value, labelText) {
+  const w = speedCanvas.width;
+  const h = speedCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = "#444";
+  ctx.beginPath();
+  ctx.arc(w/2, h, 100, Math.PI, Math.PI*2);
+  ctx.stroke();
+
+  const angle = Math.PI + (Math.min(value, 100) / 100) * Math.PI;
+  const nx = w/2 + Math.cos(angle) * 90;
+  const ny = h + Math.sin(angle) * 90;
+
+  ctx.strokeStyle = "#3b82f6";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(w/2, h);
+  ctx.lineTo(nx, ny);
+  ctx.stroke();
+
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "16px system-ui";
+  ctx.textAlign = "center";
+  ctx.fillText(labelText, w/2, h - 20);
+}
+
+function animateNeedle(target, labelText) {
+  let start = needleValue;
+  let t = 0;
+  function step() {
+    t += 0.02;
+    const eased = Math.sin((t * Math.PI) / 2);
+    needleValue = start + (target - start) * eased;
+    drawSpeedometer(needleValue, labelText);
+    if (t < 1) requestAnimationFrame(step);
   }
+  step();
 }
 
+drawSpeedometer(0, "0 Mbps");
+
 // ===============================
-// KNOWLEDGE PANEL
+// SPEED TEST ENGINE
 // ===============================
-async function buildKnowledgePanel(title) {
-  try {
-    const summary = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
-    ).then(r => r.json());
+let baseDownMbps = null;
+let baseUpMbps = null;
 
-    if (!summary.title || !summary.extract) return;
+startSpeedTestBtn.addEventListener("click", async () => {
+  speedResultsBox.style.display = "block";
+  speedFeedback.textContent = "Testing…";
 
-    knowledgePanel.innerHTML = "";
+  // PING
+  const pingStart = performance.now();
+  await fetch("https://www.cloudflare.com/cdn-cgi/trace", { cache: "no-store" });
+  const pingEnd = performance.now();
+  const ping = Math.round(pingEnd - pingStart);
+  pingEl.textContent = ping;
 
-    if (summary.thumbnail?.source) {
-      const img = document.createElement("img");
-      img.className = "kp-thumb";
-      img.src = summary.thumbnail.source;
-      img.loading = "lazy";
-      knowledgePanel.appendChild(img);
-    }
+  // DOWNLOAD (20MB)
+  const downloadStart = performance.now();
+  const blob = await fetch("https://speed.cloudflare.com/__down?bytes=20000000");
+  await blob.arrayBuffer();
+  const downloadEnd = performance.now();
+  const seconds = (downloadEnd - downloadStart) / 1000;
+  const mbps = (20 / seconds) * 8;
+  baseDownMbps = mbps;
+  downEl.textContent = mbps.toFixed(1);
+  animateNeedle(Math.min(mbps, 100), `${mbps.toFixed(1)} Mbps`);
 
-    const h = document.createElement("div");
-    h.className = "kp-title";
-    h.textContent = summary.title;
-    knowledgePanel.appendChild(h);
+  // UPLOAD (5MB)
+  const uploadData = new Uint8Array(5_000_000);
+  const uploadStart = performance.now();
+  await fetch("https://httpbin.org/post", {
+    method: "POST",
+    body: uploadData
+  });
+  const uploadEnd = performance.now();
+  const upSeconds = (uploadEnd - uploadStart) / 1000;
+  const upMbps = (5 / upSeconds) * 8;
+  baseUpMbps = upMbps;
+  upEl.textContent = upMbps.toFixed(1);
 
-    if (summary.description) {
-      const sub = document.createElement("div");
-      sub.className = "kp-subtitle";
-      sub.textContent = summary.description;
-      knowledgePanel.appendChild(sub);
-    }
+  // FEEDBACK
+  let msg = "";
+  if (mbps > 100) msg = "Your connection is excellent for gaming, 4K streaming, and large downloads.";
+  else if (mbps > 40) msg = "Great connection — smooth HD streaming and fast downloads.";
+  else if (mbps > 15) msg = "Decent connection — HD streaming should work, but large downloads may be slower.";
+  else msg = "Slow connection — expect buffering, lag, and slow downloads.";
+  msg += ` Ping: ${ping} ms.`;
+  speedFeedback.textContent = msg;
+});
 
-    const ex = document.createElement("div");
-    ex.className = "kp-extract";
-    ex.textContent = summary.extract;
-    knowledgePanel.appendChild(ex);
+// ===============================
+// UNIT SWITCHING
+// ===============================
+unitSelect.addEventListener("change", () => {
+  if (baseDownMbps == null || baseUpMbps == null) return;
 
-    const link = document.createElement("a");
-    link.className = "kp-link";
-    link.href = summary.content_urls?.desktop?.page || "";
-    link.target = "_blank";
-    link.textContent = "View on Wikipedia";
-    knowledgePanel.appendChild(link);
+  const unit = unitSelect.value;
+  let d = baseDownMbps;
+  let u = baseUpMbps;
 
-    knowledgePanel.classList.remove("hidden");
-  } catch (err) {
-    console.error("KP error:", err);
+  if (unit === "mbps") {
+    unitLabel.textContent = "Mbps";
+    unitLabel2.textContent = "Mbps";
+    downEl.textContent = d.toFixed(1);
+    upEl.textContent = u.toFixed(1);
+    animateNeedle(Math.min(d, 100), `${d.toFixed(1)} Mbps`);
+  } else if (unit === "mbps2") {
+    unitLabel.textContent = "MB/s";
+    unitLabel2.textContent = "MB/s";
+    downEl.textContent = (d / 8).toFixed(2);
+    upEl.textContent = (u / 8).toFixed(2);
+    animateNeedle(Math.min(d, 100), `${(d/8).toFixed(2)} MB/s`);
+  } else if (unit === "kbps") {
+    unitLabel.textContent = "Kbps";
+    unitLabel2.textContent = "Kbps";
+    downEl.textContent = (d * 1000).toFixed(0);
+    upEl.textContent = (u * 1000).toFixed(0);
+    animateNeedle(Math.min(d, 100), `${(d*1000).toFixed(0)} Kbps`);
   }
-}
-
-// ===============================
-// HELPERS
-// ===============================
-function showLoading(on) {
-  loader.classList.toggle("visible", on);
-}
-
-function showNoResults(on) {
-  noResults.classList.toggle("visible", on);
-}
-
-function safeDomain(url) {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return "";
-  }
-}
+});
