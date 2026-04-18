@@ -1,4 +1,2 @@
-// Root-level search.js
-// Loads the real search engine logic from assets/js/search.js
-
+// Root-level loader for 360 Search
 import "/assets/js/search.js";
