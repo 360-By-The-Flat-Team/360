@@ -1,4 +1,4 @@
-// 360 Search — Supabase Backend Version
+// 360 Search — SafeSearch & Autocomplete Edition
 
 const resultsContainer = document.getElementById("resultsContainer");
 const imageResults = document.getElementById("imageResults");
@@ -11,16 +11,23 @@ const gridBtn = document.getElementById("gridViewBtn");
 const form = document.getElementById("strip-search-form");
 const input = document.getElementById("strip-search-input");
 const tabButtons = document.querySelectorAll(".tab-btn");
+const safeSelect = document.getElementById("safeSelect");
+const acList = document.getElementById("autocompleteList");
+
+let typingTimer;
+let acTimer;
+let acIndex = -1;
+let acItems = [];
 
 // View toggle
-listBtn.addEventListener("click", () => {
+listBtn?.addEventListener("click", () => {
   listBtn.classList.add("active");
   gridBtn.classList.remove("active");
   resultsContainer.classList.remove("grid-view");
   resultsContainer.classList.add("list-view");
 });
 
-gridBtn.addEventListener("click", () => {
+gridBtn?.addEventListener("click", () => {
   gridBtn.classList.add("active");
   listBtn.classList.remove("active");
   resultsContainer.classList.remove("list-view");
@@ -44,20 +51,59 @@ tabButtons.forEach(btn => {
 });
 
 // Form submit
-form.addEventListener("submit", (e) => {
+form?.addEventListener("submit", (e) => {
   e.preventDefault();
   const q = input.value.trim();
   if (!q) return;
+  hideAutocomplete();
   runSearch(q);
   const url = new URL(window.location.href);
   url.searchParams.set("q", q);
+  url.searchParams.set("safe", getSafeLevel());
   window.history.replaceState(null, "", url.toString());
+});
+
+// Instant search + autocomplete
+input?.addEventListener("input", () => {
+  const q = input.value.trim();
+  clearTimeout(typingTimer);
+  clearTimeout(acTimer);
+  if (!q) {
+    hideAutocomplete();
+    return;
+  }
+  typingTimer = setTimeout(() => runSearch(q), 300);
+  acTimer = setTimeout(() => fetchAutocomplete(q), 150);
+});
+
+// Keyboard navigation for autocomplete
+input?.addEventListener("keydown", (e) => {
+  if (!acList || acList.classList.contains("hidden")) return;
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    moveAc(1);
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    moveAc(-1);
+  } else if (e.key === "Enter") {
+    if (acIndex >= 0 && acIndex < acItems.length) {
+      e.preventDefault();
+      const text = acItems[acIndex].dataset.value;
+      input.value = text;
+      hideAutocomplete();
+      runSearch(text);
+    }
+  } else if (e.key === "Escape") {
+    hideAutocomplete();
+  }
 });
 
 // On load
 window.addEventListener("load", () => {
   const url = new URL(window.location.href);
   const q = url.searchParams.get("q") || "";
+  const safe = url.searchParams.get("safe") || "moderate";
+  if (safeSelect) safeSelect.value = safe;
   if (q) {
     input.value = q;
     runSearch(q);
@@ -67,7 +113,14 @@ window.addEventListener("load", () => {
   }
 });
 
-// ⭐ NEW: Supabase-powered search
+function getSafeLevel() {
+  if (!safeSelect) return "moderate";
+  const val = safeSelect.value || "moderate";
+  if (val === "off") return "off";
+  if (val === "strict") return "strict";
+  return "moderate";
+}
+
 async function runSearch(q) {
   resultsContainer.innerHTML = "";
   imageResults.innerHTML = "";
@@ -82,18 +135,17 @@ async function runSearch(q) {
   let wikiEntity = null;
 
   try {
+    const safe = getSafeLevel();
     const res = await fetch(
-      "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search?q=" + encodeURIComponent(q),
-      { method: "GET" }
+      `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search?q=${encodeURIComponent(
+        q
+      )}&safe=${encodeURIComponent(safe)}`
     );
-
     if (!res.ok) throw new Error("Backend error: " + res.status);
-
     const data = await res.json();
     deduped = data.results || [];
     imageSet = data.images || [];
     wikiEntity = data.entity || null;
-
   } catch (e) {
     console.warn("Search backend error", e);
   }
@@ -105,7 +157,7 @@ async function runSearch(q) {
     return;
   }
 
-  // Render main results
+  // Main results
   deduped.forEach(r => {
     const card = document.createElement("div");
     card.className = "result-card";
@@ -158,7 +210,7 @@ async function runSearch(q) {
     resultsContainer.appendChild(card);
   });
 
-  // Image tab
+  // Images
   const seenImg = new Set();
   imageSet.forEach(r => {
     if (!r.img || seenImg.has(r.img)) return;
@@ -183,16 +235,81 @@ async function runSearch(q) {
     imageResults.appendChild(card);
   });
 
-  // Knowledge panel
   if (wikiEntity) {
     buildKnowledgePanel(wikiEntity);
   }
 }
 
+async function fetchAutocomplete(q) {
+  if (!acList) return;
+  try {
+    const res = await fetch(
+      `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete?q=${encodeURIComponent(
+        q
+      )}`
+    );
+    if (!res.ok) throw new Error("AC error: " + res.status);
+    const data = await res.json();
+    renderAutocomplete(data.suggestions || []);
+  } catch (e) {
+    console.warn("Autocomplete error", e);
+  }
+}
+
+function renderAutocomplete(items) {
+  if (!acList) return;
+  acList.innerHTML = "";
+  acItems = [];
+  acIndex = -1;
+
+  if (!items.length) {
+    acList.classList.add("hidden");
+    return;
+  }
+
+  items.forEach((s, idx) => {
+    const div = document.createElement("div");
+    div.className = "ac-item";
+    div.textContent = s.text;
+    div.dataset.value = s.text;
+    div.dataset.source = s.source;
+    div.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      input.value = s.text;
+      hideAutocomplete();
+      runSearch(s.text);
+    });
+    acList.appendChild(div);
+    acItems.push(div);
+  });
+
+  acList.classList.remove("hidden");
+}
+
+function moveAc(delta) {
+  if (!acItems.length) return;
+  acIndex += delta;
+  if (acIndex < 0) acIndex = acItems.length - 1;
+  if (acIndex >= acItems.length) acIndex = 0;
+  acItems.forEach((el, i) => {
+    el.classList.toggle("active", i === acIndex);
+  });
+}
+
+function hideAutocomplete() {
+  if (!acList) return;
+  acList.classList.add("hidden");
+  acList.innerHTML = "";
+  acItems = [];
+  acIndex = -1;
+}
+
 async function buildKnowledgePanel(title) {
   try {
     const summary = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+        title
+      )}`
     ).then(r => r.json());
 
     if (!summary.title || !summary.extract) return;
