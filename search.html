@@ -108,7 +108,6 @@
   <!-- Settings Panel -->
   <div class="settings-panel" id="settingsPanel">
     <!-- (unchanged — same as your index.html) -->
-    <!-- I am not repeating it here to save space -->
   </div>
 
   <!-- Auth Popup -->
@@ -149,6 +148,7 @@
         <option value="off">Off</option>
       </select>
     </header>
+
     <!-- ============================
          OLD 360 SEARCH V3 LAYOUT
     ============================= -->
@@ -156,6 +156,32 @@
 
       <!-- LEFT SIDE -->
       <div class="search-left">
+
+        <!-- SPEED TEST MODULE -->
+        <div id="speedTestModule" class="result-card hidden" style="padding:20px;">
+          <h2 class="result-title">Internet Speed Test</h2>
+          <p class="result-desc">Measure your ping, download, and upload speed.</p>
+
+          <canvas id="speedometer" width="260" height="140" style="width:100%;max-width:260px;margin:20px auto;display:block;"></canvas>
+
+          <div id="speedResults" style="margin-top:14px; display:none;">
+            <div><strong>Ping:</strong> <span id="pingResult">–</span> ms</div>
+            <div><strong>Download:</strong> <span id="downloadResult">–</span> <span id="unitLabel">Mbps</span></div>
+            <div><strong>Upload:</strong> <span id="uploadResult">–</span> <span id="unitLabel2">Mbps</span></div>
+            <div style="margin-top:10px;font-size:13px;color:var(--mut);" id="speedFeedback"></div>
+          </div>
+
+          <button id="startSpeedTest" class="toggle-btn" style="margin-top:14px;">Start Test</button>
+
+          <div style="margin-top:12px;">
+            <label style="font-size:13px;">Units:</label>
+            <select id="unitSelect" class="safe-select" style="margin-left:6px;">
+              <option value="mbps">Mbps</option>
+              <option value="mbps2">MB/s</option>
+              <option value="kbps">Kbps</option>
+            </select>
+          </div>
+        </div>
 
         <!-- Tabs -->
         <div class="search-tabs">
