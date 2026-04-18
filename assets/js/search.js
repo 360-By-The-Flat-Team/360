@@ -93,158 +93,83 @@ async function runSearch(q) {
   }
 
   // ============================
-  // 2. VYNTR (optional)
-  // ============================
-  if (VYNTR_KEY) {
-    try {
-      const res = await fetch(`https://api.vyntr.com/search?q=${encodeURIComponent(q)}`, {
-        headers: { Authorization: `Bearer ${VYNTR_KEY}` }
-      });
-      const data = await res.json();
-
-      (data.results || []).slice(0, 10).forEach(r => {
-        results.push({
-          title: r.title || "",
-          desc: r.snippet || "",
-          url: r.url || "",
-          img: r.image || ""
-        });
-      });
-    } catch (e) {
-      console.warn("Vyntr error", e);
-    }
-  }
-
-  // ============================
-  // 3. DUCKDUCKGO LITE
-  // ============================
+// 2. VYNTR (correct endpoint)
+// ============================
+if (VYNTR_KEY) {
   try {
-    const html = await fetch(
-      `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`
-    ).then(r => r.text());
+    const res = await fetch(
+      `https://vyntr.com/api/v1/search?q=${encodeURIComponent(q)}`,
+      {
+        headers: {
+          "Authorization": `Bearer ${VYNTR_KEY}`
+        }
+      }
+    );
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
+    const data = await res.json();
 
-    [...doc.querySelectorAll("a")].slice(0, 10).forEach(a => {
-      const href = a.href;
-      const text = a.textContent.trim();
-      if (!href.startsWith("http")) return;
-      if (!text) return;
+    (data.web || []).slice(0, 10).forEach(item => {
       results.push({
-        title: text,
-        desc: "",
-        url: href,
-        img: ""
+        title: item.title || "",
+        desc: item.preview || "",
+        url: item.url || "",
+        img: "" // Vyntr doesn't return images
       });
     });
+
   } catch (e) {
-    console.warn("DDG error", e);
+    console.warn("Vyntr error", e);
   }
+}
+  
+// ============================
+// 3. DUCKDUCKGO — MULTIPLE BEST MATCHES (AC API)
+// ============================
+try {
+  const ddg = await fetch(
+    `https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}`
+  ).then(r => r.json());
 
-  // ============================
-  // 4. WIKIPEDIA SUMMARY
-  // ============================
-  try {
-    const wiki = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`
-    ).then(r => r.json());
+  ddg.slice(0, 8).forEach(item => {
+    if (!item?.phrase) return;
 
-    if (wiki.title && wiki.extract) {
-      results.push({
-        title: wiki.title,
-        desc: wiki.extract,
-        url: wiki.content_urls?.desktop?.page || "",
-        img: wiki.thumbnail?.source || ""
-      });
-    }
-  } catch (e) {
-    console.warn("Wiki error", e);
-  }
-
-  showLoading(false);
-
-  if (!results.length) {
-    showNoResults(true);
-    return;
-  }
-
-  // Simple dedupe by URL
-  const seen = new Set();
-  const deduped = [];
-  for (const r of results) {
-    if (!r.url || seen.has(r.url)) continue;
-    seen.add(r.url);
-    deduped.push(r);
-  }
-
-  deduped.forEach(r => {
-    const card = document.createElement("div");
-    card.className = "result-card";
-
-    if (r.img) {
-      const img = document.createElement("img");
-      img.className = "result-img";
-      img.src = r.img;
-      img.loading = "lazy";
-      card.appendChild(img);
-    }
-
-    const header = document.createElement("div");
-    header.className = "result-header";
-
-    const domain = r.url ? safeDomain(r.url) : "";
-    if (domain) {
-      const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-      const icon = document.createElement("img");
-      icon.className = "result-favicon";
-      icon.src = favicon;
-      icon.loading = "lazy";
-      header.appendChild(icon);
-    }
-
-    const title = document.createElement("div");
-    title.className = "result-title";
-    title.textContent = r.title || r.url || "(no title)";
-    header.appendChild(title);
-
-    card.appendChild(header);
-
-    if (r.desc) {
-      const desc = document.createElement("div");
-      desc.className = "result-desc";
-      desc.textContent = r.desc;
-      card.appendChild(desc);
-    }
-
-    if (r.url) {
-      const link = document.createElement("a");
-      link.className = "result-url";
-      link.href = r.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = r.url;
-      card.appendChild(link);
-    }
-
-    resultsContainer.appendChild(card);
+    results.push({
+      title: item.phrase,
+      desc: "", // AC API has no snippet
+      url: item.redirect || "",
+      img: ""
+    });
   });
+} catch (e) {
+  console.warn("DuckDuckGo AC error", e);
 }
 
-function showLoading(on) {
-  if (!loadingEl) return;
-  loadingEl.classList.toggle("visible", on);
-}
 
-function showNoResults(on) {
-  if (!noQueryEl) return;
-  noQueryEl.classList.toggle("visible", on);
-}
+ // ============================
+// 4. WIKIPEDIA — MULTIPLE BEST MATCHES
+// ============================
+try {
+  const wikiRes = await fetch(
+    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`
+  ).then(r => r.json());
 
-function safeDomain(url) {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return "";
-  }
+  // Take top 5 best matches
+  (wikiRes.query?.search || []).slice(0, 5).forEach(item => {
+    const pageUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`;
+
+    results.push({
+      title: item.title,
+      desc: item.snippet
+        ?.replace(/<\/?[^>]+(>|$)/g, "") // remove HTML tags
+        ?.replace(/&quot;/g, '"')
+        ?.replace(/&amp;/g, '&')
+        ?.replace(/&lt;/g, '<')
+        ?.replace(/&gt;/g, '>') || "",
+      url: pageUrl,
+      img: "" // Wikipedia search API does not include images
+    });
+  });
+
+} catch (e) {
+  console.warn("Wikipedia search error", e);
 }
