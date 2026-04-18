@@ -502,3 +502,65 @@ body.dark .paa-section {
 #knowledgePanel.hidden {
   display: none !important;
 }
+/* ===============================
+   RECOMMENDED SEARCHES POPUP
+=============================== */
+
+.recommended-box {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--br);
+  border-radius: 14px;
+  padding: 10px 0 14px;
+  z-index: 9998;
+  animation: fadeUp 0.2s ease;
+}
+
+body.dark .recommended-box {
+  background: rgba(15,23,42,0.85);
+}
+
+.recommended-title {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 16px 4px;
+  opacity: 0.7;
+}
+
+.recommended-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recommended-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recommended-item:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+body.dark .recommended-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.fire-icon {
+  width: 16px;
+  height: 16px;
+  animation: firePulse 1.2s infinite ease-in-out;
+}
+
+@keyframes firePulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
