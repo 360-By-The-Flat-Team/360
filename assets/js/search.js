@@ -1,103 +1,174 @@
-const API_URL = "https://api.360-search.com/search?q=";
+// ============================
+// 360 SEARCH V3 — FRONTEND
+// ============================
 
-const input = document.getElementById("strip-search-input");
+const VYNTR_KEY = "vyntr_dVZQQztzpWQZiKpsuwpCdStcNiyTnSfooWrKPUyFFDqGvSkETpjtpyuuzBJzwQSf"; 
+const GOOGLE_CX = "e003eb0834b6b4be8"; // if you want GCSE API later, Ming
+const GOOGLE_KEY = ""; // optional, for Custom Search API
+
+const resultsContainer = document.getElementById("resultsContainer");
+const loadingEl = document.getElementById("frame-loader");
+const noQueryEl = document.getElementById("no-query");
+
+const listBtn = document.getElementById("listViewBtn");
+const gridBtn = document.getElementById("gridViewBtn");
 const form = document.getElementById("strip-search-form");
-const container = document.getElementById("results-container");
+const input = document.getElementById("strip-search-input");
 
-form.addEventListener("submit", e => {
+// View toggle
+listBtn.addEventListener("click", () => {
+  listBtn.classList.add("active");
+  gridBtn.classList.remove("active");
+  resultsContainer.classList.remove("grid-view");
+  resultsContainer.classList.add("list-view");
+});
+
+gridBtn.addEventListener("click", () => {
+  gridBtn.classList.add("active");
+  listBtn.classList.remove("active");
+  resultsContainer.classList.remove("list-view");
+  resultsContainer.classList.add("grid-view");
+});
+
+// Form submit
+form.addEventListener("submit", (e) => {
   e.preventDefault();
   const q = input.value.trim();
   if (!q) return;
-  history.replaceState({}, "", "?q=" + encodeURIComponent(q));
-  loadResults(q);
+  runSearch(q);
+  const url = new URL(window.location.href);
+  url.searchParams.set("q", q);
+  window.history.replaceState(null, "", url.toString());
 });
 
+// On load, hydrate from ?q=
 window.addEventListener("load", () => {
-  const params = new URLSearchParams(location.search);
-  const q = params.get("q");
+  const url = new URL(window.location.href);
+  const q = url.searchParams.get("q") || "";
   if (q) {
     input.value = q;
-    loadResults(q);
+    runSearch(q);
   }
 });
 
-async function loadResults(q) {
-  container.innerHTML = skeletonSet();
+async function runSearch(q) {
+  resultsContainer.innerHTML = "";
+  showLoading(true);
+  showNoResults(false);
 
-  let data;
+  const results = [];
+
+  // Vyntr
+  if (VYNTR_KEY) {
+    try {
+      const res = await fetch(`https://api.vyntr.com/search?q=${encodeURIComponent(q)}`, {
+        headers: { Authorization: `Bearer ${VYNTR_KEY}` }
+      });
+      const data = await res.json();
+      (data.results || []).forEach(r => {
+        results.push({
+          title: r.title || "",
+          desc: r.snippet || "",
+          url: r.url || "",
+          img: r.image || ""
+        });
+      });
+    } catch (e) {
+      console.warn("Vyntr error", e);
+    }
+  }
+
+  // Wikipedia
   try {
-    const res = await fetch(API_URL + encodeURIComponent(q));
-    data = await res.json();
-  } catch {
-    return renderErrorCards();
+    const wiki = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`
+    ).then(r => r.json());
+    if (wiki.title && wiki.extract) {
+      results.push({
+        title: wiki.title,
+        desc: wiki.extract,
+        url: wiki.content_urls?.desktop?.page || "",
+        img: wiki.thumbnail?.source || ""
+      });
+    }
+  } catch (e) {
+    console.warn("Wiki error", e);
   }
 
-  if (!data || !data.results || data.results.length === 0) {
-    return container.innerHTML = `<div class="error-card">No results found.</div>`;
+  // DuckDuckGo Lite (best-effort)
+  try {
+    const html = await fetch(
+      `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`
+    ).then(r => r.text());
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    doc.querySelectorAll("a").forEach(a => {
+      const href = a.getAttribute("href") || "";
+      const text = a.textContent?.trim() || "";
+      if (!href.startsWith("http")) return;
+      if (!text) return;
+      results.push({
+        title: text,
+        desc: "",
+        url: href,
+        img: ""
+      });
+    });
+  } catch (e) {
+    console.warn("DDG error", e);
   }
 
-  renderHybrid(data.results);
-}
+  showLoading(false);
 
-function renderHybrid(results) {
-  const web = results.filter(r => r.type === "web");
-  const media = results.filter(r => r.type === "image" || r.type === "video");
-
-  container.innerHTML = "";
-
-  if (web.length) {
-    web.forEach(r => container.appendChild(webCard(r)));
+  if (!results.length) {
+    showNoResults(true);
+    return;
   }
 
-  if (media.length) {
-    const wrap = document.createElement("div");
-    wrap.className = "grid-wrap";
-    media.forEach(r => wrap.appendChild(mediaCard(r)));
-    container.appendChild(wrap);
-  }
+  results.forEach(r => {
+    const card = document.createElement("div");
+    card.className = "result-card";
+
+    if (r.img) {
+      const img = document.createElement("img");
+      img.className = "result-img";
+      img.src = r.img;
+      img.loading = "lazy";
+      card.appendChild(img);
+    }
+
+    const title = document.createElement("div");
+    title.className = "result-title";
+    title.textContent = r.title || r.url || "(no title)";
+    card.appendChild(title);
+
+    if (r.desc) {
+      const desc = document.createElement("div");
+      desc.className = "result-desc";
+      desc.textContent = r.desc;
+      card.appendChild(desc);
+    }
+
+    if (r.url) {
+      const link = document.createElement("a");
+      link.className = "result-url";
+      link.href = r.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = r.url;
+      card.appendChild(link);
+    }
+
+    resultsContainer.appendChild(card);
+  });
 }
 
-function webCard(r) {
-  const div = document.createElement("div");
-  div.className = "result-card";
-  div.innerHTML = `
-    <div class="result-title">${r.title || "Untitled"}</div>
-    <div class="result-desc">${r.description || ""}</div>
-    <div class="result-url">${r.url || ""}</div>
-  `;
-  return div;
+function showLoading(on) {
+  if (!loadingEl) return;
+  loadingEl.classList.toggle("visible", on);
 }
 
-function mediaCard(r) {
-  const div = document.createElement("div");
-  div.className = "grid-card";
-  div.innerHTML = `
-    <img src="${r.image || r.thumbnail || ""}" onerror="this.style.display='none'">
-    <div class="grid-card-body">
-      <div class="grid-card-title">${r.title || "Untitled"}</div>
-    </div>
-  `;
-  return div;
-}
-
-function skeletonSet() {
-  return `
-    <div class="result-card">
-      <div class="skel" style="width:60%"></div>
-      <div class="skel" style="width:90%;margin-top:8px"></div>
-      <div class="skel" style="width:40%;margin-top:8px"></div>
-    </div>
-    <div class="result-card">
-      <div class="skel" style="width:50%"></div>
-      <div class="skel" style="width:80%;margin-top:8px"></div>
-      <div class="skel" style="width:30%;margin-top:8px"></div>
-    </div>
-  `;
-}
-
-function renderErrorCards() {
-  container.innerHTML = `
-    <div class="result-card error-card">⚠ Worker offline — showing cached layout</div>
-    <div class="result-card error-card">⚠ Could not load results</div>
-  `;
+function showNoResults(on) {
+  if (!noQueryEl) return;
+  noQueryEl.classList.toggle("visible", on);
 }
