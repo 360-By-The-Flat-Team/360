@@ -1,7 +1,7 @@
 {
   "name": "360",
   "short_name": "360",
-  "id": "/https://360-search.com/",
+  "id": "https://360-search.com/",
   "start_url": "https://360-search.com/",
   "scope": "/",
   "display": "browser",
@@ -9,7 +9,7 @@
   "dir": "ltr",
   "lang": "en-US",
   "background_color": "#000000",
-  "theme_color": "#000000"
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
