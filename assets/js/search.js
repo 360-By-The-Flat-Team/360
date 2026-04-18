@@ -1,5 +1,5 @@
 // 360 Search V3 — Frontend Engine
-// Autocomplete + SafeSearch + PAA + KP + Images
+// Matches EXACT HTML + CSS provided by Z
 
 const form = document.getElementById("strip-search-form");
 const input = document.getElementById("strip-search-input");
@@ -21,9 +21,9 @@ let acTimer;
 let acIndex = -1;
 let acItems = [];
 
-// ===============================
-// VIEW TOGGLE
-// ===============================
+/* ===============================
+   VIEW TOGGLE
+=============================== */
 listBtn?.addEventListener("click", () => {
   listBtn.classList.add("active");
   gridBtn.classList.remove("active");
@@ -38,14 +38,16 @@ gridBtn?.addEventListener("click", () => {
   resultsContainer.classList.remove("list-view");
 });
 
-// ===============================
-// TABS
-// ===============================
+/* ===============================
+   TABS
+=============================== */
 tabButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     tabButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
+
     const tab = btn.dataset.tab;
+
     if (tab === "all") {
       resultsContainer.classList.remove("hidden");
       imageResults.classList.add("hidden");
@@ -56,41 +58,45 @@ tabButtons.forEach(btn => {
   });
 });
 
-// ===============================
-// FORM SUBMIT
-// ===============================
+/* ===============================
+   FORM SUBMIT
+=============================== */
 form?.addEventListener("submit", (e) => {
   e.preventDefault();
   const q = input.value.trim();
   if (!q) return;
   hideAutocomplete();
   runSearch(q);
+
   const url = new URL(window.location.href);
   url.searchParams.set("q", q);
   url.searchParams.set("safe", getSafeLevel());
   window.history.replaceState(null, "", url.toString());
 });
 
-// ===============================
-// INSTANT SEARCH + AUTOCOMPLETE
-// ===============================
+/* ===============================
+   INSTANT SEARCH + AUTOCOMPLETE
+=============================== */
 input?.addEventListener("input", () => {
   const q = input.value.trim();
   clearTimeout(typingTimer);
   clearTimeout(acTimer);
+
   if (!q) {
     hideAutocomplete();
     return;
   }
+
   typingTimer = setTimeout(() => runSearch(q), 300);
   acTimer = setTimeout(() => fetchAutocomplete(q), 150);
 });
 
-// ===============================
-// AUTOCOMPLETE KEYBOARD NAV
-// ===============================
+/* ===============================
+   AUTOCOMPLETE KEYBOARD NAV
+=============================== */
 input?.addEventListener("keydown", (e) => {
-  if (!acList || !acList.classList.contains("visible")) return;
+  if (!acList.classList.contains("visible")) return;
+
   if (e.key === "ArrowDown") {
     e.preventDefault();
     moveAc(1);
@@ -110,14 +116,16 @@ input?.addEventListener("keydown", (e) => {
   }
 });
 
-// ===============================
-// ON LOAD
-// ===============================
+/* ===============================
+   ON LOAD
+=============================== */
 window.addEventListener("load", () => {
   const url = new URL(window.location.href);
   const q = url.searchParams.get("q") || "";
   const safe = url.searchParams.get("safe") || "moderate";
+
   if (safeSelect) safeSelect.value = safe;
+
   if (q) {
     input.value = q;
     runSearch(q);
@@ -127,9 +135,9 @@ window.addEventListener("load", () => {
   }
 });
 
-// ===============================
-// SAFESEARCH
-// ===============================
+/* ===============================
+   SAFESEARCH
+=============================== */
 function getSafeLevel() {
   if (!safeSelect) return "moderate";
   const val = safeSelect.value || "moderate";
@@ -138,51 +146,53 @@ function getSafeLevel() {
   return "moderate";
 }
 
-// ===============================
-// MAIN SEARCH
-// ===============================
+/* ===============================
+   MAIN SEARCH
+=============================== */
 async function runSearch(q) {
   resultsContainer.innerHTML = "";
   imageResults.innerHTML = "";
   knowledgePanel.innerHTML = "";
   knowledgePanel.classList.add("hidden");
   paaList.innerHTML = "";
-  paaSection?.classList.add("hidden");
+  paaSection.classList.add("hidden");
 
   showLoading(true);
   showNoResults(false);
 
-  let deduped = [];
-  let imageSet = [];
-  let wikiEntity = null;
+  let results = [];
+  let images = [];
+  let entity = null;
   let paa = [];
 
   try {
     const safe = getSafeLevel();
     const res = await fetch(
-      `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search?q=${encodeURIComponent(
-        q
-      )}&safe=${encodeURIComponent(safe)}`
+      `/functions/v1/search?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safe)}`
     );
-    if (!res.ok) throw new Error("Backend error: " + res.status);
+
+    if (!res.ok) throw new Error("Backend error");
+
     const data = await res.json();
-    deduped = data.results || [];
-    imageSet = data.images || [];
-    wikiEntity = data.entity || null;
+    results = data.results || [];
+    images = data.images || [];
+    entity = data.entity || null;
     paa = data.paa || [];
   } catch (e) {
-    console.warn("Search backend error", e);
+    console.warn("Search error", e);
   }
 
   showLoading(false);
 
-  if (!deduped.length) {
+  if (!results.length) {
     showNoResults(true);
     return;
   }
 
-  // Results
-  deduped.forEach(r => {
+  /* ===============================
+     WEB RESULTS
+  =============================== */
+  results.forEach(r => {
     const card = document.createElement("div");
     card.className = "result-card";
 
@@ -197,19 +207,18 @@ async function runSearch(q) {
     const header = document.createElement("div");
     header.className = "result-header";
 
-    const domain = r.url ? safeDomain(r.url) : "";
+    const domain = safeDomain(r.url);
     if (domain) {
-      const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
       const icon = document.createElement("img");
       icon.className = "result-favicon";
-      icon.src = favicon;
+      icon.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
       icon.loading = "lazy";
       header.appendChild(icon);
     }
 
     const title = document.createElement("div");
     title.className = "result-title";
-    title.textContent = r.title || r.url || "(no title)";
+    title.textContent = r.title || r.url;
     header.appendChild(title);
 
     card.appendChild(header);
@@ -221,30 +230,25 @@ async function runSearch(q) {
       card.appendChild(desc);
     }
 
-    if (r.url) {
-      const link = document.createElement("a");
-      link.className = "result-url";
-      link.href = r.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = r.url;
-      card.appendChild(link);
-    }
+    const link = document.createElement("a");
+    link.className = "result-url";
+    link.href = r.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = r.url;
+    card.appendChild(link);
 
     resultsContainer.appendChild(card);
   });
 
-  // Images
-  const seenImg = new Set();
-  imageSet.forEach(r => {
-    if (!r.img || seenImg.has(r.img)) return;
-    seenImg.add(r.img);
-
+  /* ===============================
+     IMAGE RESULTS
+  =============================== */
+  images.forEach(r => {
     const card = document.createElement("a");
     card.className = "image-card";
     card.href = r.url || "#";
     card.target = "_blank";
-    card.rel = "noopener noreferrer";
 
     const img = document.createElement("img");
     img.src = r.img;
@@ -253,56 +257,54 @@ async function runSearch(q) {
 
     const cap = document.createElement("div");
     cap.className = "image-card-caption";
-    cap.textContent = r.title || safeDomain(r.url) || "";
+    cap.textContent = r.title || safeDomain(r.url);
     card.appendChild(cap);
 
     imageResults.appendChild(card);
   });
 
-  // Knowledge panel
-  if (wikiEntity) {
-    buildKnowledgePanel(wikiEntity);
-  }
+  /* ===============================
+     KNOWLEDGE PANEL
+  =============================== */
+  if (entity) buildKnowledgePanel(entity);
 
-  // People Also Ask
-  if (paa && paa.length) {
-    paaSection?.classList.remove("hidden");
+  /* ===============================
+     PEOPLE ALSO ASK
+  =============================== */
+  if (paa.length) {
+    paaSection.classList.remove("hidden");
     paaList.innerHTML = "";
+
     paa.forEach(item => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "paa-item";
+      const wrap = document.createElement("div");
+      wrap.className = "paa-item";
 
       const qEl = document.createElement("div");
       qEl.className = "paa-question";
       qEl.innerHTML = `<span>${item.q}</span><span class="chevron">›</span>`;
-      wrapper.appendChild(qEl);
+      wrap.appendChild(qEl);
 
       const aEl = document.createElement("div");
       aEl.className = "paa-answer";
       aEl.textContent = item.a;
-      wrapper.appendChild(aEl);
+      wrap.appendChild(aEl);
 
       qEl.addEventListener("click", () => {
-        wrapper.classList.toggle("open");
+        wrap.classList.toggle("open");
       });
 
-      paaList.appendChild(wrapper);
+      paaList.appendChild(wrap);
     });
   }
 }
 
-// ===============================
-// AUTOCOMPLETE
-// ===============================
+/* ===============================
+   AUTOCOMPLETE
+=============================== */
 async function fetchAutocomplete(q) {
-  if (!acList) return;
   try {
-    const res = await fetch(
-      `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete?q=${encodeURIComponent(
-        q
-      )}`
-    );
-    if (!res.ok) throw new Error("AC error: " + res.status);
+    const res = await fetch(`/functions/v1/autocomplete?q=${encodeURIComponent(q)}`);
+    if (!res.ok) throw new Error("AC error");
     const data = await res.json();
     renderAutocomplete(data.suggestions || []);
   } catch (e) {
@@ -311,7 +313,6 @@ async function fetchAutocomplete(q) {
 }
 
 function renderAutocomplete(items) {
-  if (!acList) return;
   acList.innerHTML = "";
   acItems = [];
   acIndex = -1;
@@ -358,34 +359,31 @@ function moveAc(delta) {
   acIndex += delta;
   if (acIndex < 0) acIndex = acItems.length - 1;
   if (acIndex >= acItems.length) acIndex = 0;
+
   acItems.forEach((el, i) => {
     el.classList.toggle("active", i === acIndex);
   });
 }
 
 function hideAutocomplete() {
-  if (!acList) return;
   acList.classList.remove("visible");
   acList.innerHTML = "";
   acItems = [];
   acIndex = -1;
 }
 
-// ===============================
-// KNOWLEDGE PANEL
-// ===============================
+/* ===============================
+   KNOWLEDGE PANEL
+=============================== */
 async function buildKnowledgePanel(title) {
   try {
     const summary = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-        title
-      )}`
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
     ).then(r => r.json());
 
     if (!summary.title || !summary.extract) return;
 
     knowledgePanel.innerHTML = "";
-    knowledgePanel.classList.add("knowledge-panel");
 
     if (summary.thumbnail?.source) {
       const img = document.createElement("img");
@@ -416,26 +414,23 @@ async function buildKnowledgePanel(title) {
     link.className = "kp-link";
     link.href = summary.content_urls?.desktop?.page || "";
     link.target = "_blank";
-    link.rel = "noopener noreferrer";
     link.textContent = "View on Wikipedia";
     knowledgePanel.appendChild(link);
 
     knowledgePanel.classList.remove("hidden");
   } catch (e) {
-    console.warn("Knowledge panel error", e);
+    console.warn("KP error", e);
   }
 }
 
-// ===============================
-// HELPERS
-// ===============================
+/* ===============================
+   HELPERS
+=============================== */
 function showLoading(on) {
-  if (!loader) return;
   loader.classList.toggle("visible", on);
 }
 
 function showNoResults(on) {
-  if (!noResults) return;
   noResults.classList.toggle("visible", on);
 }
 
