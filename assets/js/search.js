@@ -1,4 +1,4 @@
-// 360 Search — SafeSearch & Autocomplete Edition
+// 360 Search — Supabase backend + SafeSearch + autocomplete + FAQ!!!!!
 
 const resultsContainer = document.getElementById("resultsContainer");
 const imageResults = document.getElementById("imageResults");
@@ -263,7 +263,7 @@ function renderAutocomplete(items) {
   acIndex = -1;
 
   if (!items.length) {
-    acList.classList.add("hidden");
+    acList.classList.remove("visible");
     return;
   }
 
@@ -273,17 +273,27 @@ function renderAutocomplete(items) {
     div.textContent = s.text;
     div.dataset.value = s.text;
     div.dataset.source = s.source;
+
+    const src = document.createElement("span");
+    src.className = "ac-source";
+    src.textContent =
+      s.source === "ddg" ? "Web" :
+      s.source === "wiki" ? "Wiki" :
+      s.source === "trending" ? "Trending" : "";
+    div.appendChild(src);
+
     div.addEventListener("mousedown", (e) => {
       e.preventDefault();
       input.value = s.text;
       hideAutocomplete();
       runSearch(s.text);
     });
+
     acList.appendChild(div);
     acItems.push(div);
   });
 
-  acList.classList.remove("hidden");
+  acList.classList.add("visible");
 }
 
 function moveAc(delta) {
@@ -298,7 +308,7 @@ function moveAc(delta) {
 
 function hideAutocomplete() {
   if (!acList) return;
-  acList.classList.add("hidden");
+  acList.classList.remove("visible");
   acList.innerHTML = "";
   acItems = [];
   acIndex = -1;
@@ -373,3 +383,11 @@ function safeDomain(url) {
     return "";
   }
 }
+
+/* FAQ accordion */
+document.querySelectorAll(".faq-item").forEach(item => {
+  const q = item.querySelector(".faq-question");
+  q?.addEventListener("click", () => {
+    item.classList.toggle("open");
+  });
+});
