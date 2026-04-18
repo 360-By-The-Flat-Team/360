@@ -564,3 +564,93 @@ body.dark .recommended-item:hover {
   50% { transform: scale(1.2); opacity: 1; }
   100% { transform: scale(1); opacity: 0.9; }
 }
+/* ================================
+   360 SEARCH — FIXED LAYOUT PATCH
+   ================================ */
+
+/* Main layout wrapper */
+.search-results-page {
+  position: relative;
+  padding-top: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--br);
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--br);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--txt);
+}
+
+.tab-btn.active {
+  background: var(--a);
+  color: #fff;
+  border-color: var(--a);
+}
+
+/* View toggle */
+.view-toggle {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 20px 0;
+}
+
+.view-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--br);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--txt);
+}
+
+.view-btn.active {
+  background: var(--a);
+  color: #fff;
+  border-color: var(--a);
+}
+
+/* Results + Knowledge Panel layout */
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Knowledge Panel */
+#knowledgePanel {
+  position: sticky;
+  top: 90px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--br);
+  border-radius: 12px;
+  padding: 16px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+body.dark #knowledgePanel {
+  background: rgba(255,255,255,0.04);
+}
+
+/* Image results grid */
+.image-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
