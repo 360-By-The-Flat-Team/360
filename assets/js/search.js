@@ -2,9 +2,8 @@
 // 360 SEARCH V3 — FRONTEND
 // ============================
 
+const YOU_KEY = "ydc-sk-d2a60aadc53e8b11-ANqKGAwcV0ApGknI310HgozZDDO1jnJS-a821a00f";  
 const VYNTR_KEY = "vyntr_dVZQQztzpWQZiKpsuwpCdStcNiyTnSfooWrKPUyFFDqGvSkETpjtpyuuzBJzwQSf"; 
-const GOOGLE_CX = "e003eb0834b6b4be8"; // if you want GCSE API later, Ming
-const GOOGLE_KEY = ""; // optional, for Custom Search API
 
 const resultsContainer = document.getElementById("resultsContainer");
 const loadingEl = document.getElementById("frame-loader");
@@ -48,6 +47,9 @@ window.addEventListener("load", () => {
   if (q) {
     input.value = q;
     runSearch(q);
+  } else {
+    showLoading(false);
+    showNoResults(false);
   }
 });
 
@@ -58,14 +60,49 @@ async function runSearch(q) {
 
   const results = [];
 
-  // Vyntr
+  // ============================
+  // 1. YOU.COM SEARCH API
+  // ============================
+  if (YOU_KEY) {
+    try {
+      const res = await fetch("https://api.ydc-index.io/search", {
+        method: "POST",
+        headers: {
+          "X-API-Key": YOU_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: q,
+          num_web_results: 10
+        })
+      });
+
+      const data = await res.json();
+
+      (data.web || []).forEach(item => {
+        results.push({
+          title: item.title || "",
+          desc: item.snippet || "",
+          url: item.url || "",
+          img: item.image || ""
+        });
+      });
+    } catch (e) {
+      console.warn("You.com error", e);
+    }
+  }
+
+  // ============================
+  // 2. VYNTR (optional)
+  // ============================
   if (VYNTR_KEY) {
     try {
       const res = await fetch(`https://api.vyntr.com/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${VYNTR_KEY}` }
       });
       const data = await res.json();
-      (data.results || []).forEach(r => {
+
+      (data.results || []).slice(0, 10).forEach(r => {
         results.push({
           title: r.title || "",
           desc: r.snippet || "",
@@ -78,33 +115,20 @@ async function runSearch(q) {
     }
   }
 
-  // Wikipedia
-  try {
-    const wiki = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`
-    ).then(r => r.json());
-    if (wiki.title && wiki.extract) {
-      results.push({
-        title: wiki.title,
-        desc: wiki.extract,
-        url: wiki.content_urls?.desktop?.page || "",
-        img: wiki.thumbnail?.source || ""
-      });
-    }
-  } catch (e) {
-    console.warn("Wiki error", e);
-  }
-
-  // DuckDuckGo Lite (best-effort)
+  // ============================
+  // 3. DUCKDUCKGO LITE
+  // ============================
   try {
     const html = await fetch(
       `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`
     ).then(r => r.text());
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    doc.querySelectorAll("a").forEach(a => {
-      const href = a.getAttribute("href") || "";
-      const text = a.textContent?.trim() || "";
+
+    [...doc.querySelectorAll("a")].slice(0, 10).forEach(a => {
+      const href = a.href;
+      const text = a.textContent.trim();
       if (!href.startsWith("http")) return;
       if (!text) return;
       results.push({
@@ -118,6 +142,26 @@ async function runSearch(q) {
     console.warn("DDG error", e);
   }
 
+  // ============================
+  // 4. WIKIPEDIA SUMMARY
+  // ============================
+  try {
+    const wiki = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`
+    ).then(r => r.json());
+
+    if (wiki.title && wiki.extract) {
+      results.push({
+        title: wiki.title,
+        desc: wiki.extract,
+        url: wiki.content_urls?.desktop?.page || "",
+        img: wiki.thumbnail?.source || ""
+      });
+    }
+  } catch (e) {
+    console.warn("Wiki error", e);
+  }
+
   showLoading(false);
 
   if (!results.length) {
@@ -125,7 +169,16 @@ async function runSearch(q) {
     return;
   }
 
-  results.forEach(r => {
+  // Simple dedupe by URL
+  const seen = new Set();
+  const deduped = [];
+  for (const r of results) {
+    if (!r.url || seen.has(r.url)) continue;
+    seen.add(r.url);
+    deduped.push(r);
+  }
+
+  deduped.forEach(r => {
     const card = document.createElement("div");
     card.className = "result-card";
 
@@ -137,10 +190,25 @@ async function runSearch(q) {
       card.appendChild(img);
     }
 
+    const header = document.createElement("div");
+    header.className = "result-header";
+
+    const domain = r.url ? safeDomain(r.url) : "";
+    if (domain) {
+      const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+      const icon = document.createElement("img");
+      icon.className = "result-favicon";
+      icon.src = favicon;
+      icon.loading = "lazy";
+      header.appendChild(icon);
+    }
+
     const title = document.createElement("div");
     title.className = "result-title";
     title.textContent = r.title || r.url || "(no title)";
-    card.appendChild(title);
+    header.appendChild(title);
+
+    card.appendChild(header);
 
     if (r.desc) {
       const desc = document.createElement("div");
@@ -171,4 +239,12 @@ function showLoading(on) {
 function showNoResults(on) {
   if (!noQueryEl) return;
   noQueryEl.classList.toggle("visible", on);
+}
+
+function safeDomain(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
 }
