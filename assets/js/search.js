@@ -168,8 +168,9 @@ async function runSearch(q) {
   try {
     const safe = getSafeLevel();
     const res = await fetch(
-      `/functions/v1/search?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safe)}`
-    );
+  `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safe)}`
+);
+
 
     if (!res.ok) throw new Error("Backend error");
 
@@ -303,7 +304,10 @@ async function runSearch(q) {
 =============================== */
 async function fetchAutocomplete(q) {
   try {
-    const res = await fetch(`/functions/v1/autocomplete?q=${encodeURIComponent(q)}`);
+    const res = await fetch(
+  `https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete?q=${encodeURIComponent(q)}`
+);
+
     if (!res.ok) throw new Error("AC error");
     const data = await res.json();
     renderAutocomplete(data.suggestions || []);
