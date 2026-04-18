@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Search</title>
+
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/responsive.css">
+  <link rel="stylesheet" href="/assets/css/cursor.css">
+  <link rel="stylesheet" href="/assets/css/search.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Cursor -->
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <!-- Sidebar toggle -->
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-mark"></div>
+      <button id="settingsBtn">⚙</button>
+    </div>
+    <nav class="nav-list">
+      <div class="nav-item active" data-href="/">Home</div>
+      <div class="nav-item" data-href="/ai">AI</div>
+      <div class="nav-item" data-href="/weather">Weather</div>
+      <div class="nav-item" data-href="/translator">Translator</div>
+      <div class="nav-item" data-href="/stocks">Stocks</div>
+      <div class="nav-item" data-href="/url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="/chat">Chat</div>
+      <div class="nav-item" data-href="/news">News</div>
+      <div class="nav-item" data-href="/games">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.1.2</div>
+  </aside>
+
+  <!-- Overlay + settings -->
+  <div class="overlay" id="overlay"></div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <!-- (unchanged — your full settings panel here) -->
+  </div>
+
+  <!-- Auth popup -->
+  <div id="auth-popup" class="auth-popup hidden">
+    <!-- (unchanged — your full auth popup here) -->
+  </div>
+
+  <!-- Auth buttons -->
+  <div class="auth-top-right">
+    <button id="signInBtn" class="auth-btn">Sign In</button>
+    <button id="signUpBtn" class="auth-btn">Sign Up</button>
+    <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
+  </div>
+
+  <!-- PAGE -->
+  <div class="search-results-page">
+
+    <!-- Classic strip -->
+    <div class="search-bar-strip">
+      <a class="strip-logo" href="/">360</a>
+
+      <form id="strip-search-form">
+        <input id="strip-search-input" type="text" placeholder="Search with 360..." autocomplete="off">
+        <button id="strip-search-btn" type="submit">Search</button>
+      </form>
+    </div>
+
+    <!-- Results container -->
+    <div id="results-container"></div>
+
+  </div>
+
+  <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
+  <script src="/assets/js/search.js"></script>
+
+</body>
+</html>
