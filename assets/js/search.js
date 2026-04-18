@@ -18,6 +18,10 @@ const acList = document.getElementById("autocompleteList");
 const loader = document.getElementById("frame-loader");
 const noResults = document.getElementById("no-query");
 
+// Recommended popup
+const recommendedBox = document.getElementById("recommendedBox");
+const recommendedList = document.getElementById("recommendedList");
+
 // Autocomplete state
 let acIndex = -1;
 let acItems = [];
@@ -27,6 +31,7 @@ let searchTimer;
 // Supabase function URLs
 const SEARCH_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search";
 const AC_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/autocomplete";
+const TREND_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/trending";
 
 // ===============================
 // VIEW TOGGLE
@@ -73,6 +78,7 @@ form.addEventListener("submit", e => {
   const q = input.value.trim();
   if (!q) return;
   hideAutocomplete();
+  recommendedBox.classList.add("hidden");
   runSearch(q);
 
   const url = new URL(window.location.href);
@@ -82,209 +88,76 @@ form.addEventListener("submit", e => {
 });
 
 // ===============================
-// INPUT LISTENER (INSTANT SEARCH + AC)
+// INPUT LISTENER (INSTANT SEARCH + AC + RECOMMENDED)
 // ===============================
+input.addEventListener("focus", () => {
+  if (!input.value.trim()) loadRecommended();
+});
+
 input.addEventListener("input", () => {
   const q = input.value.trim();
-  clearTimeout(searchTimer);
-  clearTimeout(acTimer);
 
   if (!q) {
     hideAutocomplete();
+    loadRecommended();
     return;
   }
+
+  recommendedBox.classList.add("hidden");
+
+  clearTimeout(searchTimer);
+  clearTimeout(acTimer);
 
   searchTimer = setTimeout(() => runSearch(q), 300);
   acTimer = setTimeout(() => fetchAutocomplete(q), 150);
 });
 
 // ===============================
-// AUTOCOMPLETE KEYBOARD NAV
+// CLICK OUTSIDE → HIDE POPUPS
 // ===============================
-input.addEventListener("keydown", e => {
-  if (!acList.classList.contains("visible")) return;
-
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    moveAc(1);
-  } else if (e.key === "ArrowUp") {
-    e.preventDefault();
-    moveAc(-1);
-  } else if (e.key === "Enter") {
-    if (acIndex >= 0 && acIndex < acItems.length) {
-      e.preventDefault();
-      const text = acItems[acIndex].dataset.value;
-      input.value = text;
-      hideAutocomplete();
-      runSearch(text);
-    }
-  } else if (e.key === "Escape") {
+document.addEventListener("click", (e) => {
+  if (!form.contains(e.target)) {
+    recommendedBox.classList.add("hidden");
     hideAutocomplete();
   }
 });
 
 // ===============================
-// ON LOAD
+// LOAD RECOMMENDED (TRENDING)
 // ===============================
-window.addEventListener("load", () => {
-  const url = new URL(window.location.href);
-  const q = url.searchParams.get("q") || "";
-  const safe = url.searchParams.get("safe") || "moderate";
-
-  safeSelect.value = safe;
-
-  if (q) {
-    input.value = q;
-    runSearch(q);
-  }
-});
-
-// ===============================
-// MAIN SEARCH
-// ===============================
-async function runSearch(q) {
-  resultsContainer.innerHTML = "";
-  imageResults.innerHTML = "";
-  knowledgePanel.innerHTML = "";
-  knowledgePanel.classList.add("hidden");
-  paaList.innerHTML = "";
-  paaSection.classList.add("hidden");
-
-  showLoading(true);
-  showNoResults(false);
-
-  let results = [];
-  let images = [];
-  let entity = null;
-  let paa = [];
+async function loadRecommended() {
+  recommendedList.innerHTML = "";
+  recommendedBox.classList.remove("hidden");
 
   try {
-    const res = await fetch(
-      `${SEARCH_URL}?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safeSelect.value)}`
-    );
-
-    if (!res.ok) throw new Error("Backend error");
-
+    const res = await fetch(TREND_URL);
     const data = await res.json();
-    results = data.results || [];
-    images = data.images || [];
-    entity = data.entity || null;
-    paa = data.paa || [];
-  } catch (err) {
-    console.error("Search error:", err);
-  }
 
-  showLoading(false);
+    data.trending.forEach((row) => {
+      const div = document.createElement("div");
+      div.className = "recommended-item";
 
-  if (!results.length) {
-    showNoResults(true);
-    return;
-  }
+      const fire = document.createElement("img");
+      fire.src = "/assets/icons/fire.svg";
+      fire.className = "fire-icon";
 
-  // ===============================
-  // WEB RESULTS
-  // ===============================
-  results.forEach(r => {
-    const card = document.createElement("div");
-    card.className = "result-card";
+      const text = document.createElement("span");
+      text.textContent = row.term;
 
-    if (r.img) {
-      const img = document.createElement("img");
-      img.className = "result-img";
-      img.src = r.img;
-      img.loading = "lazy";
-      card.appendChild(img);
-    }
+      div.appendChild(fire);
+      div.appendChild(text);
 
-    const header = document.createElement("div");
-    header.className = "result-header";
+      div.addEventListener("mousedown", () => {
+        input.value = row.term;
+        recommendedBox.classList.add("hidden");
+        runSearch(row.term);
+      });
 
-    const domain = safeDomain(r.url);
-    if (domain) {
-      const icon = document.createElement("img");
-      icon.className = "result-favicon";
-      icon.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-      icon.loading = "lazy";
-      header.appendChild(icon);
-    }
-
-    const title = document.createElement("div");
-    title.className = "result-title";
-    title.textContent = r.title || r.url;
-    header.appendChild(title);
-
-    card.appendChild(header);
-
-    if (r.desc) {
-      const desc = document.createElement("div");
-      desc.className = "result-desc";
-      desc.textContent = r.desc;
-      card.appendChild(desc);
-    }
-
-    const link = document.createElement("a");
-    link.className = "result-url";
-    link.href = r.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = r.url;
-    card.appendChild(link);
-
-    resultsContainer.appendChild(card);
-  });
-
-  // ===============================
-  // IMAGE RESULTS
-  // ===============================
-  images.forEach(r => {
-    const card = document.createElement("a");
-    card.className = "image-card";
-    card.href = r.url || "#";
-    card.target = "_blank";
-
-    const img = document.createElement("img");
-    img.src = r.img;
-    img.loading = "lazy";
-    card.appendChild(img);
-
-    const cap = document.createElement("div");
-    cap.className = "image-card-caption";
-    cap.textContent = r.title || safeDomain(r.url);
-    card.appendChild(cap);
-
-    imageResults.appendChild(card);
-  });
-
-  // ===============================
-  // KNOWLEDGE PANEL
-  // ===============================
-  if (entity) buildKnowledgePanel(entity);
-
-  // ===============================
-  // PEOPLE ALSO ASK
-  // ===============================
-  if (paa.length) {
-    paaSection.classList.remove("hidden");
-    paaList.innerHTML = "";
-
-    paa.forEach(item => {
-      const wrap = document.createElement("div");
-      wrap.className = "paa-item";
-
-      const qEl = document.createElement("div");
-      qEl.className = "paa-question";
-      qEl.innerHTML = `<span>${item.q}</span><span class="chevron">›</span>`;
-      wrap.appendChild(qEl);
-
-      const aEl = document.createElement("div");
-      aEl.className = "paa-answer";
-      aEl.textContent = item.a;
-      wrap.appendChild(aEl);
-
-      qEl.addEventListener("click", () => wrap.classList.toggle("open"));
-
-      paaList.appendChild(wrap);
+      recommendedList.appendChild(div);
     });
+
+  } catch (err) {
+    console.error("Trending error:", err);
   }
 }
 
@@ -294,8 +167,6 @@ async function runSearch(q) {
 async function fetchAutocomplete(q) {
   try {
     const res = await fetch(`${AC_URL}?q=${encodeURIComponent(q)}`);
-    if (!res.ok) throw new Error("AC error");
-
     const data = await res.json();
     renderAutocomplete(data.suggestions || []);
   } catch (err) {
@@ -345,23 +216,151 @@ function renderAutocomplete(items) {
   acList.classList.add("visible");
 }
 
-function moveAc(delta) {
-  if (!acItems.length) return;
-
-  acIndex += delta;
-  if (acIndex < 0) acIndex = acItems.length - 1;
-  if (acIndex >= acItems.length) acIndex = 0;
-
-  acItems.forEach((el, i) => {
-    el.classList.toggle("active", i === acIndex);
-  });
-}
-
 function hideAutocomplete() {
   acList.classList.remove("visible");
   acList.innerHTML = "";
   acItems = [];
   acIndex = -1;
+}
+
+// ===============================
+// MAIN SEARCH
+// ===============================
+async function runSearch(q) {
+  resultsContainer.innerHTML = "";
+  imageResults.innerHTML = "";
+  knowledgePanel.innerHTML = "";
+  knowledgePanel.classList.add("hidden");
+  paaList.innerHTML = "";
+  paaSection.classList.add("hidden");
+
+  showLoading(true);
+  showNoResults(false);
+
+  let results = [];
+  let images = [];
+  let entity = null;
+  let paa = [];
+
+  try {
+    const res = await fetch(
+      `${SEARCH_URL}?q=${encodeURIComponent(q)}&safe=${encodeURIComponent(safeSelect.value)}`
+    );
+
+    const data = await res.json();
+    results = data.results || [];
+    images = data.images || [];
+    entity = data.entity || null;
+    paa = data.paa || [];
+
+  } catch (err) {
+    console.error("Search error:", err);
+  }
+
+  showLoading(false);
+
+  if (!results.length) {
+    showNoResults(true);
+    return;
+  }
+
+  // WEB RESULTS
+  results.forEach(r => {
+    const card = document.createElement("div");
+    card.className = "result-card";
+
+    if (r.img) {
+      const img = document.createElement("img");
+      img.className = "result-img";
+      img.src = r.img;
+      img.loading = "lazy";
+      card.appendChild(img);
+    }
+
+    const header = document.createElement("div");
+    header.className = "result-header";
+
+    const domain = safeDomain(r.url);
+    if (domain) {
+      const icon = document.createElement("img");
+      icon.className = "result-favicon";
+      icon.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+      icon.loading = "lazy";
+      header.appendChild(icon);
+    }
+
+    const title = document.createElement("div");
+    title.className = "result-title";
+    title.textContent = r.title || r.url;
+    header.appendChild(title);
+
+    card.appendChild(header);
+
+    if (r.desc) {
+      const desc = document.createElement("div");
+      desc.className = "result-desc";
+      desc.textContent = r.desc;
+      card.appendChild(desc);
+    }
+
+    const link = document.createElement("a");
+    link.className = "result-url";
+    link.href = r.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = r.url;
+    card.appendChild(link);
+
+    resultsContainer.appendChild(card);
+  });
+
+  // IMAGE RESULTS
+  images.forEach(r => {
+    const card = document.createElement("a");
+    card.className = "image-card";
+    card.href = r.url || "#";
+    card.target = "_blank";
+
+    const img = document.createElement("img");
+    img.src = r.img;
+    img.loading = "lazy";
+    card.appendChild(img);
+
+    const cap = document.createElement("div");
+    cap.className = "image-card-caption";
+    cap.textContent = r.title || safeDomain(r.url);
+    card.appendChild(cap);
+
+    imageResults.appendChild(card);
+  });
+
+  // KNOWLEDGE PANEL
+  if (entity) buildKnowledgePanel(entity);
+
+  // PAA
+  if (paa.length) {
+    paaSection.classList.remove("hidden");
+    paaList.innerHTML = "";
+
+    paa.forEach(item => {
+      const wrap = document.createElement("div");
+      wrap.className = "paa-item";
+
+      const qEl = document.createElement("div");
+      qEl.className = "paa-question";
+      qEl.innerHTML = `<span>${item.q}</span><span class="chevron">›</span>`;
+      wrap.appendChild(qEl);
+
+      const aEl = document.createElement("div");
+      aEl.className = "paa-answer";
+      aEl.textContent = item.a;
+      wrap.appendChild(aEl);
+
+      qEl.addEventListener("click", () => wrap.classList.toggle("open"));
+
+      paaList.appendChild(wrap);
+    });
+  }
 }
 
 // ===============================
