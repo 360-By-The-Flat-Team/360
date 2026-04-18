@@ -1,5 +1,4 @@
-const YOU_KEY = "ydc-sk-d2a60aadc53e8b11-ANqKGAwcV0ApGknI310HgozZDDO1jnJS-a821a00f";   
-const VYNTR_KEY = "vyntr_dVZQQztzpWQZiKpsuwpCdStcNiyTnSfooWrKPUyFFDqGvSkETpjtpyuuzBJzwQSf"; 
+// 360 Search — Supabase Backend Version
 
 const resultsContainer = document.getElementById("resultsContainer");
 const imageResults = document.getElementById("imageResults");
@@ -68,6 +67,7 @@ window.addEventListener("load", () => {
   }
 });
 
+// ⭐ NEW: Supabase-powered search
 async function runSearch(q) {
   resultsContainer.innerHTML = "";
   imageResults.innerHTML = "";
@@ -77,130 +77,32 @@ async function runSearch(q) {
   showLoading(true);
   showNoResults(false);
 
-  const results = [];
-  const imageCandidates = [];
+  let deduped = [];
+  let imageSet = [];
   let wikiEntity = null;
 
-  // 1. You.com
-  if (YOU_KEY) {
-    try {
-      const res = await fetch("https://api.ydc-index.io/search", {
-        method: "POST",
-        headers: {
-          "X-API-Key": YOU_KEY,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          query: q,
-          num_web_results: 10
-        })
-      });
-      const data = await res.json();
-      (data.web || []).forEach(item => {
-        const r = {
-          title: item.title || "",
-          desc: item.snippet || "",
-          url: item.url || "",
-          img: item.image || "",
-          source: "You.com"
-        };
-        results.push(r);
-        if (r.img) imageCandidates.push(r);
-      });
-    } catch (e) {
-      console.warn("You.com error", e);
-    }
-  }
-
-  // 2. Vyntr
-  if (VYNTR_KEY) {
-    try {
-      const res = await fetch(
-        `https://vyntr.com/api/v1/search?q=${encodeURIComponent(q)}`,
-        {
-          headers: { "Authorization": `Bearer ${VYNTR_KEY}` }
-        }
-      );
-      const data = await res.json();
-      (data.web || []).slice(0, 10).forEach(item => {
-        const r = {
-          title: item.title || "",
-          desc: item.preview || "",
-          url: item.url || "",
-          img: "",
-          source: "Vyntr"
-        };
-        results.push(r);
-      });
-    } catch (e) {
-      console.warn("Vyntr error", e);
-    }
-  }
-
-  // 3. DuckDuckGo AC
   try {
-    const ddg = await fetch(
-      `https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}`
-    ).then(r => r.json());
+    const res = await fetch(
+      "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search?q=" + encodeURIComponent(q),
+      { method: "GET" }
+    );
 
-    ddg.slice(0, 8).forEach(item => {
-      if (!item?.phrase) return;
-      results.push({
-        title: item.phrase,
-        desc: "",
-        url: item.redirect || "",
-        img: "",
-        source: "DuckDuckGo"
-      });
-    });
+    if (!res.ok) throw new Error("Backend error: " + res.status);
+
+    const data = await res.json();
+    deduped = data.results || [];
+    imageSet = data.images || [];
+    wikiEntity = data.entity || null;
+
   } catch (e) {
-    console.warn("DuckDuckGo AC error", e);
-  }
-
-  // 4. Wikipedia search (multi)
-  try {
-    const wikiRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`
-    ).then(r => r.json());
-
-    const searchResults = (wikiRes.query?.search || []).slice(0, 5);
-    searchResults.forEach(item => {
-      const pageUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`;
-      results.push({
-        title: item.title,
-        desc: item.snippet
-          ?.replace(/<\/?[^>]+(>|$)/g, "")
-          ?.replace(/&quot;/g, '"')
-          ?.replace(/&amp;/g, '&')
-          ?.replace(/&lt;/g, '<')
-          ?.replace(/&gt;/g, '>') || "",
-        url: pageUrl,
-        img: "",
-        source: "Wikipedia"
-      });
-    });
-
-    if (searchResults.length > 0) {
-      wikiEntity = searchResults[0].title;
-    }
-  } catch (e) {
-    console.warn("Wikipedia search error", e);
+    console.warn("Search backend error", e);
   }
 
   showLoading(false);
 
-  if (!results.length) {
+  if (!deduped.length) {
     showNoResults(true);
     return;
-  }
-
-  // Deduplicate by URL
-  const seen = new Set();
-  const deduped = [];
-  for (const r of results) {
-    if (!r.url || seen.has(r.url)) continue;
-    seen.add(r.url);
-    deduped.push(r);
   }
 
   // Render main results
@@ -256,11 +158,7 @@ async function runSearch(q) {
     resultsContainer.appendChild(card);
   });
 
-  // Build image tab
-  const imageSet = [];
-  deduped.forEach(r => { if (r.img) imageSet.push(r); });
-  imageCandidates.forEach(r => { if (r.img) imageSet.push(r); });
-
+  // Image tab
   const seenImg = new Set();
   imageSet.forEach(r => {
     if (!r.img || seenImg.has(r.img)) return;
@@ -285,7 +183,7 @@ async function runSearch(q) {
     imageResults.appendChild(card);
   });
 
-  // Knowledge panel (smart mode)
+  // Knowledge panel
   if (wikiEntity) {
     buildKnowledgePanel(wikiEntity);
   }
