@@ -1,40 +1,46 @@
-// 360 Search — Supabase backend + SafeSearch + autocomplete + FAQ!!!!!
+// 360 Search V3 — Frontend Engine
+// Autocomplete + SafeSearch + PAA + KP + Images
 
-const resultsContainer = document.getElementById("resultsContainer");
-const imageResults = document.getElementById("imageResults");
-const loadingEl = document.getElementById("frame-loader");
-const noQueryEl = document.getElementById("no-query");
-const knowledgePanel = document.getElementById("knowledgePanel");
-
-const listBtn = document.getElementById("listViewBtn");
-const gridBtn = document.getElementById("gridViewBtn");
 const form = document.getElementById("strip-search-form");
 const input = document.getElementById("strip-search-input");
+const resultsContainer = document.getElementById("resultsContainer");
+const imageResults = document.getElementById("imageResults");
+const knowledgePanel = document.getElementById("knowledgePanel");
+const paaSection = document.getElementById("paaSection");
+const paaList = document.getElementById("paaList");
+const listBtn = document.getElementById("listViewBtn");
+const gridBtn = document.getElementById("gridViewBtn");
 const tabButtons = document.querySelectorAll(".tab-btn");
 const safeSelect = document.getElementById("safeSelect");
 const acList = document.getElementById("autocompleteList");
+const loader = document.getElementById("frame-loader");
+const noResults = document.getElementById("no-query");
 
 let typingTimer;
 let acTimer;
 let acIndex = -1;
 let acItems = [];
 
-// View toggle
+// ===============================
+// VIEW TOGGLE
+// ===============================
 listBtn?.addEventListener("click", () => {
   listBtn.classList.add("active");
   gridBtn.classList.remove("active");
-  resultsContainer.classList.remove("grid-view");
   resultsContainer.classList.add("list-view");
+  resultsContainer.classList.remove("grid-view");
 });
 
 gridBtn?.addEventListener("click", () => {
   gridBtn.classList.add("active");
   listBtn.classList.remove("active");
-  resultsContainer.classList.remove("list-view");
   resultsContainer.classList.add("grid-view");
+  resultsContainer.classList.remove("list-view");
 });
 
-// Tabs
+// ===============================
+// TABS
+// ===============================
 tabButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     tabButtons.forEach(b => b.classList.remove("active"));
@@ -43,14 +49,16 @@ tabButtons.forEach(btn => {
     if (tab === "all") {
       resultsContainer.classList.remove("hidden");
       imageResults.classList.add("hidden");
-    } else {
+    } else if (tab === "images") {
       resultsContainer.classList.add("hidden");
       imageResults.classList.remove("hidden");
     }
   });
 });
 
-// Form submit
+// ===============================
+// FORM SUBMIT
+// ===============================
 form?.addEventListener("submit", (e) => {
   e.preventDefault();
   const q = input.value.trim();
@@ -63,7 +71,9 @@ form?.addEventListener("submit", (e) => {
   window.history.replaceState(null, "", url.toString());
 });
 
-// Instant search + autocomplete
+// ===============================
+// INSTANT SEARCH + AUTOCOMPLETE
+// ===============================
 input?.addEventListener("input", () => {
   const q = input.value.trim();
   clearTimeout(typingTimer);
@@ -76,9 +86,11 @@ input?.addEventListener("input", () => {
   acTimer = setTimeout(() => fetchAutocomplete(q), 150);
 });
 
-// Keyboard navigation for autocomplete
+// ===============================
+// AUTOCOMPLETE KEYBOARD NAV
+// ===============================
 input?.addEventListener("keydown", (e) => {
-  if (!acList || acList.classList.contains("hidden")) return;
+  if (!acList || !acList.classList.contains("visible")) return;
   if (e.key === "ArrowDown") {
     e.preventDefault();
     moveAc(1);
@@ -98,7 +110,9 @@ input?.addEventListener("keydown", (e) => {
   }
 });
 
-// On load
+// ===============================
+// ON LOAD
+// ===============================
 window.addEventListener("load", () => {
   const url = new URL(window.location.href);
   const q = url.searchParams.get("q") || "";
@@ -113,6 +127,9 @@ window.addEventListener("load", () => {
   }
 });
 
+// ===============================
+// SAFESEARCH
+// ===============================
 function getSafeLevel() {
   if (!safeSelect) return "moderate";
   const val = safeSelect.value || "moderate";
@@ -121,11 +138,16 @@ function getSafeLevel() {
   return "moderate";
 }
 
+// ===============================
+// MAIN SEARCH
+// ===============================
 async function runSearch(q) {
   resultsContainer.innerHTML = "";
   imageResults.innerHTML = "";
-  knowledgePanel.classList.add("hidden");
   knowledgePanel.innerHTML = "";
+  knowledgePanel.classList.add("hidden");
+  paaList.innerHTML = "";
+  paaSection?.classList.add("hidden");
 
   showLoading(true);
   showNoResults(false);
@@ -133,6 +155,7 @@ async function runSearch(q) {
   let deduped = [];
   let imageSet = [];
   let wikiEntity = null;
+  let paa = [];
 
   try {
     const safe = getSafeLevel();
@@ -146,6 +169,7 @@ async function runSearch(q) {
     deduped = data.results || [];
     imageSet = data.images || [];
     wikiEntity = data.entity || null;
+    paa = data.paa || [];
   } catch (e) {
     console.warn("Search backend error", e);
   }
@@ -157,7 +181,7 @@ async function runSearch(q) {
     return;
   }
 
-  // Main results
+  // Results
   deduped.forEach(r => {
     const card = document.createElement("div");
     card.className = "result-card";
@@ -235,11 +259,41 @@ async function runSearch(q) {
     imageResults.appendChild(card);
   });
 
+  // Knowledge panel
   if (wikiEntity) {
     buildKnowledgePanel(wikiEntity);
   }
+
+  // People Also Ask
+  if (paa && paa.length) {
+    paaSection?.classList.remove("hidden");
+    paaList.innerHTML = "";
+    paa.forEach(item => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "paa-item";
+
+      const qEl = document.createElement("div");
+      qEl.className = "paa-question";
+      qEl.innerHTML = `<span>${item.q}</span><span class="chevron">›</span>`;
+      wrapper.appendChild(qEl);
+
+      const aEl = document.createElement("div");
+      aEl.className = "paa-answer";
+      aEl.textContent = item.a;
+      wrapper.appendChild(aEl);
+
+      qEl.addEventListener("click", () => {
+        wrapper.classList.toggle("open");
+      });
+
+      paaList.appendChild(wrapper);
+    });
+  }
 }
 
+// ===============================
+// AUTOCOMPLETE
+// ===============================
 async function fetchAutocomplete(q) {
   if (!acList) return;
   try {
@@ -267,12 +321,13 @@ function renderAutocomplete(items) {
     return;
   }
 
-  items.forEach((s, idx) => {
+  items.forEach(s => {
     const div = document.createElement("div");
     div.className = "ac-item";
-    div.textContent = s.text;
     div.dataset.value = s.text;
-    div.dataset.source = s.source;
+
+    const text = document.createElement("span");
+    text.textContent = s.text;
 
     const src = document.createElement("span");
     src.className = "ac-source";
@@ -280,6 +335,8 @@ function renderAutocomplete(items) {
       s.source === "ddg" ? "Web" :
       s.source === "wiki" ? "Wiki" :
       s.source === "trending" ? "Trending" : "";
+
+    div.appendChild(text);
     div.appendChild(src);
 
     div.addEventListener("mousedown", (e) => {
@@ -314,6 +371,9 @@ function hideAutocomplete() {
   acIndex = -1;
 }
 
+// ===============================
+// KNOWLEDGE PANEL
+// ===============================
 async function buildKnowledgePanel(title) {
   try {
     const summary = await fetch(
@@ -325,12 +385,12 @@ async function buildKnowledgePanel(title) {
     if (!summary.title || !summary.extract) return;
 
     knowledgePanel.innerHTML = "";
+    knowledgePanel.classList.add("knowledge-panel");
 
-    const thumb = summary.thumbnail?.source || "";
-    if (thumb) {
+    if (summary.thumbnail?.source) {
       const img = document.createElement("img");
       img.className = "kp-thumb";
-      img.src = thumb;
+      img.src = summary.thumbnail.source;
       img.loading = "lazy";
       knowledgePanel.appendChild(img);
     }
@@ -366,14 +426,17 @@ async function buildKnowledgePanel(title) {
   }
 }
 
+// ===============================
+// HELPERS
+// ===============================
 function showLoading(on) {
-  if (!loadingEl) return;
-  loadingEl.classList.toggle("visible", on);
+  if (!loader) return;
+  loader.classList.toggle("visible", on);
 }
 
 function showNoResults(on) {
-  if (!noQueryEl) return;
-  noQueryEl.classList.toggle("visible", on);
+  if (!noResults) return;
+  noResults.classList.toggle("visible", on);
 }
 
 function safeDomain(url) {
@@ -383,11 +446,3 @@ function safeDomain(url) {
     return "";
   }
 }
-
-/* FAQ accordion */
-document.querySelectorAll(".faq-item").forEach(item => {
-  const q = item.querySelector(".faq-question");
-  q?.addEventListener("click", () => {
-    item.classList.toggle("open");
-  });
-});
