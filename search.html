@@ -1,109 +1,156 @@
+<!-- ===============================
+  SEARCH.HTML V3 — 360 SEARCH
+================================ -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-89NN1P6CEV');
+  </script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360 Search</title>
+  <title>360 — Search</title>
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
 
-  <!-- 360 V3 CSS -->
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
   <link rel="stylesheet" href="/assets/css/search.css" />
 
-  <!-- Theme variables -->
-  <style>
-    :root {
-      --a: #4ea3ff;
-      --a2: #7cc8ff;
-      --txt: #111;
-      --txtd: #fff;
-      --mut: #555;
-      --mutd: #aaa;
-      --br: rgba(0,0,0,0.15);
-    }
-    body.dark {
-      --br: rgba(255,255,255,0.15);
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<body>
 
-<body class="search-results-page">
+  <!-- Cursor -->
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
 
-  <!-- TOP STRIP -->
-  <div class="search-bar-strip">
-    <a href="/" class="strip-logo">360</a>
+  <!-- Sidebar -->
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-mark"></div>
+      <button id="settingsBtn">⚙</button>
+    </div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="/">Home</div>
+      <div class="nav-item" data-href="../ai">AI</div>
+      <div class="nav-item" data-href="../weather">Weather</div>
+      <div class="nav-item" data-href="../translator">Translator</div>
+      <div class="nav-item" data-href="../stocks">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="../chat">Chat</div>
+      <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item" data-href="../games">Games</div>
+    </nav>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.1.1</div>
+  </aside>
 
-    <form id="strip-search-form" autocomplete="off">
-      <input
-        id="strip-search-input"
-        type="text"
-        placeholder="Search the web..."
-        spellcheck="false"
-      />
+  <div class="overlay" id="overlay"></div>
 
-      <button id="strip-search-btn" type="submit">Search</button>
-
-      <!-- AUTOCOMPLETE -->
-      <div id="autocompleteList" class="autocomplete"></div>
-    </form>
-
-    <!-- SAFESEARCH -->
-    <select id="safeSelect" class="safe-select">
-      <option value="moderate">Moderate</option>
-      <option value="strict">Strict</option>
-      <option value="off">Off (Login Required)</option>
-    </select>
+  <!-- Settings panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <!-- unchanged -->
   </div>
 
-  <!-- MAIN LAYOUT -->
-  <div class="search-main-layout">
+  <!-- Auth popup -->
+  <div id="auth-popup" class="auth-popup hidden">
+    <!-- unchanged -->
+  </div>
 
-    <!-- LEFT COLUMN -->
-    <div class="search-left">
+  <div class="auth-top-right">
+    <button id="signInBtn" class="auth-btn">Sign In</button>
+    <button id="signUpBtn" class="auth-btn">Sign Up</button>
+    <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
+  </div>
 
-      <!-- TABS -->
-      <div class="search-tabs">
-        <button class="tab-btn active" data-tab="all">All</button>
-        <button class="tab-btn" data-tab="images">Images</button>
-      </div>
+  <!-- SEARCH PAGE -->
+  <div class="search-results-page">
 
-      <!-- VIEW TOGGLE -->
+    <div class="search-bar-strip">
+      <a class="strip-logo" href="./">360</a>
+
+      <form id="strip-search-form">
+        <input id="strip-search-input" type="text" placeholder="Search the web…" autocomplete="off" />
+
+        <!-- ⭐ ADDED: AUTOCOMPLETE -->
+        <div id="autocompleteList" class="autocomplete"></div>
+
+        <button id="strip-search-btn" type="submit">Search</button>
+      </form>
+
+      <!-- ⭐ ADDED: SAFESEARCH -->
+      <select id="safeSelect" class="safe-select">
+        <option value="moderate">Moderate</option>
+        <option value="strict">Strict</option>
+        <option value="off">Off (Login Required)</option>
+      </select>
+
       <div class="view-toggle">
         <button id="listViewBtn" class="toggle-btn active">List</button>
         <button id="gridViewBtn" class="toggle-btn">Grid</button>
       </div>
-
-      <!-- RESULTS -->
-      <div id="resultsContainer" class="results list-view"></div>
-
-      <!-- PAA -->
-      <section id="paaSection" class="paa-section hidden">
-        <h3 class="paa-title">People also ask</h3>
-        <div id="paaList"></div>
-      </section>
-
-      <!-- IMAGE RESULTS -->
-      <div id="imageResults" class="results images-view hidden"></div>
-
-      <!-- LOADER -->
-      <div id="frame-loader" class="loading">
-        <div class="loader-spinner"></div>
-        Loading results…
-      </div>
-
-      <!-- NO RESULTS -->
-      <div id="no-query" class="no-results">
-        <div class="big-emoji">😕</div>
-        No results found.
-      </div>
-
     </div>
 
-    <!-- RIGHT COLUMN — KNOWLEDGE PANEL -->
-    <aside id="knowledgePanel" class="knowledge-panel hidden"></aside>
+    <!-- ⭐ ADDED: MAIN LAYOUT WRAPPER -->
+    <div class="search-main-layout">
 
+      <!-- LEFT COLUMN -->
+      <div class="search-left">
+
+        <!-- ⭐ ADDED: TABS -->
+        <div class="search-tabs">
+          <button class="tab-btn active" data-tab="all">All</button>
+          <button class="tab-btn" data-tab="images">Images</button>
+        </div>
+
+        <!-- RESULTS -->
+        <div id="resultsContainer" class="results list-view"></div>
+
+        <!-- ⭐ ADDED: PAA -->
+        <section id="paaSection" class="paa-section hidden">
+          <h3 class="paa-title">People also ask</h3>
+          <div id="paaList"></div>
+        </section>
+
+        <!-- ⭐ ADDED: IMAGE RESULTS -->
+        <div id="imageResults" class="results images-view hidden"></div>
+
+        <!-- LOADER -->
+        <div id="frame-loader" class="loading">
+          <div class="loader-spinner"></div>
+          <p>Searching…</p>
+        </div>
+
+        <!-- NO RESULTS -->
+        <div id="no-query" class="no-results">
+          <div class="big-emoji">🔍</div>
+          <p>No results found.</p>
+        </div>
+
+      </div>
+
+      <!-- ⭐ ADDED: KNOWLEDGE PANEL -->
+      <aside id="knowledgePanel" class="knowledge-panel hidden"></aside>
+
+    </div>
   </div>
 
-  <!-- JS -->
+  <audio id="clickSound" src="click-sound.mp3" preload="auto"></audio>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
   <script src="/assets/js/search.js"></script>
-
 </body>
 </html>
