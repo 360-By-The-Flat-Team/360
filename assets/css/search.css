@@ -149,22 +149,28 @@ body.dark .result-card {
   border-color: rgba(255,255,255,0.15);
 }
 
-.result-img {
-  width: 100%;
-  border-radius: 12px;
-  margin-bottom: 10px;
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.result-favicon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
 }
 
 .result-title {
   font-size: 17px;
   font-weight: 700;
-  margin-bottom: 6px;
 }
 
 .result-desc {
   font-size: 14px;
   color: var(--mut);
-  margin-bottom: 8px;
+  margin: 6px 0 8px;
 }
 
 body.dark .result-desc { color: var(--mutd); }
@@ -173,6 +179,13 @@ body.dark .result-desc { color: var(--mutd); }
   font-size: 13px;
   color: var(--a);
   word-break: break-all;
+}
+
+/* Image */
+.result-img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 10px;
 }
 
 /* Loading / no results */
