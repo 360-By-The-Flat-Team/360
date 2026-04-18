@@ -5,71 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360 Search</title>
 
+  <!-- 360 V3 CSS -->
   <link rel="stylesheet" href="/assets/css/search.css" />
-  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme variables -->
+  <style>
+    :root {
+      --a: #4ea3ff;
+      --a2: #7cc8ff;
+      --txt: #111;
+      --txtd: #fff;
+      --mut: #555;
+      --mutd: #aaa;
+      --br: rgba(0,0,0,0.15);
+    }
+    body.dark {
+      --br: rgba(255,255,255,0.15);
+    }
+  </style>
 </head>
 
-<body>
+<body class="search-results-page">
 
-  <header class="topbar">
-    <div class="logo">360</div>
+  <!-- TOP STRIP -->
+  <div class="search-bar-strip">
+    <a href="/" class="strip-logo">360</a>
 
-    <div class="safesearch-wrapper">
-      <label for="safeSelect">SafeSearch:</label>
-      <select id="safeSelect" class="safe-select">
-        <option value="moderate">Moderate</option>
-        <option value="strict">Strict</option>
-        <option value="off">Off (Login Required)</option>
-      </select>
-    </div>
-  </header>
-
-  <section class="search-section">
     <form id="strip-search-form" autocomplete="off">
-      <div class="search-bar-wrapper">
-        <input
-          id="strip-search-input"
-          type="text"
-          placeholder="Search the web..."
-          spellcheck="false"
-        />
+      <input
+        id="strip-search-input"
+        type="text"
+        placeholder="Search the web..."
+        spellcheck="false"
+      />
 
-        <div id="autocompleteList" class="autocomplete"></div>
+      <button id="strip-search-btn" type="submit">Search</button>
+
+      <!-- AUTOCOMPLETE -->
+      <div id="autocompleteList" class="autocomplete"></div>
+    </form>
+
+    <!-- SAFESEARCH -->
+    <select id="safeSelect" class="safe-select">
+      <option value="moderate">Moderate</option>
+      <option value="strict">Strict</option>
+      <option value="off">Off (Login Required)</option>
+    </select>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="search-main-layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="search-left">
+
+      <!-- TABS -->
+      <div class="search-tabs">
+        <button class="tab-btn active" data-tab="all">All</button>
+        <button class="tab-btn" data-tab="images">Images</button>
       </div>
 
-      <button type="submit" class="search-btn">Search</button>
-    </form>
-  </section>
+      <!-- VIEW TOGGLE -->
+      <div class="view-toggle">
+        <button id="listViewBtn" class="toggle-btn active">List</button>
+        <button id="gridViewBtn" class="toggle-btn">Grid</button>
+      </div>
 
-  <div class="view-toggle">
-    <button id="listViewBtn" class="toggle-btn active">List</button>
-    <button id="gridViewBtn" class="toggle-btn">Grid</button>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="all">All</button>
-    <button class="tab-btn" data-tab="images">Images</button>
-  </div>
-
-  <main class="layout">
-    <div class="main-column">
+      <!-- RESULTS -->
       <div id="resultsContainer" class="results list-view"></div>
 
-      <!-- PEOPLE ALSO ASK -->
+      <!-- PAA -->
       <section id="paaSection" class="paa-section hidden">
         <h3 class="paa-title">People also ask</h3>
         <div id="paaList"></div>
       </section>
 
-      <div id="imageResults" class="image-grid hidden"></div>
+      <!-- IMAGE RESULTS -->
+      <div id="imageResults" class="results images-view hidden"></div>
+
+      <!-- LOADER -->
+      <div id="frame-loader" class="loading">
+        <div class="loader-spinner"></div>
+        Loading results…
+      </div>
+
+      <!-- NO RESULTS -->
+      <div id="no-query" class="no-results">
+        <div class="big-emoji">😕</div>
+        No results found.
+      </div>
+
     </div>
 
-    <aside id="knowledgePanel" class="hidden"></aside>
-  </main>
+    <!-- RIGHT COLUMN — KNOWLEDGE PANEL -->
+    <aside id="knowledgePanel" class="knowledge-panel hidden"></aside>
 
-  <div id="frame-loader" class="loader hidden">Loading…</div>
-  <div id="no-query" class="no-results hidden">No results found.</div>
+  </div>
 
+  <!-- JS -->
   <script src="/assets/js/search.js"></script>
+
 </body>
 </html>
