@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TROLLEY PROBLEM: THE GAME</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+  :root {
+    --bg: #0a0a1a;
+    --bg2: #12122a;
+    --panel: #1a1a3a;
+    --border: #3a3a7a;
+    --gold: #ffd700;
+    --red: #ff4444;
+    --green: #44ff88;
+    --blue: #4488ff;
+    --text: #e0e0ff;
+    --dim: #8888aa;
+    --pixel: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* CRT glow on edges */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,50,0.6) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  #app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    text-align: center;
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  #header h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.5), 3px 3px 0 #8b6000;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%,95%,100% { opacity: 1; }
+    96% { opacity: 0.8; }
+    97% { opacity: 1; }
+    98% { opacity: 0.7; }
+    99% { opacity: 1; }
+  }
+
+  #header .subtitle {
+    font-size: 14px;
+    color: var(--dim);
+    letter-spacing: 3px;
+  }
+
+  /* ── STATS BAR ── */
+  #statsBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stat { display: flex; align-items: center; gap: 6px; }
+  .stat-label { color: var(--dim); font-size: 14px; }
+  .stat-val { font-weight: bold; }
+  .stat-val.saved { color: var(--green); }
+  .stat-val.killed { color: var(--red); }
+  .stat-val.level { color: var(--gold); }
+
+  /* progress bar */
+  #progressWrap { width: 100%; height: 6px; background: #222244; border: 1px solid var(--border); margin-bottom: 12px; }
+  #progressBar { height: 100%; background: var(--gold); transition: width 0.4s; box-shadow: 0 0 8px var(--gold); }
+
+  /* ── LEVEL TITLE ── */
+  #levelTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+    min-height: 20px;
+  }
+
+  /* ── CANVAS ── */
+  #canvasWrap {
+    background: #050510;
+    border: 2px solid var(--border);
+    box-shadow: 0 0 30px rgba(68,68,255,0.2), inset 0 0 20px rgba(0,0,50,0.5);
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ── DILEMMA BOX ── */
+  #dilemmaBox {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 19px;
+    line-height: 1.6;
+    min-height: 60px;
+    color: var(--text);
+  }
+
+  #dilemmaBox .dlabel {
+    font-size: 12px;
+    color: var(--gold);
+    font-family: 'Press Start 2P', monospace;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* ── BUTTONS ── */
+  #btnRow {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 12px 24px;
+    border: 2px solid;
+    background: transparent;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.1s;
+    position: relative;
+    text-transform: uppercase;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 1px solid;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-pull {
+    color: var(--red);
+    border-color: var(--red);
+    text-shadow: 0 0 8px var(--red);
+    box-shadow: 0 0 12px rgba(255,68,68,0.3), inset 0 0 12px rgba(255,68,68,0.05);
+  }
+  .btn-pull::before { border-color: var(--red); }
+  .btn-pull:hover { background: rgba(255,68,68,0.15); box-shadow: 0 0 20px rgba(255,68,68,0.5); }
+
+  .btn-dont {
+    color: var(--green);
+    border-color: var(--green);
+    text-shadow: 0 0 8px var(--green);
+    box-shadow: 0 0 12px rgba(68,255,136,0.3), inset 0 0 12px rgba(68,255,136,0.05);
+  }
+  .btn-dont::before { border-color: var(--green); }
+  .btn-dont:hover { background: rgba(68,255,136,0.1); box-shadow: 0 0 20px rgba(68,255,136,0.4); }
+
+  .btn-next {
+    color: var(--gold);
+    border-color: var(--gold);
+    text-shadow: 0 0 8px var(--gold);
+    box-shadow: 0 0 12px rgba(255,215,0,0.3);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .btn-next::before { border-color: var(--gold); }
+  .btn-next:hover { background: rgba(255,215,0,0.15); }
+
+  .btn-restart {
+    color: var(--blue);
+    border-color: var(--blue);
+    text-shadow: 0 0 8px var(--blue);
+    box-shadow: 0 0 12px rgba(68,136,255,0.3);
+  }
+  .btn-restart:hover { background: rgba(68,136,255,0.15); }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 12px rgba(255,215,0,0.3); }
+    50% { box-shadow: 0 0 24px rgba(255,215,0,0.7); }
+  }
+
+  /* ── RESULT BOX ── */
+  #resultBox {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    font-size: 18px;
+    line-height: 1.6;
+    min-height: 20px;
+    color: #aaccff;
+    display: none;
+  }
+
+  #resultBox .rlabel {
+    font-size: 11px;
+    color: var(--blue);
+    font-family: 'Press Start 2P', monospace;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* ── END SCREEN ── */
+  #endScreen {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background: var(--panel);
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 40px rgba(255,215,0,0.3);
+    margin-bottom: 12px;
+  }
+
+  #endScreen h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: var(--gold);
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px var(--gold);
+  }
+
+  .end-stat {
+    font-size: 22px;
+    margin: 8px 0;
+  }
+
+  #verdict {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    margin: 20px 0;
+    padding: 12px;
+    border: 1px solid var(--gold);
+    display: inline-block;
+  }
+
+  .end-note {
+    font-size: 16px;
+    color: var(--dim);
+    margin-top: 16px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>&#9881; TROLLEY PROBLEM &#9881;</h1>
+    <div class="subtitle">THE PIXEL ETHICS SIMULATOR &mdash; 40 LEVELS</div>
+  </div>
+
+  <div id="statsBar">
+    <div class="stat"><span class="stat-label">SAVED:</span><span class="stat-val saved" id="sSaved">0</span></div>
+    <div class="stat"><span class="stat-label">LEVEL:</span><span class="stat-val level" id="sLevel">1 / 40</span></div>
+    <div class="stat"><span class="stat-label">SACRIFICED:</span><span class="stat-val killed" id="sKilled">0</span></div>
+  </div>
+
+  <div id="progressWrap"><div id="progressBar" style="width:0%"></div></div>
+
+  <div id="levelTitle">LEVEL 1 — THE CLASSIC</div>
+
+  <div id="canvasWrap">
+    <canvas id="c" width="800" height="320"></canvas>
+  </div>
+
+  <div id="dilemmaBox">
+    <span class="dlabel">&#9650; SITUATION:</span>
+    <span id="dilemmaText">Loading...</span>
+  </div>
+
+  <div id="btnRow">
+    <button class="btn btn-pull" id="btnPull" onclick="choose(true)">&#9654; PULL LEVER</button>
+    <button class="btn btn-dont" id="btnDont" onclick="choose(false)">&#9632; DO NOTHING</button>
+  </div>
+
+  <div id="resultBox">
+    <span class="rlabel">&#9658; OUTCOME:</span>
+    <span id="resultText"></span>
+  </div>
+
+  <div id="endScreen">
+    <h2>&#9733; GAME COMPLETE &#9733;</h2>
+    <div class="end-stat">&#x1F7E2; People Saved: <span style="color:var(--green)" id="eFinalSaved">0</span></div>
+    <div class="end-stat">&#x1F534; People Sacrificed: <span style="color:var(--red)" id="eFinalKilled">0</span></div>
+    <div class="end-stat">Levels Completed: <span style="color:var(--gold)">40 / 40</span></div>
+    <div id="verdict">VERDICT: LOADING...</div>
+    <div class="end-note">There are no correct answers. Only choices, consequences, and the quiet weight of moral philosophy.</div>
+    <br>
+    <div id="btnRow2" style="margin-top:12px">
+      <button class="btn btn-restart" onclick="restart()">&#9654; PLAY AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 800, H = 320;
+
+// ─── COLOR PALETTE ───
+const PAL = {
+  sky: '#050510', stars: '#ffffff',
+  ground: '#0a1a0a', grass: '#0d1f0d', grassTop: '#163016',
+  rail: '#888', tie: '#5c3d0a', tie2: '#7a5c2a',
+  cart: '#cc2222', cartTop: '#ee3333', cartDark: '#881111',
+  wheel: '#333', wheelRim: '#666', wheelHub: '#999',
+  smoke: ['#444466','#333355','#222244'],
+  leverBase: '#444', leverArm: '#cc8800', leverKnob: '#ffaa00',
+  signBg: '#ddbb55', signBorder: '#aa8833', signText: '#2a1a00',
+  personColors: ['#ff9999','#ffcc99','#99ffbb','#99ccff','#ff99ff','#ffff99','#bbbbff','#ffccbb','#aaffcc','#ffaacc'],
+  dead: '#cc0000',
+  gold: '#ffd700',
+  white: '#ffffff',
+  dark: '#111',
+};
+
+const levels = [
+  { title:"THE CLASSIC", dilemma:"A runaway trolley barrels toward 5 people tied to the tracks. You can pull the lever to divert it to a side track — killing 1 person instead. What do you do?", mainCount:5, sideCount:1, pull:"You diverted the trolley. 1 person died instead of 5. A utilitarian choice — most people pull.", dontPull:"You did nothing. 5 people died. You valued inaction over intervention." },
+  { title:"THE FOOTBRIDGE", dilemma:"Same trolley, no lever. But there's a large man on a footbridge above. Pushing him off would stop the trolley, saving 5. Do you push him?", mainCount:5, sideCount:1, pull:"You pushed the man. He died, 5 were saved. Does the method of killing matter morally?", dontPull:"You refused to push. 5 people died. Most people refuse — even though the math is identical to the classic.", mainSpecial:"NO LEVER", sideSpecial:"PUSH HIM?" },
+  { title:"THE LOOP TRACK", dilemma:"The side track loops back to the main track. The 1 person's body would stop the trolley before it loops back — you're using them as a brake. Pull?", mainCount:5, sideCount:1, pull:"Pulled. 1 died stopping the trolley. But you used them as a means to an end, not just a side effect.", dontPull:"You didn't pull. 5 perished. The loop detail changes many people's intuitions." },
+  { title:"YOUR FAMILY", dilemma:"5 strangers are on the main track. Your beloved sibling is on the side track. Do you pull the lever?", mainCount:5, sideCount:1, pull:"You sacrificed your sibling to save 5 strangers. Utilitarian — but could you ever forgive yourself?", dontPull:"You let 5 strangers die to save your sibling. Was that selfish, or just human?", mainSpecial:"STRANGERS", sideSpecial:"YOUR SIBLING" },
+  { title:"NUMBERS GAME", dilemma:"100 strangers on the main track. 1 stranger on the side track. Does scale change your calculus?", mainCount:6, sideCount:1, pull:"100 saved, 1 sacrificed. Does the math feel easier when the numbers are bigger?", dontPull:"100 dead. Did the sheer number paralyze you, or did 1 life still feel non-negotiable?", mainSpecial:"x100 PEOPLE" },
+  { title:"THE CRIMINAL", dilemma:"5 good citizens on the main track. 1 convicted murderer on the side track. Do you pull the lever?", mainCount:5, sideCount:1, pull:"You diverted toward the murderer. Many agree — but who decides who 'deserves' to die?", dontPull:"5 innocent people died. Does the murderer's past justify their survival?", mainSpecial:"INNOCENT", sideSpecial:"MURDERER" },
+  { title:"THE VOLUNTEER", dilemma:"5 people on the main track. The 1 person on the side track VOLUNTEERED to be there to prove a philosophical point. Pull?", mainCount:5, sideCount:1, pull:"You honored their sacrifice. 5 saved, 1 voluntarily died.", dontPull:"The volunteer's gesture meant nothing. 5 died instead.", sideSpecial:"VOLUNTEERED!" },
+  { title:"AGE MATTERS?", dilemma:"5 elderly people (average age 78) on the main track. 1 child (age 7) on the side track. Quality-adjusted life years?", mainCount:5, sideCount:1, pull:"You saved 5 elders but killed a child with 70+ years ahead. Was future life worth more?", dontPull:"5 elderly people died. Their lives were equally complete. Were you right?", mainSpecial:"AVG AGE 78", sideSpecial:"AGE 7" },
+  { title:"THE ORGAN HARVEST", dilemma:"5 patients need organ transplants or they die. 1 healthy person could save all 5 with their organs. Do you harvest?", mainCount:5, sideCount:1, pull:"You harvested the healthy person's organs. Utilitarian math — but monstrous to most.", dontPull:"5 patients died. You respected bodily autonomy. Most people don't pull here — why?", mainSpecial:"NEED ORGANS", sideSpecial:"HAS 5 ORGANS" },
+  { title:"THE PRESIDENT", dilemma:"5 civilians on the main track. 1 sitting head of state on the side track. Do geopolitical consequences matter?", mainCount:5, sideCount:1, pull:"You killed the president. Thousands may die in political fallout. Did you think ahead?", dontPull:"5 civilians died. The president lives. Was stability worth 5 lives?", mainSpecial:"CIVILIANS", sideSpecial:"THE PRESIDENT" },
+  { title:"THE PHILOSOPHERS", dilemma:"5 utilitarian philosophers on the main track WANT you to pull. 1 deontologist on the side says you MUST NOT. Who do you listen to?", mainCount:5, sideCount:1, pull:"You listened to the majority — or did you just do what they wanted? Is that moral?", dontPull:"You followed the deontologist's rule — or were you agreeing with them too?", mainSpecial:"PULL!(they say)", sideSpecial:"DO NOT!(they say)" },
+  { title:"$250M VS 1 LIFE", dilemma:"5 empty trolleys worth $50M each are on the main track heading for a cliff. 1 person is on the side track. Pull to divert the trolley, saving the trolleys?", mainCount:5, sideCount:1, pull:"1 person died. $250M saved. Life > property?", dontPull:"$250M destroyed. 1 person lives. Was the economic calculus justified?", mainSpecial:"$250M TROLLEYS", sideSpecial:"1 PERSON" },
+  { title:"THE CLONES", dilemma:"5 perfect clones of you are on the main track. 1 original you is on the side track. Clones have all your memories. Pull?", mainCount:5, sideCount:1, pull:"You sacrificed yourself to save 5 versions of you. There are now 5 of you... sort of.", dontPull:"Your 5 clones died. Only the 'real' you survived. Are clones real people?", mainSpecial:"CLONE-YOU x5", sideSpecial:"REAL YOU" },
+  { title:"THE CAT PERSON", dilemma:"5 people who hate cats are on the main track. 1 person who has 17 cats (who die without them) is on the side. Pull?", mainCount:5, sideCount:1, pull:"5 cat-haters saved. 1 person and 17 cats died. The internet is divided.", dontPull:"5 cat-haters died. 1 cat lover and 17 cats survived. The internet approves.", mainSpecial:"HATE CATS", sideSpecial:"+17 CATS DIE" },
+  { title:"INFINITE REGRESS", dilemma:"You've just been told that pulling this lever will release another trolley somewhere else, killing 10 people. Still pull to save the 5 here?", mainCount:5, sideCount:1, pull:"You pulled. 5 saved here. 10 died elsewhere. Did distant consequences matter?", dontPull:"You didn't pull. 1 died, 5 died. But the 10 elsewhere are safe.", mainSpecial:"5 LIVES HERE", sideSpecial:"+10 DIE ELSEWHERE" },
+  { title:"THE BABY", dilemma:"5 adults on the main track. 1 baby (1 year old) on the side track. Babies have not yet developed full personhood by some philosophical criteria. Pull?", mainCount:5, sideCount:1, pull:"5 adults saved, 1 baby sacrificed. Many find this deeply disturbing despite the math.", dontPull:"5 adults died to protect the baby. Some argue infants have a special moral status.", mainSpecial:"5 ADULTS", sideSpecial:"1 BABY" },
+  { title:"AI TROLLEY", dilemma:"5 humans are on the main track. 1 advanced AI with apparent consciousness is on the side track. Does AI life have value?", mainCount:5, sideCount:1, pull:"You ended the AI to save 5 humans. Anthropocentric, or justified?", dontPull:"5 humans died to preserve an AI. You valued machine consciousness equally.", mainSpecial:"HUMANS", sideSpecial:"AI MIND" },
+  { title:"HAPPINESS MATH", dilemma:"5 lottery winners (life full of joy ahead) on the main track. 1 person who just lost everything on the side track. Pull?", mainCount:5, sideCount:1, pull:"5 happy people saved, 1 miserable person killed. Was their suffering a factor?", dontPull:"5 happy people died, 1 miserable person survived. Does expected happiness count?", mainSpecial:"VERY HAPPY", sideSpecial:"VERY MISERABLE" },
+  { title:"THE LIAR", dilemma:"5 people on the main track claim they consent and WANT to be hit. On the side: 1 honest person who definitely doesn't. Pull toward the honest one?", mainCount:5, sideCount:1, pull:"You took the 5 at their word. Claimed consent respected.", dontPull:"You protected the honest person. The 5 who 'wanted it' got what they asked for.", mainSpecial:"CLAIM CONSENT", sideSpecial:"NO CONSENT" },
+  { title:"THE SLEEPING", dilemma:"5 people in comas (prognosis unknown) on the main track. 1 wide awake, terrified person on the side. Does awareness of death matter?", mainCount:5, sideCount:1, pull:"5 comatose people saved. The awake, aware person experienced every second.", dontPull:"The awake person survived. 5 comatose people died, unaware of anything. Better?", mainSpecial:"UNCONSCIOUS", sideSpecial:"FULLY AWARE" },
+  { title:"TROLLEY IN SPACE", dilemma:"5 astronauts are in the path of a space trolley. 1 alien (first contact with alien life!) is on the other track. Pull?", mainCount:5, sideCount:1, pull:"5 astronauts saved. The alien dies — possibly ending humanity's chance at cosmic friendship.", dontPull:"5 astronauts dead. The alien lives. Humanity gains a cosmic ally. Worth it?", mainSpecial:"HUMANS", sideSpecial:"FIRST ALIEN!" },
+  { title:"QUANTUM TROLLEY", dilemma:"The trolley is in quantum superposition — heading toward BOTH tracks simultaneously. Observing it collapses the wave function. Do you look?", mainCount:5, sideCount:1, pull:"You looked. The universe chose. Quantum fate decided.", dontPull:"You didn't look. Everyone remained alive and dead simultaneously. Optimal?", mainSpecial:"SUPERPOSITION", sideSpecial:"SUPERPOSITION" },
+  { title:"THE ANCIENT TREE", dilemma:"5 people are on the main track. 1 ancient 3,000-year-old tree is on the side track. The tree is irreplaceable. Pull?", mainCount:5, sideCount:1, pull:"5 lives saved. The 3,000-year-old tree is gone — a living monument lost forever.", dontPull:"5 died. The tree lives. Some environmental ethicists argue ancient trees have profound intrinsic value.", mainSpecial:"5 PEOPLE", sideSpecial:"3000yr OLD TREE" },
+  { title:"THE TROLLS", dilemma:"5 internet trolls who have caused immeasurable online suffering are on the main track. 1 genuinely kind person is on the side. Pull?", mainCount:5, sideCount:1, pull:"You saved the kind person. The 5 trolls died. Nobody online seemed to mind.", dontPull:"The kind person died, 5 trolls survived. They immediately went online to complain.", mainSpecial:"INTERNET TROLLS", sideSpecial:"VERY KIND PERSON" },
+  { title:"DEMOCRACY DECIDES", dilemma:"5 people on the main track. You put it to a vote of 1000 bystanders — 501 say pull, 499 say don't. Do you follow the vote?", mainCount:5, sideCount:1, pull:"You followed the majority vote. Democracy decided. Was a 1-vote margin enough?", dontPull:"You defied the majority. Are some decisions too weighty for democracy?", mainSpecial:"VOTE: PULL 501", sideSpecial:"VOTE: DONT 499" },
+  { title:"THE REPEAT", dilemma:"You've faced this exact scenario 100 times before. You always pull. This is number 101. The 1 person knows your pattern and has accepted their fate.", mainCount:5, sideCount:1, pull:"You pulled again. The 1 person had a look of weary acceptance.", dontPull:"You broke your pattern. The 5 died in shock. The 1 person on the side was stunned.", mainSpecial:"5 EVERY TIME", sideSpecial:"KNOWS THEIR FATE" },
+  { title:"YOU ARE THE TROLLEY", dilemma:"You have become the trolley. You hurtle toward 5 people. You can steer into a wall (dying) to save them. You have 3 seconds.", mainCount:5, sideCount:1, pull:"You steered into the wall. You died. 5 people watched a person-trolley sacrifice themselves.", dontPull:"You couldn't do it. 5 people were hit by a human trolley.", mainSpecial:"5 LIVES", sideSpecial:"THE WALL (YOU DIE)" },
+  { title:"GOD SHOWS UP", dilemma:"God appears and says pulling the lever is a sin. 5 will go to heaven if they die now. If you pull, the 1 on the side will suffer eternally. Pull?", mainCount:5, sideCount:1, pull:"You pulled despite divine warning. 1 soul condemned eternally, 5 in heaven.", dontPull:"You obeyed. 5 entered heaven. The 1 on the side is spared eternal suffering.", mainSpecial:"HEAVEN AWAITS", sideSpecial:"ETERNAL DAMNATION" },
+  { title:"THE SIMULATION", dilemma:"You've just been told this is a simulation. The 5 and the 1 are NPCs with no consciousness. But you've grown attached to them. Pull?", mainCount:5, sideCount:1, pull:"You pulled. It's just code. But something felt real.", dontPull:"You did nothing. It's just code. But 5 NPCs died and you feel oddly guilty.", mainSpecial:"JUST CODE", sideSpecial:"JUST CODE" },
+  { title:"LAST HOPE", dilemma:"5 people on the main track. The 1 person on the side is the last human capable of having children — humanity's last chance at survival. Pull?", mainCount:5, sideCount:1, pull:"5 saved, 1 sacrificed. Humanity ends in a generation. Was the present worth the future?", dontPull:"5 died, 1 lives. Humanity continues. The math spans all of future history.", mainSpecial:"5 MORTALS", sideSpecial:"HUMANITY'S HOPE" },
+  { title:"MEMORY WIPE", dilemma:"After this scenario, everyone's memory will be wiped. The 5 and the 1 will not remember. You will not remember. Does it still matter?", mainCount:5, sideCount:1, pull:"You pulled. It happened. It was real — even if forgotten.", dontPull:"You didn't pull. It happened. It was real — even if forgotten.", mainSpecial:"WONT REMEMBER", sideSpecial:"WONT REMEMBER" },
+  { title:"THE MARTYR'S NOTE", dilemma:"A note from the 1 person on the side track: 'Please let me die. My death will teach the world more about ethics than any other event in history.'", mainCount:5, sideCount:1, pull:"You honored their wish. 5 saved. The 1 died as they wanted — and their wish came true.", dontPull:"You overrode their consent. 5 died. The would-be martyr survived, furious at your paternalism.", sideSpecial:"REQUESTS DEATH" },
+  { title:"YOU VS EVERYONE", dilemma:"The trolley will kill 1 BILLION people. The only way to stop it is to pull the lever — which will kill only you. Pull?", mainCount:6, sideCount:1, pull:"You pulled and died. 1 billion people lived. History's greatest hero.", dontPull:"You lived. 1 billion died. You will carry that forever.", mainSpecial:"1 BILLION LIVES", sideSpecial:"YOUR LIFE" },
+  { title:"THE REVERSED", dilemma:"WAIT. This one is backwards. 1 person is on the main track. 5 people are on the SIDE track. Pull the lever to kill 5 to save 1?", mainCount:1, sideCount:5, pull:"You pulled. 5 died to save 1. Almost nobody does this. Why did you?", dontPull:"You didn't pull. 1 died, 5 survived. Interestingly — most people choose this when numbers flip." },
+  { title:"THE PHILOSOPHER'S GIFT", dilemma:"The 5 on the main track have each written groundbreaking philosophy that will save millions of future lives. The 1 on the side is an ordinary person. Pull?", mainCount:5, sideCount:1, pull:"5 ordinary deaths. But their philosophy lived on and saved countless future lives.", dontPull:"The 5 philosophers died. Their ideas died with them. 1 ordinary person survived.", mainSpecial:"FUTURE IMPACT", sideSpecial:"ORDINARY LIFE" },
+  { title:"THE OBSERVER EFFECT", dilemma:"5 people who have read every trolley problem paper are on the main track. 1 person who has never heard of the trolley problem is on the side.", mainCount:5, sideCount:1, pull:"5 trolley-problem experts died — ironic. Their deaths resolved the debate empirically.", dontPull:"1 bewildered person survived. 5 philosophers died arguing about what just happened.", mainSpecial:"EXPERTS", sideSpecial:"CLUELESS" },
+  { title:"THE NOTHING", dilemma:"There is no one on either track. The trolley rolls into the sunset. You stand at the lever. You can pull or not. Nothing happens either way.", mainCount:0, sideCount:0, pull:"You pulled the lever. Nothing happened. Was it still a moral act?", dontPull:"You did nothing. Nothing happened. But you deliberated. Was the thinking itself moral?" },
+  { title:"THE TROLLEY DRIVER", dilemma:"The trolley driver is still inside and could crash the trolley — killing only themselves — to save the 5. You could alert them. Do you yell?", mainCount:5, sideCount:1, pull:"You yelled. The driver crashed. They died a hero.", dontPull:"You said nothing. 5 died. The driver lives, never knowing they could have saved them.", mainSpecial:"5 ON TRACK", sideSpecial:"DRIVER CAN STOP IT" },
+  { title:"THE ENDLESS LOOP", dilemma:"You wake up. You are at the lever again. This is loop #10,000. You know every outcome. The choice means nothing... or does it still mean everything?", mainCount:5, sideCount:1, pull:"Loop #10,001 begins. You pulled again. Maybe habit IS character.", dontPull:"Loop #10,001 begins. You stood still again. Maybe inaction IS character.", mainSpecial:"AGAIN...", sideSpecial:"...AND AGAIN" },
+  { title:"THE FINAL TROLLEY", dilemma:"This is the last trolley problem. Ever. After this, trolleys are abolished. 5 people on the main track, 1 on the side. Your final choice defines your ethics.", mainCount:5, sideCount:1, pull:"You pulled. 1 died. The trolley problem ended with a pull. Philosophers retire.", dontPull:"You didn't pull. 5 died. The trolley problem ended with inaction. Philosophers riot.", mainSpecial:"THE LAST 5", sideSpecial:"THE FINAL 1" },
+];
+
+let currentLevel = 0, saved = 0, sacrificed = 0;
+let animFrame = 0, animRunning = false, animId = null;
+let chosen = null, resultShown = false;
+
+// ─── DRAW UTILS ───
+function rect(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(x,y,w,h); }
+function pxl(x,y,c){ ctx.fillStyle=c; ctx.fillRect(x,y,4,4); }
+
+function drawStars(seed) {
+  ctx.fillStyle = PAL.stars;
+  for (let i=0;i<60;i++) {
+    const sx = (i*137+seed*17)%W;
+    const sy = (i*97+seed*11)%90;
+    const s = (i%3===0)?2:1;
+    ctx.fillRect(sx,sy,s,s);
+  }
+}
+
+function drawGround() {
+  rect(0,270,W,50,'#080f08');
+  rect(0,268,W,4,PAL.grassTop);
+  rect(0,264,W,6,PAL.grass);
+}
+
+function drawMainTrack() {
+  for (let x=0;x<W;x+=18) { rect(x+2,276,14,7,PAL.tie); }
+  rect(0,274,W,3,PAL.rail);
+  rect(0,284,W,3,PAL.rail);
+}
+
+function drawBranchTrack(startX) {
+  for (let x=startX;x<W;x+=18) { rect(x+2,293,14,7,PAL.tie2); }
+  rect(startX,292,W-startX,2,'#777');
+  rect(startX,300,W-startX,2,'#777');
+}
+
+function drawSwitch(startX, pulled) {
+  for (let i=0;i<18;i++) {
+    const bx=startX-10+i*2.5;
+    const by=275+i;
+    rect(bx,by,5,3,pulled?'#aaa':'#555');
+  }
+}
+
+function drawLever(lx,ly,pulled) {
+  rect(lx,ly+14,10,22,PAL.leverBase);
+  rect(lx+1,ly+12,8,6,'#555');
+  // arm
+  if (pulled) {
+    rect(lx-10,ly,10,5,PAL.leverArm);
+    rect(lx-14,ly-4,8,5,PAL.leverArm);
+    rect(lx-18,ly-8,8,10,PAL.leverKnob);
+  } else {
+    rect(lx+6,ly,10,5,PAL.leverArm);
+    rect(lx+12,ly-4,8,5,PAL.leverArm);
+    rect(lx+16,ly-8,8,10,PAL.leverKnob);
+  }
+}
+
+function drawTrolley(tx, ty, frame) {
+  const blink = Math.floor(frame/4)%2;
+  // body shadow
+  rect(tx+4,ty-2,66,28,'#1a0000');
+  // main body
+  rect(tx,ty-30,64,28,PAL.cartDark);
+  rect(tx+2,ty-32,60,28,PAL.cart);
+  rect(tx+4,ty-30,56,18,PAL.cartTop);
+  // windows
+  for (let w=0;w<3;w++) {
+    rect(tx+8+w*20,ty-28,12,10,'#1a3a5a');
+    rect(tx+10+w*20,ty-26,8,6,blink?'#88ccff':'#5599cc');
+  }
+  // front grill
+  rect(tx+56,ty-28,6,20,'#882222');
+  rect(tx+58,ty-26,4,16,'#cc4444');
+  // wheels
+  for (let w=0;w<3;w++) {
+    const wx=tx+8+w*20;
+    rect(wx,ty-2,14,8,PAL.wheel);
+    rect(wx+2,ty-4,10,6,PAL.wheelRim);
+    rect(wx+4,ty-6,6,6,PAL.wheelHub);
+    rect(wx+5,ty-5,4,4,'#bbb');
+  }
+  // chimney smoke
+  for (let s=0;s<4;s++) {
+    const sx=tx+48+Math.sin((frame*0.15)+s)*3;
+    const sy=ty-36-s*9-(frame%10)*0.5;
+    ctx.globalAlpha=0.5-s*0.08;
+    rect(sx,sy,10-s*2,10-s*2,PAL.smoke[s%3]);
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawVictim(x,y,colorIdx,alive,label) {
+  if (!alive) {
+    ctx.fillStyle=PAL.dead; ctx.font='bold 14px Courier New';
+    ctx.fillText('✝',x-4,y);
+    ctx.font='8px Courier New';
+    ctx.fillStyle='#cc0000';
+    ctx.fillText('RIP',x-8,y+10);
+    return;
+  }
+  const c=PAL.personColors[colorIdx%PAL.personColors.length];
+  // head
+  rect(x,y-20,8,8,c);
+  // hair
+  rect(x,y-22,8,3,'#442200');
+  // body
+  rect(x-2,y-12,12,12,c);
+  // legs
+  rect(x,y,4,10,c);
+  rect(x+4,y,4,10,c);
+  // arms (waving)
+  rect(x-6,y-10,6,3,c);
+  rect(x+8,y-10,6,3,c);
+  // label
+  if(label){
+    ctx.fillStyle='#ffffff'; ctx.font='8px Courier New';
+    const tw=ctx.measureText(label).width;
+    ctx.fillText(label,x-tw/2+4,y-26);
+  }
+}
+
+function spreadPositions(cx,y,count) {
+  if(count===0)return[];
+  const spacing=Math.min(22,100/Math.max(count,1));
+  const total=(count-1)*spacing;
+  return Array.from({length:count},(_,i)=>[cx-total/2+i*spacing,y]);
+}
+
+function drawScene(level,pulled,frame,running) {
+  ctx.clearRect(0,0,W,H);
+  rect(0,0,W,H,PAL.sky);
+  drawStars(level);
+  drawGround();
+
+  const lv=levels[level];
+  const branchX=380;
+  drawMainTrack();
+  drawBranchTrack(branchX);
+  drawSwitch(branchX,pulled);
+
+  // Lever position
+  const leverX=360, leverY=250;
+  drawLever(leverX,leverY,pulled);
+
+  // Trolley position
+  let tx, ty;
+  if(running) {
+    if(pulled) {
+      // goes to branch
+      const progress=Math.min(frame/60,1);
+      if(progress<0.5) {
+        tx=60+progress*300; ty=275;
+      } else {
+        tx=60+(progress)*360; ty=285;
+      }
+    } else {
+      tx=60+frame*3.5; ty=275;
+    }
+  } else {
+    tx=80; ty=275;
+  }
+  tx=Math.min(tx,W-80);
+  drawTrolley(tx,ty,frame);
+
+  // Victims
+  const mainY=262, sideY=288;
+  const mainPos=spreadPositions(530,mainY,lv.mainCount);
+  const sidePos=spreadPositions(560,sideY,lv.sideCount);
+
+  const mainHit=running&&!pulled&&tx>480;
+  const sideHit=running&&pulled&&tx>480;
+
+  for(let i=0;i<lv.mainCount;i++) {
+    const [px,py]=mainPos[i];
+    drawVictim(px,py,i,!mainHit,i===0?(lv.mainSpecial||''):null);
+  }
+  for(let i=0;i<lv.sideCount;i++) {
+    const [px,py]=sidePos[i];
+    drawVictim(px,py,i+5,!sideHit,i===0?(lv.sideSpecial||''):null);
+  }
+
+  // Count labels
+  if(lv.mainCount>1) {
+    ctx.fillStyle=PAL.gold; ctx.font='bold 13px Courier New';
+    ctx.fillText('×'+lv.mainCount, 580, mainY-30);
+  }
+  if(lv.sideCount>1) {
+    ctx.fillStyle=PAL.gold; ctx.font='bold 13px Courier New';
+    ctx.fillText('×'+lv.sideCount, 610, sideY-30);
+  }
+
+  // Special floating labels
+  if(lv.mainSpecial && lv.mainCount>0) {
+    ctx.fillStyle='#ff8888'; ctx.font='9px Courier New';
+    ctx.fillText(lv.mainSpecial, 470, mainY-38);
+  }
+  if(lv.sideSpecial && lv.sideCount>0) {
+    ctx.fillStyle='#88ff88'; ctx.font='9px Courier New';
+    ctx.fillText(lv.sideSpecial, 500, sideY-38);
+  }
+
+  // Level chip
+  rect(12,12,110,24,'#1a1a3a');
+  rect(12,12,110,24,'transparent');
+  ctx.strokeStyle='#3a3a7a'; ctx.lineWidth=1; ctx.strokeRect(12,12,110,24);
+  ctx.fillStyle=PAL.gold; ctx.font='bold 9px Courier New';
+  ctx.fillText('LVL '+(level+1)+' / '+levels.length, 20, 29);
+}
+
+// ─── GAME LOGIC ───
+function updateUI() {
+  const lv=levels[currentLevel];
+  document.getElementById('levelTitle').textContent='LEVEL '+(currentLevel+1)+' — '+lv.title;
+  document.getElementById('dilemmaText').textContent=lv.dilemma;
+  document.getElementById('sSaved').textContent=saved;
+  document.getElementById('sKilled').textContent=sacrificed;
+  document.getElementById('sLevel').textContent=(currentLevel+1)+' / '+levels.length;
+  document.getElementById('progressBar').style.width=((currentLevel/levels.length)*100)+'%';
+  document.getElementById('resultBox').style.display='none';
+  document.getElementById('resultText').textContent='';
+  document.getElementById('endScreen').style.display='none';
+
+  // Reset buttons
+  const btnRow=document.getElementById('btnRow');
+  btnRow.innerHTML='<button class="btn btn-pull" id="btnPull" onclick="choose(true)">&#9654; PULL LEVER</button><button class="btn btn-dont" id="btnDont" onclick="choose(false)">&#9632; DO NOTHING</button>';
+
+  animFrame=0; animRunning=false; chosen=null; resultShown=false;
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+  drawScene(currentLevel,false,0,false);
+}
+
+function choose(pull) {
+  if(animRunning||resultShown)return;
+  chosen=pull;
+  const lv=levels[currentLevel];
+  document.getElementById('btnPull').disabled=true;
+  document.getElementById('btnDont').disabled=true;
+  animRunning=true; animFrame=0;
+
+  function animate() {
+    animFrame+=2;
+    drawScene(currentLevel,pull,animFrame,true);
+    if(animFrame<80) {
+      animId=requestAnimationFrame(animate);
+    } else {
+      animRunning=false; resultShown=true;
+      const msg=pull?lv.pull:lv.dontPull;
+      document.getElementById('resultText').textContent=msg;
+      document.getElementById('resultBox').style.display='block';
+
+      if(pull) { saved+=lv.sideCount||0; sacrificed+=lv.mainCount||0; }
+      else { saved+=lv.mainCount||0; sacrificed+=lv.sideCount||0; }
+      document.getElementById('sSaved').textContent=saved;
+      document.getElementById('sKilled').textContent=sacrificed;
+
+      const btnRow=document.getElementById('btnRow');
+      btnRow.innerHTML='';
+      const btn=document.createElement('button');
+      btn.className='btn btn-next';
+      btn.textContent=currentLevel<levels.length-1?'▶ NEXT DILEMMA':'★ SEE FINAL SCORE';
+      btn.onclick=()=>{
+        if(currentLevel<levels.length-1){currentLevel++;updateUI();}
+        else{showEnd();}
+      };
+      btnRow.appendChild(btn);
+    }
+  }
+  animate();
+}
+
+function showEnd() {
+  document.getElementById('canvasWrap').style.display='none';
+  document.getElementById('dilemmaBox').style.display='none';
+  document.getElementById('btnRow').style.display='none';
+  document.getElementById('resultBox').style.display='none';
+  document.getElementById('levelTitle').textContent='★ GAME COMPLETE ★';
+
+  document.getElementById('eFinalSaved').textContent=saved;
+  document.getElementById('eFinalKilled').textContent=sacrificed;
+
+  const ratio=saved/(saved+sacrificed||1);
+  let verdict;
+  if(ratio>0.75) verdict='UTILITARIAN HERO';
+  else if(ratio>0.5) verdict='RELUCTANT CONSEQUENTIALIST';
+  else if(ratio>0.3) verdict='MORAL PRAGMATIST';
+  else verdict='DEONTOLOGICAL PURIST';
+  document.getElementById('verdict').textContent='VERDICT: '+verdict;
+  document.getElementById('endScreen').style.display='block';
+}
+
+function restart() {
+  currentLevel=0; saved=0; sacrificed=0;
+  document.getElementById('canvasWrap').style.display='';
+  document.getElementById('dilemmaBox').style.display='';
+  document.getElementById('btnRow').style.display='';
+  updateUI();
+}
+
+updateUI();
+</script>
+</body>
+</html>
