@@ -14,7 +14,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360 Search</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -22,20 +21,15 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="360" />
 
-  <!-- Icons -->
   <link rel="icon" type="image/png" href="/favicon-32x32.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-  <!-- CSS -->
   <link rel="stylesheet" href="/assets/css/main.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/cursor.css" />
   <link rel="stylesheet" href="/assets/css/search.css" />
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
@@ -105,18 +99,13 @@
 
   <div class="overlay" id="overlay"></div>
 
-  <!-- Settings Panel -->
   <div class="settings-panel" id="settingsPanel"></div>
-
-  <!-- Auth Popup -->
   <div id="auth-popup" class="auth-popup hidden"></div>
 
-  <!-- ============================
-       SEARCH RESULTS PAGE
-  ============================= -->
+  <!-- SEARCH PAGE -->
   <div class="search-results-page">
 
-    <!-- TOP SEARCH STRIP -->
+    <!-- TOP STRIP WITH CONTROLS -->
     <header class="search-bar-strip">
       <a class="strip-logo" href="/">360</a>
 
@@ -140,34 +129,33 @@
         <button id="strip-search-btn" type="submit">Search</button>
       </form>
 
-      <select id="safeSelect" class="safe-select">
-        <option value="moderate">Moderate</option>
-        <option value="strict">Strict</option>
-        <option value="off">Off</option>
-      </select>
+      <!-- TOP CONTROLS ROW -->
+      <div class="top-controls">
+        <div class="top-tabs">
+          <button id="tabAll" class="pill-btn active">All</button>
+          <button id="tabImages" class="pill-btn">Images</button>
+        </div>
+        <div class="top-views">
+          <button id="listViewBtn" class="pill-btn active">List</button>
+          <button id="gridViewBtn" class="pill-btn">Grid</button>
+        </div>
+        <div class="top-safe">
+          <select id="safeSelect" class="safe-select pill-select">
+            <option value="moderate">Moderate</option>
+            <option value="strict">Strict</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+      </div>
     </header>
 
-    <!-- ============================
-         MAIN LAYOUT
-    ============================= -->
+    <!-- MAIN LAYOUT -->
     <div class="search-main-layout">
 
-      <!-- LEFT COLUMN -->
+      <!-- LEFT -->
       <div class="search-left">
 
-        <!-- Tabs -->
-        <div class="search-tabs">
-          <button id="tabAll" class="tab-btn active">All</button>
-          <button id="tabImages" class="tab-btn">Images</button>
-        </div>
-
-        <!-- View Toggle -->
-        <div class="view-toggle">
-          <button id="listViewBtn" class="toggle-btn active">List</button>
-          <button id="gridViewBtn" class="toggle-btn">Grid</button>
-        </div>
-
-        <!-- SPEED TEST MODULE (RESTORED) -->
+        <!-- SPEED TEST -->
         <article id="speedTestModule" class="result-card hidden speed-module">
           <h2 class="speed-title">Speed Test</h2>
           <div class="speed-layout">
@@ -201,10 +189,10 @@
           </div>
         </article>
 
-        <!-- Results -->
+        <!-- RESULTS -->
         <div id="resultsContainer" class="results list-view"></div>
 
-        <!-- Image Results -->
+        <!-- IMAGE RESULTS -->
         <div id="imageResults" class="results images-view hidden"></div>
 
         <!-- PAA -->
@@ -215,7 +203,7 @@
 
       </div>
 
-      <!-- KNOWLEDGE PANEL -->
+      <!-- KNOWLEDGE PANEL (NO IMAGE) -->
       <aside id="knowledgePanel" class="knowledge-panel hidden"></aside>
 
     </div>
@@ -233,13 +221,11 @@
     No results found
   </div>
 
-  <!-- Core Scripts -->
   <script src="/assets/js/main.js"></script>
   <script src="/assets/js/home.js"></script>
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
 
-  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
@@ -256,7 +242,6 @@
     const analytics = getAnalytics(app);
   </script>
 
-  <!-- Root Loader -->
   <script type="module" src="/search.js"></script>
 
 </body>
