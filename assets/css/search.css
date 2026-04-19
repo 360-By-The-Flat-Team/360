@@ -1,8 +1,22 @@
 /* ============================================================
-   360 SEARCH V3 — FULL REWRITE (FINAL)
+   360 SEARCH V3.5 — FULL CSS REWRITE
+   Frosted Glass + Pill Buttons + Top Controls
 ============================================================ */
 
-/* PAGE WRAPPER */
+/* ROOT COLORS */
+:root {
+  --a: #3b82f6;
+  --a2: #22c55e;
+  --br: rgba(148,163,184,0.35);
+  --txt: #020617;
+  --txtd: #e5e7eb;
+  --mut: #6b7280;
+  --mutd: #9ca3af;
+}
+
+/* ============================================================
+   PAGE WRAPPER
+============================================================ */
 .search-results-page {
   display: flex;
   flex-direction: column;
@@ -21,7 +35,7 @@
   z-index: 49;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   padding: 10px 16px;
   padding-left: 145px;
   background: rgba(255,255,255,0.9);
@@ -43,6 +57,7 @@ body.dark .search-bar-strip {
   text-decoration: none;
 }
 
+/* SEARCH FORM */
 #strip-search-form {
   position: relative;
   display: flex;
@@ -92,6 +107,85 @@ body.dark #strip-search-input::placeholder { color: var(--mutd); }
 }
 
 /* ============================================================
+   TOP CONTROLS (A1 + A2 HYBRID)
+============================================================ */
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-tabs,
+.top-views,
+.top-safe {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Pill Buttons */
+.pill-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--br);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--txt);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+body.dark .pill-btn {
+  background: rgba(15,23,42,0.6);
+  color: var(--txtd);
+  border-color: rgba(148,163,184,0.5);
+}
+
+.pill-btn:hover {
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 1px rgba(148,163,184,0.4);
+  transform: translateY(-0.5px);
+}
+
+body.dark .pill-btn:hover {
+  background: rgba(15,23,42,0.95);
+}
+
+.pill-btn.active {
+  background: linear-gradient(120deg, var(--a), var(--a2));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.35);
+}
+
+/* SafeSelect pill */
+.pill-select {
+  border-radius: 999px;
+  border: 1px solid var(--br);
+  padding: 6px 12px;
+  font-size: 13px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(10px);
+  color: var(--txt);
+  cursor: pointer;
+  appearance: none;
+  padding-right: 26px;
+}
+
+body.dark .pill-select {
+  background: rgba(15,23,42,0.8);
+  color: var(--txtd);
+  border-color: rgba(148,163,184,0.6);
+}
+
+/* Hide old controls */
+.search-tabs,
+.view-toggle {
+  display: none !important;
+}
+
+/* ============================================================
    MAIN LAYOUT
 ============================================================ */
 .search-main-layout {
@@ -107,53 +201,6 @@ body.dark #strip-search-input::placeholder { color: var(--mutd); }
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-/* ============================================================
-   TABS
-============================================================ */
-.search-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.tab-btn {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--br);
-  background: rgba(255,255,255,0.6);
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.tab-btn.active {
-  background: linear-gradient(120deg, var(--a), var(--a2));
-  color: #fff;
-  border-color: transparent;
-}
-
-/* ============================================================
-   VIEW TOGGLE
-============================================================ */
-.view-toggle {
-  display: flex;
-  gap: 6px;
-}
-
-.toggle-btn {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--br);
-  background: rgba(255,255,255,0.4);
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.toggle-btn.active {
-  background: linear-gradient(120deg, var(--a), var(--a2));
-  color: #fff;
-  border-color: transparent;
 }
 
 /* ============================================================
@@ -229,12 +276,6 @@ body.dark .result-desc { color: var(--mutd); }
   word-break: break-all;
 }
 
-.result-img {
-  width: 100%;
-  border-radius: 12px;
-  margin-bottom: 8px;
-}
-
 /* ============================================================
    IMAGE CARDS
 ============================================================ */
@@ -265,7 +306,7 @@ body.dark .result-desc { color: var(--mutd); }
 }
 
 /* ============================================================
-   KNOWLEDGE PANEL
+   KNOWLEDGE PANEL (WITH IMAGE)
 ============================================================ */
 .knowledge-panel {
   background: rgba(255,255,255,0.8);
@@ -368,124 +409,6 @@ body.dark .paa-section {
 }
 
 /* ============================================================
-   AUTOCOMPLETE
-============================================================ */
-.autocomplete {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  width: 100%;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(14px);
-  border: 1px solid var(--br);
-  border-radius: 14px;
-  padding: 6px 0;
-  z-index: 9999;
-  display: none;
-  max-height: 260px;
-  overflow-y: auto;
-  animation: fadeUp 0.2s ease;
-}
-
-body.dark .autocomplete {
-  background: rgba(15,23,42,0.85);
-}
-
-.autocomplete.visible {
-  display: block;
-}
-
-.ac-item {
-  padding: 10px 16px;
-  font-size: 14px;
-  display: flex;
-  justify-content: space-between;
-  cursor: pointer;
-  color: var(--txt);
-}
-
-body.dark .ac-item { color: var(--txtd); }
-
-.ac-item:hover {
-  background: rgba(255,255,255,0.12);
-}
-
-body.dark .ac-item:hover {
-  background: rgba(255,255,255,0.08);
-}
-
-.ac-item.active {
-  background: rgba(255,255,255,0.2);
-}
-
-.ac-source {
-  font-size: 11px;
-  opacity: 0.6;
-}
-
-/* ============================================================
-   RECOMMENDED SEARCHES
-============================================================ */
-.recommended-box {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  width: 100%;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(14px);
-  border: 1px solid var(--br);
-  border-radius: 14px;
-  padding: 10px 0 14px;
-  z-index: 9998;
-  animation: fadeUp 0.2s ease;
-}
-
-body.dark .recommended-box {
-  background: rgba(15,23,42,0.85);
-}
-
-.recommended-title {
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 16px 4px;
-  opacity: 0.7;
-}
-
-.recommended-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.recommended-item {
-  padding: 10px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.recommended-item:hover {
-  background: rgba(255,255,255,0.12);
-}
-
-body.dark .recommended-item:hover {
-  background: rgba(255,255,255,0.08);
-}
-
-.fire-icon {
-  width: 16px;
-  height: 16px;
-  animation: firePulse 1.2s infinite ease-in-out;
-}
-
-@keyframes firePulse {
-  0% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.9; }
-}
-
-/* ============================================================
    SPEED TEST MODULE
 ============================================================ */
 #speedTestModule {
@@ -561,4 +484,8 @@ body.dark .no-results { color: var(--mutd); }
     padding-left: 60px;
   }
   .strip-logo { display: none; }
+  .top-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }
