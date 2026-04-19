@@ -67,17 +67,20 @@ function hideNoResults() {
 function renderWebResults(results) {
   resultsContainer.innerHTML = "";
 
-  results.forEach(r => {
+  (results || []).forEach(r => {
+    const url = r.url || r.link || "";
+    const snippet = r.snippet || r.description || "";
+
     const card = document.createElement("div");
     card.className = "result-card";
 
     card.innerHTML = `
       <div class="result-header">
         ${r.favicon ? `<img class="result-favicon" src="${r.favicon}">` : ""}
-        <div class="result-title">${r.title}</div>
+        <div class="result-title">${r.title || ""}</div>
       </div>
-      <div class="result-desc">${r.snippet || ""}</div>
-      <a class="result-url" href="${r.url}" target="_blank">${r.url}</a>
+      <div class="result-desc">${snippet}</div>
+      <a class="result-url" href="${url}" target="_blank">${url}</a>
     `;
 
     resultsContainer.appendChild(card);
@@ -90,12 +93,24 @@ function renderWebResults(results) {
 function renderImageResults(images) {
   imageResults.innerHTML = "";
 
-  images.forEach(img => {
+  (images || []).forEach(img => {
+    const src =
+      img.src ||
+      img.image ||
+      img.thumbnail ||
+      img.thumbnailUrl ||
+      img.link ||
+      img.url ||
+      img.media ||
+      "";
+
+    if (!src) return;
+
     const card = document.createElement("div");
     card.className = "image-card";
 
     card.innerHTML = `
-      <img src="${img.src}" alt="">
+      <img src="${src}" alt="">
       <div class="image-card-caption">${img.title || ""}</div>
     `;
 
@@ -116,7 +131,7 @@ function renderKP(kp) {
 
   knowledgePanel.innerHTML = `
     <div class="kp-title">${kp.title || ""}</div>
-    <div class="kp-subtitle">${kp.subtitle || ""}</div>
+    ${kp.subtitle ? `<div class="kp-subtitle">${kp.subtitle}</div>` : ""}
     ${kp.image ? `<img class="kp-thumb" src="${kp.image}">` : ""}
     <div class="kp-extract">${kp.extract || ""}</div>
     ${kp.url ? `<a class="kp-link" href="${kp.url}" target="_blank">More info</a>` : ""}
@@ -129,6 +144,7 @@ function renderKP(kp) {
 function renderPAA(paa) {
   if (!paa || !paa.length) {
     paaSection.classList.add("hidden");
+    paaList.innerHTML = "";
     return;
   }
 
@@ -183,16 +199,21 @@ async function runSearch(query) {
       })
     });
 
+    if (!res.ok) {
+      console.error("Search HTTP error:", res.status, await res.text());
+      hideLoader();
+      showNoResults();
+      return;
+    }
+
     const data = await res.json();
     hideLoader();
 
-    /* Render */
     renderWebResults(data.results || []);
     renderImageResults(data.images || []);
     renderKP(data.kp || null);
     renderPAA(data.paa || []);
 
-    /* Tab visibility */
     if (currentTab === "all") {
       resultsContainer.classList.remove("hidden");
       imageResults.classList.add("hidden");
@@ -204,6 +225,7 @@ async function runSearch(query) {
   } catch (err) {
     hideLoader();
     console.error("Search error:", err);
+    showNoResults();
   }
 }
 
