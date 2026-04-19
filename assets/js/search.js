@@ -1,40 +1,59 @@
-// ===============================
-// 360 SEARCH V3 — FULL REWRITE
-// ===============================
+// ============================================================
+// 360 SEARCH V3 — FULL ENGINE (FINAL)
+// ============================================================
 
-// DOM refs
+// ===============================
+// CONFIG (MUST BE FIRST)
+// ===============================
+const SEARCH_URL = "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search";  
+
+const speedKeywords = [
+  "speed test",
+  "speedtest",
+  "internet speed",
+  "wifi speed",
+  "network speed",
+  "ping test",
+  "latency test",
+  "speed check"
+];
+
+// ===============================
+// DOM REFS
+// ===============================
 const resultsContainer = document.getElementById("resultsContainer");
-const imageResults = document.getElementById("imageResults");
-const knowledgePanel = document.getElementById("knowledgePanel");
+const imageResults     = document.getElementById("imageResults");
+const knowledgePanel   = document.getElementById("knowledgePanel");
 const stripSearchInput = document.getElementById("strip-search-input");
-const stripSearchForm = document.getElementById("strip-search-form");
-const safeSelect = document.getElementById("safeSelect");
-const paaSection = document.getElementById("paaSection");
-const paaList = document.getElementById("paaList");
-const loader = document.getElementById("frame-loader");
-const noQueryBox = document.getElementById("no-query");
-const tabAll = document.getElementById("tabAll");
-const tabImages = document.getElementById("tabImages");
-const listViewBtn = document.getElementById("listViewBtn");
-const gridViewBtn = document.getElementById("gridViewBtn");
+const stripSearchForm  = document.getElementById("strip-search-form");
+const safeSelect       = document.getElementById("safeSelect");
+const paaSection       = document.getElementById("paaSection");
+const paaList          = document.getElementById("paaList");
+const loader           = document.getElementById("frame-loader");
+const noQueryBox       = document.getElementById("no-query");
+
+const tabAll           = document.getElementById("tabAll");
+const tabImages        = document.getElementById("tabImages");
+const listViewBtn      = document.getElementById("listViewBtn");
+const gridViewBtn      = document.getElementById("gridViewBtn");
 
 // SPEED TEST DOM
-const speedModule = document.getElementById("speedTestModule");
-const speedCanvas = document.getElementById("speedometer");
-const pingEl = document.getElementById("pingResult");
-const downEl = document.getElementById("downloadResult");
-const upEl = document.getElementById("uploadResult");
-const unitLabel = document.getElementById("unitLabel");
-const unitLabel2 = document.getElementById("unitLabel2");
-const speedFeedback = document.getElementById("speedFeedback");
-const speedResultsBox = document.getElementById("speedResults");
-const startSpeedTestBtn = document.getElementById("startSpeedTest");
-const unitSelect = document.getElementById("unitSelect");
+const speedModule      = document.getElementById("speedTestModule");
+const speedCanvas      = document.getElementById("speedometer");
+const pingEl           = document.getElementById("pingResult");
+const downEl           = document.getElementById("downloadResult");
+const upEl             = document.getElementById("uploadResult");
+const unitLabel        = document.getElementById("unitLabel");
+const unitLabel2       = document.getElementById("unitLabel2");
+const speedFeedback    = document.getElementById("speedFeedback");
+const speedResultsBox  = document.getElementById("speedResults");
+const startSpeedTestBtn= document.getElementById("startSpeedTest");
+const unitSelect       = document.getElementById("unitSelect");
 
 // ===============================
-// URL QUERY → INPUT + AUTO SEARCH
+// URL PARAM → AUTO SEARCH
 // ===============================
-const params = new URLSearchParams(window.location.search);
+const params   = new URLSearchParams(location.search);
 const initialQ = params.get("q");
 
 if (initialQ) {
@@ -43,7 +62,7 @@ if (initialQ) {
 }
 
 // ===============================
-// MAIN SEARCH HANDLER
+// EVENT LISTENERS
 // ===============================
 stripSearchForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -52,9 +71,6 @@ stripSearchForm.addEventListener("submit", (e) => {
   runSearch(q);
 });
 
-// ===============================
-// TAB SWITCHING
-// ===============================
 tabAll.addEventListener("click", () => {
   tabAll.classList.add("active");
   tabImages.classList.remove("active");
@@ -69,9 +85,6 @@ tabImages.addEventListener("click", () => {
   imageResults.classList.remove("hidden");
 });
 
-// ===============================
-// VIEW TOGGLE
-// ===============================
 listViewBtn.addEventListener("click", () => {
   listViewBtn.classList.add("active");
   gridViewBtn.classList.remove("active");
@@ -87,20 +100,24 @@ gridViewBtn.addEventListener("click", () => {
 });
 
 // ===============================
-// SPEED KEYWORD DETECTION
+// SPEED TEST KEYWORD DETECTION
 // ===============================
-const speedKeywords = [
-  "speed test", "speedtest", "internet speed", "wifi speed",
-  "network speed", "ping test", "latency test", "speed check"
-];
-
 function shouldShowSpeedTest(query) {
-  const q = query.toLowerCase();
-  return speedKeywords.some(k => q.includes(k));
+  const q = query.toLowerCase().replace(/\s+/g, "");
+  return (
+    q.includes("speedtest") ||
+    q.includes("speedcheck") ||
+    q.includes("internetspeed") ||
+    q.includes("wifispeed") ||
+    q.includes("networkspeed") ||
+    q.includes("pingtest") ||
+    q.includes("latencytest") ||
+    (q.includes("speed") && q.includes("test"))
+  );
 }
 
 // ===============================
-// RUN SEARCH (HOOK TO YOUR EDGE FUNCTION)
+// MAIN SEARCH FUNCTION
 // ===============================
 async function runSearch(query) {
   // Speed test visibility
@@ -118,22 +135,29 @@ async function runSearch(query) {
   paaSection.classList.add("hidden");
 
   try {
-    // TODO: Replace with your real backend call
-    // const res = await fetch("/functions/v1/search", { ... });
-    // const data = await res.json();
+    const res = await fetch(SEARCH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        q: query,
+        safe: safeSelect ? safeSelect.value : "moderate"
+      })
+    });
 
-    const data = { results: [], images: [], kp: null, paa: [] }; // placeholder
+    if (!res.ok) throw new Error("Backend error " + res.status);
 
-    renderResults(data.results);
-    renderImages(data.images);
-    renderKP(data.kp);
-    renderPAA(data.paa);
+    const data = await res.json();
 
-    if (!data.results.length && !data.images.length) {
+    renderResults(data.results || []);
+    renderImages(data.images || []);
+    renderKP(data.kp || null);
+    renderPAA(data.paa || []);
+
+    if (!data.results?.length && !data.images?.length) {
       noQueryBox.classList.add("visible");
     }
   } catch (err) {
-    console.error(err);
+    console.error("Search error:", err);
     noQueryBox.classList.add("visible");
   } finally {
     loader.classList.remove("visible");
@@ -141,36 +165,36 @@ async function runSearch(query) {
 }
 
 // ===============================
-// RENDER HELPERS
+// RENDER FUNCTIONS
 // ===============================
 function renderResults(items) {
   resultsContainer.innerHTML = "";
-  items.forEach(item => {
+  for (const item of items) {
     const card = document.createElement("article");
     card.className = "result-card";
     card.innerHTML = `
       <div class="result-header">
-        ${item.favicon ? `<img class="result-favicon" src="${item.favicon}" />` : ""}
+        ${item.favicon ? `<img class="result-favicon" src="${item.favicon}" alt="">` : ""}
         <div class="result-title">${item.title || "Untitled"}</div>
       </div>
       <div class="result-url">${item.url || ""}</div>
       <div class="result-desc">${item.snippet || ""}</div>
     `;
     resultsContainer.appendChild(card);
-  });
+  }
 }
 
 function renderImages(items) {
   imageResults.innerHTML = "";
-  items.forEach(item => {
+  for (const item of items) {
     const card = document.createElement("div");
     card.className = "image-card";
     card.innerHTML = `
-      <img src="${item.src}" alt="${item.title || ""}" />
+      <img src="${item.src}" alt="">
       <div class="image-card-caption">${item.title || ""}</div>
     `;
     imageResults.appendChild(card);
-  });
+  }
 }
 
 function renderKP(kp) {
@@ -182,9 +206,9 @@ function renderKP(kp) {
   knowledgePanel.innerHTML = `
     <div class="kp-title">${kp.title || ""}</div>
     <div class="kp-subtitle">${kp.subtitle || ""}</div>
-    ${kp.image ? `<img class="kp-thumb" src="${kp.image}" />` : ""}
+    ${kp.image ? `<img class="kp-thumb" src="${kp.image}" alt="">` : ""}
     <div class="kp-extract">${kp.extract || ""}</div>
-    ${kp.url ? `<a class="kp-link" href="${kp.url}" target="_blank">More info</a>` : ""}
+    ${kp.url ? `<a class="kp-link" href="${kp.url}" target="_blank" rel="noopener noreferrer">More info</a>` : ""}
   `;
 }
 
@@ -195,7 +219,7 @@ function renderPAA(items) {
   }
   paaSection.classList.remove("hidden");
   paaList.innerHTML = "";
-  items.forEach(item => {
+  for (const item of items) {
     const row = document.createElement("div");
     row.className = "paa-item";
     row.innerHTML = `
@@ -209,16 +233,16 @@ function renderPAA(items) {
       row.classList.toggle("open");
     });
     paaList.appendChild(row);
-  });
+  }
 }
 
 // ===============================
-// SPEEDOMETER CANVAS
+// SPEEDOMETER
 // ===============================
 const ctx = speedCanvas.getContext("2d");
 let needleValue = 0;
 
-function drawSpeedometer(value, labelText) {
+function drawSpeedometer(value, label) {
   const w = speedCanvas.width;
   const h = speedCanvas.height;
   ctx.clearRect(0, 0, w, h);
@@ -226,34 +250,34 @@ function drawSpeedometer(value, labelText) {
   ctx.lineWidth = 10;
   ctx.strokeStyle = "#444";
   ctx.beginPath();
-  ctx.arc(w/2, h, 100, Math.PI, Math.PI*2);
+  ctx.arc(w / 2, h, 100, Math.PI, Math.PI * 2);
   ctx.stroke();
 
   const angle = Math.PI + (Math.min(value, 100) / 100) * Math.PI;
-  const nx = w/2 + Math.cos(angle) * 90;
+  const nx = w / 2 + Math.cos(angle) * 90;
   const ny = h + Math.sin(angle) * 90;
 
   ctx.strokeStyle = "#3b82f6";
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(w/2, h);
+  ctx.moveTo(w / 2, h);
   ctx.lineTo(nx, ny);
   ctx.stroke();
 
   ctx.fillStyle = "#e5e7eb";
   ctx.font = "16px system-ui";
   ctx.textAlign = "center";
-  ctx.fillText(labelText, w/2, h - 20);
+  ctx.fillText(label, w / 2, h - 20);
 }
 
-function animateNeedle(target, labelText) {
+function animateNeedle(target, label) {
   let start = needleValue;
   let t = 0;
   function step() {
     t += 0.02;
     const eased = Math.sin((t * Math.PI) / 2);
     needleValue = start + (target - start) * eased;
-    drawSpeedometer(needleValue, labelText);
+    drawSpeedometer(needleValue, label);
     if (t < 1) requestAnimationFrame(step);
   }
   step();
@@ -333,12 +357,12 @@ unitSelect.addEventListener("change", () => {
     unitLabel2.textContent = "MB/s";
     downEl.textContent = (d / 8).toFixed(2);
     upEl.textContent = (u / 8).toFixed(2);
-    animateNeedle(Math.min(d, 100), `${(d/8).toFixed(2)} MB/s`);
+    animateNeedle(Math.min(d, 100), `${(d / 8).toFixed(2)} MB/s`);
   } else if (unit === "kbps") {
     unitLabel.textContent = "Kbps";
     unitLabel2.textContent = "Kbps";
     downEl.textContent = (d * 1000).toFixed(0);
     upEl.textContent = (u * 1000).toFixed(0);
-    animateNeedle(Math.min(d, 100), `${(d*1000).toFixed(0)} Kbps`);
+    animateNeedle(Math.min(d, 100), `${(d * 1000).toFixed(0)} Kbps`);
   }
 });
