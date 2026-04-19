@@ -1,10 +1,13 @@
 /* ============================================================
-   360 SEARCH V3.5 — FULL JS REWRITE
-   Works with: new HTML, new CSS, new backend
+   360 SEARCH V3.6 — HYBRID ENGINE (LOCAL BM25 + EDGE FUNCTION)
+   Full rewrite with dual-source backend integration
 ============================================================ */
 
-console.log("360 Search V3.5 — search.js loaded");
+console.log("360 Search V3.6 — search.js loaded");
 
+/* ============================================================
+   ELEMENTS
+============================================================ */
 const resultsContainer = document.getElementById("resultsContainer");
 const imageResults = document.getElementById("imageResults");
 const knowledgePanel = document.getElementById("knowledgePanel");
@@ -28,7 +31,7 @@ const autocompleteList = document.getElementById("autocompleteList");
 const recommendedBox = document.getElementById("recommendedBox");
 const recommendedList = document.getElementById("recommendedList");
 
-/* Speed test elements */
+/* Speed test */
 const speedModule = document.getElementById("speedTestModule");
 const speedCanvas = document.getElementById("speedometer");
 const pingResult = document.getElementById("pingResult");
@@ -41,25 +44,17 @@ const speedFeedback = document.getElementById("speedFeedback");
 /* ============================================================
    STATE
 ============================================================ */
-let currentTab = "all";     // all | images
-let currentView = "list";   // list | grid
+let currentTab = "all";
+let currentView = "list";
 let currentQuery = "";
 
 /* ============================================================
    HELPERS
 ============================================================ */
-function showLoader() {
-  loader.classList.add("visible");
-}
-function hideLoader() {
-  loader.classList.remove("visible");
-}
-function showNoResults() {
-  noQuery.classList.add("visible");
-}
-function hideNoResults() {
-  noQuery.classList.remove("visible");
-}
+function showLoader() { loader.classList.add("visible"); }
+function hideLoader() { loader.classList.remove("visible"); }
+function showNoResults() { noQuery.classList.add("visible"); }
+function hideNoResults() { noQuery.classList.remove("visible"); }
 
 /* ============================================================
    RENDER: WEB RESULTS
@@ -119,7 +114,7 @@ function renderImageResults(images) {
 }
 
 /* ============================================================
-   RENDER: KNOWLEDGE PANEL (WITH IMAGE)
+   RENDER: KNOWLEDGE PANEL
 ============================================================ */
 function renderKP(kp) {
   if (!kp) {
@@ -172,7 +167,7 @@ function renderPAA(paa) {
 }
 
 /* ============================================================
-   MAIN SEARCH FUNCTION
+   MAIN SEARCH FUNCTION — HYBRID ENGINE
 ============================================================ */
 async function runSearch(query) {
   currentQuery = query;
@@ -190,30 +185,73 @@ async function runSearch(query) {
   showLoader();
 
   try {
-    const res = await fetch("https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        q: query,
-        safe: safeSelect.value
-      })
-    });
+    /* ============================================================
+       1. TRIGGER LOCAL BM25 ENGINE
+    ============================================================= */
+    await fetch(
+      `http://127.0.0.1:7000/run-local-search?q=${encodeURIComponent(query)}`
+    );
 
-    if (!res.ok) {
-      console.error("Search HTTP error:", res.status, await res.text());
-      hideLoader();
-      showNoResults();
-      return;
+    /* ============================================================
+       2. FETCH LOCAL RESULTS FROM SUPABASE
+    ============================================================= */
+    const supabaseClient = supabase.createClient(
+      "https://wiswfpfsjiowtrdyqpxy.supabase.co",
+      "YOUR_ANON_KEY_HERE"
+    );
+
+    const { data: localRows } = await supabaseClient
+      .from("results")
+      .select("*")
+      .eq("query", query)
+      .order("score", { ascending: false });
+
+    /* Delete after reading */
+    await supabaseClient.from("results").delete().eq("query", query);
+
+    /* ============================================================
+       3. CALL EDGE FUNCTION FOR IMAGES + KP + PAA
+    ============================================================= */
+    let edgeData = {};
+    try {
+      const edgeRes = await fetch(
+        "https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            q: query,
+            safe: safeSelect.value
+          })
+        }
+      );
+
+      if (edgeRes.ok) {
+        edgeData = await edgeRes.json();
+      }
+    } catch (e) {
+      console.warn("Edge function unavailable:", e);
     }
 
-    const data = await res.json();
     hideLoader();
 
-    renderWebResults(data.results || []);
-    renderImageResults(data.images || []);
-    renderKP(data.kp || null);
-    renderPAA(data.paa || []);
+    /* ============================================================
+       4. RENDER EVERYTHING
+    ============================================================= */
 
+    // Local BM25 results
+    renderWebResults(localRows || []);
+
+    // Edge function images
+    renderImageResults(edgeData.images || []);
+
+    // Knowledge panel
+    renderKP(edgeData.kp || null);
+
+    // People Also Ask
+    renderPAA(edgeData.paa || []);
+
+    /* Tab logic */
     if (currentTab === "all") {
       resultsContainer.classList.remove("hidden");
       imageResults.classList.add("hidden");
