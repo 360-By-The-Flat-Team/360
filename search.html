@@ -24,6 +24,7 @@
   <link rel="icon" type="image/png" href="/favicon-32x32.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
+  <!-- 360 OS CSS -->
   <link rel="stylesheet" href="/assets/css/main.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/cursor.css" />
@@ -105,7 +106,7 @@
   <!-- SEARCH PAGE -->
   <div class="search-results-page">
 
-    <!-- TOP STRIP WITH CONTROLS -->
+    <!-- TOP STRIP -->
     <header class="search-bar-strip">
       <a class="strip-logo" href="/">360</a>
 
@@ -129,7 +130,7 @@
         <button id="strip-search-btn" type="submit">Search</button>
       </form>
 
-      <!-- TOP CONTROLS ROW -->
+      <!-- TOP CONTROLS -->
       <div class="top-controls">
         <div class="top-tabs">
           <button id="tabAll" class="pill-btn active">All</button>
@@ -203,7 +204,7 @@
 
       </div>
 
-      <!-- KNOWLEDGE PANEL (NO IMAGE) -->
+      <!-- KNOWLEDGE PANEL -->
       <aside id="knowledgePanel" class="knowledge-panel hidden"></aside>
 
     </div>
@@ -217,15 +218,17 @@
 
   <!-- No Results -->
   <div id="no-query" class="no-results">
-    <div class="big-emoji">😕</div>
+    <div class="big-emoji">🔎</div>
     No results found
   </div>
 
+  <!-- 360 OS Scripts -->
   <script src="/assets/js/main.js"></script>
   <script src="/assets/js/home.js"></script>
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
 
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
@@ -242,7 +245,8 @@
     const analytics = getAnalytics(app);
   </script>
 
-  <script type="module" src="/search.js"></script>
+  <!-- NEW SEARCH ENGINE -->
+  <script src="/search.js"></script>
 
 </body>
 </html>
