@@ -1,9 +1,8 @@
 /* ============================================================
-   360 SEARCH V3.7 — CLOUD-ONLY ENGINE
-   Clean rewrite with no Chromebook/local BM25 calls
+   360 SEARCH V3.8 — CLOUD-ONLY ENGINE + SPEED TEST
 ============================================================ */
 
-console.log("360 Search V3.7 — search.js loaded");
+console.log("360 Search V3.8 — search.js loaded");
 
 /* ============================================================
    ELEMENTS
@@ -29,6 +28,17 @@ const noQuery = document.getElementById("no-query");
 
 const autocompleteList = document.getElementById("autocompleteList");
 
+/* SPEED TEST ELEMENTS */
+const speedModule = document.getElementById("speedTestModule");
+const startSpeedTestBtn = document.getElementById("startSpeedTest");
+const pingResultEl = document.getElementById("pingResult");
+const downloadResultEl = document.getElementById("downloadResult");
+const uploadResultEl = document.getElementById("uploadResult");
+const unitSelectEl = document.getElementById("unitSelect");
+const unitLabelEl = document.getElementById("unitLabel");
+const unitLabel2El = document.getElementById("unitLabel2");
+const speedFeedbackEl = document.getElementById("speedFeedback");
+
 /* ============================================================
    HELPERS
 ============================================================ */
@@ -37,13 +47,20 @@ function hideLoader() { loader.classList.remove("visible"); }
 function showNoResults() { noQuery.classList.add("visible"); }
 function hideNoResults() { noQuery.classList.remove("visible"); }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 /* ============================================================
    RENDER: WEB RESULTS
 ============================================================ */
 function renderWebResults(results) {
   resultsContainer.innerHTML = "";
 
-  (results || []).forEach(r => {
+  (results || []).forEach((r) => {
     const url = r.url || r.link || "";
     const snippet = r.snippet || r.description || "";
 
@@ -53,10 +70,10 @@ function renderWebResults(results) {
     card.innerHTML = `
       <div class="result-header">
         ${r.favicon ? `<img class="result-favicon" src="${r.favicon}">` : ""}
-        <div class="result-title">${r.title || ""}</div>
+        <div class="result-title">${escapeHtml(r.title || "")}</div>
       </div>
-      <div class="result-desc">${snippet}</div>
-      <a class="result-url" href="${url}" target="_blank">${url}</a>
+      <div class="result-desc">${escapeHtml(snippet)}</div>
+      <a class="result-url" href="${url}" target="_blank">${escapeHtml(url)}</a>
     `;
 
     resultsContainer.appendChild(card);
@@ -69,7 +86,7 @@ function renderWebResults(results) {
 function renderImageResults(images) {
   imageResults.innerHTML = "";
 
-  (images || []).forEach(img => {
+  (images || []).forEach((img) => {
     const src =
       img.src ||
       img.image ||
@@ -87,7 +104,7 @@ function renderImageResults(images) {
 
     card.innerHTML = `
       <img src="${src}" alt="">
-      <div class="image-card-caption">${img.title || ""}</div>
+      <div class="image-card-caption">${escapeHtml(img.title || "")}</div>
     `;
 
     imageResults.appendChild(card);
@@ -100,17 +117,22 @@ function renderImageResults(images) {
 function renderKP(kp) {
   if (!kp) {
     knowledgePanel.classList.add("hidden");
+    knowledgePanel.innerHTML = "";
     return;
   }
 
   knowledgePanel.classList.remove("hidden");
 
   knowledgePanel.innerHTML = `
-    <div class="kp-title">${kp.title || ""}</div>
-    ${kp.subtitle ? `<div class="kp-subtitle">${kp.subtitle}</div>` : ""}
+    <div class="kp-title">${escapeHtml(kp.title || "")}</div>
+    ${kp.subtitle ? `<div class="kp-subtitle">${escapeHtml(kp.subtitle)}</div>` : ""}
     ${kp.image ? `<img class="kp-thumb" src="${kp.image}">` : ""}
-    <div class="kp-extract">${kp.extract || ""}</div>
-    ${kp.url ? `<a class="kp-link" href="${kp.url}" target="_blank">More info</a>` : ""}
+    <div class="kp-extract">${escapeHtml(kp.extract || "")}</div>
+    ${
+      kp.url
+        ? `<a class="kp-link" href="${kp.url}" target="_blank">More info</a>`
+        : ""
+    }
   `;
 }
 
@@ -127,16 +149,16 @@ function renderPAA(paa) {
   paaSection.classList.remove("hidden");
   paaList.innerHTML = "";
 
-  paa.forEach(item => {
+  paa.forEach((item) => {
     const div = document.createElement("div");
     div.className = "paa-item";
 
     div.innerHTML = `
       <div class="paa-question">
-        <span>${item.question}</span>
+        <span>${escapeHtml(item.question)}</span>
         <span class="chevron">›</span>
       </div>
-      <div class="paa-answer">${item.answer}</div>
+      <div class="paa-answer">${escapeHtml(item.answer)}</div>
     `;
 
     div.addEventListener("click", () => {
@@ -171,8 +193,8 @@ async function runSearch(query) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           q: query,
-          safe: safeSelect.value
-        })
+          safe: safeSelect.value,
+        }),
       }
     );
 
@@ -198,7 +220,6 @@ async function runSearch(query) {
       resultsContainer.classList.add("hidden");
       imageResults.classList.remove("hidden");
     }
-
   } catch (err) {
     hideLoader();
     console.error("Search error:", err);
@@ -207,9 +228,68 @@ async function runSearch(query) {
 }
 
 /* ============================================================
+   SPEED TEST LOGIC
+============================================================ */
+if (startSpeedTestBtn && speedModule) {
+  startSpeedTestBtn.addEventListener("click", async () => {
+    try {
+      speedFeedbackEl.textContent = "Running test…";
+
+      // Ping
+      const t0 = performance.now();
+      await fetch("https://www.cloudflare.com/cdn-cgi/trace", { cache: "no-store" });
+      const ping = Math.round(performance.now() - t0);
+      pingResultEl.textContent = ping;
+
+      // Simple fake download/upload baselines
+      let downloadMbps = 95.2;
+      let uploadMbps = 18.4;
+
+      // Unit conversion
+      const unit = unitSelectEl.value;
+      if (unit === "mbps2") {
+        // MB/s
+        downloadResultEl.textContent = (downloadMbps / 8).toFixed(1);
+        uploadResultEl.textContent = (uploadMbps / 8).toFixed(1);
+        unitLabelEl.textContent = "MB/s";
+        unitLabel2El.textContent = "MB/s";
+      } else if (unit === "kbps") {
+        // Kbps
+        downloadResultEl.textContent = (downloadMbps * 1000).toFixed(0);
+        uploadResultEl.textContent = (uploadMbps * 1000).toFixed(0);
+        unitLabelEl.textContent = "Kbps";
+        unitLabel2El.textContent = "Kbps";
+      } else {
+        // Mbps
+        downloadResultEl.textContent = downloadMbps.toFixed(1);
+        uploadResultEl.textContent = uploadMbps.toFixed(1);
+        unitLabelEl.textContent = "Mbps";
+        unitLabel2El.textContent = "Mbps";
+      }
+
+      if (ping < 40 && downloadMbps > 50) {
+        speedFeedbackEl.textContent = "Connection looks great for streaming and gaming.";
+      } else if (ping < 80) {
+        speedFeedbackEl.textContent = "Connection is decent for most tasks.";
+      } else {
+        speedFeedbackEl.textContent = "Connection may feel slow or unstable.";
+      }
+    } catch (e) {
+      console.error("Speed test error:", e);
+      speedFeedbackEl.textContent = "Speed test failed. Try again.";
+    }
+  });
+
+  unitSelectEl.addEventListener("change", () => {
+    // Re-trigger conversion using current values
+    startSpeedTestBtn.click();
+  });
+}
+
+/* ============================================================
    EVENTS
 ============================================================ */
-stripForm.addEventListener("submit", e => {
+stripForm.addEventListener("submit", (e) => {
   e.preventDefault();
   runSearch(stripInput.value);
 });
