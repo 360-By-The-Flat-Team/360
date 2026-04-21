@@ -482,6 +482,9 @@
       <div class="vids-nav-item" data-view="trending">
         <span class="vids-nav-icon">🔥</span> Trending
       </div>
+      <div class="vids-nav-item" data-view="albums">
+        <span class="vids-nav-icon">📀</span> Albums
+      </div>
       <div class="vids-nav-item" data-view="subscriptions">
         <span class="vids-nav-icon">🎧</span> Subscriptions
       </div>
@@ -510,10 +513,6 @@
       <div class="vids-nav-item" data-view="cat-entertainment">
         <span class="vids-nav-icon">🎭</span> Entertainment
       </div>
-      <!-- optional: albums view later -->
-      <!-- <div class="vids-nav-item" data-view="albums">
-        <span class="vids-nav-icon">📀</span> Albums
-      </div> -->
     </aside>
 
     <main class="vids-main" id="vidsMain">
@@ -526,6 +525,7 @@
         <div class="vids-chip" data-filter="Education">Education</div>
         <div class="vids-chip" data-filter="Entertainment">Entertainment</div>
         <div class="vids-chip" data-filter="Other">Other</div>
+        <div class="vids-chip" data-filter="albums">Albums</div>
       </div>
 
       <div class="vids-grid" id="vidsGrid">
@@ -595,7 +595,6 @@
         </select>
       </div>
 
-      <!-- ⭐ NEW: Album name (optional) -->
       <div class="vids-field">
         <label>Album (optional)</label>
         <input type="text" id="trackAlbum" placeholder="Album name (will be created if new)" />
@@ -618,8 +617,29 @@
           <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>
           <div id="watchNowPlaying" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Now Playing</div>
         </div>
-        <!-- default browser controls kept -->
-        <audio id="musicPlayer" controls preload="metadata"></audio>
+
+        <!-- custom audio player UI -->
+        <audio id="musicPlayer" preload="metadata" style="display:none;"></audio>
+        <div id="customPlayerControls" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;color:#e5e7eb;font-size:13px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button id="cpPlayPause" class="vids-action-btn">▶️</button>
+            <div id="cpTime" style="font-variant-numeric:tabular-nums;">0:00 / 0:00</div>
+            <select id="cpSpeed" style="margin-left:auto;padding:4px 8px;border-radius:8px;border:1px solid rgba(148,163,184,.6);background:#020617;color:#e5e7eb;font-size:12px;">
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+          <input id="cpSeek" type="range" min="0" max="100" value="0"
+                 style="width:100%;accent-color:#3b82f6;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;">🔊</span>
+            <input id="cpVolume" type="range" min="0" max="1" step="0.01" value="1"
+                   style="flex:1;accent-color:#3b82f6;">
+          </div>
+        </div>
       </div>
       <div class="vids-watch-info">
         <div class="vids-watch-title" id="watchTitle"></div>
@@ -627,12 +647,10 @@
         <div class="vids-watch-actions">
           <button class="vids-action-btn" id="likeBtn">👍 <span id="likeCount">0</span></button>
           <button class="vids-action-btn" id="shareBtn">🔗 Share</button>
-          <!-- ⭐ NEW: Download -->
           <button class="vids-action-btn" id="downloadBtn">⬇️ Download</button>
         </div>
         <div class="vids-watch-desc" id="watchDesc"></div>
 
-        <!-- ⭐ NEW: Comments -->
         <div id="commentsSection" style="margin-top:14px;">
           <h4 style="font-size:14px;font-weight:700;margin:0 0 6px;">Comments</h4>
           <div id="commentsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
@@ -651,7 +669,6 @@
     </div>
   </div>
 
-  <!-- ⭐ NEW: Mini‑player dock -->
   <div id="miniPlayer"
        style="position:fixed;left:0;right:0;bottom:0;height:56px;background:rgba(15,23,42,.96);color:#e5e7eb;display:none;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid rgba(148,163,184,.4);z-index:250;">
     <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;">🎵</div>
@@ -670,21 +687,20 @@
   <script src="/assets/js/cursor.js"></script>
 
   <script>
-    // 360Music — Supabase:
-    // Storage bucket: "music" (public)
-    // Table: "music_files" + albums + comments (see SQL)
-
     const SUPABASE_URL  = 'https://wiswfpfsjiowtrdyqpxy.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
     let currentUser  = null;
     let allTracks    = [];
+    let allAlbums    = [];
     let currentTrack = null;
     let activeFilter = 'all';
     let activeView   = 'home';
     let searchQuery  = '';
     let selectedAudioFile = null;
+    let currentAlbumId = null;
+    let isSeeking = false;
 
     const grid         = document.getElementById('vidsGrid');
     const uploadOverlay= document.getElementById('uploadOverlay');
@@ -707,6 +723,12 @@
     const miniPlayer    = document.getElementById('miniPlayer');
     const miniTitle     = document.getElementById('miniTitle');
     const miniPlayPause = document.getElementById('miniPlayPause');
+
+    const cpPlayPause = document.getElementById('cpPlayPause');
+    const cpSeek      = document.getElementById('cpSeek');
+    const cpVolume    = document.getElementById('cpVolume');
+    const cpTime      = document.getElementById('cpTime');
+    const cpSpeed     = document.getElementById('cpSpeed');
 
     function showToast(msg, dur = 2800) {
       toast.textContent = msg;
@@ -791,6 +813,24 @@
         </div>`;
     }
 
+    function albumCard(a) {
+      const ago = timeAgo(a.created_at);
+      return `
+        <div class="vids-card vids-album-card" data-album-id="${a.id}">
+          <div class="vids-thumb">
+            <div class="vids-thumb-placeholder">📀</div>
+          </div>
+          <div class="vids-card-body">
+            <div class="vids-card-title">${escHtml(a.title)}</div>
+            <div class="vids-card-meta">
+              <span>${escHtml(a.username || 'Unknown')}</span>
+              <span class="vids-card-dot">·</span>
+              <span>${ago}</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
     async function loadComments(trackId) {
       commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">Loading comments…</span>';
       const { data, error } = await sb
@@ -820,10 +860,12 @@
 
     commentSubmit.addEventListener('click', async () => {
       if (!currentUser) { showToast('Sign in to comment.'); return; }
-      if (!currentTrack) return;
+      if (!currentTrack || !currentTrack.id) { showToast('Track not loaded yet.'); return; }
 
       const body = commentInput.value.trim();
       if (!body) return;
+
+      commentSubmit.disabled = true;
 
       const username = currentUser.email?.split('@')[0] || 'Anonymous';
       const { error } = await sb.from('comments').insert({
@@ -834,12 +876,15 @@
       });
 
       if (error) {
+        console.log(error);
         showToast('⚠️ Failed to post comment.');
+        commentSubmit.disabled = false;
         return;
       }
 
       commentInput.value = '';
       await loadComments(currentTrack.id);
+      commentSubmit.disabled = false;
     });
 
     downloadBtn.addEventListener('click', () => {
@@ -850,6 +895,69 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
+    });
+
+    function formatTime(sec) {
+      sec = Math.floor(sec || 0);
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m + ':' + s.toString().padStart(2, '0');
+    }
+
+    cpPlayPause.addEventListener('click', () => {
+      if (!player.src) return;
+      if (player.paused) {
+        player.play();
+      } else {
+        player.pause();
+      }
+    });
+
+    cpSeek.addEventListener('input', () => {
+      isSeeking = true;
+    });
+
+    cpSeek.addEventListener('change', () => {
+      if (!player.duration) return;
+      const pct = cpSeek.value / 100;
+      player.currentTime = pct * player.duration;
+      isSeeking = false;
+    });
+
+    cpVolume.addEventListener('input', () => {
+      player.volume = parseFloat(cpVolume.value);
+    });
+
+    cpSpeed.addEventListener('change', () => {
+      player.playbackRate = parseFloat(cpSpeed.value);
+    });
+
+    player.addEventListener('timeupdate', () => {
+      if (!player.duration) return;
+      if (!isSeeking) {
+        cpSeek.value = (player.currentTime / player.duration) * 100;
+      }
+      cpTime.textContent = `${formatTime(player.currentTime)} / ${formatTime(player.duration)}`;
+    });
+
+    player.addEventListener('play', () => {
+      cpPlayPause.textContent = '⏸';
+      miniPlayPause.textContent = '⏸';
+      if (player.src) miniPlayer.style.display = 'flex';
+    });
+
+    player.addEventListener('pause', () => {
+      cpPlayPause.textContent = '▶️';
+      miniPlayPause.textContent = '▶️';
+    });
+
+    miniPlayPause.addEventListener('click', () => {
+      if (!player.src) return;
+      if (player.paused) {
+        player.play();
+      } else {
+        player.pause();
+      }
     });
 
     async function openWatch(id) {
@@ -876,23 +984,35 @@
       player.load();
       player.play().catch(() => {});
 
+      cpSeek.value = 0;
+      cpTime.textContent = '0:00 / 0:00';
+
       watchOverlay.classList.add('open');
       document.body.style.overflow = 'hidden';
 
       miniTitle.textContent = track.title;
       miniPlayer.style.display = 'flex';
-      miniPlayPause.textContent = '⏸';
 
-      sb.from('music_files').update({ views: (track.views||0) + 1 }).eq('id', id);
+      sb.from('music_files')
+        .update({ views: (track.views || 0) + 1 })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (!error) {
+            track.views = (track.views || 0) + 1;
+            const idx = allTracks.findIndex(t => t.id === id);
+            if (idx > -1) allTracks[idx].views = track.views;
+          }
+        });
 
-      loadComments(track.id);
+      commentSubmit.disabled = true;
+      await loadComments(track.id);
+      commentSubmit.disabled = false;
     }
 
     function closeWatch() {
       watchOverlay.classList.remove('open');
-      // keep audio playing for mini‑player
-      currentTrack = null;
       document.body.style.overflow = '';
+      // keep audio playing for mini-player
     }
 
     document.getElementById('watchCloseBtn').addEventListener('click', closeWatch);
@@ -1098,7 +1218,12 @@
       document.querySelectorAll('.vids-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       activeFilter = chip.dataset.filter;
-      renderTracks();
+      currentAlbumId = null;
+      if (activeFilter === 'albums') {
+        renderAlbumsGrid();
+      } else {
+        renderTracks();
+      }
     });
 
     document.getElementById('vidsSidebar').addEventListener('click', e => {
@@ -1109,6 +1234,7 @@
       activeView = item.dataset.view;
       searchQuery = '';
       document.getElementById('vids-search').value = '';
+      currentAlbumId = null;
       fetchTracks();
     });
 
@@ -1157,8 +1283,32 @@
       return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    async function fetchAlbums() {
+      const { data, error } = await sb
+        .from('albums')
+        .select('*, user_id, user:auth.users(email)')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      allAlbums = (data || []).map(a => ({
+        ...a,
+        username: a.user?.email?.split('@')[0] || 'User'
+      }));
+    }
+
     async function fetchTracks() {
       showSkeletons();
+
+      if (activeView === 'albums' || activeFilter === 'albums') {
+        await fetchAlbums();
+        renderAlbumsGrid();
+        return;
+      }
+
       let query = sb.from('music_files').select('*').order('created_at', { ascending: false });
 
       if (activeView.startsWith('cat-')) {
@@ -1192,7 +1342,10 @@
     }
 
     function filteredTracks() {
-      if (activeFilter === 'all') return allTracks;
+      if (currentAlbumId) {
+        return allTracks.filter(t => t.album_ids && t.album_ids.includes(currentAlbumId));
+      }
+      if (activeFilter === 'all' || activeFilter === 'albums') return allTracks;
       return allTracks.filter(t => t.category === activeFilter);
     }
 
@@ -1213,28 +1366,48 @@
       });
     }
 
-    miniPlayPause.addEventListener('click', () => {
-      if (player.paused) {
-        player.play();
-        miniPlayPause.textContent = '⏸';
-      } else {
-        player.pause();
-        miniPlayPause.textContent = '▶️';
+    function renderAlbumsGrid() {
+      if (!allAlbums.length) {
+        grid.innerHTML = `
+          <div class="vids-empty">
+            <div class="vids-empty-icon">📀</div>
+            <h3>No albums yet</h3>
+            <p>Create an album by adding an album name when uploading a track.</p>
+          </div>`;
+        return;
       }
-    });
+      grid.innerHTML = allAlbums.map(a => albumCard(a)).join('');
+      grid.querySelectorAll('.vids-album-card').forEach(card => {
+        card.addEventListener('click', async () => {
+          const albumId = card.dataset.albumId;
+          currentAlbumId = albumId;
+          activeFilter = 'all';
+          document.querySelectorAll('.vids-chip').forEach(c => c.classList.remove('active'));
+          const allChip = document.querySelector('.vids-chip[data-filter="all"]');
+          if (allChip) allChip.classList.add('active');
 
-    player.addEventListener('play', () => {
-      miniPlayPause.textContent = '⏸';
-      if (player.src) miniPlayer.style.display = 'flex';
-    });
+          showSkeletons();
+          const { data, error } = await sb
+            .from('album_tracks')
+            .select('track:track_id(*)')
+            .eq('album_id', albumId)
+            .order('order_index', { ascending: true });
 
-    player.addEventListener('pause', () => {
-      miniPlayPause.textContent = '▶️';
-    });
+          if (error) {
+            showToast('⚠️ Failed to load album tracks.');
+            return;
+          }
+
+          allTracks = (data || []).map(r => r.track).filter(Boolean);
+          renderTracks();
+        });
+      });
+    }
 
     (async () => {
       await initAuth();
       await fetchTracks();
+      await fetchAlbums();
     })();
   </script>
 </body>
