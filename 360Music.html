@@ -419,6 +419,19 @@
     }
     .vids-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ⭐ Modern waveform */
+    #waveformCanvas {
+      width: 100%;
+      height: 120px;
+      display: block;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.15);
+      margin-top: 10px;
+    }
+    body.dark #waveformCanvas {
+      background: rgba(255,255,255,0.08);
+    }
+
     @media (max-width: 768px) {
       .vids-sidebar { transform: translateX(-100%); }
       .vids-sidebar.open { transform: translateX(0); }
@@ -595,6 +608,10 @@
           <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>
           <div id="watchNowPlaying" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Now Playing</div>
         </div>
+
+        <!-- ⭐ Modern waveform -->
+        <canvas id="waveformCanvas"></canvas>
+
         <audio id="musicPlayer" controls preload="metadata"></audio>
       </div>
       <div class="vids-watch-info">
@@ -701,61 +718,6 @@
       updateAvatar();
     });
 
-    async function fetchTracks() {
-      showSkeletons();
-      let query = sb.from('music_files').select('*').order('created_at', { ascending: false });
-
-      if (activeView.startsWith('cat-')) {
-        const cat = activeView.replace('cat-', '');
-        const catMap = { gaming:'Gaming', music:'Music', tech:'Tech', education:'Education', entertainment:'Entertainment' };
-        query = query.eq('category', catMap[cat] || cat);
-      } else if (activeView === 'liked') {
-        if (!currentUser) { renderAuthGate('like tracks'); return; }
-        query = query.contains('likes', [currentUser.id]);
-      } else if (activeView === 'uploads') {
-        if (!currentUser) { renderAuthGate('view your tracks'); return; }
-        query = query.eq('user_id', currentUser.id);
-      } else if (activeView === 'trending') {
-        query = sb.from('music_files').select('*').order('views', { ascending: false }).limit(30);
-      }
-
-      if (searchQuery) {
-        query = query.ilike('title', `%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) {
-        showToast('⚠️ Failed to load tracks.');
-        grid.innerHTML = '<div class="vids-empty"><div class="vids-empty-icon">⚠️</div><h3>Error loading tracks</h3><p>'+error.message+'</p></div>';
-        return;
-      }
-
-      allTracks = data || [];
-      renderTracks();
-    }
-
-    function filteredTracks() {
-      if (activeFilter === 'all') return allTracks;
-      return allTracks.filter(t => t.category === activeFilter);
-    }
-
-    function renderTracks() {
-      const tracks = filteredTracks();
-      if (!tracks.length) {
-        grid.innerHTML = `
-          <div class="vids-empty">
-            <div class="vids-empty-icon">🎵</div>
-            <h3>No tracks here yet</h3>
-            <p>Be the first to upload something!</p>
-          </div>`;
-        return;
-      }
-      grid.innerHTML = tracks.map(t => trackCard(t)).join('');
-      grid.querySelectorAll('.vids-card').forEach(card => {
-        card.addEventListener('click', () => openWatch(card.dataset.id));
-      });
-    }
-
     function showSkeletons() {
       grid.innerHTML = Array(6).fill(0).map(() => `
         <div class="vids-card vids-skeleton">
@@ -838,6 +800,7 @@
       player.src = '';
       currentTrack = null;
       document.body.style.overflow = '';
+      stopWaveform(); // ⭐ stop waveform when closing modal
     }
 
     document.getElementById('watchCloseBtn').addEventListener('click', closeWatch);
@@ -1070,11 +1033,160 @@
       return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    async function fetchTracks() {
+      showSkeletons();
+      let query = sb.from('music_files').select('*').order('created_at', { ascending: false });
+
+      if (activeView.startsWith('cat-')) {
+        const cat = activeView.replace('cat-', '');
+        const catMap = { gaming:'Gaming', music:'Music', tech:'Tech', education:'Education', entertainment:'Entertainment' };
+        query = query.eq('category', catMap[cat] || cat);
+      } else if (activeView === 'liked') {
+        if (!currentUser) { renderAuthGate('like tracks'); return; }
+        query = query.contains('likes', [currentUser.id]);
+      } else if (activeView === 'uploads') {
+        if (!currentUser) { renderAuthGate('view your tracks'); return; }
+        query = query.eq('user_id', currentUser.id);
+      } else if (activeView === 'trending') {
+        query = sb.from('music_files').select('*').order('views', { ascending: false }).limit(30);
+      }
+
+      if (searchQuery) {
+        query = query.ilike('title', `%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        showToast('⚠️ Failed to load tracks.');
+        grid.innerHTML = '<div class="vids-empty"><div class="vids-empty-icon">⚠️</div><h3>Error loading tracks</h3><p>'+error.message+'</p></div>';
+        return;
+      }
+
+      allTracks = data || [];
+      renderTracks();
+      await checkDeepLink();
+    }
+
+    function filteredTracks() {
+      if (activeFilter === 'all') return allTracks;
+      return allTracks.filter(t => t.category === activeFilter);
+    }
+
+    function renderTracks() {
+      const tracks = filteredTracks();
+      if (!tracks.length) {
+        grid.innerHTML = `
+          <div class="vids-empty">
+            <div class="vids-empty-icon">🎵</div>
+            <h3>No tracks here yet</h3>
+            <p>Be the first to upload something!</p>
+          </div>`;
+        return;
+      }
+      grid.innerHTML = tracks.map(t => trackCard(t)).join('');
+      grid.querySelectorAll('.vids-card').forEach(card => {
+        card.addEventListener('click', () => openWatch(card.dataset.id));
+      });
+    }
+
     (async () => {
       await initAuth();
       await fetchTracks();
-      await checkDeepLink();
     })();
+  </script>
+
+  <!-- ⭐ Modern Waveform Engine -->
+  <script>
+    /* ============================================================
+       360Music — Modern Waveform Visualizer (REAL FFT)
+    =========================================================== */
+
+    const waveformCanvas = document.getElementById("waveformCanvas");
+    const waveformCtx = waveformCanvas.getContext("2d");
+    const waveformAudio = document.getElementById("musicPlayer");
+
+    let waveformAudioCtx = null;
+    let waveformAnalyser = null;
+    let waveformData = null;
+    let waveformBufferLength = 0;
+    let waveformAnim = null;
+
+    function initWaveformEngine() {
+      if (!waveformAudioCtx) {
+        waveformAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = waveformAudioCtx.createMediaElementSource(waveformAudio);
+
+        waveformAnalyser = waveformAudioCtx.createAnalyser();
+        waveformAnalyser.fftSize = 2048;
+
+        waveformBufferLength = waveformAnalyser.frequencyBinCount;
+        waveformData = new Uint8Array(waveformBufferLength);
+
+        source.connect(waveformAnalyser);
+        waveformAnalyser.connect(waveformAudioCtx.destination);
+      }
+
+      resizeWaveformCanvas();
+      drawWaveform();
+    }
+
+    function resizeWaveformCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      waveformCanvas.width = waveformCanvas.clientWidth * dpr;
+      waveformCanvas.height = waveformCanvas.clientHeight * dpr;
+      waveformCtx.setTransform(1, 0, 0, 1, 0, 0);
+      waveformCtx.scale(dpr, dpr);
+    }
+
+    window.addEventListener("resize", resizeWaveformCanvas);
+
+    function drawWaveform() {
+      waveformAnim = requestAnimationFrame(drawWaveform);
+
+      waveformAnalyser.getByteTimeDomainData(waveformData);
+
+      waveformCtx.clearRect(0, 0, waveformCanvas.clientWidth, waveformCanvas.clientHeight);
+
+      waveformCtx.lineWidth = 2;
+      waveformCtx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--vid-accent");
+
+      waveformCtx.beginPath();
+
+      const sliceWidth = waveformCanvas.clientWidth / waveformBufferLength;
+      let x = 0;
+
+      for (let i = 0; i < waveformBufferLength; i++) {
+        const v = waveformData[i] / 128.0;
+        const y = (v * waveformCanvas.clientHeight) / 2;
+
+        if (i === 0) waveformCtx.moveTo(x, y);
+        else waveformCtx.lineTo(x, y);
+
+        x += sliceWidth;
+      }
+
+      waveformCtx.stroke();
+    }
+
+    waveformAudio.addEventListener("play", () => {
+      initWaveformEngine();
+      if (waveformAudioCtx && waveformAudioCtx.state === "suspended") {
+        waveformAudioCtx.resume();
+      }
+    });
+
+    waveformAudio.addEventListener("pause", () => {
+      cancelAnimationFrame(waveformAnim);
+    });
+
+    waveformAudio.addEventListener("ended", () => {
+      cancelAnimationFrame(waveformAnim);
+    });
+
+    function stopWaveform() {
+      cancelAnimationFrame(waveformAnim);
+      waveformCtx.clearRect(0, 0, waveformCanvas.clientWidth, waveformCanvas.clientHeight);
+    }
   </script>
 </body>
 </html>
