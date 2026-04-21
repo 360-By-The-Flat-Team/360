@@ -548,10 +548,15 @@
     
       if(win){
         statusEl.textContent="🎉 Win!";
-        await supabaseClient.from("minesweeper_scores").insert({
-          time:timer,
-          difficulty:document.getElementById("difficulty").value
-        });
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        if (user) {
+          await supabaseClient.from("minesweeper_scores").insert({
+            user_id: user.id,
+            time: timer,
+            difficulty: document.getElementById("difficulty").value
+          });
+        }
       } else {
         statusEl.textContent="💀 Game Over";
       }
