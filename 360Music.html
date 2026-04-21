@@ -510,6 +510,10 @@
       <div class="vids-nav-item" data-view="cat-entertainment">
         <span class="vids-nav-icon">🎭</span> Entertainment
       </div>
+      <!-- optional: albums view later -->
+      <!-- <div class="vids-nav-item" data-view="albums">
+        <span class="vids-nav-icon">📀</span> Albums
+      </div> -->
     </aside>
 
     <main class="vids-main" id="vidsMain">
@@ -591,6 +595,12 @@
         </select>
       </div>
 
+      <!-- ⭐ NEW: Album name (optional) -->
+      <div class="vids-field">
+        <label>Album (optional)</label>
+        <input type="text" id="trackAlbum" placeholder="Album name (will be created if new)" />
+      </div>
+
       <div class="vids-upload-status" id="uploadStatus"></div>
 
       <div class="vids-modal-actions">
@@ -608,10 +618,7 @@
           <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>
           <div id="watchNowPlaying" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Now Playing</div>
         </div>
-
-        <!-- ⭐ Modern waveform -->
-        <canvas id="waveformCanvas"></canvas>
-
+        <!-- default browser controls kept -->
         <audio id="musicPlayer" controls preload="metadata"></audio>
       </div>
       <div class="vids-watch-info">
@@ -620,10 +627,39 @@
         <div class="vids-watch-actions">
           <button class="vids-action-btn" id="likeBtn">👍 <span id="likeCount">0</span></button>
           <button class="vids-action-btn" id="shareBtn">🔗 Share</button>
+          <!-- ⭐ NEW: Download -->
+          <button class="vids-action-btn" id="downloadBtn">⬇️ Download</button>
         </div>
         <div class="vids-watch-desc" id="watchDesc"></div>
+
+        <!-- ⭐ NEW: Comments -->
+        <div id="commentsSection" style="margin-top:14px;">
+          <h4 style="font-size:14px;font-weight:700;margin:0 0 6px;">Comments</h4>
+          <div id="commentsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+          <div id="commentForm" style="display:flex;gap:8px;">
+            <input
+              type="text"
+              id="commentInput"
+              placeholder="Add a comment…"
+              style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--vid-border);font-size:13px;"
+              maxlength="300"
+            />
+            <button class="vids-action-btn" id="commentSubmitBtn">Post</button>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- ⭐ NEW: Mini‑player dock -->
+  <div id="miniPlayer"
+       style="position:fixed;left:0;right:0;bottom:0;height:56px;background:rgba(15,23,42,.96);color:#e5e7eb;display:none;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid rgba(148,163,184,.4);z-index:250;">
+    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;">🎵</div>
+    <div style="flex:1;min-width:0;">
+      <div id="miniTitle" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Now Playing</div>
+    </div>
+    <button id="miniPlayPause"
+            style="border:none;background:none;color:#e5e7eb;font-size:18px;cursor:pointer;">⏸</button>
   </div>
 
   <div class="vids-toast" id="vidsToast"></div>
@@ -636,26 +672,7 @@
   <script>
     // 360Music — Supabase:
     // Storage bucket: "music" (public)
-    // Table: "music_files"
-    //
-    // create table if not exists music_files (
-    //   id uuid primary key default gen_random_uuid(),
-    //   user_id uuid references auth.users(id) on delete cascade,
-    //   username text,
-    //   title text not null,
-    //   description text,
-    //   category text default 'Other',
-    //   audio_url text not null,
-    //   views integer default 0,
-    //   likes uuid[] default '{}',
-    //   duration text,
-    //   created_at timestamptz default now()
-    // );
-    // alter table music_files enable row level security;
-    // create policy "Public read" on music_files for select using (true);
-    // create policy "Auth insert" on music_files for insert with check (auth.uid() = user_id);
-    // create policy "Owner update" on music_files for update using (auth.uid() = user_id);
-    // create policy "Owner delete" on music_files for delete using (auth.uid() = user_id);
+    // Table: "music_files" + albums + comments (see SQL)
 
     const SUPABASE_URL  = 'https://wiswfpfsjiowtrdyqpxy.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM';
@@ -680,6 +697,16 @@
     const uploadStatus = document.getElementById('uploadStatus');
     const fileChosen   = document.getElementById('fileChosen');
     const submitBtn    = document.getElementById('submitUploadBtn');
+    const trackAlbumInput = document.getElementById('trackAlbum');
+
+    const downloadBtn   = document.getElementById('downloadBtn');
+    const commentsList  = document.getElementById('commentsList');
+    const commentInput  = document.getElementById('commentInput');
+    const commentSubmit = document.getElementById('commentSubmitBtn');
+
+    const miniPlayer    = document.getElementById('miniPlayer');
+    const miniTitle     = document.getElementById('miniTitle');
+    const miniPlayPause = document.getElementById('miniPlayPause');
 
     function showToast(msg, dur = 2800) {
       toast.textContent = msg;
@@ -744,7 +771,6 @@
       const user = t.username || 'Anonymous';
       const initials = user[0].toUpperCase();
       const plays = formatNum(t.views || 0);
-      const likes = (t.likes || []).length;
       return `
         <div class="vids-card" data-id="${t.id}">
           <div class="vids-thumb">
@@ -764,6 +790,67 @@
           </div>
         </div>`;
     }
+
+    async function loadComments(trackId) {
+      commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">Loading comments…</span>';
+      const { data, error } = await sb
+        .from('comments')
+        .select('*')
+        .eq('track_id', trackId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        commentsList.innerHTML = '<span style="font-size:12px;color:#ef4444;">Failed to load comments.</span>';
+        return;
+      }
+
+      if (!data.length) {
+        commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">No comments yet. Be the first!</span>';
+        return;
+      }
+
+      commentsList.innerHTML = data.map(c => `
+        <div style="font-size:13px;">
+          <strong>${escHtml(c.username || 'User')}</strong>
+          <span style="color:var(--vid-mut);font-size:11px;"> · ${timeAgo(c.created_at)}</span>
+          <div>${escHtml(c.body)}</div>
+        </div>
+      `).join('');
+    }
+
+    commentSubmit.addEventListener('click', async () => {
+      if (!currentUser) { showToast('Sign in to comment.'); return; }
+      if (!currentTrack) return;
+
+      const body = commentInput.value.trim();
+      if (!body) return;
+
+      const username = currentUser.email?.split('@')[0] || 'Anonymous';
+      const { error } = await sb.from('comments').insert({
+        track_id: currentTrack.id,
+        user_id: currentUser.id,
+        username,
+        body
+      });
+
+      if (error) {
+        showToast('⚠️ Failed to post comment.');
+        return;
+      }
+
+      commentInput.value = '';
+      await loadComments(currentTrack.id);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!currentTrack) return;
+      const a = document.createElement('a');
+      a.href = currentTrack.audio_url;
+      a.download = (currentTrack.title || 'track') + '.mp3';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
 
     async function openWatch(id) {
       const track = allTracks.find(t => t.id === id);
@@ -787,20 +874,25 @@
 
       player.src = track.audio_url;
       player.load();
+      player.play().catch(() => {});
 
       watchOverlay.classList.add('open');
       document.body.style.overflow = 'hidden';
 
+      miniTitle.textContent = track.title;
+      miniPlayer.style.display = 'flex';
+      miniPlayPause.textContent = '⏸';
+
       sb.from('music_files').update({ views: (track.views||0) + 1 }).eq('id', id);
+
+      loadComments(track.id);
     }
 
     function closeWatch() {
       watchOverlay.classList.remove('open');
-      player.pause();
-      player.src = '';
+      // keep audio playing for mini‑player
       currentTrack = null;
       document.body.style.overflow = '';
-      stopWaveform(); // ⭐ stop waveform when closing modal
     }
 
     document.getElementById('watchCloseBtn').addEventListener('click', closeWatch);
@@ -854,6 +946,7 @@
       document.getElementById('trackTitle').value = '';
       document.getElementById('trackDesc').value = '';
       document.getElementById('trackCategory').value = 'Other';
+      trackAlbumInput.value = '';
       fileChosen.style.display = 'none';
       fileChosen.textContent = '';
       progressWrap.style.display = 'none';
@@ -902,6 +995,7 @@
       const title     = document.getElementById('trackTitle').value.trim();
       const desc      = document.getElementById('trackDesc').value.trim();
       const category  = document.getElementById('trackCategory').value;
+      const albumName = trackAlbumInput.value.trim();
 
       if (!file)  { setUploadStatus('⚠️ Please select an audio file.', 'error'); return; }
       if (!title) { setUploadStatus('⚠️ Title is required.', 'error'); return; }
@@ -945,7 +1039,7 @@
       const audio_url = urlData.publicUrl;
 
       const username = currentUser.email?.split('@')[0] || 'Anonymous';
-      const { error: insErr } = await sb.from('music_files').insert({
+      const { data: inserted, error: insErr } = await sb.from('music_files').insert({
         user_id: currentUser.id,
         username,
         title,
@@ -955,12 +1049,42 @@
         duration,
         views: 0,
         likes: []
-      });
+      }).select('id').single();
 
       if (insErr) {
         setUploadStatus('⚠️ Failed to save: ' + insErr.message, 'error');
         submitBtn.disabled = false;
         return;
+      }
+
+      if (albumName && inserted?.id) {
+        let { data: album, error: albumErr } = await sb
+          .from('albums')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .eq('title', albumName)
+          .maybeSingle();
+
+        if (!album && !albumErr) {
+          const { data: newAlbum } = await sb
+            .from('albums')
+            .insert({
+              user_id: currentUser.id,
+              title: albumName,
+              description: '',
+              cover_url: null
+            })
+            .select('*')
+            .single();
+          album = newAlbum;
+        }
+
+        if (album) {
+          await sb.from('album_tracks').insert({
+            album_id: album.id,
+            track_id: inserted.id
+          });
+        }
       }
 
       setUploadStatus('✅ Track uploaded!', 'success');
@@ -1089,104 +1213,29 @@
       });
     }
 
+    miniPlayPause.addEventListener('click', () => {
+      if (player.paused) {
+        player.play();
+        miniPlayPause.textContent = '⏸';
+      } else {
+        player.pause();
+        miniPlayPause.textContent = '▶️';
+      }
+    });
+
+    player.addEventListener('play', () => {
+      miniPlayPause.textContent = '⏸';
+      if (player.src) miniPlayer.style.display = 'flex';
+    });
+
+    player.addEventListener('pause', () => {
+      miniPlayPause.textContent = '▶️';
+    });
+
     (async () => {
       await initAuth();
       await fetchTracks();
     })();
-  </script>
-
-  <!-- ⭐ Modern Waveform Engine -->
-  <script>
-    /* ============================================================
-       360Music — Modern Waveform Visualizer (REAL FFT)
-    =========================================================== */
-
-    const waveformCanvas = document.getElementById("waveformCanvas");
-    const waveformCtx = waveformCanvas.getContext("2d");
-    const waveformAudio = document.getElementById("musicPlayer");
-
-    let waveformAudioCtx = null;
-    let waveformAnalyser = null;
-    let waveformData = null;
-    let waveformBufferLength = 0;
-    let waveformAnim = null;
-
-    function initWaveformEngine() {
-      if (!waveformAudioCtx) {
-        waveformAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = waveformAudioCtx.createMediaElementSource(waveformAudio);
-
-        waveformAnalyser = waveformAudioCtx.createAnalyser();
-        waveformAnalyser.fftSize = 2048;
-
-        waveformBufferLength = waveformAnalyser.frequencyBinCount;
-        waveformData = new Uint8Array(waveformBufferLength);
-
-        source.connect(waveformAnalyser);
-        waveformAnalyser.connect(waveformAudioCtx.destination);
-      }
-
-      resizeWaveformCanvas();
-      drawWaveform();
-    }
-
-    function resizeWaveformCanvas() {
-      const dpr = window.devicePixelRatio || 1;
-      waveformCanvas.width = waveformCanvas.clientWidth * dpr;
-      waveformCanvas.height = waveformCanvas.clientHeight * dpr;
-      waveformCtx.setTransform(1, 0, 0, 1, 0, 0);
-      waveformCtx.scale(dpr, dpr);
-    }
-
-    window.addEventListener("resize", resizeWaveformCanvas);
-
-    function drawWaveform() {
-      waveformAnim = requestAnimationFrame(drawWaveform);
-
-      waveformAnalyser.getByteTimeDomainData(waveformData);
-
-      waveformCtx.clearRect(0, 0, waveformCanvas.clientWidth, waveformCanvas.clientHeight);
-
-      waveformCtx.lineWidth = 2;
-      waveformCtx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--vid-accent");
-
-      waveformCtx.beginPath();
-
-      const sliceWidth = waveformCanvas.clientWidth / waveformBufferLength;
-      let x = 0;
-
-      for (let i = 0; i < waveformBufferLength; i++) {
-        const v = waveformData[i] / 128.0;
-        const y = (v * waveformCanvas.clientHeight) / 2;
-
-        if (i === 0) waveformCtx.moveTo(x, y);
-        else waveformCtx.lineTo(x, y);
-
-        x += sliceWidth;
-      }
-
-      waveformCtx.stroke();
-    }
-
-    waveformAudio.addEventListener("play", () => {
-      initWaveformEngine();
-      if (waveformAudioCtx && waveformAudioCtx.state === "suspended") {
-        waveformAudioCtx.resume();
-      }
-    });
-
-    waveformAudio.addEventListener("pause", () => {
-      cancelAnimationFrame(waveformAnim);
-    });
-
-    waveformAudio.addEventListener("ended", () => {
-      cancelAnimationFrame(waveformAnim);
-    });
-
-    function stopWaveform() {
-      cancelAnimationFrame(waveformAnim);
-      waveformCtx.clearRect(0, 0, waveformCanvas.clientWidth, waveformCanvas.clientHeight);
-    }
   </script>
 </body>
 </html>
