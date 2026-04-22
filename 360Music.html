@@ -432,6 +432,75 @@
       background: rgba(255,255,255,0.08);
     }
 
+    /* Thumbnail controls (additive, matches existing UI) */
+    .thumb-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .thumb-btn {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--vid-border);
+      background: var(--vid-bg);
+      color: var(--vid-txt);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s;
+    }
+    .thumb-btn:hover {
+      border-color: var(--vid-accent);
+      color: var(--vid-accent);
+    }
+    .thumb-preview {
+      width: 100%;
+      aspect-ratio: 1/1;
+      border-radius: 12px;
+      border: 1px dashed var(--vid-border);
+      background-size: cover;
+      background-position: center;
+      background-color: var(--vid-bg);
+    }
+    .preset-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 350;
+    }
+    .preset-modal-inner {
+      background: var(--vid-card);
+      border-radius: 16px;
+      border: 1px solid var(--vid-border);
+      padding: 16px;
+      max-width: 420px;
+      width: 100%;
+    }
+    .preset-modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .preset-thumb {
+      width: 100%;
+      aspect-ratio: 1/1;
+      border-radius: 10px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid var(--vid-border);
+      transition: .15s;
+    }
+    .preset-thumb:hover {
+      border-color: var(--vid-accent);
+      transform: translateY(-1px);
+    }
+
     @media (max-width: 768px) {
       .vids-sidebar { transform: translateX(-100%); }
       .vids-sidebar.open { transform: translateX(0); }
@@ -597,6 +666,18 @@
       </div>
       -->
 
+      <!-- Thumbnail field (additive, same UI pattern) -->
+      <div class="vids-field">
+        <label>Thumbnail</label>
+        <div class="thumb-options">
+          <button type="button" class="thumb-btn" id="thumbUploadBtn">Upload Image</button>
+          <button type="button" class="thumb-btn" id="thumbAutoBtn">Auto‑Generate</button>
+          <button type="button" class="thumb-btn" id="thumbPresetBtn">Choose Preset</button>
+        </div>
+        <input type="file" id="thumbFileInput" accept="image/*" style="display:none;">
+        <div id="thumbPreview" class="thumb-preview"></div>
+      </div>
+
       <div class="vids-upload-status" id="uploadStatus"></div>
 
       <div class="vids-modal-actions">
@@ -699,6 +780,10 @@
     let currentAlbumId = null;
     let isSeeking = false;
 
+    // thumbnail state
+    let selectedThumbnailFile = null;
+    let selectedThumbnailPreset = null;
+
     const grid         = document.getElementById('vidsGrid');
     const uploadOverlay= document.getElementById('uploadOverlay');
     const watchOverlay = document.getElementById('watchOverlay');
@@ -726,6 +811,19 @@
     const cpVolume    = document.getElementById('cpVolume');
     const cpTime      = document.getElementById('cpTime');
     const cpSpeed     = document.getElementById('cpSpeed');
+
+    const thumbUploadBtn  = document.getElementById('thumbUploadBtn');
+    const thumbAutoBtn    = document.getElementById('thumbAutoBtn');
+    const thumbPresetBtn  = document.getElementById('thumbPresetBtn');
+    const thumbFileInput  = document.getElementById('thumbFileInput');
+    const thumbPreview    = document.getElementById('thumbPreview');
+
+    const presetThumbs = [
+      '/assets/music/preset1.png',
+      '/assets/music/preset2.png',
+      '/assets/music/preset3.png',
+      '/assets/music/preset4.png'
+    ];
 
     function showToast(msg, dur = 2800) {
       toast.textContent = msg;
@@ -793,7 +891,11 @@
       return `
         <div class="vids-card" data-id="${t.id}">
           <div class="vids-thumb">
-            <div class="vids-thumb-placeholder">🎵</div>
+            ${
+              t.thumbnail_url
+                ? `<img src="${escHtml(t.thumbnail_url)}" alt="${escHtml(t.title)}" />`
+                : `<div class="vids-thumb-placeholder">🎵</div>`
+            }
             ${t.duration ? `<div class="vids-duration">${escHtml(t.duration)}</div>` : ''}
           </div>
           <div class="vids-card-body">
@@ -815,7 +917,11 @@
       return `
         <div class="vids-card vids-album-card" data-album-id="${a.id}">
           <div class="vids-thumb">
-            <div class="vids-thumb-placeholder">📀</div>
+            ${
+              a.cover_url
+                ? `<img src="${escHtml(a.cover_url)}" alt="${escHtml(a.title)}" />`
+                : `<div class="vids-thumb-placeholder">📀</div>`
+            }
           </div>
           <div class="vids-card-body">
             <div class="vids-card-title">${escHtml(a.title)}</div>
@@ -1063,13 +1169,18 @@
       document.getElementById('trackTitle').value = '';
       document.getElementById('trackDesc').value = '';
       document.getElementById('trackCategory').value = 'Other';
-      trackAlbumInput.value = '';
+      if (trackAlbumInput) trackAlbumInput.value = '';
       fileChosen.style.display = 'none';
       fileChosen.textContent = '';
       progressWrap.style.display = 'none';
       progressBar.style.width = '0%';
       setUploadStatus('', '');
       submitBtn.disabled = false;
+
+      // reset thumbnail state
+      selectedThumbnailFile = null;
+      selectedThumbnailPreset = null;
+      thumbPreview.style.backgroundImage = '';
     }
 
     function setUploadStatus(msg, type = '') {
@@ -1104,6 +1215,85 @@
       }
     }
 
+    // Thumbnail controls
+
+    thumbUploadBtn.addEventListener('click', () => {
+      thumbFileInput.click();
+    });
+
+    thumbFileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('⚠️ Please select an image file.');
+        return;
+      }
+      selectedThumbnailFile = file;
+      selectedThumbnailPreset = null;
+      const url = URL.createObjectURL(file);
+      thumbPreview.style.backgroundImage = `url(${url})`;
+    });
+
+    thumbAutoBtn.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const bars = 48;
+      const barWidth = canvas.width / (bars * 1.5);
+      for (let i = 0; i < bars; i++) {
+        const h = Math.random() * (canvas.height * 0.6) + canvas.height * 0.1;
+        const x = i * (barWidth * 1.5) + barWidth * 0.25;
+        const y = canvas.height - h;
+        const grad = ctx.createLinearGradient(x, y, x, canvas.height);
+        grad.addColorStop(0, '#3b82f6');
+        grad.addColorStop(1, '#06b6d4');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, barWidth, h);
+      }
+
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        selectedThumbnailFile = new File([blob], 'auto.png', { type: 'image/png' });
+        selectedThumbnailPreset = null;
+        const url = URL.createObjectURL(blob);
+        thumbPreview.style.backgroundImage = `url(${url})`;
+      }, 'image/png');
+    });
+
+    thumbPresetBtn.addEventListener('click', () => {
+      const wrap = document.createElement('div');
+      wrap.className = 'preset-modal';
+      wrap.innerHTML = `
+        <div class="preset-modal-inner">
+          <div style="font-size:13px;font-weight:600;color:var(--vid-txt);margin-bottom:4px;">Choose a preset thumbnail</div>
+          <div style="font-size:12px;color:var(--vid-mut);">These are static images from your assets folder.</div>
+          <div class="preset-modal-grid"></div>
+        </div>
+      `;
+      const gridEl = wrap.querySelector('.preset-modal-grid');
+      presetThumbs.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.className = 'preset-thumb';
+        img.addEventListener('click', () => {
+          selectedThumbnailPreset = src;
+          selectedThumbnailFile = null;
+          thumbPreview.style.backgroundImage = `url(${src})`;
+          document.body.removeChild(wrap);
+        });
+        gridEl.appendChild(img);
+      });
+      wrap.addEventListener('click', e => {
+        if (e.target === wrap) document.body.removeChild(wrap);
+      });
+      document.body.appendChild(wrap);
+    });
+
     document.getElementById('submitUploadBtn').addEventListener('click', async () => {
       if (!currentUser) { showToast('Sign in first.'); return; }
 
@@ -1112,7 +1302,7 @@
       const title     = document.getElementById('trackTitle').value.trim();
       const desc      = document.getElementById('trackDesc').value.trim();
       const category  = document.getElementById('trackCategory').value;
-      const albumName = trackAlbumInput.value.trim();
+      const albumName = trackAlbumInput ? trackAlbumInput.value.trim() : '';
 
       if (!file)  { setUploadStatus('⚠️ Please select an audio file.', 'error'); return; }
       if (!title) { setUploadStatus('⚠️ Title is required.', 'error'); return; }
@@ -1155,6 +1345,25 @@
       const { data: urlData } = sb.storage.from('music').getPublicUrl(fileName);
       const audio_url = urlData.publicUrl;
 
+      // thumbnail upload (optional)
+      let thumbnail_url = null;
+      try {
+        if (selectedThumbnailFile) {
+          const thumbName = `${currentUser.id}/thumb_${Date.now()}.png`;
+          const { data: tData, error: tErr } = await sb.storage
+            .from('thumbnails')
+            .upload(thumbName, selectedThumbnailFile, { cacheControl: '3600', upsert: false });
+          if (!tErr && tData) {
+            const { data: tUrlData } = sb.storage.from('thumbnails').getPublicUrl(tData.path);
+            thumbnail_url = tUrlData.publicUrl;
+          }
+        } else if (selectedThumbnailPreset) {
+          thumbnail_url = selectedThumbnailPreset;
+        }
+      } catch (e) {
+        console.log('Thumbnail upload error', e);
+      }
+
       const username = currentUser.email?.split('@')[0] || 'Anonymous';
       const { data: inserted, error: insErr } = await sb.from('music_files').insert({
         user_id: currentUser.id,
@@ -1165,7 +1374,8 @@
         audio_url,
         duration,
         views: 0,
-        likes: []
+        likes: [],
+        thumbnail_url
       }).select('id').single();
 
       if (insErr) {
@@ -1297,79 +1507,13 @@
       }));
     }
 
-    async function fetchTracks() {
-      showSkeletons();
-
-      if (activeView === 'albums' || activeFilter === 'albums') {
-        await fetchAlbums();
-        renderAlbumsGrid();
-        return;
-      }
-
-      let query = sb.from('music_files').select('*').order('created_at', { ascending: false });
-
-      if (activeView.startsWith('cat-')) {
-        const cat = activeView.replace('cat-', '');
-        const catMap = { gaming:'Gaming', music:'Music', tech:'Tech', education:'Education', entertainment:'Entertainment' };
-        query = query.eq('category', catMap[cat] || cat);
-      } else if (activeView === 'liked') {
-        if (!currentUser) { renderAuthGate('like tracks'); return; }
-        query = query.contains('likes', [currentUser.id]);
-      } else if (activeView === 'uploads') {
-        if (!currentUser) { renderAuthGate('view your tracks'); return; }
-        query = query.eq('user_id', currentUser.id);
-      } else if (activeView === 'trending') {
-        query = sb.from('music_files').select('*').order('views', { ascending: false }).limit(30);
-      }
-
-      if (searchQuery) {
-        query = query.ilike('title', `%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) {
-        showToast('⚠️ Failed to load tracks.');
-        grid.innerHTML = '<div class="vids-empty"><div class="vids-empty-icon">⚠️</div><h3>Error loading tracks</h3><p>'+error.message+'</p></div>';
-        return;
-      }
-
-      allTracks = data || [];
-      renderTracks();
-      await checkDeepLink();
-    }
-
-    function filteredTracks() {
-      if (currentAlbumId) {
-        return allTracks.filter(t => t.album_ids && t.album_ids.includes(currentAlbumId));
-      }
-      if (activeFilter === 'all' || activeFilter === 'albums') return allTracks;
-      return allTracks.filter(t => t.category === activeFilter);
-    }
-
-    function renderTracks() {
-      const tracks = filteredTracks();
-      if (!tracks.length) {
-        grid.innerHTML = `
-          <div class="vids-empty">
-            <div class="vids-empty-icon">🎵</div>
-            <h3>No tracks here yet</h3>
-            <p>Be the first to upload something!</p>
-          </div>`;
-        return;
-      }
-      grid.innerHTML = tracks.map(t => trackCard(t)).join('');
-      grid.querySelectorAll('.vids-card').forEach(card => {
-        card.addEventListener('click', () => openWatch(card.dataset.id));
-      });
-    }
-
     function renderAlbumsGrid() {
       if (!allAlbums.length) {
         grid.innerHTML = `
           <div class="vids-empty">
             <div class="vids-empty-icon">📀</div>
             <h3>No albums yet</h3>
-            <p>Create an album by adding an album name when uploading a track.</p>
+            <p>Create albums by uploading tracks with album names.</p>
           </div>`;
         return;
       }
@@ -1399,6 +1543,98 @@
           renderTracks();
         });
       });
+    }
+
+    function renderTracks() {
+      if (!allTracks.length) {
+        grid.innerHTML = `
+          <div class="vids-empty">
+            <div class="vids-empty-icon">🎵</div>
+            <h3>No tracks yet</h3>
+            <p>Upload a track to get started with 360Music.</p>
+          </div>`;
+        return;
+      }
+
+      let filtered = [...allTracks];
+
+      if (activeView === 'trending') {
+        filtered.sort((a,b) => (b.views||0) - (a.views||0));
+      } else if (activeView === 'uploads' && currentUser) {
+        filtered = filtered.filter(t => t.user_id === currentUser.id);
+      } else if (activeView === 'liked' && currentUser) {
+        filtered = filtered.filter(t => (t.likes||[]).includes(currentUser.id));
+      } else if (activeView === 'cat-gaming') {
+        filtered = filtered.filter(t => t.category === 'Gaming');
+      } else if (activeView === 'cat-tech') {
+        filtered = filtered.filter(t => t.category === 'Tech');
+      } else if (activeView === 'cat-education') {
+        filtered = filtered.filter(t => t.category === 'Education');
+      } else if (activeView === 'cat-entertainment') {
+        filtered = filtered.filter(t => t.category === 'Entertainment');
+      }
+
+      if (activeFilter && activeFilter !== 'all' && activeFilter !== 'albums') {
+        filtered = filtered.filter(t => t.category === activeFilter);
+      }
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(t =>
+          (t.title || '').toLowerCase().includes(q) ||
+          (t.description || '').toLowerCase().includes(q) ||
+          (t.username || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (!filtered.length) {
+        grid.innerHTML = `
+          <div class="vids-empty">
+            <div class="vids-empty-icon">🔍</div>
+            <h3>No results</h3>
+            <p>Try a different search or filter.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(t => trackCard(t)).join('');
+      grid.querySelectorAll('.vids-card').forEach(card => {
+        const id = card.dataset.id;
+        if (!id) return;
+        card.addEventListener('click', () => openWatch(id));
+      });
+    }
+
+    async function fetchTracks() {
+      showSkeletons();
+
+      if (activeView === 'albums' || activeFilter === 'albums') {
+        await fetchAlbums();
+        renderAlbumsGrid();
+        return;
+      }
+
+      const query = sb
+        .from('music_files')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.log(error);
+        grid.innerHTML = `
+          <div class="vids-empty">
+            <div class="vids-empty-icon">⚠️</div>
+            <h3>Failed to load tracks</h3>
+            <p>Please try again in a moment.</p>
+          </div>`;
+        return;
+      }
+
+      allTracks = data || [];
+      renderTracks();
+      await checkDeepLink();
     }
 
     (async () => {
