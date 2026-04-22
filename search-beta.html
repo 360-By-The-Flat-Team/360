@@ -1,91 +1,1302 @@
+
+<!-- ===============================
+  SEARCH.HTML V2.2.0 CUSTOM SEARCH
+================================ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-89NN1P6CEV');
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>360 — Search</title>
-
-  <link rel="stylesheet" href="/assets/css/main.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-  <link rel="stylesheet" href="/assets/css/cursor.css">
-  <link rel="stylesheet" href="/assets/css/search.css">
-
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ══════════════════════════════════════════
+       GLASSMORPHISM DESIGN SYSTEM
+       No page background — assets handle that.
+    ══════════════════════════════════════════ */
+    :root {
+      --glass-light:      rgba(255,255,255,0.18);
+      --glass-light-mid:  rgba(255,255,255,0.30);
+      --glass-light-high: rgba(255,255,255,0.55);
+      --glass-dark:       rgba(8,12,28,0.35);
+      --glass-dark-mid:   rgba(8,12,28,0.52);
+      --glass-dark-high:  rgba(8,12,28,0.72);
+      --glass-blur:       blur(18px);
+      --glass-blur-sm:    blur(10px);
+      --glass-border:     rgba(255,255,255,0.30);
+      --glass-border-dk:  rgba(255,255,255,0.12);
+      --glass-shadow:     0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.10);
+      --glass-shadow-sm:  0 4px 16px rgba(0,0,0,0.12);
+      --glass-inset:      inset 0 1px 0 rgba(255,255,255,0.35);
+      --glass-inset-dk:   inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    /* ── GCSE hidden container ── */
+    #gcse-hidden-container {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 700px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* ── Page layout — NO background set ── */
+    .search-results-page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-top: 72px;
+      align-items: center;
+    }
+
+    /* ── Top search bar strip — frosted glass bar ── */
+    .search-bar-strip {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      z-index: 49;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      background: var(--glass-light-mid);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow: var(--glass-inset), 0 2px 20px rgba(0,0,0,0.10);
+    }
+    body.dark .search-bar-strip {
+      background: var(--glass-dark-mid);
+      border-bottom-color: var(--glass-border-dk);
+      box-shadow: var(--glass-inset-dk), 0 2px 20px rgba(0,0,0,0.30);
+    }
+
+    /* 360 logo */
+    .strip-logo {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    /* ── Custom search wrapper ── */
+    .custom-search-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 620px;
+    }
+
+    /* ── Search form — glass pill ── */
+    .custom-search-form {
+      display: flex;
+      align-items: center;
+      border-radius: 999px;
+      background: var(--glass-light);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1.5px solid var(--glass-border);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset);
+      overflow: visible;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .custom-search-form:focus-within {
+      border-color: var(--a);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.18), var(--glass-shadow-sm), var(--glass-inset);
+    }
+    body.dark .custom-search-form {
+      background: var(--glass-dark);
+      border-color: var(--glass-border-dk);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset-dk);
+    }
+    body.dark .custom-search-form:focus-within {
+      border-color: var(--a);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.20), var(--glass-shadow-sm), var(--glass-inset-dk);
+    }
+
+    /* Search icon */
+    .search-icon {
+      flex-shrink: 0;
+      padding: 0 0 0 16px;
+      display: flex;
+      align-items: center;
+      color: var(--mut);
+      pointer-events: none;
+    }
+    body.dark .search-icon { color: var(--mutd); }
+
+    /* Input */
+    #custom-search-input {
+      flex: 1;
+      padding: 11px 12px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: var(--txt);
+      font-family: inherit;
+      caret-color: var(--a);
+      min-width: 0;
+    }
+    body.dark #custom-search-input { color: var(--txtd); }
+    #custom-search-input::placeholder { color: var(--mut); }
+    body.dark #custom-search-input::placeholder { color: var(--mutd); }
+
+    /* Clear button — glass circle */
+    #custom-clear-btn {
+      flex-shrink: 0;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.10);
+      backdrop-filter: var(--glass-blur-sm);
+      color: var(--mut);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin-right: 6px;
+      transition: background 0.18s, color 0.18s;
+    }
+    #custom-clear-btn:hover { background: rgba(0,0,0,0.18); color: var(--txt); }
+    body.dark #custom-clear-btn { background: rgba(255,255,255,0.10); color: var(--mutd); }
+    body.dark #custom-clear-btn:hover { background: rgba(255,255,255,0.20); color: var(--txtd); }
+    #custom-clear-btn.visible { display: flex; }
+
+    /* Search button — gradient pill */
+    #custom-search-btn {
+      flex-shrink: 0;
+      margin: 5px 5px 5px 0;
+      padding: 8px 20px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      color: #050816;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+      transition: opacity 0.18s, transform 0.13s, box-shadow 0.18s;
+    }
+    #custom-search-btn:hover { opacity: 0.88; transform: scale(1.04); box-shadow: 0 6px 20px rgba(59,130,246,0.45); }
+    #custom-search-btn:active { transform: scale(0.96); }
+
+    /* ── Suggestions dropdown — frosted panel ── */
+    #suggestions-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0; right: 0;
+      background: var(--glass-light-high);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      box-shadow: var(--glass-shadow), var(--glass-inset);
+      z-index: 200;
+      overflow: hidden;
+      display: none;
+      animation: suggFadeIn 0.16s cubic-bezier(.22,.68,0,1.2);
+    }
+    body.dark #suggestions-dropdown {
+      background: var(--glass-dark-high);
+      border-color: var(--glass-border-dk);
+      box-shadow: var(--glass-shadow), var(--glass-inset-dk);
+    }
+    @keyframes suggFadeIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #suggestions-dropdown.visible { display: block; }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--txt);
+      transition: background 0.12s;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    body.dark .suggestion-item { border-bottom-color: rgba(255,255,255,0.06); color: var(--txtd); }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover, .suggestion-item.active { background: rgba(59,130,246,0.10); }
+    body.dark .suggestion-item:hover, body.dark .suggestion-item.active { background: rgba(59,130,246,0.15); }
+
+    .suggestion-icon {
+      flex-shrink: 0;
+      color: var(--mut);
+      display: flex;
+    }
+    body.dark .suggestion-icon { color: var(--mutd); }
+
+    .suggestion-text { flex: 1; }
+    .suggestion-text em {
+      font-style: normal;
+      font-weight: 700;
+      color: var(--a);
+    }
+
+    .suggestion-arrow {
+      flex-shrink: 0;
+      color: var(--mut);
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+    .suggestion-item:hover .suggestion-arrow,
+    .suggestion-item.active .suggestion-arrow { opacity: 1; }
+
+    /* ── Tab bar — glass pill tabs ── */
+    .results-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      width: 100%;
+      max-width: 900px;
+      box-sizing: border-box;
+    }
+    .results-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mut);
+      cursor: pointer;
+      background: var(--glass-light);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-inset);
+      transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+      white-space: nowrap;
+    }
+    .results-tab:hover {
+      background: var(--glass-light-mid);
+      color: var(--txt);
+      transform: translateY(-1px);
+    }
+    .results-tab.active {
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.35), var(--glass-inset);
+    }
+    body.dark .results-tab {
+      background: var(--glass-dark);
+      border-color: var(--glass-border-dk);
+      color: var(--mutd);
+      box-shadow: var(--glass-inset-dk);
+    }
+    body.dark .results-tab:hover { background: var(--glass-dark-mid); color: var(--txtd); }
+    body.dark .results-tab.active {
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      color: #fff; border-color: transparent;
+    }
+
+    /* ── Results container ── */
+    #custom-results-area {
+      width: 100%;
+      max-width: 900px;
+      padding: 16px 20px 60px;
+      box-sizing: border-box;
+    }
+
+    .results-info {
+      font-size: 13px;
+      color: var(--mut);
+      margin-bottom: 16px;
+      padding: 0 4px;
+    }
+    body.dark .results-info { color: var(--mutd); }
+
+    /* ── Result cards — frosted glass panels ── */
+    .result-card {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      background: var(--glass-light-mid);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: 18px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset);
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      animation: cardIn 0.22s ease both;
+    }
+    .result-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--glass-shadow), var(--glass-inset);
+      border-color: var(--a);
+    }
+    body.dark .result-card {
+      background: var(--glass-dark-mid);
+      border-color: var(--glass-border-dk);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset-dk);
+    }
+    body.dark .result-card:hover {
+      border-color: var(--a);
+      box-shadow: var(--glass-shadow), var(--glass-inset-dk);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-card-inner { display: flex; gap: 16px; align-items: flex-start; }
+    .result-card-text  { flex: 1; min-width: 0; }
+
+    .result-site-row { display: flex; align-items: center; gap: 8px; }
+    .result-favicon  { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+    .result-site-name { font-size: 13px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body.dark .result-site-name { color: var(--mutd); }
+    .result-url { font-size: 12px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body.dark .result-url { color: var(--mutd); }
+
+    .result-title {
+      font-size: 17px; font-weight: 700;
+      color: var(--a); text-decoration: none;
+      line-height: 1.35; display: block; margin-top: 3px;
+    }
+    .result-title:hover { text-decoration: underline; }
+
+    .result-snippet { font-size: 14px; color: var(--mut); line-height: 1.55; margin-top: 4px; }
+    body.dark .result-snippet { color: var(--mutd); }
+
+    .result-thumbnail {
+      width: 110px; height: 74px;
+      object-fit: cover; border-radius: 10px; flex-shrink: 0;
+      border: 1px solid var(--glass-border);
+    }
+    body.dark .result-thumbnail { border-color: var(--glass-border-dk); }
+
+    /* ── Image grid ── */
+    #image-results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .image-result-item {
+      border-radius: 14px; overflow: hidden;
+      background: var(--glass-light);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow-sm);
+      cursor: pointer; text-decoration: none; display: block;
+      transition: transform 0.15s, box-shadow 0.15s;
+      animation: cardIn 0.2s ease both;
+    }
+    body.dark .image-result-item { background: var(--glass-dark); border-color: var(--glass-border-dk); }
+    .image-result-item:hover { transform: scale(1.04); box-shadow: var(--glass-shadow); }
+    .image-result-item img { width: 100%; height: 140px; object-fit: cover; display: block; }
+    .image-result-label { padding: 7px 10px; font-size: 12px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body.dark .image-result-label { color: var(--mutd); }
+
+    /* ── Pagination — glass pill buttons ── */
+    .results-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--glass-light);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-inset);
+      color: var(--txt);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+    .page-btn:hover { background: var(--glass-light-mid); border-color: var(--a); transform: scale(1.05); }
+    .page-btn.active {
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(59,130,246,0.40);
+    }
+    .page-btn:disabled { opacity: 0.38; cursor: default; pointer-events: none; }
+    body.dark .page-btn { background: var(--glass-dark); border-color: var(--glass-border-dk); color: var(--txtd); box-shadow: var(--glass-inset-dk); }
+    body.dark .page-btn:hover { background: var(--glass-dark-mid); border-color: var(--a); }
+
+    /* ── State boxes ── */
+    .state-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      gap: 16px;
+      text-align: center;
+      color: var(--mut);
+      font-size: 15px;
+    }
+    body.dark .state-box { color: var(--mutd); }
+    .state-box .big-icon { font-size: 52px; }
+    .state-box h3 { font-size: 20px; font-weight: 700; color: var(--txt); margin: 0; }
+    body.dark .state-box h3 { color: var(--txtd); }
+
+    .loader-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--glass-border);
+      border-top-color: var(--a);
+      border-radius: 50%;
+      animation: spin360 0.75s linear infinite;
+    }
+    @keyframes spin360 { to { transform: rotate(360deg); } }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .strip-logo { display: none; }
+      .search-bar-strip { padding: 9px 12px; }
+      .result-thumbnail { display: none; }
+      #image-results-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+      .results-tabs { gap: 4px; padding: 8px; }
+      .results-tab { padding: 6px 12px; font-size: 12px; }
+    }
+  </style>
 </head>
 <body>
-
-  <!-- Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-trail"></div>
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
-
-  <!-- Sidebar toggle -->
   <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
-
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-mark"></div>
-      <button id="settingsBtn">⚙</button>
-    </div>
+    <div class="sidebar-header"><div class="logo-mark"></div><button id="settingsBtn">⚙</button></div>
     <nav class="nav-list">
       <div class="nav-item active" data-href="/">Home</div>
-      <div class="nav-item" data-href="/ai">AI</div>
-      <div class="nav-item" data-href="/weather">Weather</div>
-      <div class="nav-item" data-href="/translator">Translator</div>
-      <div class="nav-item" data-href="/stocks">Stocks</div>
-      <div class="nav-item" data-href="/url-shortener">URL Shortener</div>
-      <div class="nav-item" data-href="/chat">Chat</div>
-      <div class="nav-item" data-href="/news">News</div>
-      <div class="nav-item" data-href="/games">Games</div>
+      <div class="nav-item" data-href="../ai">AI</div>
+      <div class="nav-item" data-href="../weather">Weather</div>
+      <div class="nav-item" data-href="../translator">Translator</div>
+      <div class="nav-item" data-href="../stocks">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="../chat">Chat</div>
+      <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item" data-href="../games">Games</div>
     </nav>
-    <div class="sidebar-footer">© 2026 360 INC. · V2.1.2</div>
+    <div class="sidebar-footer">© 2026 360 INC. · V2.2.0</div>
   </aside>
-
-  <!-- Overlay + settings -->
   <div class="overlay" id="overlay"></div>
-
   <div class="settings-panel" id="settingsPanel">
-    <!-- (unchanged — your full settings panel here) -->
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
+    </div>
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
+    </div>
+    <div class="cursor-color-row">
+      <label>Cursor color</label>
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
   </div>
-
-  <!-- Auth popup -->
   <div id="auth-popup" class="auth-popup hidden">
-    <!-- (unchanged — your full auth popup here) -->
+    <div class="auth-box">
+      <h2>Account</h2>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+      <button id="auth-login-btn">Log In</button>
+      <button id="auth-signup-btn">Sign Up</button>
+      <button id="github-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>Sign in with GitHub</span>
+      </button>
+      <button id="google-login" class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-close-btn" class="close-btn">Close</button>
+    </div>
   </div>
-
-  <!-- Auth buttons -->
   <div class="auth-top-right">
     <button id="signInBtn" class="auth-btn">Sign In</button>
     <button id="signUpBtn" class="auth-btn">Sign Up</button>
     <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
   </div>
 
-  <!-- PAGE -->
-  <div class="search-results-page">
-
-    <!-- Classic strip -->
-    <div class="search-bar-strip">
-      <a class="strip-logo" href="/">360</a>
-
-      <form id="strip-search-form">
-        <input id="strip-search-input" type="text" placeholder="Search with 360..." autocomplete="off">
-        <button id="strip-search-btn" type="submit">Search</button>
-      </form>
-    </div>
-
-    <!-- Results container -->
-    <div id="results-container"></div>
-
+  <!-- ══ HIDDEN GCSE CONTAINER (does the actual work) ══ -->
+  <div id="gcse-hidden-container">
+    <div class="gcse-search" id="gcse-widget"></div>
   </div>
 
-  <audio id="clickSound" src="/click-sound.mp3" preload="auto"></audio>
+  <!-- ══ SEARCH RESULTS PAGE ══ -->
+  <div class="search-results-page">
+    <!-- Top fixed strip with custom search bar -->
+    <div class="search-bar-strip">
+      <a class="strip-logo" href="./">360</a>
+      <div class="custom-search-wrapper">
+        <div class="custom-search-form">
+          <!-- Search icon -->
+          <span class="search-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </span>
+          <input
+            id="custom-search-input"
+            type="search"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="Search the web…"
+            aria-label="Search"
+          />
+          <button id="custom-clear-btn" aria-label="Clear search" title="Clear">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <button id="custom-search-btn">Search</button>
+        </div>
+        <!-- Live suggestions dropdown -->
+        <div id="suggestions-dropdown"></div>
+      </div>
+    </div>
 
+    <!-- Tab bar -->
+    <div class="results-tabs" id="results-tabs">
+      <div class="results-tab active" data-tab="web">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Web
+      </div>
+      <div class="results-tab" data-tab="images">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Images
+      </div>
+      <div class="results-tab" data-tab="news">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
+        News
+      </div>
+    </div>
+
+    <!-- Results area -->
+    <div id="custom-results-area">
+      <div class="state-box" id="empty-state">
+        <div class="big-icon">🔍</div>
+        <h3>Search anything</h3>
+        <p>Type in the bar above and press Search or Enter</p>
+      </div>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="click-sound.mp3" preload="auto"></audio>
   <script src="/assets/js/main.js"></script>
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
-  <script src="/assets/js/search.js"></script>
+  <!-- Load GCSE silently -->
+  <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
 
+  <script>
+  (() => {
+    /* ─────────────────────────────────
+       STATE
+    ───────────────────────────────── */
+    const state = {
+      query: '',
+      tab: 'web',
+      page: 1,
+      suggestIdx: -1,
+      suggestList: [],
+      gcseReady: false,
+      pendingSearch: null,
+      searching: false,
+    };
+
+    /* ─────────────────────────────────
+       ELEMENT REFS
+    ───────────────────────────────── */
+    const input       = document.getElementById('custom-search-input');
+    const clearBtn    = document.getElementById('custom-clear-btn');
+    const searchBtn   = document.getElementById('custom-search-btn');
+    const dropdown    = document.getElementById('suggestions-dropdown');
+    const resultsArea = document.getElementById('custom-results-area');
+    const tabsEl      = document.getElementById('results-tabs');
+
+    /* ─────────────────────────────────
+       INIT FROM URL
+    ───────────────────────────────── */
+    function initFromUrl() {
+      const params = new URL(location.href).searchParams;
+      const q = params.get('q') || '';
+      const t = params.get('tab') || 'web';
+      if (q) {
+        input.value = q;
+        state.query = q;
+        state.tab = t;
+        updateClearBtn();
+        setActiveTab(t);
+        waitForGcseAndSearch(q, t);
+      }
+    }
+
+    /* ─────────────────────────────────
+       WAIT FOR GCSE THEN SEARCH
+    ───────────────────────────────── */
+    function waitForGcseAndSearch(q, tab) {
+      if (state.gcseReady) {
+        triggerGcseSearch(q, tab);
+      } else {
+        state.pendingSearch = { q, tab };
+      }
+    }
+
+    /* ─────────────────────────────────
+       GCSE READY DETECTION
+       Poll until the hidden GCSE input exists
+    ───────────────────────────────── */
+    let gcseCheckInterval = setInterval(() => {
+      const gcseInput = getGcseInput();
+      if (gcseInput) {
+        clearInterval(gcseCheckInterval);
+        state.gcseReady = true;
+        if (state.pendingSearch) {
+          triggerGcseSearch(state.pendingSearch.q, state.pendingSearch.tab);
+          state.pendingSearch = null;
+        }
+      }
+    }, 100);
+
+    /* ─────────────────────────────────
+       GET GCSE INPUT / FORM
+    ───────────────────────────────── */
+    function getGcseInput() {
+      return document.querySelector('#gcse-hidden-container input.gsc-input');
+    }
+    function getGcseBtn() {
+      return document.querySelector('#gcse-hidden-container .gsc-search-button-v2, #gcse-hidden-container button.gsc-search-button');
+    }
+
+    /* ─────────────────────────────────
+       TRIGGER GCSE SEARCH
+       Sets GCSE input value + fires search
+    ───────────────────────────────── */
+    function triggerGcseSearch(q, tab) {
+      const gcseInput = getGcseInput();
+      if (!gcseInput) return;
+
+      // Set value
+      gcseInput.value = q;
+      gcseInput.dispatchEvent(new Event('input', { bubbles: true }));
+      gcseInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Try using google.search.cse if available
+      if (window.google && google.search && google.search.cse) {
+        try {
+          const element = google.search.cse.element.getElement('searchresults-only0') ||
+                          google.search.cse.element.getAllElements()[0];
+          if (element) {
+            element.execute(q);
+            setupGcseObserver();
+            return;
+          }
+        } catch(e) {}
+      }
+
+      // Fallback: click the GCSE search button
+      const btn = getGcseBtn();
+      if (btn) {
+        setTimeout(() => {
+          btn.click();
+          setupGcseObserver();
+        }, 50);
+      }
+    }
+
+    /* ─────────────────────────────────
+       OBSERVE GCSE RESULTS + SCRAPE
+    ───────────────────────────────── */
+    let gcseObserver = null;
+    function setupGcseObserver() {
+      showLoading();
+      if (gcseObserver) gcseObserver.disconnect();
+
+      const gcseContainer = document.getElementById('gcse-hidden-container');
+      let stableTimer = null;
+
+      gcseObserver = new MutationObserver(() => {
+        clearTimeout(stableTimer);
+        stableTimer = setTimeout(() => {
+          scrapeAndRender();
+        }, 400);
+      });
+
+      gcseObserver.observe(gcseContainer, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+      });
+
+      // Safety timeout
+      setTimeout(() => {
+        scrapeAndRender();
+      }, 4000);
+    }
+
+    /* ─────────────────────────────────
+       SCRAPE GCSE RESULTS
+    ───────────────────────────────── */
+    function scrapeAndRender() {
+      const gcseContainer = document.getElementById('gcse-hidden-container');
+
+      if (state.tab === 'images') {
+        scrapeImages(gcseContainer);
+        return;
+      }
+
+      const resultEls = gcseContainer.querySelectorAll('.gsc-webResult.gsc-result');
+      if (!resultEls.length) {
+        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result');
+        if (noResults) {
+          renderNoResults();
+        }
+        // Still loading, wait
+        return;
+      }
+
+      const results = [];
+      resultEls.forEach(el => {
+        const titleEl    = el.querySelector('.gs-title a, .gs-title');
+        const snippetEl  = el.querySelector('.gs-snippet');
+        const urlEl      = el.querySelector('.gs-visibleUrl, .gsc-url-top');
+        const thumbEl    = el.querySelector('.gs-image img, .gsc-thumbnail img');
+
+        const href    = titleEl ? (titleEl.href || titleEl.getAttribute('data-ctorig') || '') : '';
+        const title   = titleEl ? titleEl.textContent.trim() : '';
+        const snippet = snippetEl ? snippetEl.innerHTML : '';
+        const url     = urlEl ? urlEl.textContent.trim() : (href ? new URL(href).hostname : '');
+        const thumb   = thumbEl ? thumbEl.src : '';
+
+        if (title && href) {
+          results.push({ title, href, snippet, url, thumb });
+        }
+      });
+
+      // Get total count
+      const countEl = gcseContainer.querySelector('.gsc-result-info');
+      const countText = countEl ? countEl.textContent.trim() : '';
+
+      // Get page numbers from GCSE
+      const pageEls = gcseContainer.querySelectorAll('.gsc-cursor-page');
+      const currentPageEl = gcseContainer.querySelector('.gsc-cursor-current-page');
+      const totalPages = pageEls.length;
+      const currentPage = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
+
+      renderWebResults(results, countText, currentPage, totalPages);
+    }
+
+    function scrapeImages(gcseContainer) {
+      // Switch GCSE to image mode by clicking the image tab if available
+      const imageTabs = gcseContainer.querySelectorAll('.gsc-tabHeader, .gsc-refinementHeader');
+      let imageTabClicked = false;
+      imageTabs.forEach(t => {
+        if (t.textContent.toLowerCase().includes('image')) {
+          t.click();
+          imageTabClicked = true;
+        }
+      });
+
+      setTimeout(() => {
+        const imgEls = gcseContainer.querySelectorAll('.gsc-imageResult img, .gs-image img');
+        const imgs = [];
+        imgEls.forEach(img => {
+          const src = img.src || img.getAttribute('data-src');
+          const parent = img.closest('a');
+          const href = parent ? parent.href : '#';
+          const alt = img.alt || '';
+          if (src && !src.includes('data:')) {
+            imgs.push({ src, href, alt });
+          }
+        });
+
+        if (imgs.length) {
+          renderImageResults(imgs);
+        } else {
+          // Fallback: use web results but show thumbnails
+          const webResults = [];
+          gcseContainer.querySelectorAll('.gsc-webResult.gsc-result').forEach(el => {
+            const thumbEl = el.querySelector('.gs-image img, .gsc-thumbnail img');
+            const titleEl = el.querySelector('.gs-title a');
+            if (thumbEl) {
+              webResults.push({
+                src: thumbEl.src,
+                href: titleEl ? titleEl.href : '#',
+                alt: titleEl ? titleEl.textContent.trim() : ''
+              });
+            }
+          });
+          if (webResults.length) {
+            renderImageResults(webResults);
+          } else {
+            renderNoResults();
+          }
+        }
+      }, 600);
+    }
+
+    /* ─────────────────────────────────
+       LIVE SUGGESTIONS via GCSE autocomplete
+    ───────────────────────────────── */
+    let suggestTimeout = null;
+    let lastSuggestQuery = '';
+
+    function fetchSuggestions(q) {
+      if (!q.trim() || q === lastSuggestQuery) return;
+      lastSuggestQuery = q;
+
+      // Mirror to GCSE input to get its autocomplete
+      const gcseInput = getGcseInput();
+      if (gcseInput) {
+        gcseInput.value = q;
+        gcseInput.dispatchEvent(new Event('input', { bubbles: true }));
+        gcseInput.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+      }
+
+      // Also try Google's suggestion API (works on same domain or via jsonp trick)
+      // Use a JSONP call to Google's suggest endpoint
+      const existingScript = document.getElementById('suggest-jsonp');
+      if (existingScript) existingScript.remove();
+
+      window.__suggestCallback = function(data) {
+        if (data && data[1]) {
+          const suggestions = data[1].slice(0, 7).map(s => Array.isArray(s) ? s[0] : s);
+          showSuggestions(suggestions, q);
+        }
+      };
+
+      const script = document.createElement('script');
+      script.id = 'suggest-jsonp';
+      script.src = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}&callback=__suggestCallback`;
+      document.head.appendChild(script);
+
+      // Also scrape GCSE autocomplete dropdown as secondary source
+      setTimeout(() => {
+        const gcseDropdown = document.querySelector('#gcse-hidden-container .gsc-completion-container');
+        if (gcseDropdown) {
+          const items = gcseDropdown.querySelectorAll('.gsc-completion-title');
+          const scraped = Array.from(items).map(el => el.textContent.trim()).filter(Boolean);
+          if (scraped.length) {
+            showSuggestions(scraped, q);
+          }
+        }
+      }, 300);
+    }
+
+    function showSuggestions(items, query) {
+      if (!items || !items.length) {
+        hideSuggestions();
+        return;
+      }
+
+      state.suggestList = items;
+      state.suggestIdx = -1;
+
+      const q = query.toLowerCase();
+      dropdown.innerHTML = items.map((s, i) => {
+        // Bold-match the typed prefix in suggestion text
+        const lower = s.toLowerCase();
+        let display = s;
+        if (lower.startsWith(q)) {
+          display = `<em>${escHtml(s.slice(0, q.length))}</em>${escHtml(s.slice(q.length))}`;
+        } else {
+          display = escHtml(s);
+        }
+        return `
+          <div class="suggestion-item" data-idx="${i}" data-val="${escHtml(s)}">
+            <span class="suggestion-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+            <span class="suggestion-text">${display}</span>
+            <span class="suggestion-arrow">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7M7 7h10v10"/>
+              </svg>
+            </span>
+          </div>`;
+      }).join('');
+
+      dropdown.classList.add('visible');
+
+      // Attach click handlers
+      dropdown.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('mousedown', e => {
+          e.preventDefault();
+          const val = item.getAttribute('data-val');
+          input.value = val;
+          state.query = val;
+          hideSuggestions();
+          updateClearBtn();
+          doSearch(val);
+        });
+      });
+    }
+
+    function hideSuggestions() {
+      dropdown.classList.remove('visible');
+      state.suggestIdx = -1;
+    }
+
+    /* ─────────────────────────────────
+       KEYBOARD NAVIGATION
+    ───────────────────────────────── */
+    input.addEventListener('keydown', e => {
+      const items = dropdown.querySelectorAll('.suggestion-item');
+      if (dropdown.classList.contains('visible') && items.length) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          state.suggestIdx = Math.min(state.suggestIdx + 1, items.length - 1);
+          updateSuggestHighlight(items);
+          if (state.suggestIdx >= 0) input.value = state.suggestList[state.suggestIdx];
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          state.suggestIdx = Math.max(state.suggestIdx - 1, -1);
+          updateSuggestHighlight(items);
+          if (state.suggestIdx >= 0) input.value = state.suggestList[state.suggestIdx];
+          else input.value = state.query;
+          return;
+        }
+        if (e.key === 'Escape') {
+          hideSuggestions();
+          return;
+        }
+      }
+      if (e.key === 'Enter') {
+        hideSuggestions();
+        const q = input.value.trim();
+        if (q) doSearch(q);
+      }
+    });
+
+    function updateSuggestHighlight(items) {
+      items.forEach((el, i) => {
+        el.classList.toggle('active', i === state.suggestIdx);
+      });
+    }
+
+    /* ─────────────────────────────────
+       INPUT EVENTS
+    ───────────────────────────────── */
+    input.addEventListener('input', () => {
+      const val = input.value;
+      state.query = val;
+      updateClearBtn();
+      if (!val.trim()) {
+        hideSuggestions();
+        lastSuggestQuery = '';
+        return;
+      }
+      clearTimeout(suggestTimeout);
+      suggestTimeout = setTimeout(() => fetchSuggestions(val), 120);
+    });
+
+    input.addEventListener('focus', () => {
+      if (input.value.trim() && state.suggestList.length) {
+        dropdown.classList.add('visible');
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.custom-search-wrapper')) hideSuggestions();
+    });
+
+    /* ─────────────────────────────────
+       CLEAR BUTTON
+    ───────────────────────────────── */
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      state.query = '';
+      updateClearBtn();
+      hideSuggestions();
+      input.focus();
+      showEmptyState();
+      updateUrl('', state.tab);
+    });
+
+    function updateClearBtn() {
+      clearBtn.classList.toggle('visible', !!input.value);
+    }
+
+    /* ─────────────────────────────────
+       SEARCH BUTTON
+    ───────────────────────────────── */
+    searchBtn.addEventListener('click', () => {
+      const q = input.value.trim();
+      if (q) {
+        hideSuggestions();
+        doSearch(q);
+      }
+    });
+
+    /* ─────────────────────────────────
+       TABS
+    ───────────────────────────────── */
+    tabsEl.addEventListener('click', e => {
+      const tab = e.target.closest('.results-tab');
+      if (!tab) return;
+      const t = tab.getAttribute('data-tab');
+      state.tab = t;
+      state.page = 1;
+      setActiveTab(t);
+      updateUrl(state.query, t);
+      if (state.query) {
+        // Switch GCSE tab if possible
+        const gcseTabs = document.querySelectorAll('#gcse-hidden-container .gsc-tabHeader');
+        gcseTabs.forEach(gt => {
+          const text = gt.textContent.toLowerCase();
+          if ((t === 'web' && (text.includes('web') || text.includes('all'))) ||
+              (t === 'images' && text.includes('image')) ||
+              (t === 'news' && text.includes('news'))) {
+            gt.click();
+          }
+        });
+        setTimeout(() => scrapeAndRender(), 600);
+      }
+    });
+
+    function setActiveTab(t) {
+      tabsEl.querySelectorAll('.results-tab').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-tab') === t);
+      });
+    }
+
+    /* ─────────────────────────────────
+       DO SEARCH (main entry point)
+    ───────────────────────────────── */
+    function doSearch(q) {
+      state.query = q;
+      state.page = 1;
+      input.value = q;
+      updateClearBtn();
+      updateUrl(q, state.tab);
+      waitForGcseAndSearch(q, state.tab);
+    }
+
+    /* ─────────────────────────────────
+       URL MANAGEMENT
+    ───────────────────────────────── */
+    function updateUrl(q, tab) {
+      const url = new URL(location.href);
+      if (q) {
+        url.searchParams.set('q', q);
+        url.searchParams.set('tab', tab);
+      } else {
+        url.searchParams.delete('q');
+        url.searchParams.delete('tab');
+      }
+      url.hash = '';
+      history.replaceState(null, '', url.toString());
+    }
+
+    /* ─────────────────────────────────
+       RENDER FUNCTIONS
+    ───────────────────────────────── */
+    function showLoading() {
+      resultsArea.innerHTML = `
+        <div class="state-box">
+          <div class="loader-spinner"></div>
+          <p>Searching…</p>
+        </div>`;
+    }
+
+    function showEmptyState() {
+      resultsArea.innerHTML = `
+        <div class="state-box" id="empty-state">
+          <div class="big-icon">🔍</div>
+          <h3>Search anything</h3>
+          <p>Type in the bar above and press Search or Enter</p>
+        </div>`;
+    }
+
+    function renderNoResults() {
+      resultsArea.innerHTML = `
+        <div class="state-box">
+          <div class="big-icon">😶</div>
+          <h3>No results found</h3>
+          <p>Try different keywords or check your spelling</p>
+        </div>`;
+    }
+
+    function renderWebResults(results, countText, currentPage, totalPages) {
+      if (!results.length) { renderNoResults(); return; }
+
+      let html = '';
+      if (countText) {
+        html += `<div class="results-info">${escHtml(countText)}</div>`;
+      }
+
+      results.forEach((r, i) => {
+        let hostname = '';
+        try { hostname = new URL(r.href).hostname.replace('www.', ''); } catch(e) {}
+
+        const faviconUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(r.href)}`;
+        const delay = i * 0.04;
+
+        html += `
+          <div class="result-card" style="animation-delay:${delay}s">
+            <div class="result-card-inner">
+              <div class="result-card-text">
+                <div class="result-site-row">
+                  <img class="result-favicon" src="${escHtml(faviconUrl)}" alt="" loading="lazy" onerror="this.style.display='none'"/>
+                  <span class="result-site-name">${escHtml(hostname)}</span>
+                </div>
+                <div class="result-url">${escHtml(r.url || r.href)}</div>
+                <a class="result-title" href="${escHtml(r.href)}" target="_blank" rel="noopener noreferrer">${escHtml(r.title)}</a>
+                ${r.snippet ? `<div class="result-snippet">${r.snippet}</div>` : ''}
+              </div>
+              ${r.thumb ? `<img class="result-thumbnail" src="${escHtml(r.thumb)}" alt="" loading="lazy" onerror="this.remove()"/>` : ''}
+            </div>
+          </div>`;
+      });
+
+      // Pagination
+      if (totalPages > 1) {
+        html += buildPagination(currentPage, totalPages);
+      }
+
+      resultsArea.innerHTML = html;
+      resultsArea.scrollTop = 0;
+
+      // Attach pagination events
+      resultsArea.querySelectorAll('.page-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const page = parseInt(btn.getAttribute('data-page'));
+          goToPage(page);
+        });
+      });
+    }
+
+    function renderImageResults(imgs) {
+      if (!imgs.length) { renderNoResults(); return; }
+
+      let html = `<div id="image-results-grid">`;
+      imgs.forEach((img, i) => {
+        const delay = i * 0.03;
+        html += `
+          <a class="image-result-item" href="${escHtml(img.href)}" target="_blank" rel="noopener noreferrer" style="animation-delay:${delay}s">
+            <img src="${escHtml(img.src)}" alt="${escHtml(img.alt)}" loading="lazy" onerror="this.closest('.image-result-item').remove()"/>
+            <div class="image-result-label">${escHtml(img.alt || 'Image')}</div>
+          </a>`;
+      });
+      html += `</div>`;
+
+      resultsArea.innerHTML = html;
+    }
+
+    function buildPagination(current, total) {
+      const MAX = 8;
+      let pages = [];
+      for (let i = 1; i <= Math.min(total, MAX); i++) pages.push(i);
+
+      let html = `<div class="results-pagination">`;
+      html += `<button class="page-btn" data-page="${current - 1}" ${current <= 1 ? 'disabled' : ''}>← Prev</button>`;
+      pages.forEach(p => {
+        html += `<button class="page-btn ${p === current ? 'active' : ''}" data-page="${p}">${p}</button>`;
+      });
+      html += `<button class="page-btn" data-page="${current + 1}" ${current >= total ? 'disabled' : ''}>Next →</button>`;
+      html += `</div>`;
+      return html;
+    }
+
+    function goToPage(page) {
+      // Click the corresponding GCSE page button
+      const gcsePages = document.querySelectorAll('#gcse-hidden-container .gsc-cursor-page');
+      gcsePages.forEach(btn => {
+        if (parseInt(btn.textContent) === page) {
+          btn.click();
+          showLoading();
+          setTimeout(() => scrapeAndRender(), 1200);
+        }
+      });
+
+      // Also try the prev/next
+      if (page < state.page) {
+        const prevBtn = document.querySelector('#gcse-hidden-container .gsc-cursor-previous-page');
+        if (prevBtn) { prevBtn.click(); showLoading(); setTimeout(() => scrapeAndRender(), 1200); }
+      } else if (page > state.page) {
+        const nextBtn = document.querySelector('#gcse-hidden-container .gsc-cursor-next-page');
+        if (nextBtn) { nextBtn.click(); showLoading(); setTimeout(() => scrapeAndRender(), 1200); }
+      }
+
+      state.page = page;
+    }
+
+    /* ─────────────────────────────────
+       UTILS
+    ───────────────────────────────── */
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /* ─────────────────────────────────
+       BOOT
+    ───────────────────────────────── */
+    initFromUrl();
+
+  })();
+  </script>
 </body>
 </html>
