@@ -1132,18 +1132,64 @@
     /* ─────────────────────────────────
        URL MANAGEMENT
     ───────────────────────────────── */
-    function updateUrl(q, tab) {
-      const url = new URL(location.href);
-      if (q) {
-        url.searchParams.set('q', q);
-        url.searchParams.set('tab', tab);
-      } else {
-        url.searchParams.delete('q');
-        url.searchParams.delete('tab');
+    function syncGcsQuery() {
+      const hash = window.location.hash;
+  
+      const qMatch = hash.match(/gsc\.q=([^&]*)/);
+      const tabMatch = hash.match(/gsc\.tab=([^&]*)/);
+  
+      const url = new URL(window.location.href);
+  
+      // If no query (e.g. X button pressed), strip back to bare /search
+      if (!qMatch || !qMatch[1]) {
+        url.search = '';
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+        return;
       }
-      url.hash = '';
-      history.replaceState(null, '', url.toString());
+  
+      const gscQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).trim();
+  
+      if (!gscQuery) {
+        url.search = '';
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+        return;
+      }
+  
+      const tab = tabMatch ? tabMatch[1] : '0';
+      const currentQ = url.searchParams.get('q') || '';
+      const currentTab = url.searchParams.get('tab') || '0';
+  
+      if (gscQuery !== currentQ || tab !== currentTab) {
+        url.searchParams.set('q', gscQuery);
+        url.searchParams.set('tab', tab);
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      } else {
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      }
     }
+  
+    const _origPushState = history.pushState.bind(history);
+    const _origReplaceState = history.replaceState.bind(history);
+  
+    history.pushState = function(...args) {
+      _origPushState(...args);
+      setTimeout(syncGcsQuery, 50);
+    };
+    history.replaceState = function(...args) {
+      if (args[2] && String(args[2]).includes('gsc.')) {
+        _origReplaceState(...args);
+        setTimeout(syncGcsQuery, 50);
+      } else {
+        _origReplaceState(...args);
+      }
+    };
+  
+    window.addEventListener('hashchange', syncGcsQuery);
+    window.addEventListener('load', () => setTimeout(syncGcsQuery, 300));
 
     /* ─────────────────────────────────
        RENDER FUNCTIONS
