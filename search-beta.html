@@ -1132,6 +1132,19 @@
     /* ─────────────────────────────────
        URL MANAGEMENT
     ───────────────────────────────── */
+    function updateUrl(q, tab) {
+      const url = new URL(location.href);
+      if (q) {
+        url.searchParams.set('q', q);
+        url.searchParams.set('tab', tab);
+      } else {
+        url.searchParams.delete('q');
+        url.searchParams.delete('tab');
+      }
+      url.hash = '';
+      history.replaceState(null, '', url.toString());
+    }
+
     function syncGcsQuery() {
       const hash = window.location.hash;
   
