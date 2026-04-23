@@ -1397,10 +1397,10 @@
       }
 
       try {
-        const resp = await fetch('https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/ai-chatbot', {
+        const resp = await fetch('https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search-ai', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: q, query: q, prompt: q }),
+          body: JSON.stringify({ message: q, query: q, prompt: q, objective: 'Do not respond like you are chatting. This is a one-time message. Only return information found on the internet and definitions if requested.' }),
           signal: aiAbortController.signal,
         });
 
