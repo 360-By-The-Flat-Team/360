@@ -1397,7 +1397,7 @@
       }
 
       try {
-        const resp = await fetch('/api/ai-chatbot', {
+        const resp = await fetch('https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/ai-chatbot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: q, query: q, prompt: q }),
