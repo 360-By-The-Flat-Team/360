@@ -353,6 +353,7 @@
     .vids-upload-status.error { color: #ef4444; }
     .vids-upload-status.success { color: #22c55e; }
 
+    /* ── Watch overlay ── */
     .vids-watch-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.85);
       backdrop-filter: blur(6px); z-index: 300;
@@ -368,14 +369,58 @@
       transform: translateY(16px); transition: transform .2s;
     }
     .vids-watch-overlay.open .vids-watch-box { transform: translateY(0); }
+
+    /* ── Player area with blurred album art bg ── */
     .vids-player-wrap {
-      width: 100%; background: #020617; position: relative;
+      width: 100%; position: relative;
       padding: 24px 24px 18px;
       display: flex; flex-direction: column; gap: 12px;
+      background: #020617; /* fallback */
+      overflow: hidden;
     }
-    .vids-player-wrap audio {
-      width: 100%;
+    /* blurred album art background layer */
+    .vids-player-bg {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      filter: blur(28px) brightness(0.35) saturate(1.4);
+      transform: scale(1.1); /* hide blur edges */
+      pointer-events: none;
+      transition: background-image .4s ease;
     }
+    /* album art square in player */
+    .vids-player-art {
+      width: 96px; height: 96px; border-radius: 12px;
+      background: linear-gradient(135deg, #22c55e, #0ea5e9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 42px; flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      position: relative;
+    }
+    .vids-player-art img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .vids-player-top {
+      display: flex; align-items: center; gap: 14px;
+      position: relative; /* above bg */
+    }
+    .vids-player-info { flex: 1; min-width: 0; }
+    .vids-player-info .now-playing-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: rgba(229,231,235,.5); margin-bottom: 4px;
+    }
+    #watchNowPlaying {
+      font-size: 15px; font-weight: 700; color: #e5e7eb;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .vids-player-wrap audio { display: none; }
+
+    #customPlayerControls {
+      position: relative; /* above bg */
+      margin-top: 10px; display: flex; flex-direction: column; gap: 8px;
+      color: #e5e7eb; font-size: 13px;
+    }
+
     .vids-watch-info { padding: 20px 24px; }
     .vids-watch-title {
       font-size: 18px; font-weight: 800; color: var(--vid-txt);
@@ -429,87 +474,65 @@
     }
     .vids-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ⭐ Modern waveform */
-    #waveformCanvas {
-      width: 100%;
-      height: 120px;
-      display: block;
-      border-radius: 12px;
-      background: rgba(0,0,0,0.15);
-      margin-top: 10px;
-    }
-    body.dark #waveformCanvas {
-      background: rgba(255,255,255,0.08);
-    }
-
-    /* Thumbnail controls (additive, matches existing UI) */
+    /* Thumbnail controls */
     .thumb-options {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
     }
     .thumb-btn {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--vid-border);
-      background: var(--vid-bg);
-      color: var(--vid-txt);
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .15s;
+      padding: 6px 10px; border-radius: 999px;
+      border: 1px solid var(--vid-border); background: var(--vid-bg);
+      color: var(--vid-txt); font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: .15s;
     }
-    .thumb-btn:hover {
-      border-color: var(--vid-accent);
-      color: var(--vid-accent);
+    .thumb-btn:hover { border-color: var(--vid-accent); color: var(--vid-accent); }
+    .thumb-btn.active-source {
+      border-color: var(--vid-accent); color: var(--vid-accent);
+      background: var(--vid-hover);
     }
-    .thumb-preview {
-      width: 100%;
-      aspect-ratio: 1/1;
-      border-radius: 12px;
-      border: 1px dashed var(--vid-border);
-      background-size: cover;
-      background-position: center;
-      background-color: var(--vid-bg);
+    /* thumbnail preview box */
+    .thumb-preview-wrap {
+      position: relative; width: 100%; aspect-ratio: 1/1;
+      border-radius: 12px; border: 1px dashed var(--vid-border);
+      background: var(--vid-bg); overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
     }
+    .thumb-preview-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: none;
+    }
+    .thumb-preview-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--vid-mut); font-size: 12px;
+    }
+    .thumb-preview-placeholder span { font-size: 28px; }
+    .thumb-source-badge {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(59,130,246,.85); color: #fff;
+      font-size: 10px; font-weight: 700; padding: 3px 8px;
+      border-radius: 999px; display: none;
+    }
+
     .preset-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
       z-index: 350;
     }
     .preset-modal-inner {
-      background: var(--vid-card);
-      border-radius: 16px;
-      border: 1px solid var(--vid-border);
-      padding: 16px;
-      max-width: 420px;
-      width: 100%;
+      background: var(--vid-card); border-radius: 16px;
+      border: 1px solid var(--vid-border); padding: 16px;
+      max-width: 420px; width: 100%;
     }
     .preset-modal-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px; margin-top: 10px;
     }
     .preset-thumb {
-      width: 100%;
-      aspect-ratio: 1/1;
-      border-radius: 10px;
-      object-fit: cover;
-      cursor: pointer;
-      border: 1px solid var(--vid-border);
-      transition: .15s;
+      width: 100%; aspect-ratio: 1/1; border-radius: 10px;
+      object-fit: cover; cursor: pointer;
+      border: 1px solid var(--vid-border); transition: .15s;
     }
-    .preset-thumb:hover {
-      border-color: var(--vid-accent);
-      transform: translateY(-1px);
-    }
+    .preset-thumb:hover { border-color: var(--vid-accent); transform: translateY(-1px); }
 
     @media (max-width: 768px) {
       .vids-sidebar { transform: translateX(-100%); }
@@ -630,6 +653,7 @@
     </main>
   </div>
 
+  <!-- ── Upload Modal ── -->
   <div class="vids-modal-overlay" id="uploadOverlay">
     <div class="vids-modal">
       <h2>🎵 Upload Track</h2>
@@ -669,23 +693,29 @@
         </select>
       </div>
 
-      <!-- When this is fixed, delete this comment!
-      <div class="vids-field">
-        <label>Album (optional)</label>
-        <input type="text" id="trackAlbum" placeholder="Album name (will be created if new)" />
-      </div>
-      -->
-
-      <!-- Thumbnail field (additive, same UI pattern) -->
+      <!-- Thumbnail field -->
       <div class="vids-field">
         <label>Thumbnail</label>
+        <!-- status line shown while extracting -->
+        <div id="thumbExtractStatus" style="font-size:11px;color:var(--vid-mut);margin-bottom:6px;min-height:16px;"></div>
         <div class="thumb-options">
-          <button type="button" class="thumb-btn" id="thumbUploadBtn">Upload Image</button>
-          <button type="button" class="thumb-btn" id="thumbAutoBtn">Auto‑Generate</button>
-          <button type="button" class="thumb-btn" id="thumbPresetBtn">Choose Preset</button>
+          <button type="button" class="thumb-btn" id="thumbUploadBtn">📷 Upload Image</button>
+          <button type="button" class="thumb-btn" id="thumbAutoBtn">✨ Auto-Generate</button>
+          <button type="button" class="thumb-btn" id="thumbPresetBtn">🖼 Choose Preset</button>
+          <button type="button" class="thumb-btn" id="thumbClearBtn" style="display:none;">✕ Clear</button>
         </div>
         <input type="file" id="thumbFileInput" accept="image/*" style="display:none;">
-        <div id="thumbPreview" class="thumb-preview"></div>
+
+        <!-- Preview box -->
+        <div class="thumb-preview-wrap" id="thumbPreviewWrap">
+          <img id="thumbPreviewImg" src="" alt="Thumbnail preview" />
+          <div class="thumb-preview-placeholder" id="thumbPlaceholder">
+            <span>🎵</span>
+            <div>Thumbnail will appear here</div>
+            <div style="font-size:10px;margin-top:2px;color:var(--vid-mut);">Auto-extracted from MP3 art if available</div>
+          </div>
+          <div class="thumb-source-badge" id="thumbSourceBadge"></div>
+        </div>
       </div>
 
       <div class="vids-upload-status" id="uploadStatus"></div>
@@ -697,18 +727,32 @@
     </div>
   </div>
 
+  <!-- ── Watch / Player Modal ── -->
   <div class="vids-watch-overlay" id="watchOverlay">
     <div class="vids-watch-box">
       <div class="vids-player-wrap">
+        <!-- blurred album art background -->
+        <div class="vids-player-bg" id="playerBg"></div>
+
         <button class="vids-watch-close" id="watchCloseBtn">✕</button>
-        <div style="display:flex;align-items:center;gap:12px;color:#e5e7eb;font-size:14px;">
-          <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>
-          <div id="watchNowPlaying" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Now Playing</div>
+
+        <div class="vids-player-top">
+          <!-- album art square -->
+          <div class="vids-player-art" id="playerArt">
+            <img id="playerArtImg" src="" alt="" style="display:none;" />
+            <span id="playerArtEmoji">🎵</span>
+          </div>
+          <div class="vids-player-info">
+            <div class="now-playing-label">Now Playing</div>
+            <div id="watchNowPlaying">—</div>
+          </div>
         </div>
 
-        <!-- custom audio player UI -->
+        <!-- hidden native audio -->
         <audio id="musicPlayer" preload="metadata" style="display:none;"></audio>
-        <div id="customPlayerControls" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;color:#e5e7eb;font-size:13px;">
+
+        <!-- custom controls -->
+        <div id="customPlayerControls">
           <div style="display:flex;align-items:center;gap:10px;">
             <button id="cpPlayPause" class="vids-action-btn">▶️</button>
             <div id="cpTime" style="font-variant-numeric:tabular-nums;">0:00 / 0:00</div>
@@ -729,6 +773,7 @@
           </div>
         </div>
       </div>
+
       <div class="vids-watch-info">
         <div class="vids-watch-title" id="watchTitle"></div>
         <div class="vids-watch-meta" id="watchMeta"></div>
@@ -757,9 +802,13 @@
     </div>
   </div>
 
+  <!-- Mini player -->
   <div id="miniPlayer"
        style="position:fixed;left:0;right:0;bottom:0;height:56px;background:rgba(15,23,42,.96);color:#e5e7eb;display:none;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid rgba(148,163,184,.4);z-index:250;">
-    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;">🎵</div>
+    <div id="miniArt" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0;">
+      <img id="miniArtImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;" />
+      <span id="miniArtEmoji">🎵</span>
+    </div>
     <div style="flex:1;min-width:0;">
       <div id="miniTitle" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Now Playing</div>
     </div>
@@ -780,83 +829,68 @@
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    let currentUser  = null;
-    let allTracks    = [];
-    let allAlbums    = [];
-    let currentTrack = null;
-    let activeFilter = 'all';
-    let activeView   = 'home';
-    let searchQuery  = '';
-    let selectedAudioFile = null;
-    let currentAlbumId = null;
-    let isSeeking = false;
+    let currentUser      = null;
+    let allTracks        = [];
+    let allAlbums        = [];
+    let currentTrack     = null;
+    let activeFilter     = 'all';
+    let activeView       = 'home';
+    let searchQuery      = '';
+    let selectedAudioFile= null;
+    let currentAlbumId   = null;
+    let isSeeking        = false;
 
-    // thumbnail state
-    function extractThumbnailFromAudio(file) {
-      return new Promise((resolve) => {
-        window.jsmediatags.read(file, {
-          onSuccess: function(tag) {
-            const picture = tag.tags.picture;
-            if (picture) {
-              const base64String = new Uint8Array(picture.data)
-              .reduce((data, byte) => data + String.fromCharCode(byte), '');
-            
-            const imageUrl = `data:${picture.format};base64,${btoa(base64String)}`;
-    
-              fetch(imageUrl)
-                .then(res => res.blob())
-                .then(blob => {
-                  const file = new File([blob], "cover.png", { type: blob.type });
-                  resolve(file);
-                });
-    
-            } else {
-              resolve(null);
-            }
-          },
-          onError: function() {
-            resolve(null);
-          }
-        });
-      });
-    }
-    
-    let selectedThumbnailFile = null;
-    let selectedThumbnailPreset = null;
+    // ── Thumbnail state ──────────────────────────────────────────────────────
+    // Source priority: 'custom' > 'auto-gen' > 'preset' > 'embedded' > none
+    let thumbFile       = null;   // File object to upload
+    let thumbPreviewURL = null;   // object URL for preview (revoked after use)
+    let thumbSource     = null;   // 'embedded' | 'custom' | 'auto' | 'preset'
+    let thumbPresetSrc  = null;   // preset URL string (no upload needed)
 
-    const grid         = document.getElementById('vidsGrid');
-    const uploadOverlay= document.getElementById('uploadOverlay');
-    const watchOverlay = document.getElementById('watchOverlay');
-    const player       = document.getElementById('musicPlayer');
-    const toast        = document.getElementById('vidsToast');
-    const avatarBtn    = document.getElementById('vids-avatar');
-    const progressWrap = document.getElementById('progressWrap');
-    const progressBar  = document.getElementById('progressBar');
-    const uploadStatus = document.getElementById('uploadStatus');
-    const fileChosen   = document.getElementById('fileChosen');
-    const submitBtn    = document.getElementById('submitUploadBtn');
-    const trackAlbumInput = document.getElementById('trackAlbum');
+    // DOM refs ────────────────────────────────────────────────────────────────
+    const grid          = document.getElementById('vidsGrid');
+    const uploadOverlay = document.getElementById('uploadOverlay');
+    const watchOverlay  = document.getElementById('watchOverlay');
+    const player        = document.getElementById('musicPlayer');
+    const toast         = document.getElementById('vidsToast');
+    const avatarBtn     = document.getElementById('vids-avatar');
+    const progressWrap  = document.getElementById('progressWrap');
+    const progressBar   = document.getElementById('progressBar');
+    const uploadStatus  = document.getElementById('uploadStatus');
+    const fileChosen    = document.getElementById('fileChosen');
+    const submitBtn     = document.getElementById('submitUploadBtn');
 
-    const downloadBtn   = document.getElementById('downloadBtn');
-    const commentsList  = document.getElementById('commentsList');
-    const commentInput  = document.getElementById('commentInput');
-    const commentSubmit = document.getElementById('commentSubmitBtn');
+    const downloadBtn    = document.getElementById('downloadBtn');
+    const commentsList   = document.getElementById('commentsList');
+    const commentInput   = document.getElementById('commentInput');
+    const commentSubmit  = document.getElementById('commentSubmitBtn');
 
-    const miniPlayer    = document.getElementById('miniPlayer');
-    const miniTitle     = document.getElementById('miniTitle');
-    const miniPlayPause = document.getElementById('miniPlayPause');
+    const miniPlayer     = document.getElementById('miniPlayer');
+    const miniTitle      = document.getElementById('miniTitle');
+    const miniPlayPause  = document.getElementById('miniPlayPause');
+    const miniArtImg     = document.getElementById('miniArtImg');
+    const miniArtEmoji   = document.getElementById('miniArtEmoji');
 
-    const cpPlayPause = document.getElementById('cpPlayPause');
-    const cpSeek      = document.getElementById('cpSeek');
-    const cpVolume    = document.getElementById('cpVolume');
-    const cpTime      = document.getElementById('cpTime');
-    const cpSpeed     = document.getElementById('cpSpeed');
+    const cpPlayPause    = document.getElementById('cpPlayPause');
+    const cpSeek         = document.getElementById('cpSeek');
+    const cpVolume       = document.getElementById('cpVolume');
+    const cpTime         = document.getElementById('cpTime');
+    const cpSpeed        = document.getElementById('cpSpeed');
 
-    const thumbUploadBtn  = document.getElementById('thumbUploadBtn');
-    const thumbAutoBtn    = document.getElementById('thumbAutoBtn');
-    const thumbPresetBtn  = document.getElementById('thumbPresetBtn');
-    const thumbFileInput  = document.getElementById('thumbFileInput');
-    const thumbPreview    = document.getElementById('thumbPreview');
+    const playerBg       = document.getElementById('playerBg');
+    const playerArtImg   = document.getElementById('playerArtImg');
+    const playerArtEmoji = document.getElementById('playerArtEmoji');
+
+    const thumbUploadBtn     = document.getElementById('thumbUploadBtn');
+    const thumbAutoBtn       = document.getElementById('thumbAutoBtn');
+    const thumbPresetBtn     = document.getElementById('thumbPresetBtn');
+    const thumbClearBtn      = document.getElementById('thumbClearBtn');
+    const thumbFileInput     = document.getElementById('thumbFileInput');
+    const thumbPreviewWrap   = document.getElementById('thumbPreviewWrap');
+    const thumbPreviewImg    = document.getElementById('thumbPreviewImg');
+    const thumbPlaceholder   = document.getElementById('thumbPlaceholder');
+    const thumbSourceBadge   = document.getElementById('thumbSourceBadge');
+    const thumbExtractStatus = document.getElementById('thumbExtractStatus');
 
     const presetThumbs = [
       '/assets/music/preset1.png',
@@ -865,269 +899,381 @@
       '/assets/music/preset4.png'
     ];
 
-    function showToast(msg, dur = 2800) {
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), dur);
+    // ── Thumbnail preview helpers ─────────────────────────────────────────────
+    function setThumbPreview(url, source, label) {
+      // Revoke previous blob URL if any
+      if (thumbPreviewURL && thumbPreviewURL.startsWith('blob:')) {
+        URL.revokeObjectURL(thumbPreviewURL);
+      }
+      thumbPreviewURL = url;
+      thumbSource     = source;
+
+      thumbPreviewImg.src = url;
+      thumbPreviewImg.style.display = 'block';
+      thumbPlaceholder.style.display = 'none';
+      thumbSourceBadge.textContent   = label;
+      thumbSourceBadge.style.display = 'block';
+      thumbClearBtn.style.display    = 'inline-flex';
+
+      // Highlight active source button
+      [thumbUploadBtn, thumbAutoBtn, thumbPresetBtn].forEach(b => b.classList.remove('active-source'));
+      if (source === 'custom') thumbUploadBtn.classList.add('active-source');
+      if (source === 'auto')   thumbAutoBtn.classList.add('active-source');
+      if (source === 'preset') thumbPresetBtn.classList.add('active-source');
     }
 
-    async function initAuth() {
-      const { data: { session } } = await sb.auth.getSession();
-      currentUser = session?.user ?? null;
-      updateAvatar();
+    function clearThumbPreview() {
+      if (thumbPreviewURL && thumbPreviewURL.startsWith('blob:')) {
+        URL.revokeObjectURL(thumbPreviewURL);
+      }
+      thumbPreviewURL = null;
+      thumbSource     = null;
+      thumbPresetSrc  = null;
+      thumbFile       = null;
+
+      thumbPreviewImg.src            = '';
+      thumbPreviewImg.style.display  = 'none';
+      thumbPlaceholder.style.display = 'flex';
+      thumbSourceBadge.style.display = 'none';
+      thumbClearBtn.style.display    = 'none';
+      thumbExtractStatus.textContent = '';
+      [thumbUploadBtn, thumbAutoBtn, thumbPresetBtn].forEach(b => b.classList.remove('active-source'));
     }
 
-    function updateAvatar() {
-      if (currentUser) {
-        const initials = (currentUser.email || 'U')[0].toUpperCase();
-        avatarBtn.textContent = initials;
-        avatarBtn.title = currentUser.email;
-      } else {
-        avatarBtn.textContent = '?';
-        avatarBtn.title = 'Not signed in';
+    thumbClearBtn.addEventListener('click', clearThumbPreview);
+
+    // ── Extract embedded art from audio file ──────────────────────────────────
+    function extractThumbnailFromAudio(file) {
+      return new Promise((resolve) => {
+        if (!window.jsmediatags) { resolve(null); return; }
+        window.jsmediatags.read(file, {
+          onSuccess(tag) {
+            const picture = tag.tags.picture;
+            if (!picture) { resolve(null); return; }
+            try {
+              const base64 = new Uint8Array(picture.data)
+                .reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+              const dataUrl = `data:${picture.format};base64,${btoa(base64)}`;
+              // Convert to a File so we can upload it
+              fetch(dataUrl)
+                .then(r => r.blob())
+                .then(blob => {
+                  const artFile = new File([blob], 'cover.png', { type: blob.type });
+                  resolve({ file: artFile, url: dataUrl });
+                })
+                .catch(() => resolve(null));
+            } catch {
+              resolve(null);
+            }
+          },
+          onError() { resolve(null); }
+        });
+      });
+    }
+
+    // ── Handle audio file selection ───────────────────────────────────────────
+    async function handleFileSelected(file) {
+      if (!file.type.startsWith('audio/')) { showToast('⚠️ Please select an audio file.'); return; }
+      if (file.size > 100 * 1024 * 1024) { showToast('⚠️ Max file size is 100MB.'); return; }
+
+      selectedAudioFile = file;
+      fileChosen.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
+      fileChosen.style.display = 'block';
+
+      const titleInput = document.getElementById('trackTitle');
+      if (!titleInput.value) {
+        titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      }
+
+      // Only auto-extract if the user hasn't manually chosen a thumbnail yet
+      if (thumbSource === null) {
+        thumbExtractStatus.textContent = '🔍 Scanning for embedded album art…';
+        const result = await extractThumbnailFromAudio(file);
+        if (result) {
+          thumbFile = result.file;
+          thumbPresetSrc = null;
+          setThumbPreview(result.url, 'embedded', '🎨 From MP3');
+          thumbExtractStatus.textContent = '✅ Album art found and set as thumbnail';
+        } else {
+          thumbExtractStatus.textContent = 'No embedded art found — you can add one below';
+        }
       }
     }
 
-    avatarBtn.addEventListener('click', () => {
-      const popup = document.getElementById('auth-popup');
-      if (popup) {
-        popup.classList.remove('hidden');
-      } else {
-        showToast('Sign in via 360 account popup.');
-      }
+    // ── Thumbnail button: Upload custom image ─────────────────────────────────
+    thumbUploadBtn.addEventListener('click', () => thumbFileInput.click());
+
+    thumbFileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showToast('⚠️ Please select an image file.'); return; }
+      thumbFile      = file;
+      thumbPresetSrc = null;
+      setThumbPreview(URL.createObjectURL(file), 'custom', '📷 Custom');
+      thumbExtractStatus.textContent = '';
+      // reset so next audio pick won't override user's choice
     });
 
-    sb.auth.onAuthStateChange((_e, session) => {
-      currentUser = session?.user ?? null;
-      updateAvatar();
+    // ── Thumbnail button: Auto-generate waveform art ──────────────────────────
+    thumbAutoBtn.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600; canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, 600, 600);
+
+      const bars = 48;
+      const barW = 600 / (bars * 1.5);
+      for (let i = 0; i < bars; i++) {
+        const h = Math.random() * 360 + 60;
+        const x = i * barW * 1.5 + barW * 0.25;
+        const y = 600 - h;
+        const grad = ctx.createLinearGradient(x, y, x, 600);
+        grad.addColorStop(0, '#3b82f6');
+        grad.addColorStop(1, '#06b6d4');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, h, 4);
+        ctx.fill();
+      }
+
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        thumbFile      = new File([blob], 'auto.png', { type: 'image/png' });
+        thumbPresetSrc = null;
+        setThumbPreview(URL.createObjectURL(blob), 'auto', '✨ Auto-Generated');
+        thumbExtractStatus.textContent = '';
+      }, 'image/png');
     });
 
-    function showSkeletons() {
-      grid.innerHTML = Array(6).fill(0).map(() => `
-        <div class="vids-card vids-skeleton">
-          <div class="skel-thumb"></div>
-          <div class="vids-card-body">
-            <div class="skel-line" style="width:${70+Math.random()*20|0}%"></div>
-            <div class="skel-line short"></div>
-          </div>
-        </div>`).join('');
-    }
-
-    function renderAuthGate(action) {
-      grid.innerHTML = `
-        <div class="vids-auth-gate" style="grid-column:1/-1">
-          <div style="font-size:48px">🔐</div>
-          <h3>Sign in to ${action}</h3>
-          <p>Create a 360 account to access this feature.</p>
-          <button class="vids-btn primary" onclick="document.getElementById('auth-popup')?.classList.remove('hidden')">Sign In</button>
+    // ── Thumbnail button: Choose preset ──────────────────────────────────────
+    thumbPresetBtn.addEventListener('click', () => {
+      const wrap = document.createElement('div');
+      wrap.className = 'preset-modal';
+      wrap.innerHTML = `
+        <div class="preset-modal-inner">
+          <div style="font-size:13px;font-weight:600;color:var(--vid-txt);margin-bottom:4px;">Choose a preset thumbnail</div>
+          <div style="font-size:12px;color:var(--vid-mut);">Static images from your assets folder.</div>
+          <div class="preset-modal-grid"></div>
         </div>`;
-    }
+      const gridEl = wrap.querySelector('.preset-modal-grid');
+      presetThumbs.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.className = 'preset-thumb';
+        img.addEventListener('click', () => {
+          thumbFile      = null;
+          thumbPresetSrc = src;
+          setThumbPreview(src, 'preset', '🖼 Preset');
+          thumbExtractStatus.textContent = '';
+          document.body.removeChild(wrap);
+        });
+        gridEl.appendChild(img);
+      });
+      wrap.addEventListener('click', e => { if (e.target === wrap) document.body.removeChild(wrap); });
+      document.body.appendChild(wrap);
+    });
 
-    function trackCard(t) {
-      const ago = timeAgo(t.created_at);
-      const user = t.username || 'Anonymous';
-      const initials = user[0].toUpperCase();
-      const plays = formatNum(t.views || 0);
-      return `
-        <div class="vids-card" data-id="${t.id}">
-          <div class="vids-thumb">
-            ${
-              t.thumbnail_url
-                ? `<img src="${escHtml(t.thumbnail_url)}" alt="${escHtml(t.title)}" />`
-                : `<div class="vids-thumb-placeholder">🎵</div>`
-            }
-            ${t.duration ? `<div class="vids-duration">${escHtml(t.duration)}</div>` : ''}
-          </div>
-          <div class="vids-card-body">
-            <div class="vids-card-title">${escHtml(t.title)}</div>
-            <div class="vids-card-meta">
-              <div class="vids-card-avatar">${initials}</div>
-              <span>${escHtml(user)}</span>
-              <span class="vids-card-dot">·</span>
-              <span>${plays} plays</span>
-              <span class="vids-card-dot">·</span>
-              <span>${ago}</span>
-            </div>
-          </div>
-        </div>`;
-    }
+    // ── Dropzone ──────────────────────────────────────────────────────────────
+    const dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault(); dropzone.classList.remove('drag-over');
+      const file = e.dataTransfer?.files[0];
+      if (file) handleFileSelected(file);
+    });
+    document.getElementById('audioFile').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) handleFileSelected(file);
+    });
 
-    function albumCard(a) {
-      const ago = timeAgo(a.created_at);
-      return `
-        <div class="vids-card vids-album-card" data-album-id="${a.id}">
-          <div class="vids-thumb">
-            ${
-              a.cover_url
-                ? `<img src="${escHtml(a.cover_url)}" alt="${escHtml(a.title)}" />`
-                : `<div class="vids-thumb-placeholder">📀</div>`
-            }
-          </div>
-          <div class="vids-card-body">
-            <div class="vids-card-title">${escHtml(a.title)}</div>
-            <div class="vids-card-meta">
-              <span>${escHtml(a.username || 'Unknown')}</span>
-              <span class="vids-card-dot">·</span>
-              <span>${ago}</span>
-            </div>
-          </div>
-        </div>`;
-    }
+    // ── Upload submit ─────────────────────────────────────────────────────────
+    submitBtn.addEventListener('click', async () => {
+      if (!currentUser) { showToast('Sign in first.'); return; }
 
-    async function loadComments(trackId) {
-      commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">Loading comments…</span>';
-      const { data, error } = await sb
-        .from('comments')
-        .select('*')
-        .eq('track_id', trackId)
-        .order('created_at', { ascending: true });
+      const file     = selectedAudioFile;
+      const title    = document.getElementById('trackTitle').value.trim();
+      const desc     = document.getElementById('trackDesc').value.trim();
+      const category = document.getElementById('trackCategory').value;
 
-      if (error) {
-        commentsList.innerHTML = '<span style="font-size:12px;color:#ef4444;">Failed to load comments.</span>';
-        return;
-      }
+      if (!file)  { setUploadStatus('⚠️ Please select an audio file.', 'error'); return; }
+      if (!title) { setUploadStatus('⚠️ Title is required.', 'error'); return; }
 
-      if (!data.length) {
-        commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">No comments yet. Be the first!</span>';
-        return;
-      }
+      submitBtn.disabled = true;
+      progressWrap.style.display = 'block';
+      setUploadStatus('Uploading track…');
 
-      commentsList.innerHTML = data.map(c => `
-        <div style="font-size:13px;">
-          <strong>${escHtml(c.username || 'User')}</strong>
-          <span style="color:var(--vid-mut);font-size:11px;"> · ${timeAgo(c.created_at)}</span>
-          <div>${escHtml(c.body)}</div>
-        </div>
-      `).join('');
-    }
+      // Get duration
+      let duration = null;
+      try {
+        const tmpUrl = URL.createObjectURL(file);
+        const aud = document.createElement('audio');
+        aud.preload = 'metadata';
+        await new Promise(res => { aud.onloadedmetadata = res; aud.src = tmpUrl; });
+        const secs = Math.round(aud.duration || 0);
+        duration = `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
+        URL.revokeObjectURL(tmpUrl);
+      } catch {}
 
-    commentSubmit.addEventListener('click', async () => {
-      if (!currentUser) { showToast('Sign in to comment.'); return; }
-      if (!currentTrack || !currentTrack.id) { showToast('Track not loaded yet.'); return; }
-
-      const body = commentInput.value.trim();
-      if (!body) return;
-
-      commentSubmit.disabled = true;
-
-      const username = currentUser.email?.split('@')[0] || 'Anonymous';
-      const { error } = await sb.from('comments').insert({
-        track_id: currentTrack.id,
-        user_id: currentUser.id,
-        username,
-        body
+      // Upload audio
+      const fileName = `${currentUser.id}/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
+      const { error: upErr } = await sb.storage.from('music').upload(fileName, file, {
+        cacheControl: '3600', upsert: false,
+        onUploadProgress(e) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = pct + '%';
+          setUploadStatus(`Uploading… ${pct}%`);
+        }
       });
 
-      if (error) {
-        console.log(error);
-        showToast('⚠️ Failed to post comment.');
-        commentSubmit.disabled = false;
+      if (upErr) {
+        setUploadStatus('⚠️ Upload failed: ' + upErr.message, 'error');
+        submitBtn.disabled = false;
         return;
       }
 
-      commentInput.value = '';
-      await loadComments(currentTrack.id);
-      commentSubmit.disabled = false;
+      progressBar.style.width = '100%';
+      setUploadStatus('Saving track info…');
+
+      const { data: urlData } = sb.storage.from('music').getPublicUrl(fileName);
+      const audio_url = urlData.publicUrl;
+
+      // Upload thumbnail
+      let thumbnail_url = null;
+      try {
+        if (thumbFile) {
+          setUploadStatus('Uploading thumbnail…');
+          const ext  = thumbFile.name.split('.').pop() || 'png';
+          const path = `${currentUser.id}/thumb_${Date.now()}.${ext}`;
+          const { data: tData, error: tErr } = await sb.storage
+            .from('thumbnails')
+            .upload(path, thumbFile, { cacheControl: '3600', upsert: false });
+          if (!tErr && tData) {
+            const { data: tUrlData } = sb.storage.from('thumbnails').getPublicUrl(tData.path);
+            thumbnail_url = tUrlData.publicUrl;
+          }
+        } else if (thumbPresetSrc) {
+          // Preset is a relative URL — store as-is (no upload needed)
+          thumbnail_url = thumbPresetSrc;
+        }
+      } catch (e) {
+        console.warn('Thumbnail upload error', e);
+      }
+
+      setUploadStatus('Finalising…');
+
+      const username = currentUser.email?.split('@')[0] || 'Anonymous';
+      const { error: insErr } = await sb.from('music_files').insert({
+        user_id: currentUser.id,
+        username,
+        title,
+        description: desc,
+        category,
+        audio_url,
+        duration,
+        views: 0,
+        likes: [],
+        thumbnail_url
+      });
+
+      if (insErr) {
+        setUploadStatus('⚠️ Failed to save: ' + insErr.message, 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+
+      setUploadStatus('✅ Track uploaded!', 'success');
+      showToast('🎵 Track uploaded successfully!');
+      setTimeout(() => { closeUpload(); fetchTracks(); }, 1200);
     });
 
-    downloadBtn.addEventListener('click', () => {
-      if (!currentTrack) return;
-      const a = document.createElement('a');
-      a.href = currentTrack.audio_url;
-      a.download = (currentTrack.title || 'track') + '.mp3';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+    // ── Upload modal helpers ──────────────────────────────────────────────────
+    document.getElementById('openUploadBtn').addEventListener('click', () => {
+      if (!currentUser) { showToast('Sign in to upload tracks.'); return; }
+      uploadOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
     });
 
-    function formatTime(sec) {
-      sec = Math.floor(sec || 0);
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return m + ':' + s.toString().padStart(2, '0');
+    document.getElementById('cancelUploadBtn').addEventListener('click', closeUpload);
+    uploadOverlay.addEventListener('click', e => { if (e.target === uploadOverlay) closeUpload(); });
+
+    function closeUpload() {
+      uploadOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+      resetUploadForm();
     }
 
-    cpPlayPause.addEventListener('click', () => {
-      if (!player.src) return;
-      if (player.paused) {
-        player.play();
+    function resetUploadForm() {
+      document.getElementById('audioFile').value   = '';
+      selectedAudioFile = null;
+      document.getElementById('trackTitle').value  = '';
+      document.getElementById('trackDesc').value   = '';
+      document.getElementById('trackCategory').value = 'Other';
+      fileChosen.style.display   = 'none';
+      fileChosen.textContent     = '';
+      progressWrap.style.display = 'none';
+      progressBar.style.width    = '0%';
+      setUploadStatus('', '');
+      submitBtn.disabled = false;
+      clearThumbPreview();
+    }
+
+    function setUploadStatus(msg, type = '') {
+      uploadStatus.textContent = msg;
+      uploadStatus.className = 'vids-upload-status' + (type ? ' ' + type : '');
+    }
+
+    // ── Player album art helper ───────────────────────────────────────────────
+    function setPlayerArt(thumbnailUrl) {
+      if (thumbnailUrl) {
+        playerArtImg.src           = thumbnailUrl;
+        playerArtImg.style.display = 'block';
+        playerArtEmoji.style.display = 'none';
+        playerBg.style.backgroundImage = `url(${thumbnailUrl})`;
+
+        miniArtImg.src            = thumbnailUrl;
+        miniArtImg.style.display  = 'block';
+        miniArtEmoji.style.display = 'none';
       } else {
-        player.pause();
+        playerArtImg.style.display   = 'none';
+        playerArtEmoji.style.display = 'block';
+        playerBg.style.backgroundImage = '';
+
+        miniArtImg.style.display    = 'none';
+        miniArtEmoji.style.display  = 'block';
       }
-    });
+    }
 
-    cpSeek.addEventListener('input', () => {
-      isSeeking = true;
-    });
-
-    cpSeek.addEventListener('change', () => {
-      if (!player.duration) return;
-      const pct = cpSeek.value / 100;
-      player.currentTime = pct * player.duration;
-      isSeeking = false;
-    });
-
-    cpVolume.addEventListener('input', () => {
-      player.volume = parseFloat(cpVolume.value);
-    });
-
-    cpSpeed.addEventListener('change', () => {
-      player.playbackRate = parseFloat(cpSpeed.value);
-    });
-
-    player.addEventListener('timeupdate', () => {
-      if (!player.duration) return;
-      if (!isSeeking) {
-        cpSeek.value = (player.currentTime / player.duration) * 100;
-      }
-      cpTime.textContent = `${formatTime(player.currentTime)} / ${formatTime(player.duration)}`;
-    });
-
-    player.addEventListener('play', () => {
-      cpPlayPause.textContent = '⏸';
-      miniPlayPause.textContent = '⏸';
-      if (player.src) miniPlayer.style.display = 'flex';
-    });
-
-    player.addEventListener('pause', () => {
-      cpPlayPause.textContent = '▶️';
-      miniPlayPause.textContent = '▶️';
-    });
-
-    miniPlayPause.addEventListener('click', () => {
-      if (!player.src) return;
-      if (player.paused) {
-        player.play();
-      } else {
-        player.pause();
-      }
-    });
-
+    // ── Watch overlay ─────────────────────────────────────────────────────────
     async function openWatch(id) {
       const track = allTracks.find(t => t.id === id);
       if (!track) return;
       currentTrack = track;
 
-      document.getElementById('watchTitle').textContent = track.title;
-      document.getElementById('watchDesc').textContent = track.description || 'No description.';
-      document.getElementById('watchNowPlaying').textContent = 'Now Playing · ' + track.title;
+      document.getElementById('watchTitle').textContent  = track.title;
+      document.getElementById('watchDesc').textContent   = track.description || 'No description.';
+      document.getElementById('watchNowPlaying').textContent = track.title;
 
-      const ago = timeAgo(track.created_at);
-      const user = track.username || 'Anonymous';
+      const ago   = timeAgo(track.created_at);
+      const user  = track.username || 'Anonymous';
       const plays = formatNum((track.views || 0) + 1);
       document.getElementById('watchMeta').innerHTML =
         `<span>${escHtml(user)}</span><span>·</span><span>${plays} plays</span><span>·</span><span>${ago}</span><span>·</span><span>${escHtml(track.category||'Other')}</span>`;
 
       const likedByMe = currentUser && (track.likes||[]).includes(currentUser.id);
-      const likeBtn = document.getElementById('likeBtn');
+      const likeBtn   = document.getElementById('likeBtn');
       likeBtn.className = 'vids-action-btn' + (likedByMe ? ' liked' : '');
       document.getElementById('likeCount').textContent = (track.likes||[]).length;
+
+      // Set album art in player
+      setPlayerArt(track.thumbnail_url || null);
 
       player.src = track.audio_url;
       player.load();
       player.play().catch(() => {});
-
-      cpSeek.value = 0;
+      cpSeek.value      = 0;
       cpTime.textContent = '0:00 / 0:00';
 
       watchOverlay.classList.add('open');
@@ -1136,6 +1282,7 @@
       miniTitle.textContent = track.title;
       miniPlayer.style.display = 'flex';
 
+      // Increment views
       sb.from('music_files')
         .update({ views: (track.views || 0) + 1 })
         .eq('id', id)
@@ -1155,29 +1302,24 @@
     function closeWatch() {
       watchOverlay.classList.remove('open');
       document.body.style.overflow = '';
-      // keep audio playing for mini-player
     }
 
     document.getElementById('watchCloseBtn').addEventListener('click', closeWatch);
     watchOverlay.addEventListener('click', e => { if (e.target === watchOverlay) closeWatch(); });
 
+    // ── Like / Share / Download ───────────────────────────────────────────────
     document.getElementById('likeBtn').addEventListener('click', async () => {
       if (!currentUser) { showToast('Sign in to like tracks.'); return; }
       if (!currentTrack) return;
-
       const likes = [...(currentTrack.likes || [])];
-      const idx = likes.indexOf(currentUser.id);
+      const idx   = likes.indexOf(currentUser.id);
       if (idx > -1) likes.splice(idx, 1); else likes.push(currentUser.id);
-
       const { error } = await sb.from('music_files').update({ likes }).eq('id', currentTrack.id);
       if (error) { showToast('⚠️ Could not update like.'); return; }
-
       currentTrack.likes = likes;
       const likedByMe = likes.includes(currentUser.id);
-      const likeBtn = document.getElementById('likeBtn');
-      likeBtn.className = 'vids-action-btn' + (likedByMe ? ' liked' : '');
+      document.getElementById('likeBtn').className = 'vids-action-btn' + (likedByMe ? ' liked' : '');
       document.getElementById('likeCount').textContent = likes.length;
-
       const t = allTracks.find(t => t.id === currentTrack.id);
       if (t) t.likes = likes;
     });
@@ -1188,307 +1330,98 @@
       navigator.clipboard.writeText(url).then(() => showToast('🔗 Link copied!')).catch(() => showToast('Share: ' + url));
     });
 
-    document.getElementById('openUploadBtn').addEventListener('click', () => {
-      if (!currentUser) { showToast('Sign in to upload tracks.'); return; }
-      uploadOverlay.classList.add('open');
-      document.body.style.overflow = 'hidden';
+    downloadBtn.addEventListener('click', () => {
+      if (!currentTrack) return;
+      const a = document.createElement('a');
+      a.href = currentTrack.audio_url;
+      a.download = (currentTrack.title || 'track') + '.mp3';
+      document.body.appendChild(a); a.click(); a.remove();
     });
 
-    document.getElementById('cancelUploadBtn').addEventListener('click', closeUpload);
-    uploadOverlay.addEventListener('click', e => { if (e.target === uploadOverlay) closeUpload(); });
-
-    function closeUpload() {
-      uploadOverlay.classList.remove('open');
-      document.body.style.overflow = '';
-      resetUploadForm();
+    // ── Custom player controls ────────────────────────────────────────────────
+    function formatTime(sec) {
+      sec = Math.floor(sec || 0);
+      return Math.floor(sec/60) + ':' + (sec%60).toString().padStart(2,'0');
     }
 
-    function resetUploadForm() {
-      document.getElementById('audioFile').value = '';
-      selectedAudioFile = null;
-      document.getElementById('trackTitle').value = '';
-      document.getElementById('trackDesc').value = '';
-      document.getElementById('trackCategory').value = 'Other';
-      if (trackAlbumInput) trackAlbumInput.value = '';
-      fileChosen.style.display = 'none';
-      fileChosen.textContent = '';
-      progressWrap.style.display = 'none';
-      progressBar.style.width = '0%';
-      setUploadStatus('', '');
-      submitBtn.disabled = false;
+    cpPlayPause.addEventListener('click', () => {
+      if (!player.src) return;
+      player.paused ? player.play() : player.pause();
+    });
 
-      // reset thumbnail state
-      selectedThumbnailFile = null;
-      selectedThumbnailPreset = null;
-      thumbPreview.style.backgroundImage = '';
+    cpSeek.addEventListener('input', () => { isSeeking = true; });
+    cpSeek.addEventListener('change', () => {
+      if (!player.duration) return;
+      player.currentTime = (cpSeek.value / 100) * player.duration;
+      isSeeking = false;
+    });
+    cpVolume.addEventListener('input', () => { player.volume = parseFloat(cpVolume.value); });
+    cpSpeed.addEventListener('change', () => { player.playbackRate = parseFloat(cpSpeed.value); });
+
+    player.addEventListener('timeupdate', () => {
+      if (!player.duration) return;
+      if (!isSeeking) cpSeek.value = (player.currentTime / player.duration) * 100;
+      cpTime.textContent = `${formatTime(player.currentTime)} / ${formatTime(player.duration)}`;
+    });
+
+    player.addEventListener('play', () => {
+      cpPlayPause.textContent  = '⏸';
+      miniPlayPause.textContent = '⏸';
+      if (player.src) miniPlayer.style.display = 'flex';
+    });
+    player.addEventListener('pause', () => {
+      cpPlayPause.textContent  = '▶️';
+      miniPlayPause.textContent = '▶️';
+    });
+
+    miniPlayPause.addEventListener('click', () => {
+      if (!player.src) return;
+      player.paused ? player.play() : player.pause();
+    });
+
+    // ── Comments ──────────────────────────────────────────────────────────────
+    async function loadComments(trackId) {
+      commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">Loading comments…</span>';
+      const { data, error } = await sb
+        .from('comments').select('*').eq('track_id', trackId)
+        .order('created_at', { ascending: true });
+
+      if (error) { commentsList.innerHTML = '<span style="font-size:12px;color:#ef4444;">Failed to load.</span>'; return; }
+      if (!data.length) { commentsList.innerHTML = '<span style="font-size:12px;color:var(--vid-mut);">No comments yet. Be the first!</span>'; return; }
+
+      commentsList.innerHTML = data.map(c => `
+        <div style="font-size:13px;">
+          <strong>${escHtml(c.username||'User')}</strong>
+          <span style="color:var(--vid-mut);font-size:11px;"> · ${timeAgo(c.created_at)}</span>
+          <div>${escHtml(c.body)}</div>
+        </div>`).join('');
     }
 
-    function setUploadStatus(msg, type = '') {
-      uploadStatus.textContent = msg;
-      uploadStatus.className = 'vids-upload-status' + (type ? ' ' + type : '');
-    }
-
-    const dropzone = document.getElementById('dropzone');
-    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
-    dropzone.addEventListener('drop', e => {
-      e.preventDefault(); dropzone.classList.remove('drag-over');
-      const file = e.dataTransfer?.files[0];
-      if (file) handleFileSelected(file);
-    });
-
-    document.getElementById('audioFile').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (file) handleFileSelected(file);
-    });
-
-    function handleFileSelected(file) {
-      if (!file.type.startsWith('audio/')) { showToast('⚠️ Please select an audio file.'); return; }
-      if (file.size > 100 * 1024 * 1024) { showToast('⚠️ Max file size is 100MB.'); return; }
-      selectedAudioFile = file;
-      fileChosen.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
-      fileChosen.style.display = 'block';
-
-      const titleInput = document.getElementById('trackTitle');
-      if (!titleInput.value) {
-        titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-      }
-    }
-
-    // Thumbnail controls
-
-    thumbUploadBtn.addEventListener('click', () => {
-      thumbFileInput.click();
-    });
-
-    thumbFileInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) {
-        showToast('⚠️ Please select an image file.');
-        return;
-      }
-      selectedThumbnailFile = file;
-      selectedThumbnailPreset = null;
-      const url = URL.createObjectURL(file);
-      thumbPreview.style.backgroundImage = `url(${url})`;
-    });
-
-    thumbAutoBtn.addEventListener('click', () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 600;
-      canvas.height = 600;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#020617';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const bars = 48;
-      const barWidth = canvas.width / (bars * 1.5);
-      for (let i = 0; i < bars; i++) {
-        const h = Math.random() * (canvas.height * 0.6) + canvas.height * 0.1;
-        const x = i * (barWidth * 1.5) + barWidth * 0.25;
-        const y = canvas.height - h;
-        const grad = ctx.createLinearGradient(x, y, x, canvas.height);
-        grad.addColorStop(0, '#3b82f6');
-        grad.addColorStop(1, '#06b6d4');
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, y, barWidth, h);
-      }
-
-      canvas.toBlob(blob => {
-        if (!blob) return;
-        selectedThumbnailFile = new File([blob], 'auto.png', { type: 'image/png' });
-        selectedThumbnailPreset = null;
-        const url = URL.createObjectURL(blob);
-        thumbPreview.style.backgroundImage = `url(${url})`;
-      }, 'image/png');
-    });
-
-    thumbPresetBtn.addEventListener('click', () => {
-      const wrap = document.createElement('div');
-      wrap.className = 'preset-modal';
-      wrap.innerHTML = `
-        <div class="preset-modal-inner">
-          <div style="font-size:13px;font-weight:600;color:var(--vid-txt);margin-bottom:4px;">Choose a preset thumbnail</div>
-          <div style="font-size:12px;color:var(--vid-mut);">These are static images from your assets folder.</div>
-          <div class="preset-modal-grid"></div>
-        </div>
-      `;
-      const gridEl = wrap.querySelector('.preset-modal-grid');
-      presetThumbs.forEach(src => {
-        const img = document.createElement('img');
-        img.src = src;
-        img.className = 'preset-thumb';
-        img.addEventListener('click', () => {
-          selectedThumbnailPreset = src;
-          selectedThumbnailFile = null;
-          thumbPreview.style.backgroundImage = `url(${src})`;
-          document.body.removeChild(wrap);
-        });
-        gridEl.appendChild(img);
-      });
-      wrap.addEventListener('click', e => {
-        if (e.target === wrap) document.body.removeChild(wrap);
-      });
-      document.body.appendChild(wrap);
-    });
-
-    document.getElementById('submitUploadBtn').addEventListener('click', async () => {
-      if (!currentUser) { showToast('Sign in first.'); return; }
-
-      const inputFile = document.getElementById('audioFile').files[0];
-      const file      = selectedAudioFile || inputFile;
-      const title     = document.getElementById('trackTitle').value.trim();
-      const desc      = document.getElementById('trackDesc').value.trim();
-      const category  = document.getElementById('trackCategory').value;
-      const albumName = trackAlbumInput ? trackAlbumInput.value.trim() : '';
-
-      // Auto extract thumbnail from MP3 if none selected
-      if (!selectedThumbnailFile && !selectedThumbnailPreset && file) {
-        setUploadStatus('Checking for embedded artwork…');
-      
-        const extractedThumb = await extractThumbnailFromAudio(file);
-      
-        if (extractedThumb) {
-          selectedThumbnailFile = extractedThumb;
-      
-          const previewUrl = URL.createObjectURL(extractedThumb);
-          thumbPreview.style.backgroundImage = `url(${previewUrl})`;
-      
-          setUploadStatus('🎨 Using embedded album art');
-        } else {
-          setUploadStatus('No embedded artwork found');
-        }
-      }
-
-      if (!file)  { setUploadStatus('⚠️ Please select an audio file.', 'error'); return; }
-      if (!title) { setUploadStatus('⚠️ Title is required.', 'error'); return; }
-
-      submitBtn.disabled = true;
-      progressWrap.style.display = 'block';
-      setUploadStatus('Uploading track…');
-
-      let duration = null;
-      try {
-        const url = URL.createObjectURL(file);
-        const aud = document.createElement('audio');
-        aud.preload = 'metadata';
-        await new Promise(res => { aud.onloadedmetadata = res; aud.src = url; });
-        const secs = Math.round(aud.duration || 0);
-        const m = Math.floor(secs / 60), s = secs % 60;
-        duration = `${m}:${s.toString().padStart(2,'0')}`;
-        URL.revokeObjectURL(url);
-      } catch {}
-
-      const fileName = `${currentUser.id}/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
-      const { error: upErr } = await sb.storage.from('music').upload(fileName, file, {
-        cacheControl: '3600', upsert: false,
-        onUploadProgress: (e) => {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          progressBar.style.width = pct + '%';
-          setUploadStatus(`Uploading… ${pct}%`);
-        }
-      });
-
-      if (upErr) {
-        setUploadStatus('⚠️ Upload failed: ' + upErr.message, 'error');
-        submitBtn.disabled = false;
-        return;
-      }
-
-      progressBar.style.width = '100%';
-      setUploadStatus('Saving track info…');
-
-      const { data: urlData } = sb.storage.from('music').getPublicUrl(fileName);
-      const audio_url = urlData.publicUrl;
-
-      // thumbnail upload (optional)
-      let thumbnail_url = null;
-      try {
-        if (selectedThumbnailFile) {
-          const thumbName = `${currentUser.id}/thumb_${Date.now()}.png`;
-          const { data: tData, error: tErr } = await sb.storage
-            .from('thumbnails')
-            .upload(thumbName, selectedThumbnailFile, { cacheControl: '3600', upsert: false });
-          if (!tErr && tData) {
-            const { data: tUrlData } = sb.storage.from('thumbnails').getPublicUrl(tData.path);
-            thumbnail_url = tUrlData.publicUrl;
-          }
-        } else if (selectedThumbnailPreset) {
-          thumbnail_url = selectedThumbnailPreset;
-        }
-      } catch (e) {
-        console.log('Thumbnail upload error', e);
-      }
-
+    commentSubmit.addEventListener('click', async () => {
+      if (!currentUser) { showToast('Sign in to comment.'); return; }
+      if (!currentTrack?.id) return;
+      const body = commentInput.value.trim();
+      if (!body) return;
+      commentSubmit.disabled = true;
       const username = currentUser.email?.split('@')[0] || 'Anonymous';
-      const { data: inserted, error: insErr } = await sb.from('music_files').insert({
-        user_id: currentUser.id,
-        username,
-        title,
-        description: desc,
-        category,
-        audio_url,
-        duration,
-        views: 0,
-        likes: [],
-        thumbnail_url
-      }).select('id').single();
-
-      if (insErr) {
-        setUploadStatus('⚠️ Failed to save: ' + insErr.message, 'error');
-        submitBtn.disabled = false;
-        return;
-      }
-
-      if (albumName && inserted?.id) {
-        let { data: album, error: albumErr } = await sb
-          .from('albums')
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .eq('title', albumName)
-          .maybeSingle();
-
-        if (!album && !albumErr) {
-          const { data: newAlbum } = await sb
-            .from('albums')
-            .insert({
-              user_id: currentUser.id,
-              title: albumName,
-              description: '',
-              cover_url: null
-            })
-            .select('*')
-            .single();
-          album = newAlbum;
-        }
-
-        if (album) {
-          await sb.from('album_tracks').insert({
-            album_id: album.id,
-            track_id: inserted.id
-          });
-        }
-      }
-
-      setUploadStatus('✅ Track uploaded!', 'success');
-      showToast('🎵 Track uploaded successfully!');
-      setTimeout(() => { closeUpload(); fetchTracks(); }, 1200);
+      const { error } = await sb.from('comments').insert({
+        track_id: currentTrack.id, user_id: currentUser.id, username, body
+      });
+      if (error) { showToast('⚠️ Failed to post comment.'); commentSubmit.disabled = false; return; }
+      commentInput.value = '';
+      await loadComments(currentTrack.id);
+      commentSubmit.disabled = false;
     });
 
+    // ── Chips & Sidebar ───────────────────────────────────────────────────────
     document.getElementById('vidsChips').addEventListener('click', e => {
       const chip = e.target.closest('.vids-chip');
       if (!chip) return;
       document.querySelectorAll('.vids-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
-      activeFilter = chip.dataset.filter;
+      activeFilter  = chip.dataset.filter;
       currentAlbumId = null;
-      if (activeFilter === 'albums') {
-        renderAlbumsGrid();
-      } else {
-        renderTracks();
-      }
+      activeFilter === 'albums' ? renderAlbumsGrid() : renderTracks();
     });
 
     document.getElementById('vidsSidebar').addEventListener('click', e => {
@@ -1506,98 +1439,128 @@
     let searchTimer;
     document.getElementById('vids-search').addEventListener('input', e => {
       clearTimeout(searchTimer);
-      searchQuery = e.target.value.trim();
-      searchTimer = setTimeout(fetchTracks, 400);
+      searchQuery  = e.target.value.trim();
+      searchTimer  = setTimeout(fetchTracks, 400);
     });
     document.getElementById('vids-search-btn').addEventListener('click', fetchTracks);
-    document.getElementById('vids-search').addEventListener('keydown', e => {
-      if (e.key === 'Enter') fetchTracks();
-    });
+    document.getElementById('vids-search').addEventListener('keydown', e => { if (e.key==='Enter') fetchTracks(); });
 
-    async function checkDeepLink() {
-      const params = new URLSearchParams(location.search);
-      const t = params.get('t');
-      if (t && allTracks.length) {
-        const found = allTracks.find(tr => tr.id === t);
-        if (found) openWatch(found.id);
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    async function initAuth() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user ?? null;
+      updateAvatar();
+    }
+    function updateAvatar() {
+      if (currentUser) {
+        avatarBtn.textContent = (currentUser.email||'U')[0].toUpperCase();
+        avatarBtn.title = currentUser.email;
+      } else {
+        avatarBtn.textContent = '?';
+        avatarBtn.title = 'Not signed in';
       }
     }
+    avatarBtn.addEventListener('click', () => {
+      const popup = document.getElementById('auth-popup');
+      if (popup) popup.classList.remove('hidden');
+      else showToast('Sign in via 360 account popup.');
+    });
+    sb.auth.onAuthStateChange((_e, session) => {
+      currentUser = session?.user ?? null;
+      updateAvatar();
+    });
 
-    function timeAgo(ts) {
-      const diff = Date.now() - new Date(ts).getTime();
-      const m = Math.floor(diff / 60000);
-      if (m < 1)   return 'just now';
-      if (m < 60)  return `${m}m ago`;
-      const h = Math.floor(m / 60);
-      if (h < 24)  return `${h}h ago`;
-      const d = Math.floor(h / 24);
-      if (d < 30)  return `${d}d ago`;
-      const mo = Math.floor(d / 30);
-      if (mo < 12) return `${mo}mo ago`;
-      return `${Math.floor(mo/12)}y ago`;
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    function showToast(msg, dur=2800) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), dur);
     }
 
-    function formatNum(n) {
-      if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
-      if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-      if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
-      return String(n);
+    // ── Card rendering ────────────────────────────────────────────────────────
+    function trackCard(t) {
+      const ago    = timeAgo(t.created_at);
+      const user   = t.username || 'Anonymous';
+      const initials = user[0].toUpperCase();
+      const plays  = formatNum(t.views || 0);
+      return `
+        <div class="vids-card" data-id="${t.id}">
+          <div class="vids-thumb">
+            ${t.thumbnail_url
+              ? `<img src="${escHtml(t.thumbnail_url)}" alt="${escHtml(t.title)}" loading="lazy" />`
+              : `<div class="vids-thumb-placeholder">🎵</div>`}
+            ${t.duration ? `<div class="vids-duration">${escHtml(t.duration)}</div>` : ''}
+          </div>
+          <div class="vids-card-body">
+            <div class="vids-card-title">${escHtml(t.title)}</div>
+            <div class="vids-card-meta">
+              <div class="vids-card-avatar">${initials}</div>
+              <span>${escHtml(user)}</span>
+              <span class="vids-card-dot">·</span>
+              <span>${plays} plays</span>
+              <span class="vids-card-dot">·</span>
+              <span>${ago}</span>
+            </div>
+          </div>
+        </div>`;
     }
 
-    function escHtml(str) {
-      return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function albumCard(a) {
+      return `
+        <div class="vids-card vids-album-card" data-album-id="${a.id}">
+          <div class="vids-thumb">
+            ${a.cover_url
+              ? `<img src="${escHtml(a.cover_url)}" alt="${escHtml(a.title)}" loading="lazy" />`
+              : `<div class="vids-thumb-placeholder">📀</div>`}
+          </div>
+          <div class="vids-card-body">
+            <div class="vids-card-title">${escHtml(a.title)}</div>
+            <div class="vids-card-meta">
+              <span>${escHtml(a.username||'Unknown')}</span>
+              <span class="vids-card-dot">·</span>
+              <span>${timeAgo(a.created_at)}</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Fetch & render ────────────────────────────────────────────────────────
+    function showSkeletons() {
+      grid.innerHTML = Array(6).fill(0).map(() => `
+        <div class="vids-card vids-skeleton">
+          <div class="skel-thumb"></div>
+          <div class="vids-card-body">
+            <div class="skel-line" style="width:${70+Math.random()*20|0}%"></div>
+            <div class="skel-line short"></div>
+          </div>
+        </div>`).join('');
     }
 
     async function fetchAlbums() {
       const { data, error } = await sb
-        .from('albums')
-        .select('*, user_id, user:auth.users(email)')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      allAlbums = (data || []).map(a => ({
-        ...a,
-        username: a.user?.email?.split('@')[0] || 'User'
-      }));
+        .from('albums').select('*').order('created_at', { ascending: false });
+      if (error) { console.warn(error); return; }
+      allAlbums = (data || []).map(a => ({ ...a, username: a.username || 'User' }));
     }
 
     function renderAlbumsGrid() {
       if (!allAlbums.length) {
-        grid.innerHTML = `
-          <div class="vids-empty">
-            <div class="vids-empty-icon">📀</div>
-            <h3>No albums yet</h3>
-            <p>Create albums by uploading tracks with album names.</p>
-          </div>`;
+        grid.innerHTML = `<div class="vids-empty"><div class="vids-empty-icon">📀</div><h3>No albums yet</h3><p>Create albums by uploading tracks with album names.</p></div>`;
         return;
       }
       grid.innerHTML = allAlbums.map(a => albumCard(a)).join('');
       grid.querySelectorAll('.vids-album-card').forEach(card => {
         card.addEventListener('click', async () => {
-          const albumId = card.dataset.albumId;
-          currentAlbumId = albumId;
-          activeFilter = 'all';
+          currentAlbumId = card.dataset.albumId;
+          activeFilter   = 'all';
           document.querySelectorAll('.vids-chip').forEach(c => c.classList.remove('active'));
-          const allChip = document.querySelector('.vids-chip[data-filter="all"]');
-          if (allChip) allChip.classList.add('active');
-
+          document.querySelector('.vids-chip[data-filter="all"]')?.classList.add('active');
           showSkeletons();
           const { data, error } = await sb
-            .from('album_tracks')
-            .select('track:track_id(*)')
-            .eq('album_id', albumId)
-            .order('order_index', { ascending: true });
-
-          if (error) {
-            showToast('⚠️ Failed to load album tracks.');
-            return;
-          }
-
-          allTracks = (data || []).map(r => r.track).filter(Boolean);
+            .from('album_tracks').select('track:track_id(*)')
+            .eq('album_id', currentAlbumId).order('order_index', { ascending: true });
+          if (error) { showToast('⚠️ Failed to load album tracks.'); return; }
+          allTracks = (data||[]).map(r => r.track).filter(Boolean);
           renderTracks();
         });
       });
@@ -1605,96 +1568,90 @@
 
     function renderTracks() {
       if (!allTracks.length) {
-        grid.innerHTML = `
-          <div class="vids-empty">
-            <div class="vids-empty-icon">🎵</div>
-            <h3>No tracks yet</h3>
-            <p>Upload a track to get started with 360Music.</p>
-          </div>`;
+        grid.innerHTML = `<div class="vids-empty"><div class="vids-empty-icon">🎵</div><h3>No tracks yet</h3><p>Upload a track to get started.</p></div>`;
         return;
       }
-
       let filtered = [...allTracks];
+      if (activeView === 'trending') filtered.sort((a,b) => (b.views||0)-(a.views||0));
+      else if (activeView === 'uploads' && currentUser) filtered = filtered.filter(t => t.user_id === currentUser.id);
+      else if (activeView === 'liked'   && currentUser) filtered = filtered.filter(t => (t.likes||[]).includes(currentUser.id));
+      else if (activeView === 'cat-gaming')       filtered = filtered.filter(t => t.category === 'Gaming');
+      else if (activeView === 'cat-tech')         filtered = filtered.filter(t => t.category === 'Tech');
+      else if (activeView === 'cat-education')    filtered = filtered.filter(t => t.category === 'Education');
+      else if (activeView === 'cat-entertainment')filtered = filtered.filter(t => t.category === 'Entertainment');
 
-      if (activeView === 'trending') {
-        filtered.sort((a,b) => (b.views||0) - (a.views||0));
-      } else if (activeView === 'uploads' && currentUser) {
-        filtered = filtered.filter(t => t.user_id === currentUser.id);
-      } else if (activeView === 'liked' && currentUser) {
-        filtered = filtered.filter(t => (t.likes||[]).includes(currentUser.id));
-      } else if (activeView === 'cat-gaming') {
-        filtered = filtered.filter(t => t.category === 'Gaming');
-      } else if (activeView === 'cat-tech') {
-        filtered = filtered.filter(t => t.category === 'Tech');
-      } else if (activeView === 'cat-education') {
-        filtered = filtered.filter(t => t.category === 'Education');
-      } else if (activeView === 'cat-entertainment') {
-        filtered = filtered.filter(t => t.category === 'Entertainment');
-      }
-
-      if (activeFilter && activeFilter !== 'all' && activeFilter !== 'albums') {
+      if (activeFilter && activeFilter !== 'all' && activeFilter !== 'albums')
         filtered = filtered.filter(t => t.category === activeFilter);
-      }
 
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         filtered = filtered.filter(t =>
-          (t.title || '').toLowerCase().includes(q) ||
-          (t.description || '').toLowerCase().includes(q) ||
-          (t.username || '').toLowerCase().includes(q)
-        );
+          (t.title||'').toLowerCase().includes(q) ||
+          (t.description||'').toLowerCase().includes(q) ||
+          (t.username||'').toLowerCase().includes(q));
       }
 
       if (!filtered.length) {
-        grid.innerHTML = `
-          <div class="vids-empty">
-            <div class="vids-empty-icon">🔍</div>
-            <h3>No results</h3>
-            <p>Try a different search or filter.</p>
-          </div>`;
+        grid.innerHTML = `<div class="vids-empty"><div class="vids-empty-icon">🔍</div><h3>No results</h3><p>Try a different search or filter.</p></div>`;
         return;
       }
 
       grid.innerHTML = filtered.map(t => trackCard(t)).join('');
-      grid.querySelectorAll('.vids-card').forEach(card => {
-        const id = card.dataset.id;
-        if (!id) return;
-        card.addEventListener('click', () => openWatch(id));
+      grid.querySelectorAll('.vids-card[data-id]').forEach(card => {
+        card.addEventListener('click', () => openWatch(card.dataset.id));
       });
     }
 
     async function fetchTracks() {
       showSkeletons();
-
       if (activeView === 'albums' || activeFilter === 'albums') {
         await fetchAlbums();
         renderAlbumsGrid();
         return;
       }
-
-      const query = sb
-        .from('music_files')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      const { data, error } = await query;
-
+      const { data, error } = await sb
+        .from('music_files').select('*').order('created_at', { ascending: false });
       if (error) {
-        console.log(error);
-        grid.innerHTML = `
-          <div class="vids-empty">
-            <div class="vids-empty-icon">⚠️</div>
-            <h3>Failed to load tracks</h3>
-            <p>Please try again in a moment.</p>
-          </div>`;
+        grid.innerHTML = `<div class="vids-empty"><div class="vids-empty-icon">⚠️</div><h3>Failed to load tracks</h3><p>Please try again.</p></div>`;
         return;
       }
-
       allTracks = data || [];
       renderTracks();
       await checkDeepLink();
     }
 
+    async function checkDeepLink() {
+      const t = new URLSearchParams(location.search).get('t');
+      if (t && allTracks.length) {
+        const found = allTracks.find(tr => tr.id === t);
+        if (found) openWatch(found.id);
+      }
+    }
+
+    // ── Utils ─────────────────────────────────────────────────────────────────
+    function timeAgo(ts) {
+      const m = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+      if (m < 1)   return 'just now';
+      if (m < 60)  return `${m}m ago`;
+      const h = Math.floor(m/60);
+      if (h < 24)  return `${h}h ago`;
+      const d = Math.floor(h/24);
+      if (d < 30)  return `${d}d ago`;
+      const mo = Math.floor(d/30);
+      if (mo < 12) return `${mo}mo ago`;
+      return `${Math.floor(mo/12)}y ago`;
+    }
+    function formatNum(n) {
+      if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+      if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+      if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+      return String(n);
+    }
+    function escHtml(str) {
+      return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
     (async () => {
       await initAuth();
       await fetchTracks();
