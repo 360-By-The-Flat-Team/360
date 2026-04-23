@@ -773,6 +773,7 @@
   <script src="/assets/js/main.js"></script>
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.7/dist/jsmediatags.min.js"></script>
 
   <script>
     const SUPABASE_URL  = 'https://wiswfpfsjiowtrdyqpxy.supabase.co';
@@ -791,6 +792,35 @@
     let isSeeking = false;
 
     // thumbnail state
+    function extractThumbnailFromAudio(file) {
+      return new Promise((resolve) => {
+        window.jsmediatags.read(file, {
+          onSuccess: function(tag) {
+            const picture = tag.tags.picture;
+            if (picture) {
+              const base64String = new Uint8Array(picture.data)
+              .reduce((data, byte) => data + String.fromCharCode(byte), '');
+            
+            const imageUrl = `data:${picture.format};base64,${btoa(base64String)}`;
+    
+              fetch(imageUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                  const file = new File([blob], "cover.png", { type: blob.type });
+                  resolve(file);
+                });
+    
+            } else {
+              resolve(null);
+            }
+          },
+          onError: function() {
+            resolve(null);
+          }
+        });
+      });
+    }
+    
     let selectedThumbnailFile = null;
     let selectedThumbnailPreset = null;
 
@@ -1313,6 +1343,24 @@
       const desc      = document.getElementById('trackDesc').value.trim();
       const category  = document.getElementById('trackCategory').value;
       const albumName = trackAlbumInput ? trackAlbumInput.value.trim() : '';
+
+      // Auto extract thumbnail from MP3 if none selected
+      if (!selectedThumbnailFile && !selectedThumbnailPreset && file) {
+        setUploadStatus('Checking for embedded artwork…');
+      
+        const extractedThumb = await extractThumbnailFromAudio(file);
+      
+        if (extractedThumb) {
+          selectedThumbnailFile = extractedThumb;
+      
+          const previewUrl = URL.createObjectURL(extractedThumb);
+          thumbPreview.style.backgroundImage = `url(${previewUrl})`;
+      
+          setUploadStatus('🎨 Using embedded album art');
+        } else {
+          setUploadStatus('No embedded artwork found');
+        }
+      }
 
       if (!file)  { setUploadStatus('⚠️ Please select an audio file.', 'error'); return; }
       if (!title) { setUploadStatus('⚠️ Title is required.', 'error'); return; }
