@@ -199,6 +199,7 @@
       margin-top: 10px;
       overflow-x: auto;
       padding: 4px;
+      contain: layout paint style;
     }
 
     /* Cells */
@@ -215,7 +216,8 @@
       font-weight: bold;
       font-size: 13px;
       user-select: none;
-      transition: all 0.15s ease;
+      transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+      will-change: transform;
     }
 
     body.dark .cell {
@@ -301,6 +303,15 @@
       font-size: 18px;
       font-weight: bold;
       min-height: 28px;
+    }
+
+    .meta-row {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--mut);
     }
 
     /* Leaderboard */
@@ -492,6 +503,10 @@
       <div id="board" class="board"></div>
 
       <div id="status" class="status"></div>
+      <div class="meta-row">
+        <span>⚡ Spawn: <span id="spawnMs">—</span>ms</span>
+        <span>🧠 Mode: <span id="assistMode">Classic</span></span>
+      </div>
 
       <div class="leaderboard">
         <h3>🏆 Global Top Times</h3>
@@ -560,6 +575,7 @@
     let moves = [], replayMoves = [];
     let seedRandom = Math.random;
     let streak = 0;
+    let useAssist = false;
 
     const difficulties = {
       easy:   { r: 8,  c: 8,  m: 10  },
@@ -611,6 +627,7 @@
       document.getElementById('flagCount').textContent = 0;
       document.getElementById('mineCount').textContent = mines;
       timerEl.textContent = 0;
+      document.getElementById('assistMode').textContent = useAssist ? 'Assist' : 'Classic';
 
       clearInterval(interval);
       interval = setInterval(() => {
@@ -620,17 +637,21 @@
         }
       }, 1000);
 
+      const t0 = performance.now();
+      const frag = document.createDocumentFragment();
       for (let r = 0; r < rows; r++) {
         grid[r] = [];
         for (let c = 0; c < cols; c++) {
           const el = document.createElement('div');
           el.className = 'cell';
-          el.addEventListener('click',       () => clickCell(r, c));
-          el.addEventListener('contextmenu', e  => { e.preventDefault(); flagCell(r, c); });
-          boardEl.appendChild(el);
+          el.dataset.r = r;
+          el.dataset.c = c;
+          frag.appendChild(el);
           grid[r][c] = { mine: false, revealed: false, flagged: false, count: 0, el };
         }
       }
+      boardEl.appendChild(frag);
+      document.getElementById('spawnMs').textContent = Math.round(performance.now() - t0);
 
       loadGlobalScores();
     }
@@ -642,14 +663,31 @@
        MINE PLACEMENT & COUNTS
     ===================================================== */
     function placeMines(sr, sc) {
-      let placed = 0;
-      while (placed < mines) {
-        const r = Math.floor(seedRandom() * rows);
-        const c = Math.floor(seedRandom() * cols);
-        if (!grid[r][c].mine && !(r === sr && c === sc)) {
-          grid[r][c].mine = true;
-          placed++;
+      const blocked = new Set();
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const rr = sr + dr;
+          const cc = sc + dc;
+          if (grid[rr]?.[cc]) blocked.add(rr * cols + cc);
         }
+      }
+      const candidates = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const idx = r * cols + c;
+          if (!blocked.has(idx)) candidates.push(idx);
+        }
+      }
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(seedRandom() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+      const toPlace = Math.min(mines, candidates.length);
+      for (let i = 0; i < toPlace; i++) {
+        const idx = candidates[i];
+        const r = Math.floor(idx / cols);
+        const c = idx % cols;
+        grid[r][c].mine = true;
       }
     }
 
@@ -682,26 +720,36 @@
     }
 
     function reveal(r, c) {
-      const cell = grid[r]?.[c];
-      if (!cell || cell.revealed || cell.flagged) return;
-
-      cell.revealed = true;
-      cell.el.classList.add('revealed', 'pop');
-
-      if (cell.mine) {
-        cell.el.textContent = '💣';
-        cell.el.classList.add('mine');
+      const start = grid[r]?.[c];
+      if (!start || start.revealed || start.flagged) return;
+      if (start.mine) {
+        start.revealed = true;
+        start.el.textContent = '💣';
+        start.el.classList.add('mine', 'revealed', 'pop');
         endGame(false);
         return;
       }
-
-      if (cell.count) {
-        cell.el.textContent = cell.count;
-        cell.el.dataset.count = cell.count;
-      } else {
-        for (let dr = -1; dr <= 1; dr++)
-          for (let dc = -1; dc <= 1; dc++)
-            reveal(r + dr, c + dc);
+      const queue = [[r, c]];
+      while (queue.length) {
+        const [rr, cc] = queue.pop();
+        const cell = grid[rr]?.[cc];
+        if (!cell || cell.revealed || cell.flagged) continue;
+        cell.revealed = true;
+        cell.el.classList.add('revealed', 'pop');
+        if (cell.count) {
+          cell.el.textContent = cell.count;
+          cell.el.dataset.count = cell.count;
+          continue;
+        }
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = rr + dr;
+            const nc = cc + dc;
+            const next = grid[nr]?.[nc];
+            if (next && !next.revealed && !next.flagged && !next.mine) queue.push([nr, nc]);
+          }
+        }
       }
       checkWin();
     }
@@ -918,6 +966,58 @@ ${JSON.stringify(exportState())}`
       if (gameOver) return;
       paused = !paused;
       statusEl.textContent = paused ? '⏸ Paused' : '';
+    });
+
+    boardEl.addEventListener('click', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell) return;
+      clickCell(+cell.dataset.r, +cell.dataset.c);
+    });
+
+    boardEl.addEventListener('contextmenu', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell) return;
+      e.preventDefault();
+      flagCell(+cell.dataset.r, +cell.dataset.c);
+    });
+
+    boardEl.addEventListener('dblclick', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell || gameOver || paused) return;
+      const r = +cell.dataset.r;
+      const c = +cell.dataset.c;
+      const base = grid[r]?.[c];
+      if (!base?.revealed || !base.count) return;
+      let flaggedAround = 0;
+      const around = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const rr = r + dr;
+          const cc = c + dc;
+          const other = grid[rr]?.[cc];
+          if (!other) continue;
+          if (other.flagged) flaggedAround++;
+          else around.push([rr, cc]);
+        }
+      }
+      if (flaggedAround === base.count) around.forEach(([rr, cc]) => reveal(rr, cc));
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'a') {
+        useAssist = !useAssist;
+        document.getElementById('assistMode').textContent = useAssist ? 'Assist' : 'Classic';
+        statusEl.textContent = useAssist ? '🧠 Assist mode on (press A to toggle)' : '🧹 Classic mode';
+      }
+      if (useAssist && e.key.toLowerCase() === 'f' && !gameOver && !paused) {
+        const target = grid.flat().find(c => !c.revealed && !c.flagged && !c.mine);
+        if (target) {
+          target.el.classList.add('safe-hint');
+          setTimeout(() => target.el.classList.remove('safe-hint'), 2000);
+          statusEl.textContent = '🧠 Quick-safe highlighted';
+        }
+      }
     });
 
     /* =====================================================
