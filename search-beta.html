@@ -411,9 +411,10 @@
       -webkit-backdrop-filter: var(--glass-blur-sm);
       border: 1px solid var(--glass-border);
       box-shadow: var(--glass-shadow-sm);
-      cursor: pointer; text-decoration: none; display: block;
+      cursor: pointer; display: block;
       transition: transform 0.15s, box-shadow 0.15s;
       animation: cardIn 0.2s ease both;
+      user-select: none;
     }
     body.dark .image-result-item { background: var(--glass-dark); border-color: var(--glass-border-dk); }
     .image-result-item:hover { transform: scale(1.04); box-shadow: var(--glass-shadow); }
@@ -478,6 +479,135 @@
       animation: spin360 0.75s linear infinite;
     }
     @keyframes spin360 { to { transform: rotate(360deg); } }
+
+    /* ── Image lightbox popup ── */
+    #img-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    #img-lightbox.open { display: flex; animation: lbFadeIn 0.18s ease; }
+    @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .lb-box {
+      background: var(--glass-light-high);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 20px;
+      max-width: 820px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: lbSlideIn 0.2s cubic-bezier(.22,.68,0,1.2);
+    }
+    body.dark .lb-box {
+      background: var(--glass-dark-high);
+      border-color: var(--glass-border-dk);
+    }
+    @keyframes lbSlideIn {
+      from { transform: scale(0.93) translateY(12px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .lb-img-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.15);
+      min-height: 200px;
+      max-height: 60vh;
+      overflow: hidden;
+    }
+    .lb-img-wrap img {
+      max-width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .lb-info {
+      padding: 14px 18px;
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    body.dark .lb-info { border-top-color: var(--glass-border-dk); }
+
+    .lb-desc {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--txt);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    body.dark .lb-desc { color: var(--txtd); }
+
+    .lb-url-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lb-url {
+      font-size: 13px;
+      color: var(--a);
+      text-decoration: none;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lb-url:hover { text-decoration: underline; }
+
+    .lb-visit-btn {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(120deg, var(--a), var(--a2));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .lb-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s;
+      z-index: 1000;
+    }
+    .lb-close:hover { background: rgba(0,0,0,0.7); }
 
     /* ── AI Tab panel ── */
     #ai-panel {
@@ -703,6 +833,24 @@
     <div id="ai-panel"></div>
   </div>
 
+  <!-- Image lightbox -->
+  <div id="img-lightbox">
+    <button class="lb-close" id="lb-close-btn" aria-label="Close">✕</button>
+    <div class="lb-box">
+      <div class="lb-img-wrap"><img id="lb-img" src="" alt=""/></div>
+      <div class="lb-info">
+        <div class="lb-desc" id="lb-desc"></div>
+        <div class="lb-url-row">
+          <a class="lb-url" id="lb-url" href="#" target="_blank" rel="noopener noreferrer"></a>
+          <a class="lb-visit-btn" id="lb-visit" href="#" target="_blank" rel="noopener noreferrer">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+            Visit
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <audio id="clickSound" src="click-sound.mp3" preload="auto"></audio>
   <script src="/assets/js/main.js"></script>
   <script src="/assets/js/cookie.js"></script>
@@ -883,61 +1031,70 @@
     }
 
     /* ─────────────────────────────────
-       SCRAPE GCSE RESULTS
+       SCRAPE GCSE RESULTS (web + images unified)
     ───────────────────────────────── */
     function scrapeAndRender() {
-      // Don't scrape if AI tab is active
       if (state.tab === 'ai') return;
 
       const gcseContainer = document.getElementById('gcse-hidden-container');
 
-      if (state.tab === 'images') {
-        scrapeImages(gcseContainer);
-        return;
-      }
-
-      // Web results — look for multiple possible result selectors
+      // ── collect ALL result elements, then deduplicate by href ──
       const resultEls = gcseContainer.querySelectorAll('.gsc-webResult.gsc-result, .gs-result');
       if (!resultEls.length) {
-        // Check explicit no-results state
-        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result, .gsc-results .gsc-result:empty');
+        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result');
         if (noResults) { renderNoResults(); return; }
-        // Otherwise still loading — wait for observer or safety timer
-        return;
+        return; // still loading
       }
 
+      const seenHrefs = new Set();
       const results = [];
+
       resultEls.forEach(el => {
-        // Try multiple title selectors
         const titleAnchor = el.querySelector('.gs-title a[data-ctorig], .gs-title a, a.gs-title');
-        const titleEl     = el.querySelector('.gs-title');
         const snippetEl   = el.querySelector('.gs-snippet');
         const urlEl       = el.querySelector('.gs-visibleUrl, .gsc-url-top, .gs-visibleUrl-long');
         const thumbEl     = el.querySelector('.gs-image img, .gsc-thumbnail img, img.gs-image');
 
-        // Prefer the anchor href, fall back to data-ctorig
+        // Resolve real href (GCSE wraps in /url?q= redirect)
         let href = '';
         if (titleAnchor) {
           href = titleAnchor.getAttribute('data-ctorig') || titleAnchor.href || '';
         }
-        // Clean up Google redirect URLs
         if (href.includes('google.com/url')) {
-          try {
-            const u = new URL(href);
-            href = u.searchParams.get('q') || href;
-          } catch(e) {}
+          try { href = new URL(href).searchParams.get('q') || href; } catch(e) {}
         }
+        // Normalise: strip trailing slash for dedup key
+        const hrefKey = href.replace(/\/$/, '').toLowerCase();
+        if (!href || !titleAnchor || seenHrefs.has(hrefKey)) return; // skip duplicates
+        seenHrefs.add(hrefKey);
 
-        const title   = titleAnchor ? titleAnchor.textContent.trim() : (titleEl ? titleEl.textContent.trim() : '');
+        const title   = titleAnchor.textContent.trim();
         const snippet = snippetEl ? snippetEl.innerHTML : '';
-        const url     = urlEl ? urlEl.textContent.trim() : (href ? (() => { try { return new URL(href).hostname; } catch(e) { return href; } })() : '');
-        const thumb   = thumbEl ? (thumbEl.src || thumbEl.getAttribute('data-src') || '') : '';
 
-        if (title && href) {
-          results.push({ title, href, snippet, url, thumb });
+        // Build a clean breadcrumb display:  hostname › /path
+        let displayUrl = '';
+        try {
+          const u = new URL(href);
+          const host = u.hostname.replace(/^www\./, '');
+          const path = u.pathname.replace(/\/$/, '');
+          displayUrl = path ? `${host} › ${path}` : host;
+        } catch(e) {
+          displayUrl = urlEl ? urlEl.textContent.trim() : href;
         }
+
+        const thumb = thumbEl ? (thumbEl.src || thumbEl.getAttribute('data-src') || '') : '';
+
+        // For images tab, also collect image src
+        let imgSrc = '';
+        if (state.tab === 'images') {
+          const imgEl = el.querySelector('.gs-image img, img');
+          imgSrc = imgEl ? (imgEl.src || imgEl.getAttribute('data-src') || '') : '';
+        }
+
+        results.push({ title, href, displayUrl, snippet, thumb, imgSrc });
       });
 
+      // Count + page info
       const countEl      = gcseContainer.querySelector('.gsc-result-info');
       const countText    = countEl ? countEl.textContent.trim() : '';
       const pageEls      = gcseContainer.querySelectorAll('.gsc-cursor-page');
@@ -945,44 +1102,11 @@
       const totalPages   = pageEls.length;
       const currentPage  = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
 
-      renderWebResults(results, countText, currentPage, totalPages);
-    }
-
-    function scrapeImages(gcseContainer) {
-      // Attempt to activate image tab in GCSE
-      const tabs = gcseContainer.querySelectorAll('.gsc-tabHeader, .gsc-refinementHeader');
-      tabs.forEach(t => {
-        if (t.textContent.toLowerCase().includes('image')) t.click();
-      });
-
-      setTimeout(() => {
-        const imgEls = gcseContainer.querySelectorAll('.gsc-imageResult img, .gs-image img');
-        const imgs = [];
-        imgEls.forEach(img => {
-          const src = img.src || img.getAttribute('data-src') || '';
-          const parent = img.closest('a');
-          const href = parent ? (parent.getAttribute('data-ctorig') || parent.href || '#') : '#';
-          const alt = img.alt || '';
-          if (src && !src.startsWith('data:')) imgs.push({ src, href, alt });
-        });
-
-        if (imgs.length) { renderImageResults(imgs); return; }
-
-        // Fallback: extract thumbnails from web results
-        const fallback = [];
-        gcseContainer.querySelectorAll('.gsc-webResult.gsc-result, .gs-result').forEach(el => {
-          const thumbEl = el.querySelector('.gs-image img, .gsc-thumbnail img');
-          const titleEl = el.querySelector('.gs-title a');
-          if (thumbEl && thumbEl.src) {
-            fallback.push({
-              src: thumbEl.src,
-              href: titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#',
-              alt: titleEl ? titleEl.textContent.trim() : ''
-            });
-          }
-        });
-        if (fallback.length) { renderImageResults(fallback); } else { renderNoResults(); }
-      }, 800);
+      if (state.tab === 'images') {
+        renderImageResults(results, countText, currentPage, totalPages);
+      } else {
+        renderWebResults(results, countText, currentPage, totalPages);
+      }
     }
 
     /* ─────────────────────────────────
@@ -1205,107 +1329,149 @@
     }
 
     /* ─────────────────────────────────
+       LIGHTBOX
+    ───────────────────────────────── */
+    const lightbox   = document.getElementById('img-lightbox');
+    const lbImg      = document.getElementById('lb-img');
+    const lbDesc     = document.getElementById('lb-desc');
+    const lbUrl      = document.getElementById('lb-url');
+    const lbVisit    = document.getElementById('lb-visit');
+    const lbCloseBtn = document.getElementById('lb-close-btn');
+
+    function openLightbox({ src, href, alt, url }) {
+      lbImg.src = src;
+      lbImg.alt = alt || '';
+      lbDesc.textContent = alt || 'Image';
+      lbUrl.href = href;
+      lbUrl.textContent = url || href;
+      lbVisit.href = href;
+      lightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      document.body.style.overflow = '';
+      lbImg.src = '';
+    }
+
+    lbCloseBtn.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', e => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    /* ─────────────────────────────────
        AI SEARCH
+       Calls your edge function at /api/ai-chatbot.
+       Handles both SSE streaming and plain JSON.
     ───────────────────────────────── */
     let aiAbortController = null;
 
+    const AI_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+
     async function runAiSearch(q) {
-      // Cancel any ongoing AI request
       if (aiAbortController) aiAbortController.abort();
       aiAbortController = new AbortController();
 
       aiPanel.innerHTML = `
         <div class="ai-response-card">
-          <div class="ai-response-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            AI Answer
-          </div>
+          <div class="ai-response-label">${AI_ICON} AI Answer</div>
           <div class="ai-thinking">
             <div class="ai-thinking-dots"><span></span><span></span><span></span></div>
             Thinking…
           </div>
         </div>`;
 
+      const card   = aiPanel.querySelector('.ai-response-card');
+      let   textEl = null;
+      let   answer = '';
+
+      function ensureTextEl() {
+        if (!textEl) {
+          card.innerHTML = `<div class="ai-response-label">${AI_ICON} AI Answer</div><div class="ai-response-text"></div>`;
+          textEl = card.querySelector('.ai-response-text');
+        }
+      }
+
       try {
         const resp = await fetch('/api/ai-chatbot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: q }),
+          body: JSON.stringify({ message: q, query: q, prompt: q }),
           signal: aiAbortController.signal,
         });
 
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        if (!resp.ok) {
+          let errMsg = `Error ${resp.status}`;
+          try { const e = await resp.json(); errMsg = e.error || e.message || errMsg; } catch(e) {}
+          throw new Error(errMsg);
+        }
 
-        let answer = '';
+        const contentType = resp.headers.get('content-type') || '';
 
-        // Handle streaming response if available
-        if (resp.body && resp.body.getReader) {
+        // ── Streaming SSE ──
+        if (resp.body && (contentType.includes('text/event-stream') || contentType.includes('text/plain'))) {
           const reader = resp.body.getReader();
-          const dec = new TextDecoder();
-          const card = aiPanel.querySelector('.ai-response-card');
-          let textEl = null;
+          const dec    = new TextDecoder();
 
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = dec.decode(value, { stream: true });
 
-            // Parse SSE lines
             for (const line of chunk.split('\n')) {
-              const trimmed = line.trim();
-              if (!trimmed || trimmed === 'data: [DONE]') continue;
-              if (trimmed.startsWith('data: ')) {
+              const t = line.trim();
+              if (!t || t === 'data: [DONE]') continue;
+
+              let delta = '';
+              if (t.startsWith('data: ')) {
+                const payload = t.slice(6);
                 try {
-                  const json = JSON.parse(trimmed.slice(6));
-                  const delta = json.choices?.[0]?.delta?.content ||
-                                json.delta?.text || json.text || json.content || '';
-                  answer += delta;
-                } catch(e) {
-                  // Plain text stream
-                  answer += trimmed.slice(6);
-                }
-              } else {
-                try {
-                  const json = JSON.parse(trimmed);
-                  answer += json.content || json.text || json.message || '';
-                } catch(e) {
-                  answer += trimmed;
-                }
+                  const j = JSON.parse(payload);
+                  delta = j.choices?.[0]?.delta?.content
+                       ?? j.choices?.[0]?.text
+                       ?? j.delta?.text
+                       ?? j.content
+                       ?? j.text
+                       ?? '';
+                } catch(e) { delta = payload; }
+              }
+              if (delta) {
+                answer += delta;
+                ensureTextEl();
+                textEl.textContent = answer;
               }
             }
-
-            // Render progressively
-            if (!textEl) {
-              card.innerHTML = `
-                <div class="ai-response-label">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                  AI Answer
-                </div>
-                <div class="ai-response-text"></div>`;
-              textEl = card.querySelector('.ai-response-text');
-            }
-            if (textEl) textEl.textContent = answer;
           }
+          // Ensure we show something even if no deltas parsed
+          if (!answer) {
+            ensureTextEl();
+            textEl.textContent = '(No response received)';
+          }
+
+        // ── Plain JSON ──
         } else {
-          // Non-streaming fallback
-          const json = await resp.json();
-          answer = json.content || json.text || json.message ||
-                   json.choices?.[0]?.message?.content || JSON.stringify(json);
-          aiPanel.querySelector('.ai-response-card').innerHTML = `
-            <div class="ai-response-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-              AI Answer
-            </div>
-            <div class="ai-response-text">${escHtml(answer)}</div>`;
+          const j = await resp.json();
+          answer = j.response
+                ?? j.content
+                ?? j.text
+                ?? j.message
+                ?? j.answer
+                ?? j.choices?.[0]?.message?.content
+                ?? j.choices?.[0]?.text
+                ?? JSON.stringify(j, null, 2);
+          ensureTextEl();
+          textEl.textContent = answer;
         }
 
       } catch(err) {
         if (err.name === 'AbortError') return;
-        aiPanel.innerHTML = `
-          <div class="ai-response-card">
-            <div class="ai-response-label">AI Answer</div>
-            <div class="ai-response-text" style="color:var(--mut)">Something went wrong. Please try again.</div>
-          </div>`;
+        card.innerHTML = `
+          <div class="ai-response-label">${AI_ICON} AI Answer</div>
+          <div class="ai-response-text" style="color:var(--mut)">⚠ ${escHtml(err.message || 'Something went wrong. Please try again.')}</div>`;
       }
     }
 
@@ -1453,7 +1619,7 @@
                   <img class="result-favicon" src="${escHtml(faviconUrl)}" alt="" loading="lazy" onerror="this.style.display='none'"/>
                   <span class="result-site-name">${escHtml(hostname)}</span>
                 </div>
-                <div class="result-url">${escHtml(r.url || r.href)}</div>
+                <div class="result-url">${escHtml(r.displayUrl || r.href)}</div>
                 <a class="result-title" href="${escHtml(r.href)}" target="_blank" rel="noopener noreferrer">${escHtml(r.title)}</a>
                 ${r.snippet ? `<div class="result-snippet">${r.snippet}</div>` : ''}
               </div>
@@ -1463,29 +1629,59 @@
       });
 
       if (totalPages > 1) html += buildPagination(currentPage, totalPages);
-
       resultsArea.innerHTML = html;
-
       resultsArea.querySelectorAll('.page-btn[data-page]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const page = parseInt(btn.getAttribute('data-page'));
-          goToPage(page);
-        });
+        btn.addEventListener('click', () => goToPage(parseInt(btn.getAttribute('data-page'))));
       });
     }
 
-    function renderImageResults(imgs) {
+    function renderImageResults(results, countText, currentPage, totalPages) {
+      // Build image list from results — prefer imgSrc, fall back to thumb
+      const imgs = results
+        .map(r => ({
+          src:  r.imgSrc || r.thumb || '',
+          href: r.href,
+          alt:  r.title,
+          displayUrl: r.displayUrl,
+        }))
+        .filter(r => r.src && !r.src.startsWith('data:'));
+
       if (!imgs.length) { renderNoResults(); return; }
-      let html = `<div id="image-results-grid">`;
+
+      let html = '';
+      if (countText) html += `<div class="results-info">${escHtml(countText)}</div>`;
+
+      html += `<div id="image-results-grid">`;
       imgs.forEach((img, i) => {
+        // Detect GIFs — use <img> with no object-fit restriction so animation plays
+        const isGif = img.src.toLowerCase().includes('.gif') || img.src.toLowerCase().includes('gif');
         html += `
-          <a class="image-result-item" href="${escHtml(img.href)}" target="_blank" rel="noopener noreferrer" style="animation-delay:${i*0.03}s">
-            <img src="${escHtml(img.src)}" alt="${escHtml(img.alt)}" loading="lazy" onerror="this.closest('.image-result-item').remove()"/>
+          <div class="image-result-item" data-src="${escHtml(img.src)}" data-href="${escHtml(img.href)}" data-alt="${escHtml(img.alt)}" data-url="${escHtml(img.displayUrl || img.href)}" style="animation-delay:${i*0.03}s">
+            <img src="${escHtml(img.src)}" alt="${escHtml(img.alt)}" loading="lazy"
+              style="${isGif ? 'object-fit:contain;background:#000;' : ''}"
+              onerror="this.closest('.image-result-item').remove()"/>
             <div class="image-result-label">${escHtml(img.alt || 'Image')}</div>
-          </a>`;
+          </div>`;
       });
       html += `</div>`;
+
+      if (totalPages > 1) html += buildPagination(currentPage, totalPages);
       resultsArea.innerHTML = html;
+
+      // Wire up lightbox on each tile
+      resultsArea.querySelectorAll('.image-result-item').forEach(tile => {
+        tile.addEventListener('click', () => openLightbox({
+          src:  tile.dataset.src,
+          href: tile.dataset.href,
+          alt:  tile.dataset.alt,
+          url:  tile.dataset.url,
+        }));
+      });
+
+      // Pagination
+      resultsArea.querySelectorAll('.page-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => goToPage(parseInt(btn.getAttribute('data-page'))));
+      });
     }
 
     function buildPagination(current, total) {
