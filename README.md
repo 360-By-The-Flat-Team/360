@@ -22,7 +22,7 @@ With many search engines and browsers losing trust from core users, this is a gr
 
 - 📰 **News** — Live news feed across multiple categories | <em>News that actually loads instantly and isn't biased.</em>
 
-- 🎮 **Games** — Built-in games including Space Glider, StarBlasted and NYC Dream | <em>The highest quality games our developers can programe after long periods of researching.</em>
+- 🎮 **Games** — Built-in games including Space Glider, StarBlasted and NYC Dream | <em>The highest quality games our developers can program for you after long periods of researching.</em>
 
 - 🌦️ **Weather** — Live weather with map view | <em>Compare how our forecasts are to Google's and then you'll switch.</em>
 
