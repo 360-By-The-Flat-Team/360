@@ -1,4 +1,3 @@
-
 <!-- ===============================
   SEARCH.HTML V2.2.0 CUSTOM SEARCH
 ================================ -->
@@ -480,7 +479,75 @@
     }
     @keyframes spin360 { to { transform: rotate(360deg); } }
 
-    /* ── Mobile ── */
+    /* ── AI Tab panel ── */
+    #ai-panel {
+      width: 100%;
+      max-width: 760px;
+      padding: 20px 20px 60px;
+      box-sizing: border-box;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    #ai-panel.active { display: flex; }
+
+    .ai-response-card {
+      background: var(--glass-light-mid);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: 18px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset);
+      padding: 20px 24px;
+      animation: cardIn 0.22s ease both;
+    }
+    body.dark .ai-response-card {
+      background: var(--glass-dark-mid);
+      border-color: var(--glass-border-dk);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset-dk);
+    }
+    .ai-response-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--a);
+      margin-bottom: 12px;
+    }
+    .ai-response-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--txt);
+      white-space: pre-wrap;
+    }
+    body.dark .ai-response-text { color: var(--txtd); }
+
+    .ai-thinking {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--mut);
+      font-size: 14px;
+    }
+    body.dark .ai-thinking { color: var(--mutd); }
+    .ai-thinking-dots span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--a);
+      animation: aiDot 1.2s ease-in-out infinite;
+    }
+    .ai-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes aiDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Mobile */
     @media (max-width: 640px) {
       .strip-logo { display: none; }
       .search-bar-strip { padding: 9px 12px; }
@@ -590,7 +657,7 @@
           </span>
           <input
             id="custom-search-input"
-            type="search"
+            type="text"
             autocomplete="off"
             autocorrect="off"
             spellcheck="false"
@@ -617,9 +684,9 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         Images
       </div>
-      <div class="results-tab" data-tab="news">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
-        News
+      <div class="results-tab" data-tab="ai">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        AI
       </div>
     </div>
 
@@ -631,6 +698,9 @@
         <p>Type in the bar above and press Search or Enter</p>
       </div>
     </div>
+
+    <!-- AI panel -->
+    <div id="ai-panel"></div>
   </div>
 
   <audio id="clickSound" src="click-sound.mp3" preload="auto"></audio>
@@ -653,7 +723,10 @@
       suggestList: [],
       gcseReady: false,
       pendingSearch: null,
-      searching: false,
+      // track whether suggestion dropdown should stay open
+      suggestOpen: false,
+      // prevent observer from firing during suggestion mirroring
+      suppressObserver: false,
     };
 
     /* ─────────────────────────────────
@@ -664,6 +737,7 @@
     const searchBtn   = document.getElementById('custom-search-btn');
     const dropdown    = document.getElementById('suggestions-dropdown');
     const resultsArea = document.getElementById('custom-results-area');
+    const aiPanel     = document.getElementById('ai-panel');
     const tabsEl      = document.getElementById('results-tabs');
 
     /* ─────────────────────────────────
@@ -679,8 +753,22 @@
         state.tab = t;
         updateClearBtn();
         setActiveTab(t);
-        waitForGcseAndSearch(q, t);
+        if (t === 'ai') {
+          showResultsArea(false);
+          runAiSearch(q);
+        } else {
+          showResultsArea(true);
+          waitForGcseAndSearch(q, t);
+        }
       }
+    }
+
+    /* ─────────────────────────────────
+       SHOW / HIDE RESULTS vs AI PANEL
+    ───────────────────────────────── */
+    function showResultsArea(show) {
+      resultsArea.style.display = show ? '' : 'none';
+      aiPanel.classList.toggle('active', !show);
     }
 
     /* ─────────────────────────────────
@@ -696,7 +784,6 @@
 
     /* ─────────────────────────────────
        GCSE READY DETECTION
-       Poll until the hidden GCSE input exists
     ───────────────────────────────── */
     let gcseCheckInterval = setInterval(() => {
       const gcseInput = getGcseInput();
@@ -711,7 +798,7 @@
     }, 100);
 
     /* ─────────────────────────────────
-       GET GCSE INPUT / FORM
+       GET GCSE ELEMENTS
     ───────────────────────────────── */
     function getGcseInput() {
       return document.querySelector('#gcse-hidden-container input.gsc-input');
@@ -722,31 +809,32 @@
 
     /* ─────────────────────────────────
        TRIGGER GCSE SEARCH
-       Sets GCSE input value + fires search
     ───────────────────────────────── */
     function triggerGcseSearch(q, tab) {
       const gcseInput = getGcseInput();
       if (!gcseInput) return;
 
-      // Set value
+      // Suppress observer while we set the value
+      state.suppressObserver = true;
       gcseInput.value = q;
       gcseInput.dispatchEvent(new Event('input', { bubbles: true }));
       gcseInput.dispatchEvent(new Event('change', { bubbles: true }));
+      setTimeout(() => { state.suppressObserver = false; }, 200);
 
-      // Try using google.search.cse if available
+      // Try the google.search.cse API first
       if (window.google && google.search && google.search.cse) {
         try {
-          const element = google.search.cse.element.getElement('searchresults-only0') ||
-                          google.search.cse.element.getAllElements()[0];
-          if (element) {
-            element.execute(q);
+          const el = google.search.cse.element.getElement('searchresults-only0') ||
+                     google.search.cse.element.getAllElements()[0];
+          if (el) {
+            el.execute(q);
             setupGcseObserver();
             return;
           }
         } catch(e) {}
       }
 
-      // Fallback: click the GCSE search button
+      // Fallback: click GCSE search button
       const btn = getGcseBtn();
       if (btn) {
         setTimeout(() => {
@@ -758,39 +846,49 @@
 
     /* ─────────────────────────────────
        OBSERVE GCSE RESULTS + SCRAPE
+       Only fires after a real search,
+       not while mirroring suggestion input.
     ───────────────────────────────── */
     let gcseObserver = null;
+    let stableTimer  = null;
+    let safetyTimer  = null;
+
     function setupGcseObserver() {
       showLoading();
-      if (gcseObserver) gcseObserver.disconnect();
+      // Tear down previous observer fully
+      if (gcseObserver) { gcseObserver.disconnect(); gcseObserver = null; }
+      clearTimeout(stableTimer);
+      clearTimeout(safetyTimer);
 
       const gcseContainer = document.getElementById('gcse-hidden-container');
-      let stableTimer = null;
 
       gcseObserver = new MutationObserver(() => {
+        // Skip mutations caused by suggestion mirroring
+        if (state.suppressObserver) return;
         clearTimeout(stableTimer);
         stableTimer = setTimeout(() => {
           scrapeAndRender();
-        }, 400);
+        }, 500);
       });
 
       gcseObserver.observe(gcseContainer, {
         childList: true,
         subtree: true,
         characterData: true,
-        attributes: true,
+        attributes: false, // don't watch attribute changes — reduces noise
       });
 
-      // Safety timeout
-      setTimeout(() => {
-        scrapeAndRender();
-      }, 4000);
+      // Safety net scrape
+      safetyTimer = setTimeout(() => scrapeAndRender(), 5000);
     }
 
     /* ─────────────────────────────────
        SCRAPE GCSE RESULTS
     ───────────────────────────────── */
     function scrapeAndRender() {
+      // Don't scrape if AI tab is active
+      if (state.tab === 'ai') return;
+
       const gcseContainer = document.getElementById('gcse-hidden-container');
 
       if (state.tab === 'images') {
@@ -798,123 +896,131 @@
         return;
       }
 
-      const resultEls = gcseContainer.querySelectorAll('.gsc-webResult.gsc-result');
+      // Web results — look for multiple possible result selectors
+      const resultEls = gcseContainer.querySelectorAll('.gsc-webResult.gsc-result, .gs-result');
       if (!resultEls.length) {
-        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result');
-        if (noResults) {
-          renderNoResults();
-        }
-        // Still loading, wait
+        // Check explicit no-results state
+        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result, .gsc-results .gsc-result:empty');
+        if (noResults) { renderNoResults(); return; }
+        // Otherwise still loading — wait for observer or safety timer
         return;
       }
 
       const results = [];
       resultEls.forEach(el => {
-        const titleEl    = el.querySelector('.gs-title a, .gs-title');
-        const snippetEl  = el.querySelector('.gs-snippet');
-        const urlEl      = el.querySelector('.gs-visibleUrl, .gsc-url-top');
-        const thumbEl    = el.querySelector('.gs-image img, .gsc-thumbnail img');
+        // Try multiple title selectors
+        const titleAnchor = el.querySelector('.gs-title a[data-ctorig], .gs-title a, a.gs-title');
+        const titleEl     = el.querySelector('.gs-title');
+        const snippetEl   = el.querySelector('.gs-snippet');
+        const urlEl       = el.querySelector('.gs-visibleUrl, .gsc-url-top, .gs-visibleUrl-long');
+        const thumbEl     = el.querySelector('.gs-image img, .gsc-thumbnail img, img.gs-image');
 
-        const href    = titleEl ? (titleEl.href || titleEl.getAttribute('data-ctorig') || '') : '';
-        const title   = titleEl ? titleEl.textContent.trim() : '';
+        // Prefer the anchor href, fall back to data-ctorig
+        let href = '';
+        if (titleAnchor) {
+          href = titleAnchor.getAttribute('data-ctorig') || titleAnchor.href || '';
+        }
+        // Clean up Google redirect URLs
+        if (href.includes('google.com/url')) {
+          try {
+            const u = new URL(href);
+            href = u.searchParams.get('q') || href;
+          } catch(e) {}
+        }
+
+        const title   = titleAnchor ? titleAnchor.textContent.trim() : (titleEl ? titleEl.textContent.trim() : '');
         const snippet = snippetEl ? snippetEl.innerHTML : '';
-        const url     = urlEl ? urlEl.textContent.trim() : (href ? new URL(href).hostname : '');
-        const thumb   = thumbEl ? thumbEl.src : '';
+        const url     = urlEl ? urlEl.textContent.trim() : (href ? (() => { try { return new URL(href).hostname; } catch(e) { return href; } })() : '');
+        const thumb   = thumbEl ? (thumbEl.src || thumbEl.getAttribute('data-src') || '') : '';
 
         if (title && href) {
           results.push({ title, href, snippet, url, thumb });
         }
       });
 
-      // Get total count
-      const countEl = gcseContainer.querySelector('.gsc-result-info');
-      const countText = countEl ? countEl.textContent.trim() : '';
-
-      // Get page numbers from GCSE
-      const pageEls = gcseContainer.querySelectorAll('.gsc-cursor-page');
+      const countEl      = gcseContainer.querySelector('.gsc-result-info');
+      const countText    = countEl ? countEl.textContent.trim() : '';
+      const pageEls      = gcseContainer.querySelectorAll('.gsc-cursor-page');
       const currentPageEl = gcseContainer.querySelector('.gsc-cursor-current-page');
-      const totalPages = pageEls.length;
-      const currentPage = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
+      const totalPages   = pageEls.length;
+      const currentPage  = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
 
       renderWebResults(results, countText, currentPage, totalPages);
     }
 
     function scrapeImages(gcseContainer) {
-      // Switch GCSE to image mode by clicking the image tab if available
-      const imageTabs = gcseContainer.querySelectorAll('.gsc-tabHeader, .gsc-refinementHeader');
-      let imageTabClicked = false;
-      imageTabs.forEach(t => {
-        if (t.textContent.toLowerCase().includes('image')) {
-          t.click();
-          imageTabClicked = true;
-        }
+      // Attempt to activate image tab in GCSE
+      const tabs = gcseContainer.querySelectorAll('.gsc-tabHeader, .gsc-refinementHeader');
+      tabs.forEach(t => {
+        if (t.textContent.toLowerCase().includes('image')) t.click();
       });
 
       setTimeout(() => {
         const imgEls = gcseContainer.querySelectorAll('.gsc-imageResult img, .gs-image img');
         const imgs = [];
         imgEls.forEach(img => {
-          const src = img.src || img.getAttribute('data-src');
+          const src = img.src || img.getAttribute('data-src') || '';
           const parent = img.closest('a');
-          const href = parent ? parent.href : '#';
+          const href = parent ? (parent.getAttribute('data-ctorig') || parent.href || '#') : '#';
           const alt = img.alt || '';
-          if (src && !src.includes('data:')) {
-            imgs.push({ src, href, alt });
-          }
+          if (src && !src.startsWith('data:')) imgs.push({ src, href, alt });
         });
 
-        if (imgs.length) {
-          renderImageResults(imgs);
-        } else {
-          // Fallback: use web results but show thumbnails
-          const webResults = [];
-          gcseContainer.querySelectorAll('.gsc-webResult.gsc-result').forEach(el => {
-            const thumbEl = el.querySelector('.gs-image img, .gsc-thumbnail img');
-            const titleEl = el.querySelector('.gs-title a');
-            if (thumbEl) {
-              webResults.push({
-                src: thumbEl.src,
-                href: titleEl ? titleEl.href : '#',
-                alt: titleEl ? titleEl.textContent.trim() : ''
-              });
-            }
-          });
-          if (webResults.length) {
-            renderImageResults(webResults);
-          } else {
-            renderNoResults();
+        if (imgs.length) { renderImageResults(imgs); return; }
+
+        // Fallback: extract thumbnails from web results
+        const fallback = [];
+        gcseContainer.querySelectorAll('.gsc-webResult.gsc-result, .gs-result').forEach(el => {
+          const thumbEl = el.querySelector('.gs-image img, .gsc-thumbnail img');
+          const titleEl = el.querySelector('.gs-title a');
+          if (thumbEl && thumbEl.src) {
+            fallback.push({
+              src: thumbEl.src,
+              href: titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#',
+              alt: titleEl ? titleEl.textContent.trim() : ''
+            });
           }
-        }
-      }, 600);
+        });
+        if (fallback.length) { renderImageResults(fallback); } else { renderNoResults(); }
+      }, 800);
     }
 
     /* ─────────────────────────────────
-       LIVE SUGGESTIONS via GCSE autocomplete
+       LIVE SUGGESTIONS
+       Mirror to GCSE with suppressObserver=true
+       so the observer doesn't fire on suggestion updates.
+       Use JSONP from Google Suggest as primary source.
     ───────────────────────────────── */
-    let suggestTimeout = null;
+    let suggestTimeout   = null;
     let lastSuggestQuery = '';
+    // Track whether input is currently focused
+    let inputFocused = false;
 
     function fetchSuggestions(q) {
-      if (!q.trim() || q === lastSuggestQuery) return;
+      if (!q.trim()) return;
+      if (q === lastSuggestQuery) return;
       lastSuggestQuery = q;
 
-      // Mirror to GCSE input to get its autocomplete
+      // Mirror to GCSE for its own autocomplete — suppress observer
       const gcseInput = getGcseInput();
       if (gcseInput) {
+        state.suppressObserver = true;
         gcseInput.value = q;
         gcseInput.dispatchEvent(new Event('input', { bubbles: true }));
         gcseInput.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+        setTimeout(() => { state.suppressObserver = false; }, 300);
       }
 
-      // Also try Google's suggestion API (works on same domain or via jsonp trick)
-      // Use a JSONP call to Google's suggest endpoint
-      const existingScript = document.getElementById('suggest-jsonp');
-      if (existingScript) existingScript.remove();
+      // JSONP from Google Suggest
+      const old = document.getElementById('suggest-jsonp');
+      if (old) old.remove();
 
       window.__suggestCallback = function(data) {
+        // Only show if input still focused and query still matches
+        if (!inputFocused) return;
         if (data && data[1]) {
-          const suggestions = data[1].slice(0, 7).map(s => Array.isArray(s) ? s[0] : s);
-          showSuggestions(suggestions, q);
+          const suggs = data[1].slice(0, 7).map(s => Array.isArray(s) ? s[0] : s);
+          showSuggestions(suggs, q);
         }
       };
 
@@ -922,64 +1028,40 @@
       script.id = 'suggest-jsonp';
       script.src = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}&callback=__suggestCallback`;
       document.head.appendChild(script);
-
-      // Also scrape GCSE autocomplete dropdown as secondary source
-      setTimeout(() => {
-        const gcseDropdown = document.querySelector('#gcse-hidden-container .gsc-completion-container');
-        if (gcseDropdown) {
-          const items = gcseDropdown.querySelectorAll('.gsc-completion-title');
-          const scraped = Array.from(items).map(el => el.textContent.trim()).filter(Boolean);
-          if (scraped.length) {
-            showSuggestions(scraped, q);
-          }
-        }
-      }, 300);
     }
 
     function showSuggestions(items, query) {
-      if (!items || !items.length) {
-        hideSuggestions();
-        return;
-      }
+      if (!items || !items.length || !inputFocused) { hideSuggestions(); return; }
 
       state.suggestList = items;
       state.suggestIdx = -1;
+      state.suggestOpen = true;
 
       const q = query.toLowerCase();
       dropdown.innerHTML = items.map((s, i) => {
-        // Bold-match the typed prefix in suggestion text
         const lower = s.toLowerCase();
-        let display = s;
+        let display;
         if (lower.startsWith(q)) {
           display = `<em>${escHtml(s.slice(0, q.length))}</em>${escHtml(s.slice(q.length))}`;
         } else {
           display = escHtml(s);
         }
-        return `
-          <div class="suggestion-item" data-idx="${i}" data-val="${escHtml(s)}">
-            <span class="suggestion-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </span>
-            <span class="suggestion-text">${display}</span>
-            <span class="suggestion-arrow">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7 17 17 7M7 7h10v10"/>
-              </svg>
-            </span>
-          </div>`;
+        return `<div class="suggestion-item" data-idx="${i}" data-val="${escHtml(s)}">
+          <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+          <span class="suggestion-text">${display}</span>
+          <span class="suggestion-arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+        </div>`;
       }).join('');
 
       dropdown.classList.add('visible');
 
-      // Attach click handlers
       dropdown.querySelectorAll('.suggestion-item').forEach(item => {
         item.addEventListener('mousedown', e => {
-          e.preventDefault();
+          e.preventDefault(); // prevent blur from firing before click
           const val = item.getAttribute('data-val');
           input.value = val;
           state.query = val;
+          lastSuggestQuery = val;
           hideSuggestions();
           updateClearBtn();
           doSearch(val);
@@ -989,6 +1071,7 @@
 
     function hideSuggestions() {
       dropdown.classList.remove('visible');
+      state.suggestOpen = false;
       state.suggestIdx = -1;
     }
 
@@ -1013,10 +1096,7 @@
           else input.value = state.query;
           return;
         }
-        if (e.key === 'Escape') {
-          hideSuggestions();
-          return;
-        }
+        if (e.key === 'Escape') { hideSuggestions(); return; }
       }
       if (e.key === 'Enter') {
         hideSuggestions();
@@ -1026,9 +1106,7 @@
     });
 
     function updateSuggestHighlight(items) {
-      items.forEach((el, i) => {
-        el.classList.toggle('active', i === state.suggestIdx);
-      });
+      items.forEach((el, i) => el.classList.toggle('active', i === state.suggestIdx));
     }
 
     /* ─────────────────────────────────
@@ -1044,13 +1122,24 @@
         return;
       }
       clearTimeout(suggestTimeout);
-      suggestTimeout = setTimeout(() => fetchSuggestions(val), 120);
+      suggestTimeout = setTimeout(() => fetchSuggestions(val), 150);
     });
 
     input.addEventListener('focus', () => {
+      inputFocused = true;
+      // Re-show suggestions if we have them and there's a query
       if (input.value.trim() && state.suggestList.length) {
         dropdown.classList.add('visible');
+        state.suggestOpen = true;
       }
+    });
+
+    input.addEventListener('blur', () => {
+      inputFocused = false;
+      // Delay so mousedown on suggestion fires first
+      setTimeout(() => {
+        if (!inputFocused) hideSuggestions();
+      }, 180);
     });
 
     document.addEventListener('click', e => {
@@ -1063,6 +1152,8 @@
     clearBtn.addEventListener('click', () => {
       input.value = '';
       state.query = '';
+      lastSuggestQuery = '';
+      state.suggestList = [];
       updateClearBtn();
       hideSuggestions();
       input.focus();
@@ -1079,10 +1170,7 @@
     ───────────────────────────────── */
     searchBtn.addEventListener('click', () => {
       const q = input.value.trim();
-      if (q) {
-        hideSuggestions();
-        doSearch(q);
-      }
+      if (q) { hideSuggestions(); doSearch(q); }
     });
 
     /* ─────────────────────────────────
@@ -1092,22 +1180,21 @@
       const tab = e.target.closest('.results-tab');
       if (!tab) return;
       const t = tab.getAttribute('data-tab');
+      if (t === state.tab) return; // no-op if same tab
       state.tab = t;
       state.page = 1;
       setActiveTab(t);
       updateUrl(state.query, t);
+
+      if (t === 'ai') {
+        showResultsArea(false);
+        if (state.query) runAiSearch(state.query);
+        return;
+      }
+
+      showResultsArea(true);
       if (state.query) {
-        // Switch GCSE tab if possible
-        const gcseTabs = document.querySelectorAll('#gcse-hidden-container .gsc-tabHeader');
-        gcseTabs.forEach(gt => {
-          const text = gt.textContent.toLowerCase();
-          if ((t === 'web' && (text.includes('web') || text.includes('all'))) ||
-              (t === 'images' && text.includes('image')) ||
-              (t === 'news' && text.includes('news'))) {
-            gt.click();
-          }
-        });
-        setTimeout(() => scrapeAndRender(), 600);
+        waitForGcseAndSearch(state.query, t);
       }
     });
 
@@ -1115,6 +1202,111 @@
       tabsEl.querySelectorAll('.results-tab').forEach(el => {
         el.classList.toggle('active', el.getAttribute('data-tab') === t);
       });
+    }
+
+    /* ─────────────────────────────────
+       AI SEARCH
+    ───────────────────────────────── */
+    let aiAbortController = null;
+
+    async function runAiSearch(q) {
+      // Cancel any ongoing AI request
+      if (aiAbortController) aiAbortController.abort();
+      aiAbortController = new AbortController();
+
+      aiPanel.innerHTML = `
+        <div class="ai-response-card">
+          <div class="ai-response-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            AI Answer
+          </div>
+          <div class="ai-thinking">
+            <div class="ai-thinking-dots"><span></span><span></span><span></span></div>
+            Thinking…
+          </div>
+        </div>`;
+
+      try {
+        const resp = await fetch('/api/ai-chatbot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: q }),
+          signal: aiAbortController.signal,
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        let answer = '';
+
+        // Handle streaming response if available
+        if (resp.body && resp.body.getReader) {
+          const reader = resp.body.getReader();
+          const dec = new TextDecoder();
+          const card = aiPanel.querySelector('.ai-response-card');
+          let textEl = null;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = dec.decode(value, { stream: true });
+
+            // Parse SSE lines
+            for (const line of chunk.split('\n')) {
+              const trimmed = line.trim();
+              if (!trimmed || trimmed === 'data: [DONE]') continue;
+              if (trimmed.startsWith('data: ')) {
+                try {
+                  const json = JSON.parse(trimmed.slice(6));
+                  const delta = json.choices?.[0]?.delta?.content ||
+                                json.delta?.text || json.text || json.content || '';
+                  answer += delta;
+                } catch(e) {
+                  // Plain text stream
+                  answer += trimmed.slice(6);
+                }
+              } else {
+                try {
+                  const json = JSON.parse(trimmed);
+                  answer += json.content || json.text || json.message || '';
+                } catch(e) {
+                  answer += trimmed;
+                }
+              }
+            }
+
+            // Render progressively
+            if (!textEl) {
+              card.innerHTML = `
+                <div class="ai-response-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  AI Answer
+                </div>
+                <div class="ai-response-text"></div>`;
+              textEl = card.querySelector('.ai-response-text');
+            }
+            if (textEl) textEl.textContent = answer;
+          }
+        } else {
+          // Non-streaming fallback
+          const json = await resp.json();
+          answer = json.content || json.text || json.message ||
+                   json.choices?.[0]?.message?.content || JSON.stringify(json);
+          aiPanel.querySelector('.ai-response-card').innerHTML = `
+            <div class="ai-response-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              AI Answer
+            </div>
+            <div class="ai-response-text">${escHtml(answer)}</div>`;
+        }
+
+      } catch(err) {
+        if (err.name === 'AbortError') return;
+        aiPanel.innerHTML = `
+          <div class="ai-response-card">
+            <div class="ai-response-label">AI Answer</div>
+            <div class="ai-response-text" style="color:var(--mut)">Something went wrong. Please try again.</div>
+          </div>`;
+      }
     }
 
     /* ─────────────────────────────────
@@ -1126,11 +1318,20 @@
       input.value = q;
       updateClearBtn();
       updateUrl(q, state.tab);
+
+      if (state.tab === 'ai') {
+        showResultsArea(false);
+        runAiSearch(q);
+        return;
+      }
+
+      showResultsArea(true);
       waitForGcseAndSearch(q, state.tab);
     }
 
     /* ─────────────────────────────────
        URL MANAGEMENT
+       Your provided syncGcsQuery + custom updateUrl
     ───────────────────────────────── */
     function updateUrl(q, tab) {
       const url = new URL(location.href);
@@ -1145,6 +1346,61 @@
       history.replaceState(null, '', url.toString());
     }
 
+    function syncGcsQuery() {
+      const hash = window.location.hash;
+      const qMatch   = hash.match(/gsc\.q=([^&]*)/);
+      const tabMatch = hash.match(/gsc\.tab=([^&]*)/);
+      const url = new URL(window.location.href);
+
+      if (!qMatch || !qMatch[1]) {
+        url.search = '';
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+        return;
+      }
+
+      const gscQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).trim();
+      if (!gscQuery) {
+        url.search = '';
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+        return;
+      }
+
+      const tab        = tabMatch ? tabMatch[1] : '0';
+      const currentQ   = url.searchParams.get('q') || '';
+      const currentTab = url.searchParams.get('tab') || '0';
+
+      if (gscQuery !== currentQ || tab !== currentTab) {
+        url.searchParams.set('q', gscQuery);
+        url.searchParams.set('tab', tab);
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      } else {
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      }
+    }
+
+    const _origPushState    = history.pushState.bind(history);
+    const _origReplaceState = history.replaceState.bind(history);
+
+    history.pushState = function(...args) {
+      _origPushState(...args);
+      setTimeout(syncGcsQuery, 50);
+    };
+    history.replaceState = function(...args) {
+      if (args[2] && String(args[2]).includes('gsc.')) {
+        _origReplaceState(...args);
+        setTimeout(syncGcsQuery, 50);
+      } else {
+        _origReplaceState(...args);
+      }
+    };
+
+    window.addEventListener('hashchange', syncGcsQuery);
+    window.addEventListener('load', () => setTimeout(syncGcsQuery, 300));
+
     /* ─────────────────────────────────
        RENDER FUNCTIONS
     ───────────────────────────────── */
@@ -1158,11 +1414,14 @@
 
     function showEmptyState() {
       resultsArea.innerHTML = `
-        <div class="state-box" id="empty-state">
+        <div class="state-box">
           <div class="big-icon">🔍</div>
           <h3>Search anything</h3>
           <p>Type in the bar above and press Search or Enter</p>
         </div>`;
+      aiPanel.innerHTML = '';
+      aiPanel.classList.remove('active');
+      resultsArea.style.display = '';
     }
 
     function renderNoResults() {
@@ -1178,14 +1437,11 @@
       if (!results.length) { renderNoResults(); return; }
 
       let html = '';
-      if (countText) {
-        html += `<div class="results-info">${escHtml(countText)}</div>`;
-      }
+      if (countText) html += `<div class="results-info">${escHtml(countText)}</div>`;
 
       results.forEach((r, i) => {
         let hostname = '';
         try { hostname = new URL(r.href).hostname.replace('www.', ''); } catch(e) {}
-
         const faviconUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(r.href)}`;
         const delay = i * 0.04;
 
@@ -1206,15 +1462,10 @@
           </div>`;
       });
 
-      // Pagination
-      if (totalPages > 1) {
-        html += buildPagination(currentPage, totalPages);
-      }
+      if (totalPages > 1) html += buildPagination(currentPage, totalPages);
 
       resultsArea.innerHTML = html;
-      resultsArea.scrollTop = 0;
 
-      // Attach pagination events
       resultsArea.querySelectorAll('.page-btn[data-page]').forEach(btn => {
         btn.addEventListener('click', () => {
           const page = parseInt(btn.getAttribute('data-page'));
@@ -1225,38 +1476,32 @@
 
     function renderImageResults(imgs) {
       if (!imgs.length) { renderNoResults(); return; }
-
       let html = `<div id="image-results-grid">`;
       imgs.forEach((img, i) => {
-        const delay = i * 0.03;
         html += `
-          <a class="image-result-item" href="${escHtml(img.href)}" target="_blank" rel="noopener noreferrer" style="animation-delay:${delay}s">
+          <a class="image-result-item" href="${escHtml(img.href)}" target="_blank" rel="noopener noreferrer" style="animation-delay:${i*0.03}s">
             <img src="${escHtml(img.src)}" alt="${escHtml(img.alt)}" loading="lazy" onerror="this.closest('.image-result-item').remove()"/>
             <div class="image-result-label">${escHtml(img.alt || 'Image')}</div>
           </a>`;
       });
       html += `</div>`;
-
       resultsArea.innerHTML = html;
     }
 
     function buildPagination(current, total) {
-      const MAX = 8;
-      let pages = [];
-      for (let i = 1; i <= Math.min(total, MAX); i++) pages.push(i);
-
+      const pages = [];
+      for (let i = 1; i <= Math.min(total, 8); i++) pages.push(i);
       let html = `<div class="results-pagination">`;
-      html += `<button class="page-btn" data-page="${current - 1}" ${current <= 1 ? 'disabled' : ''}>← Prev</button>`;
+      html += `<button class="page-btn" data-page="${current-1}" ${current<=1?'disabled':''}>← Prev</button>`;
       pages.forEach(p => {
-        html += `<button class="page-btn ${p === current ? 'active' : ''}" data-page="${p}">${p}</button>`;
+        html += `<button class="page-btn ${p===current?'active':''}" data-page="${p}">${p}</button>`;
       });
-      html += `<button class="page-btn" data-page="${current + 1}" ${current >= total ? 'disabled' : ''}>Next →</button>`;
+      html += `<button class="page-btn" data-page="${current+1}" ${current>=total?'disabled':''}>Next →</button>`;
       html += `</div>`;
       return html;
     }
 
     function goToPage(page) {
-      // Click the corresponding GCSE page button
       const gcsePages = document.querySelectorAll('#gcse-hidden-container .gsc-cursor-page');
       gcsePages.forEach(btn => {
         if (parseInt(btn.textContent) === page) {
@@ -1265,8 +1510,6 @@
           setTimeout(() => scrapeAndRender(), 1200);
         }
       });
-
-      // Also try the prev/next
       if (page < state.page) {
         const prevBtn = document.querySelector('#gcse-hidden-container .gsc-cursor-previous-page');
         if (prevBtn) { prevBtn.click(); showLoading(); setTimeout(() => scrapeAndRender(), 1200); }
@@ -1274,7 +1517,6 @@
         const nextBtn = document.querySelector('#gcse-hidden-container .gsc-cursor-next-page');
         if (nextBtn) { nextBtn.click(); showLoading(); setTimeout(() => scrapeAndRender(), 1200); }
       }
-
       state.page = page;
     }
 
