@@ -1623,9 +1623,8 @@
     function renderWebResults(results, countText, currentPage, totalPages) {
       if (!results.length) { renderNoResults(); return; }
 
-      // Show up to 30 web results per render
-      const PAGE_SIZE = 30;
-      const visible = results.slice(0, PAGE_SIZE);
+      // Each GCSE page has its own result set — show all of them
+      const visible = results;
 
       let html = '';
       if (countText) html += `<div class="results-info">${escHtml(countText)}</div>`;
@@ -1671,9 +1670,8 @@
         }))
         .filter(r => r.src && !r.src.startsWith('data:'));
 
-      // Show up to 50 images per page
-      const PAGE_SIZE = 50;
-      const imgs = allImgs.slice(0, PAGE_SIZE);
+      // Each GCSE page has its own result set — show all of them
+      const imgs = allImgs;
 
       if (!imgs.length) { renderNoResults(); return; }
 
@@ -1728,23 +1726,81 @@
       return html;
     }
 
+    /* ─────────────────────────────────
+       GO TO PAGE
+       Navigate GCSE to the exact requested page.
+       GCSE's cursor only shows a window of pages, so
+       we step through prev/next as needed to reach
+       pages not currently in its cursor list.
+    ───────────────────────────────── */
     function goToPage(page) {
+      if (page < 1 || page === state.page) return;
+
+      showLoading();
+
+      const diff = page - state.page;
+      state.page = page;
+
+      // Try direct click on the GCSE numbered cursor button first
       const gcsePages = document.querySelectorAll('#gcse-hidden-container .gsc-cursor-page');
+      let directClicked = false;
+
       gcsePages.forEach(btn => {
-        if (parseInt(btn.textContent) === page) {
+        if (parseInt(btn.textContent.trim()) === page && !btn.classList.contains('gsc-cursor-current-page')) {
           btn.click();
-          showLoading();
-          setTimeout(() => scrapeAndRender(), 1200);
+          directClicked = true;
         }
       });
-      if (page < state.page) {
-        const prevBtn = document.querySelector('#gcse-hidden-container .gsc-cursor-previous-page');
-        if (prevBtn) { prevBtn.click(); showLoading(); setTimeout(() => scrapeAndRender(), 1200); }
-      } else if (page > state.page) {
-        const nextBtn = document.querySelector('#gcse-hidden-container .gsc-cursor-next-page');
-        if (nextBtn) { nextBtn.click(); showLoading(); setTimeout(() => scrapeAndRender(), 1200); }
+
+      if (directClicked) {
+        // Wait for GCSE to load the new page then scrape
+        waitAndScrape(1400);
+        return;
       }
-      state.page = page;
+
+      // GCSE cursor doesn't have that page visible — step through prev/next
+      // We need to click prev/next |diff| times sequentially
+      stepGcsePage(diff, () => waitAndScrape(1400));
+    }
+
+    function stepGcsePage(diff, done) {
+      if (diff === 0) { done(); return; }
+
+      const isForward = diff > 0;
+      const btn = isForward
+        ? document.querySelector('#gcse-hidden-container .gsc-cursor-next-page, #gcse-hidden-container [aria-label="Next page"]')
+        : document.querySelector('#gcse-hidden-container .gsc-cursor-previous-page, #gcse-hidden-container [aria-label="Previous page"]');
+
+      if (!btn) {
+        // No nav button found — try clicking GCSE numbered page closest to target
+        const gcsePages = document.querySelectorAll('#gcse-hidden-container .gsc-cursor-page');
+        if (gcsePages.length) {
+          const last = isForward ? gcsePages[gcsePages.length - 1] : gcsePages[0];
+          last.click();
+        }
+        waitAndScrape(1400);
+        return;
+      }
+
+      btn.click();
+      // After each click, wait for GCSE to settle then step again
+      const remaining = diff > 0 ? diff - 1 : diff + 1;
+      if (remaining !== 0) {
+        setTimeout(() => stepGcsePage(remaining, done), 900);
+      } else {
+        done();
+      }
+    }
+
+    function waitAndScrape(ms) {
+      // Set up a one-shot observer that fires scrapeAndRender as soon
+      // as GCSE DOM settles, with ms as the maximum wait fallback.
+      clearTimeout(stableTimer);
+      clearTimeout(safetyTimer);
+
+      safetyTimer = setTimeout(() => {
+        scrapeAndRender();
+      }, ms);
     }
 
     /* ─────────────────────────────────
