@@ -993,7 +993,6 @@
 
     function setupGcseObserver() {
       showLoading();
-      // Tear down previous observer fully
       if (gcseObserver) { gcseObserver.disconnect(); gcseObserver = null; }
       clearTimeout(stableTimer);
       clearTimeout(safetyTimer);
@@ -1001,23 +1000,24 @@
       const gcseContainer = document.getElementById('gcse-hidden-container');
 
       gcseObserver = new MutationObserver(() => {
-        // Skip mutations caused by suggestion mirroring
         if (state.suppressObserver) return;
         clearTimeout(stableTimer);
+        // Wait 1200ms of DOM silence before scraping — gives GCSE time to
+        // finish rendering all 10 results, not just the first few
         stableTimer = setTimeout(() => {
           scrapeAndRender();
-        }, 500);
+        }, 1200);
       });
 
       gcseObserver.observe(gcseContainer, {
         childList: true,
         subtree: true,
         characterData: true,
-        attributes: false, // don't watch attribute changes — reduces noise
+        attributes: false,
       });
 
-      // Safety net scrape
-      safetyTimer = setTimeout(() => scrapeAndRender(), 5000);
+      // Safety net — scrape no matter what after 8s
+      safetyTimer = setTimeout(() => scrapeAndRender(), 8000);
     }
 
     /* ─────────────────────────────────
@@ -1575,7 +1575,14 @@
     }
 
     function inlineFormat(text) {
-      let s = escHtml(text);
+      // Preserve literal <br> and <br/> before escaping, restore after
+      const PLACEHOLDER = '\x00BR\x00';
+      let s = text.replace(/<br\s*\/?>/gi, PLACEHOLDER);
+      s = escHtml(s);
+      // Restore <br> placeholders
+      s = s.replace(/\x00BR\x00/g, '<br>');
+      // Also convert \n within a cell to <br>
+      s = s.replace(/\\n/g, '<br>');
       // Bold **text** or __text__
       s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
@@ -1586,8 +1593,6 @@
       s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
       // Inline code
       s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.10);padding:2px 5px;border-radius:4px;font-size:92%;">$1</code>');
-      // Line breaks within a line (  \n)
-      s = s.replace(/  $/, '<br>');
       return s;
     }
 
@@ -1969,16 +1974,24 @@
     // or after `maxWait` ms (whichever comes first)
     function waitForGcseChange(gcseContainer, maxWait) {
       return new Promise(resolve => {
+        let settled = false;
+        let settleTimer = null;
+
         const timer = setTimeout(() => {
           obs.disconnect();
-          resolve();
+          if (!settled) resolve();
         }, maxWait);
 
         const obs = new MutationObserver(() => {
-          clearTimeout(timer);
-          obs.disconnect();
-          // Small buffer so GCSE finishes all its DOM writes
-          setTimeout(resolve, 300);
+          // Reset settle timer on every mutation — only resolve when DOM
+          // has been quiet for 1000ms (all results have finished rendering)
+          clearTimeout(settleTimer);
+          settleTimer = setTimeout(() => {
+            settled = true;
+            clearTimeout(timer);
+            obs.disconnect();
+            resolve();
+          }, 1000);
         });
 
         obs.observe(gcseContainer, {
