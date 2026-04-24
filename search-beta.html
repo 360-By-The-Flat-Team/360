@@ -675,7 +675,7 @@
       #image-results-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
       .results-tabs { gap: 4px; padding: 8px; }
       .results-tab { padding: 6px 12px; font-size: 12px; }
-    }z
+    }
   </style>
 </head>
 <body>
@@ -804,16 +804,6 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         Images
       </div>
-      <div class="results-tab" data-tab="news">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 4h16v12H4z"/>
-    <path d="M22 20H2"/>
-    <path d="M7 8h6"/>
-  </svg>
-  News
-</div>
-
       <div class="results-tab" data-tab="ai">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
         AI
@@ -1907,107 +1897,6 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
-/* ───────────────────────────────────────────────
-   ALWAYS‑ON KNOWLEDGE PANEL (WIKIPEDIA + DDG)
-   Auto‑creates container, always shows, includes image
-─────────────────────────────────────────────── */
-
-async function fetchKnowledgePanel(query) {
-  // Create KP container if missing
-  let panel = document.getElementById("knowledge-panel");
-  if (!panel) {
-    panel = document.createElement("div");
-    panel.id = "knowledge-panel";
-    panel.style.position = "fixed";
-    panel.style.top = "110px";
-    panel.style.right = "20px";
-    panel.style.width = "320px";
-    panel.style.maxHeight = "calc(100vh - 140px)";
-    panel.style.overflowY = "auto";
-    panel.style.zIndex = "5";
-    panel.style.display = "block";
-    document.body.appendChild(panel);
-  }
-
-  panel.innerHTML = `
-    <div class="kp-card">
-      <div class="kp-title">Loading…</div>
-    </div>
-  `;
-
-  // Wikipedia summary API
-  const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
-
-  // DuckDuckGo Instant Answer API
-  const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1`;
-
-  let wiki = null;
-  let ddg = null;
-
-  try { wiki = await (await fetch(wikiUrl)).json(); } catch(e) {}
-  try { ddg  = await (await fetch(ddgUrl)).json(); } catch(e) {}
-
-  let title = query;
-  let desc  = "";
-  let img   = "";
-  let url   = "";
-  let facts = [];
-
-  /* WIKIPEDIA FIRST */
-  if (wiki && wiki.extract && !wiki.type?.includes("disambiguation")) {
-    title = wiki.title || title;
-    desc  = wiki.extract || "";
-    img   = wiki.thumbnail?.source || "";
-    url   = wiki.content_urls?.desktop?.page || "";
-  }
-
-  /* DDG FALLBACK */
-  if (!desc && ddg && ddg.Abstract) {
-    desc = ddg.Abstract;
-    img  = ddg.Image || img;
-    url  = ddg.AbstractURL || url;
-  }
-
-  /* DDG INFOBOX FACTS */
-  if (ddg && ddg.Infobox && Array.isArray(ddg.Infobox.content)) {
-    facts = ddg.Infobox.content
-      .filter(f => f.data && f.label)
-      .slice(0, 8)
-      .map(f => ({ label: f.label, value: f.data }));
-  }
-
-  /* FINAL RENDER */
-  let html = `<div class="kp-card">`;
-
-  if (img) {
-    html += `<img class="kp-thumb" src="${img}" alt="" style="width:100%;border-radius:10px;margin-bottom:12px;">`;
-  }
-
-  html += `
-    <div class="kp-title">${escHtml(title)}</div>
-    <div class="kp-desc">${escHtml(desc)}</div>
-  `;
-
-  facts.forEach(f => {
-    html += `<div class="kp-fact"><strong>${escHtml(f.label)}:</strong> ${escHtml(f.value)}</div>`;
-  });
-
-  if (url) {
-    html += `<a class="kp-link" href="${url}" target="_blank" style="color:var(--accent);display:inline-block;margin-top:10px;">Learn more →</a>`;
-  }
-
-  html += `</div>`;
-
-  panel.innerHTML = html;
-}
-
-/* HOOK INTO YOUR EXISTING doSearch() */
-const _doSearch_original = doSearch;
-doSearch = function(q) {
-  fetchKnowledgePanel(q);  // ALWAYS show KP
-  _doSearch_original(q);   // run your normal search
-};
-
 
     /* ─────────────────────────────────
        BOOT
