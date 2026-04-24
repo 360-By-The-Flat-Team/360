@@ -1086,73 +1086,85 @@
     }
 
     function scrapeImageResults(gcseContainer) {
-      // GCSE image results are in .gsc-imageResult elements
-      // Each has an <a> wrapping an <img> and a caption
-      const imageEls = gcseContainer.querySelectorAll(
-        '.gsc-imageResult, .gsc-imageResult-classic, .gs-imageResult, .gsc-imageResult-column, [class*="imageResult"]'
-      );
+      // GCSE's widget only returns web results with thumbnails.
+      // For real image search (30-50 per page), use the Google Custom Search JSON API
+      // with searchType=image. cx matches your GCSE cx.
+      const CX     = 'e003eb0834b6b4be8';
+      const start  = ((state.page - 1) * 10) + 1; // API uses 1-based index, 10 per page
 
+      showLoading();
+
+      // Fetch up to 10 results per API call; to get more we make multiple calls
+      // Google CSE API max is 10 per request, so we fetch 3 pages in parallel (30 total)
+      const starts = [1, 11, 21].map(offset => start + offset - 1);
+
+      Promise.allSettled(
+        starts.map(s =>
+          fetch(`https://www.googleapis.com/customsearch/v1?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&cx=${CX}&searchType=image&q=${encodeURIComponent(state.query)}&start=${s}&num=10`)
+            .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        )
+      ).then(responses => {
+        const seenSrcs = new Set();
+        const imgs = [];
+
+        responses.forEach(res => {
+          if (res.status !== 'fulfilled') return;
+          const data = res.value;
+          if (!data.items) return;
+          data.items.forEach(item => {
+            const src = item.link || '';
+            if (!src || seenSrcs.has(src)) return;
+            seenSrcs.add(src);
+            imgs.push({
+              src,
+              href:       item.image?.contextLink || item.displayLink || src,
+              alt:        item.title || 'Image',
+              displayUrl: item.displayLink || '',
+            });
+          });
+        });
+
+        // Get total count from first response
+        const firstOk = responses.find(r => r.status === 'fulfilled' && r.value?.searchInformation);
+        const totalResults = firstOk ? parseInt(firstOk.value.searchInformation.totalResults || '0') : 0;
+        // Google CSE API allows up to 100 results (pages 1-10 with 10 each)
+        const totalPages = Math.min(10, Math.ceil(totalResults / 30));
+        const countText  = totalResults ? `About ${totalResults.toLocaleString()} image results` : '';
+
+        if (!imgs.length) {
+          // API key missing or quota exceeded — fall back to GCSE thumbnail scrape
+          scrapeImageFallback(gcseContainer);
+          return;
+        }
+
+        renderImageResults(imgs, countText, state.page, Math.max(totalPages, 1));
+      }).catch(() => {
+        scrapeImageFallback(gcseContainer);
+      });
+    }
+
+    // Fallback: scrape whatever thumbnails GCSE put in web results
+    function scrapeImageFallback(gcseContainer) {
       const seenSrcs = new Set();
       const results = [];
-
-      imageEls.forEach(el => {
-        const anchor  = el.querySelector('a');
-        const imgEl   = el.querySelector('img');
-        const titleEl = el.querySelector('.gs-title, .gsc-thumbnail-title, [class*="title"]');
-
-        if (!imgEl) return;
-
-        // Get the real image src — GCSE may use data-src or src
-        let src = imgEl.getAttribute('data-src') || imgEl.src || '';
-        // Skip tiny placeholder/spinner images
-        if (!src || src.startsWith('data:') || src.includes('blank.gif')) return;
-        if (seenSrcs.has(src)) return;
+      gcseContainer.querySelectorAll('.gsc-webResult.gsc-result, .gs-result').forEach(el => {
+        const thumbEl = el.querySelector('.gs-image img, .gsc-thumbnail img, img.gs-image');
+        const titleEl = el.querySelector('.gs-title a');
+        if (!thumbEl) return;
+        const src = thumbEl.getAttribute('data-src') || thumbEl.src || '';
+        if (!src || src.startsWith('data:') || seenSrcs.has(src)) return;
         seenSrcs.add(src);
-
-        // Get the destination URL
-        let href = anchor ? (anchor.getAttribute('data-ctorig') || anchor.href || '#') : '#';
+        let href = titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#';
         if (href.includes('google.com/url')) {
           try { href = new URL(href).searchParams.get('q') || href; } catch(e) {}
         }
-
-        const alt = imgEl.alt || (titleEl ? titleEl.textContent.trim() : '') || 'Image';
-
+        const alt = titleEl ? titleEl.textContent.trim() : 'Image';
         let displayUrl = '';
-        try {
-          displayUrl = new URL(href).hostname.replace(/^www\./, '');
-        } catch(e) { displayUrl = href; }
-
+        try { displayUrl = new URL(href).hostname.replace(/^www\./, ''); } catch(e) { displayUrl = href; }
         results.push({ src, href, alt, displayUrl });
       });
-
-      // If GCSE image-specific elements not found, fall back to thumbnails in web results
-      if (!results.length) {
-        const webEls = gcseContainer.querySelectorAll('.gsc-webResult.gsc-result, .gs-result');
-        webEls.forEach(el => {
-          const thumbEl = el.querySelector('.gs-image img, .gsc-thumbnail img, img.gs-image');
-          const titleEl = el.querySelector('.gs-title a');
-          if (!thumbEl) return;
-          const src = thumbEl.src || thumbEl.getAttribute('data-src') || '';
-          if (!src || src.startsWith('data:') || seenSrcs.has(src)) return;
-          seenSrcs.add(src);
-          let href = titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#';
-          if (href.includes('google.com/url')) {
-            try { href = new URL(href).searchParams.get('q') || href; } catch(e) {}
-          }
-          const alt = titleEl ? titleEl.textContent.trim() : 'Image';
-          let displayUrl = '';
-          try { displayUrl = new URL(href).hostname.replace(/^www\./, ''); } catch(e) { displayUrl = href; }
-          results.push({ src, href, alt, displayUrl });
-        });
-      }
-
-      if (!results.length) {
-        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result');
-        if (noResults) { renderNoResults(); return; }
-        return; // still loading
-      }
-
       const { countText, currentPage, totalPages } = getGcsePaginationInfo(gcseContainer);
+      if (!results.length) { renderNoResults(); return; }
       renderImageResults(results, countText, currentPage, totalPages);
     }
 
@@ -1442,42 +1454,140 @@
 
     const AI_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
 
-    // Convert basic markdown to safe HTML
+    // Convert markdown to safe HTML
     function renderMarkdown(text) {
       if (!text) return '';
-      // Escape HTML first
-      let s = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
 
-      // Code blocks (``` ... ```)
-      s = s.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.08);border-radius:8px;padding:12px;overflow-x:auto;font-size:13px;margin:8px 0;"><code>$1</code></pre>');
-      // Inline code
-      s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.08);padding:2px 5px;border-radius:4px;font-size:13px;">$1</code>');
+      // Split into lines for block-level processing
+      const lines = text.split('\n');
+      const out   = [];
+      let i = 0;
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        // ── Fenced code block ```
+        if (line.trim().startsWith('```')) {
+          const codeLines = [];
+          i++;
+          while (i < lines.length && !lines[i].trim().startsWith('```')) {
+            codeLines.push(escHtml(lines[i]));
+            i++;
+          }
+          out.push(`<pre style="background:rgba(0,0,0,0.10);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:13px;margin:10px 0;line-height:1.5;"><code>${codeLines.join('\n')}</code></pre>`);
+          i++;
+          continue;
+        }
+
+        // ── Table: line that starts and ends with |
+        if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+          const tableLines = [];
+          while (i < lines.length && lines[i].trim().startsWith('|')) {
+            tableLines.push(lines[i]);
+            i++;
+          }
+          out.push(renderTable(tableLines));
+          continue;
+        }
+
+        // ── Heading #
+        const hMatch = line.match(/^(#{1,3})\s+(.+)/);
+        if (hMatch) {
+          const level = hMatch[1].length;
+          const sizes = ['19px','17px','15px'];
+          out.push(`<div style="font-size:${sizes[level-1]};font-weight:700;margin:14px 0 4px;line-height:1.3;">${inlineFormat(hMatch[2])}</div>`);
+          i++; continue;
+        }
+
+        // ── Horizontal rule ---
+        if (/^---+$/.test(line.trim())) {
+          out.push(`<hr style="border:none;border-top:1px solid var(--glass-border);margin:12px 0;">`);
+          i++; continue;
+        }
+
+        // ── Unordered list item - or *
+        if (/^[\*\-]\s/.test(line)) {
+          const listItems = [];
+          while (i < lines.length && /^[\*\-]\s/.test(lines[i])) {
+            listItems.push(`<li style="margin:4px 0;">${inlineFormat(lines[i].replace(/^[\*\-]\s/, ''))}</li>`);
+            i++;
+          }
+          out.push(`<ul style="padding-left:22px;margin:6px 0;">${listItems.join('')}</ul>`);
+          continue;
+        }
+
+        // ── Numbered list
+        if (/^\d+\.\s/.test(line)) {
+          const listItems = [];
+          while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+            listItems.push(`<li style="margin:4px 0;">${inlineFormat(lines[i].replace(/^\d+\.\s/, ''))}</li>`);
+            i++;
+          }
+          out.push(`<ol style="padding-left:22px;margin:6px 0;">${listItems.join('')}</ol>`);
+          continue;
+        }
+
+        // ── Empty line → paragraph break
+        if (line.trim() === '') {
+          out.push(`<div style="height:8px;"></div>`);
+          i++; continue;
+        }
+
+        // ── Regular paragraph
+        out.push(`<p style="margin:0 0 6px;line-height:1.7;">${inlineFormat(line)}</p>`);
+        i++;
+      }
+
+      return out.join('');
+    }
+
+    function renderTable(tableLines) {
+      if (tableLines.length < 2) return escHtml(tableLines.join('\n'));
+
+      const parseRow = (line) =>
+        line.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+
+      const headers = parseRow(tableLines[0]);
+      // Skip separator row (---|---|---)
+      const bodyLines = tableLines.slice(2);
+
+      let html = `<div style="overflow-x:auto;margin:12px 0;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr>`;
+      headers.forEach(h => {
+        html += `<th style="padding:8px 12px;border-bottom:2px solid var(--glass-border);text-align:left;font-weight:700;white-space:nowrap;">${inlineFormat(h)}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+
+      bodyLines.forEach((line, ri) => {
+        if (!line.trim() || /^[\|\s\-:]+$/.test(line)) return;
+        const cells = parseRow(line);
+        const bg = ri % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'transparent';
+        html += `<tr style="background:${bg};">`;
+        cells.forEach(c => {
+          html += `<td style="padding:7px 12px;border-bottom:1px solid var(--glass-border);vertical-align:top;">${inlineFormat(c)}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      return html;
+    }
+
+    function inlineFormat(text) {
+      let s = escHtml(text);
       // Bold **text** or __text__
       s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
-      // Italic *text* or _text_  (after bold so ** doesn't trigger)
-      s = s.replace(/\*([^*\n]+)\*/g, '<em style="text-decoration:underline;font-style:normal;">$1</em>');
-      s = s.replace(/_([^_\n]+)_/g, '<em style="text-decoration:underline;font-style:normal;">$1</em>');
-      // Strikethrough ~~text~~
+      // Italic *text* or _text_ → underline as requested
+      s = s.replace(/\*([^*\n]+)\*/g, '<span style="text-decoration:underline;">$1</span>');
+      s = s.replace(/_([^_\n]+)_/g, '<span style="text-decoration:underline;">$1</span>');
+      // Strikethrough
       s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
-      // Headers ### ## #
-      s = s.replace(/^### (.+)$/gm, '<h3 style="margin:12px 0 4px;font-size:15px;font-weight:700;">$1</h3>');
-      s = s.replace(/^## (.+)$/gm, '<h2 style="margin:14px 0 4px;font-size:17px;font-weight:700;">$1</h2>');
-      s = s.replace(/^# (.+)$/gm, '<h1 style="margin:16px 0 4px;font-size:19px;font-weight:800;">$1</h1>');
-      // Bullet lists
-      s = s.replace(/^[\*\-] (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;">$1</li>');
-      s = s.replace(/(<li[\s\S]*?<\/li>)/g, '<ul style="padding-left:20px;margin:6px 0;">$1</ul>');
-      // Numbered lists
-      s = s.replace(/^\d+\. (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;">$1</li>');
-      // Horizontal rule
-      s = s.replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid var(--glass-border);margin:12px 0;">');
-      // Newlines → <br> (but not inside block elements)
-      s = s.replace(/\n{2,}/g, '<br><br>');
-      s = s.replace(/\n/g, '<br>');
-
+      // Inline code
+      s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.10);padding:2px 5px;border-radius:4px;font-size:92%;">$1</code>');
+      // Line breaks within a line (  \n)
+      s = s.replace(/  $/, '<br>');
       return s;
     }
 
