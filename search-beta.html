@@ -1171,23 +1171,64 @@
     function getGcsePaginationInfo(gcseContainer) {
       const countEl       = gcseContainer.querySelector('.gsc-result-info');
       const countText     = countEl ? countEl.textContent.trim() : '';
-      const pageEls       = gcseContainer.querySelectorAll('.gsc-cursor-page');
       const currentPageEl = gcseContainer.querySelector('.gsc-cursor-current-page');
       const currentPage   = currentPageEl ? parseInt(currentPageEl.textContent.trim()) : state.page;
-
-      // Highest page number visible in GCSE cursor
-      let totalPages = 0;
-      pageEls.forEach(el => {
-        const n = parseInt(el.textContent.trim());
-        if (!isNaN(n) && n > totalPages) totalPages = n;
-      });
-      // If there's a next-arrow, more pages exist beyond the cursor window
-      const hasNextArrow = !!gcseContainer.querySelector('.gsc-cursor-next-page');
-      if (hasNextArrow) totalPages = Math.max(totalPages, currentPage + 1);
-      if (totalPages < 1) totalPages = 1;
-
+      // GCSE always has exactly 10 pages
+      const totalPages = 10;
       state.page = currentPage;
       return { countText, currentPage, totalPages };
+    }
+
+    function scrapeImageResults(gcseContainer) {
+      const seenSrcs = new Set();
+      const results  = [];
+
+      // Try GCSE image-specific elements first
+      gcseContainer.querySelectorAll('.gsc-imageResult, [class*="imageResult"]').forEach(el => {
+        const anchor = el.querySelector('a');
+        const imgEl  = el.querySelector('img');
+        if (!imgEl) return;
+        const src = imgEl.getAttribute('data-src') || imgEl.src || '';
+        if (!src || src.startsWith('data:') || src.includes('blank') || seenSrcs.has(src)) return;
+        seenSrcs.add(src);
+        let href = anchor ? (anchor.getAttribute('data-ctorig') || anchor.href || '#') : '#';
+        if (href.includes('google.com/url')) { try { href = new URL(href).searchParams.get('q') || href; } catch(e) {} }
+        const alt = imgEl.alt || 'Image';
+        let displayUrl = '';
+        try { displayUrl = new URL(href).hostname.replace(/^www\./, ''); } catch(e) { displayUrl = href; }
+        results.push({ src, href, alt, displayUrl });
+      });
+
+      // Fall back: collect every non-tiny image from all result elements
+      if (!results.length) {
+        gcseContainer.querySelectorAll('.gsc-result, .gs-result, .gsc-webResult').forEach(el => {
+          el.querySelectorAll('img').forEach(imgEl => {
+            const src = imgEl.getAttribute('data-src') || imgEl.src || '';
+            if (!src || src.startsWith('data:') || src.includes('blank') ||
+                src.includes('favicon') || src.includes('1x1') || seenSrcs.has(src)) return;
+            if ((imgEl.width && imgEl.width < 30) || (imgEl.height && imgEl.height < 30)) return;
+            seenSrcs.add(src);
+            const anchor  = imgEl.closest('a');
+            const titleEl = el.querySelector('.gs-title a');
+            let href = anchor ? (anchor.getAttribute('data-ctorig') || anchor.href || '#') :
+                       titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#';
+            if (href.includes('google.com/url')) { try { href = new URL(href).searchParams.get('q') || href; } catch(e) {} }
+            const alt = imgEl.alt || (titleEl ? titleEl.textContent.trim() : 'Image');
+            let displayUrl = '';
+            try { displayUrl = new URL(href).hostname.replace(/^www\./, ''); } catch(e) { displayUrl = href; }
+            results.push({ src, href, alt, displayUrl });
+          });
+        });
+      }
+
+      if (!results.length) {
+        const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result');
+        if (noResults) { renderNoResults(); return; }
+        return;
+      }
+
+      const { countText, currentPage, totalPages } = getGcsePaginationInfo(gcseContainer);
+      renderImageResults(results, countText, currentPage, totalPages);
     }
 
     /* ─────────────────────────────────
@@ -1458,7 +1499,11 @@
     function renderMarkdown(text) {
       if (!text) return '';
 
-      // Split into lines for block-level processing
+      // Normalize literal \n (from JSON serialization) to real newlines
+      text = text.replace(/\\n/g, '\n');
+      // Normalize \r\n and \r
+      text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
       const lines = text.split('\n');
       const out   = [];
       let i = 0;
@@ -1468,14 +1513,15 @@
 
         // ── Fenced code block ```
         if (line.trim().startsWith('```')) {
+          const lang = line.trim().slice(3).trim();
           const codeLines = [];
           i++;
           while (i < lines.length && !lines[i].trim().startsWith('```')) {
             codeLines.push(escHtml(lines[i]));
             i++;
           }
-          out.push(`<pre style="background:rgba(0,0,0,0.10);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:13px;margin:10px 0;line-height:1.5;"><code>${codeLines.join('\n')}</code></pre>`);
-          i++;
+          out.push(`<pre style="background:rgba(0,0,0,0.12);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:13px;margin:10px 0;line-height:1.5;border:1px solid var(--glass-border);"><code>${codeLines.join('\n')}</code></pre>`);
+          i++; // skip closing ```
           continue;
         }
 
@@ -1527,7 +1573,7 @@
           continue;
         }
 
-        // ── Empty line → paragraph break
+        // ── Empty line → spacing
         if (line.trim() === '') {
           out.push(`<div style="height:8px;"></div>`);
           i++; continue;
