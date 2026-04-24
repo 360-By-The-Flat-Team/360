@@ -3,6 +3,12 @@
    User chip with Gravatar + initials fallback, full dropdown
    ============================================================ */
 
+//CHANGE THE FOLLOWING TO CHANGE ALL THE PAGE'S VERSION!!
+const version = "v2.2.0";
+
+//CHANGES THE VERSION IN ALL PAGES!!
+document.getElementById("version").textContent = version;
+
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const body = document.body;
