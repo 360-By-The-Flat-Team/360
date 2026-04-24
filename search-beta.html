@@ -1909,39 +1909,40 @@
     }
 /* ───────────────────────────────────────────────
    ALWAYS‑ON KNOWLEDGE PANEL (WIKIPEDIA + DDG)
-   Inline, no styling changes, no layout changes
+   Auto‑creates container, always shows, includes image
 ─────────────────────────────────────────────── */
 
 async function fetchKnowledgePanel(query) {
-  const panel = document.getElementById("knowledge-panel");
-
-  // If panel doesn't exist, create it ONCE
+  // Create KP container if missing
+  let panel = document.getElementById("knowledge-panel");
   if (!panel) {
-    const kp = document.createElement("div");
-    kp.id = "knowledge-panel";
-    kp.style.position = "fixed";
-    kp.style.top = "110px";
-    kp.style.right = "20px";
-    kp.style.width = "320px";
-    kp.style.maxHeight = "calc(100vh - 140px)";
-    kp.style.overflowY = "auto";
-    kp.style.zIndex = "5";
-    kp.style.display = "block";
-    document.body.appendChild(kp);
+    panel = document.createElement("div");
+    panel.id = "knowledge-panel";
+    panel.style.position = "fixed";
+    panel.style.top = "110px";
+    panel.style.right = "20px";
+    panel.style.width = "320px";
+    panel.style.maxHeight = "calc(100vh - 140px)";
+    panel.style.overflowY = "auto";
+    panel.style.zIndex = "5";
+    panel.style.display = "block";
+    document.body.appendChild(panel);
   }
 
-  const el = document.getElementById("knowledge-panel");
-  el.innerHTML = `
+  panel.innerHTML = `
     <div class="kp-card">
       <div class="kp-title">Loading…</div>
     </div>
   `;
 
+  // Wikipedia summary API
   const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
-  const ddgUrl  = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1`;
+
+  // DuckDuckGo Instant Answer API
+  const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1`;
 
   let wiki = null;
-  let ddg  = null;
+  let ddg = null;
 
   try { wiki = await (await fetch(wikiUrl)).json(); } catch(e) {}
   try { ddg  = await (await fetch(ddgUrl)).json(); } catch(e) {}
@@ -1949,10 +1950,10 @@ async function fetchKnowledgePanel(query) {
   let title = query;
   let desc  = "";
   let img   = "";
-  let facts = [];
   let url   = "";
+  let facts = [];
 
-  // Wikipedia strong match
+  /* WIKIPEDIA FIRST */
   if (wiki && wiki.extract && !wiki.type?.includes("disambiguation")) {
     title = wiki.title || title;
     desc  = wiki.extract || "";
@@ -1960,14 +1961,14 @@ async function fetchKnowledgePanel(query) {
     url   = wiki.content_urls?.desktop?.page || "";
   }
 
-  // DuckDuckGo fallback
+  /* DDG FALLBACK */
   if (!desc && ddg && ddg.Abstract) {
     desc = ddg.Abstract;
     img  = ddg.Image || img;
     url  = ddg.AbstractURL || url;
   }
 
-  // DuckDuckGo infobox facts
+  /* DDG INFOBOX FACTS */
   if (ddg && ddg.Infobox && Array.isArray(ddg.Infobox.content)) {
     facts = ddg.Infobox.content
       .filter(f => f.data && f.label)
@@ -1975,10 +1976,12 @@ async function fetchKnowledgePanel(query) {
       .map(f => ({ label: f.label, value: f.data }));
   }
 
-  // Render KP
+  /* FINAL RENDER */
   let html = `<div class="kp-card">`;
 
-  if (img) html += `<img class="kp-thumb" src="${img}" alt="">`;
+  if (img) {
+    html += `<img class="kp-thumb" src="${img}" alt="" style="width:100%;border-radius:10px;margin-bottom:12px;">`;
+  }
 
   html += `
     <div class="kp-title">${escHtml(title)}</div>
@@ -1990,20 +1993,21 @@ async function fetchKnowledgePanel(query) {
   });
 
   if (url) {
-    html += `<a class="kp-link" href="${url}" target="_blank">Learn more →</a>`;
+    html += `<a class="kp-link" href="${url}" target="_blank" style="color:var(--accent);display:inline-block;margin-top:10px;">Learn more →</a>`;
   }
 
   html += `</div>`;
 
-  el.innerHTML = html;
+  panel.innerHTML = html;
 }
 
-/* CALL IT INSIDE doSearch() */
-const _doSearch = doSearch;
+/* HOOK INTO YOUR EXISTING doSearch() */
+const _doSearch_original = doSearch;
 doSearch = function(q) {
-  fetchKnowledgePanel(q);   // ALWAYS show KP
-  _doSearch(q);             // run normal search
+  fetchKnowledgePanel(q);  // ALWAYS show KP
+  _doSearch_original(q);   // run your normal search
 };
+
 
     /* ─────────────────────────────────
        BOOT
