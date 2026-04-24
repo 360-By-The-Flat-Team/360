@@ -1365,14 +1365,64 @@
 
     /* ─────────────────────────────────
        AI SEARCH
-       Calls your edge function at /api/ai-chatbot.
-       Handles both SSE streaming and plain JSON.
+       Calls Supabase edge function.
+       Returns { reply: "..." } — extract .reply.
+       Renders markdown-lite formatting.
     ───────────────────────────────── */
     let aiAbortController = null;
 
     const AI_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
 
+    // Convert basic markdown to safe HTML
+    function renderMarkdown(text) {
+      if (!text) return '';
+      // Escape HTML first
+      let s = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Code blocks (``` ... ```)
+      s = s.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.08);border-radius:8px;padding:12px;overflow-x:auto;font-size:13px;margin:8px 0;"><code>$1</code></pre>');
+      // Inline code
+      s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.08);padding:2px 5px;border-radius:4px;font-size:13px;">$1</code>');
+      // Bold **text** or __text__
+      s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+      // Italic *text* or _text_  (after bold so ** doesn't trigger)
+      s = s.replace(/\*([^*\n]+)\*/g, '<em style="text-decoration:underline;font-style:normal;">$1</em>');
+      s = s.replace(/_([^_\n]+)_/g, '<em style="text-decoration:underline;font-style:normal;">$1</em>');
+      // Strikethrough ~~text~~
+      s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
+      // Headers ### ## #
+      s = s.replace(/^### (.+)$/gm, '<h3 style="margin:12px 0 4px;font-size:15px;font-weight:700;">$1</h3>');
+      s = s.replace(/^## (.+)$/gm, '<h2 style="margin:14px 0 4px;font-size:17px;font-weight:700;">$1</h2>');
+      s = s.replace(/^# (.+)$/gm, '<h1 style="margin:16px 0 4px;font-size:19px;font-weight:800;">$1</h1>');
+      // Bullet lists
+      s = s.replace(/^[\*\-] (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;">$1</li>');
+      s = s.replace(/(<li[\s\S]*?<\/li>)/g, '<ul style="padding-left:20px;margin:6px 0;">$1</ul>');
+      // Numbered lists
+      s = s.replace(/^\d+\. (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;">$1</li>');
+      // Horizontal rule
+      s = s.replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid var(--glass-border);margin:12px 0;">');
+      // Newlines → <br> (but not inside block elements)
+      s = s.replace(/\n{2,}/g, '<br><br>');
+      s = s.replace(/\n/g, '<br>');
+
+      return s;
+    }
+
     async function runAiSearch(q) {
+      // Offline check
+      if (!navigator.onLine) {
+        aiPanel.innerHTML = `
+          <div class="ai-response-card">
+            <div class="ai-response-label">${AI_ICON} AI Answer</div>
+            <div class="ai-response-text" style="color:var(--mut)">📡 You appear to be offline. Please check your internet connection and try again.</div>
+          </div>`;
+        return;
+      }
+
       if (aiAbortController) aiAbortController.abort();
       aiAbortController = new AbortController();
 
@@ -1385,22 +1435,17 @@
           </div>
         </div>`;
 
-      const card   = aiPanel.querySelector('.ai-response-card');
-      let   textEl = null;
-      let   answer = '';
+      const card = aiPanel.querySelector('.ai-response-card');
 
-      function ensureTextEl() {
-        if (!textEl) {
-          card.innerHTML = `<div class="ai-response-label">${AI_ICON} AI Answer</div><div class="ai-response-text"></div>`;
-          textEl = card.querySelector('.ai-response-text');
-        }
+      function showAnswer(text) {
+        card.innerHTML = `<div class="ai-response-label">${AI_ICON} AI Answer</div><div class="ai-response-text">${renderMarkdown(text)}</div>`;
       }
 
       try {
         const resp = await fetch('https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search-ai', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: q, query: q, prompt: q }),
+          body: JSON.stringify({ message: q }),
           signal: aiAbortController.signal,
         });
 
@@ -1410,68 +1455,26 @@
           throw new Error(errMsg);
         }
 
-        const contentType = resp.headers.get('content-type') || '';
+        const j = await resp.json();
 
-        // ── Streaming SSE ──
-        if (resp.body && (contentType.includes('text/event-stream') || contentType.includes('text/plain'))) {
-          const reader = resp.body.getReader();
-          const dec    = new TextDecoder();
+        // Your edge function returns { reply: "..." }
+        const answer = j.reply
+                    ?? j.response
+                    ?? j.content
+                    ?? j.text
+                    ?? j.message
+                    ?? j.answer
+                    ?? j.choices?.[0]?.message?.content
+                    ?? JSON.stringify(j, null, 2);
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = dec.decode(value, { stream: true });
-
-            for (const line of chunk.split('\n')) {
-              const t = line.trim();
-              if (!t || t === 'data: [DONE]') continue;
-
-              let delta = '';
-              if (t.startsWith('data: ')) {
-                const payload = t.slice(6);
-                try {
-                  const j = JSON.parse(payload);
-                  delta = j.choices?.[0]?.delta?.content
-                       ?? j.choices?.[0]?.text
-                       ?? j.delta?.text
-                       ?? j.content
-                       ?? j.text
-                       ?? '';
-                } catch(e) { delta = payload; }
-              }
-              if (delta) {
-                answer += delta;
-                ensureTextEl();
-                textEl.textContent = answer;
-              }
-            }
-          }
-          // Ensure we show something even if no deltas parsed
-          if (!answer) {
-            ensureTextEl();
-            textEl.textContent = '(No response received)';
-          }
-
-        // ── Plain JSON ──
-        } else {
-          const j = await resp.json();
-          answer = j.response
-                ?? j.content
-                ?? j.text
-                ?? j.message
-                ?? j.answer
-                ?? j.choices?.[0]?.message?.content
-                ?? j.choices?.[0]?.text
-                ?? JSON.stringify(j, null, 2);
-          ensureTextEl();
-          textEl.textContent = answer;
-        }
+        showAnswer(answer);
 
       } catch(err) {
         if (err.name === 'AbortError') return;
+        const isOffline = !navigator.onLine || err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
         card.innerHTML = `
           <div class="ai-response-label">${AI_ICON} AI Answer</div>
-          <div class="ai-response-text" style="color:var(--mut)">⚠ ${escHtml(err.message || 'Something went wrong. Please try again.')}</div>`;
+          <div class="ai-response-text" style="color:var(--mut)">${isOffline ? '📡 No internet connection.' : '⚠ ' + escHtml(err.message || 'Something went wrong.')}</div>`;
       }
     }
 
@@ -1479,6 +1482,17 @@
        DO SEARCH (main entry point)
     ───────────────────────────────── */
     function doSearch(q) {
+      // Offline check for web/images searches
+      if (!navigator.onLine && state.tab !== 'ai') {
+        resultsArea.innerHTML = `
+          <div class="state-box">
+            <div class="big-icon">📡</div>
+            <h3>No internet connection</h3>
+            <p>Please check your connection and try again.</p>
+          </div>`;
+        return;
+      }
+
       state.query = q;
       state.page = 1;
       input.value = q;
@@ -1496,20 +1510,18 @@
     }
 
     /* ─────────────────────────────────
-       URL MANAGEMENT
-       Your provided syncGcsQuery + custom updateUrl
+       URL MANAGEMENT — uses %20 not + for spaces
     ───────────────────────────────── */
     function updateUrl(q, tab) {
-      const url = new URL(location.href);
+      // Build URL manually so we control encoding (%20 not +)
+      const base = location.pathname;
       if (q) {
-        url.searchParams.set('q', q);
-        url.searchParams.set('tab', tab);
+        const encoded = encodeURIComponent(q); // gives %20 for spaces
+        const tabEnc  = encodeURIComponent(tab);
+        history.replaceState(null, '', `${base}?q=${encoded}&tab=${tabEnc}`);
       } else {
-        url.searchParams.delete('q');
-        url.searchParams.delete('tab');
+        history.replaceState(null, '', base);
       }
-      url.hash = '';
-      history.replaceState(null, '', url.toString());
     }
 
     function syncGcsQuery() {
@@ -1538,10 +1550,9 @@
       const currentTab = url.searchParams.get('tab') || '0';
 
       if (gscQuery !== currentQ || tab !== currentTab) {
-        url.searchParams.set('q', gscQuery);
-        url.searchParams.set('tab', tab);
-        url.hash = '';
-        window.history.replaceState(null, '', url.toString());
+        // Use %20 encoding
+        const base = location.pathname;
+        window.history.replaceState(null, '', `${base}?q=${encodeURIComponent(gscQuery)}&tab=${encodeURIComponent(tab)}`);
       } else {
         url.hash = '';
         window.history.replaceState(null, '', url.toString());
@@ -1566,6 +1577,16 @@
 
     window.addEventListener('hashchange', syncGcsQuery);
     window.addEventListener('load', () => setTimeout(syncGcsQuery, 300));
+
+    // Also detect going offline/online while the page is open
+    window.addEventListener('offline', () => {
+      resultsArea.innerHTML = `
+        <div class="state-box">
+          <div class="big-icon">📡</div>
+          <h3>You went offline</h3>
+          <p>Results may not load until your connection is restored.</p>
+        </div>`;
+    });
 
     /* ─────────────────────────────────
        RENDER FUNCTIONS
@@ -1602,14 +1623,18 @@
     function renderWebResults(results, countText, currentPage, totalPages) {
       if (!results.length) { renderNoResults(); return; }
 
+      // Show up to 30 web results per render
+      const PAGE_SIZE = 30;
+      const visible = results.slice(0, PAGE_SIZE);
+
       let html = '';
       if (countText) html += `<div class="results-info">${escHtml(countText)}</div>`;
 
-      results.forEach((r, i) => {
+      visible.forEach((r, i) => {
         let hostname = '';
         try { hostname = new URL(r.href).hostname.replace('www.', ''); } catch(e) {}
         const faviconUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(r.href)}`;
-        const delay = i * 0.04;
+        const delay = i * 0.03;
 
         html += `
           <div class="result-card" style="animation-delay:${delay}s">
@@ -1636,8 +1661,8 @@
     }
 
     function renderImageResults(results, countText, currentPage, totalPages) {
-      // Build image list from results — prefer imgSrc, fall back to thumb
-      const imgs = results
+      // Build image list — prefer imgSrc, fall back to thumb
+      const allImgs = results
         .map(r => ({
           src:  r.imgSrc || r.thumb || '',
           href: r.href,
@@ -1646,6 +1671,10 @@
         }))
         .filter(r => r.src && !r.src.startsWith('data:'));
 
+      // Show up to 50 images per page
+      const PAGE_SIZE = 50;
+      const imgs = allImgs.slice(0, PAGE_SIZE);
+
       if (!imgs.length) { renderNoResults(); return; }
 
       let html = '';
@@ -1653,12 +1682,16 @@
 
       html += `<div id="image-results-grid">`;
       imgs.forEach((img, i) => {
-        // Detect GIFs — use <img> with no object-fit restriction so animation plays
-        const isGif = img.src.toLowerCase().includes('.gif') || img.src.toLowerCase().includes('gif');
+        const isGif = /\.gif($|\?)|gif/i.test(img.src);
         html += `
-          <div class="image-result-item" data-src="${escHtml(img.src)}" data-href="${escHtml(img.href)}" data-alt="${escHtml(img.alt)}" data-url="${escHtml(img.displayUrl || img.href)}" style="animation-delay:${i*0.03}s">
+          <div class="image-result-item"
+            data-src="${escHtml(img.src)}"
+            data-href="${escHtml(img.href)}"
+            data-alt="${escHtml(img.alt)}"
+            data-url="${escHtml(img.displayUrl || img.href)}"
+            style="animation-delay:${i*0.02}s">
             <img src="${escHtml(img.src)}" alt="${escHtml(img.alt)}" loading="lazy"
-              style="${isGif ? 'object-fit:contain;background:#000;' : ''}"
+              style="${isGif ? 'object-fit:contain;background:#000;height:140px;' : ''}"
               onerror="this.closest('.image-result-item').remove()"/>
             <div class="image-result-label">${escHtml(img.alt || 'Image')}</div>
           </div>`;
@@ -1668,7 +1701,6 @@
       if (totalPages > 1) html += buildPagination(currentPage, totalPages);
       resultsArea.innerHTML = html;
 
-      // Wire up lightbox on each tile
       resultsArea.querySelectorAll('.image-result-item').forEach(tile => {
         tile.addEventListener('click', () => openLightbox({
           src:  tile.dataset.src,
@@ -1678,7 +1710,6 @@
         }));
       });
 
-      // Pagination
       resultsArea.querySelectorAll('.page-btn[data-page]').forEach(btn => {
         btn.addEventListener('click', () => goToPage(parseInt(btn.getAttribute('data-page'))));
       });
