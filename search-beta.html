@@ -859,25 +859,6 @@
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
 
   <script>
-    async function fetch360(q, tab = "web", page = 1, safe = "moderate") {
-  try {
-    const res = await fetch("https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ q, tab, page, safe })
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error("Edge function error: " + err);
-    }
-
-    return await res.json();
-  } catch (err) {
-    console.error("360 Edge Error:", err);
-    return { error: err.message };
-  }
-}
   (() => {
     /* ─────────────────────────────────
        STATE
@@ -1114,12 +1095,27 @@
       });
 
       // Count + page info
-      const countEl      = gcseContainer.querySelector('.gsc-result-info');
-      const countText    = countEl ? countEl.textContent.trim() : '';
-      const pageEls      = gcseContainer.querySelectorAll('.gsc-cursor-page');
+      // GCSE shows a sliding window of cursor buttons.
+      // currentPage = the highlighted one. totalPages = highest number seen in cursor.
+      const countEl       = gcseContainer.querySelector('.gsc-result-info');
+      const countText     = countEl ? countEl.textContent.trim() : '';
+      const pageEls       = gcseContainer.querySelectorAll('.gsc-cursor-page');
       const currentPageEl = gcseContainer.querySelector('.gsc-cursor-current-page');
-      const totalPages   = pageEls.length;
-      const currentPage  = currentPageEl ? parseInt(currentPageEl.textContent) : 1;
+      const currentPage   = currentPageEl ? parseInt(currentPageEl.textContent.trim()) : state.page;
+
+      // Total = highest page number visible in cursor (GCSE adds more as you navigate)
+      let totalPages = 0;
+      pageEls.forEach(el => {
+        const n = parseInt(el.textContent.trim());
+        if (!isNaN(n) && n > totalPages) totalPages = n;
+      });
+      // If GCSE shows a next-page arrow there are more pages beyond the cursor window
+      const hasNextArrow = !!gcseContainer.querySelector('.gsc-cursor-next-page');
+      if (hasNextArrow && totalPages === currentPage) totalPages = currentPage + 1;
+      if (totalPages < 1) totalPages = 1;
+
+      // Keep state in sync with actual GCSE page
+      state.page = currentPage;
 
       if (state.tab === 'images') {
         renderImageResults(results, countText, currentPage, totalPages);
@@ -1532,12 +1528,9 @@
        URL MANAGEMENT — uses %20 not + for spaces
     ───────────────────────────────── */
     function updateUrl(q, tab) {
-      // Build URL manually so we control encoding (%20 not +)
       const base = location.pathname;
       if (q) {
-        const encoded = encodeURIComponent(q); // gives %20 for spaces
-        const tabEnc  = encodeURIComponent(tab);
-        history.replaceState(null, '', `${base}?q=${encoded}&tab=${tabEnc}`);
+        history.replaceState(null, '', `${base}?q=${encodeURIComponent(q)}&tab=${encodeURIComponent(tab)}`);
       } else {
         history.replaceState(null, '', base);
       }
@@ -1545,34 +1538,38 @@
 
     function syncGcsQuery() {
       const hash = window.location.hash;
+
+      // Only act if the hash actually contains a GCSE query token
+      if (!hash.includes('gsc.q=')) {
+        // GCSE fired a replaceState without a query — just strip the hash
+        // but DO NOT wipe the search params we set ourselves
+        if (window.location.hash) {
+          const url = new URL(window.location.href);
+          url.hash = '';
+          window.history.replaceState(null, '', url.toString());
+        }
+        return;
+      }
+
       const qMatch   = hash.match(/gsc\.q=([^&]*)/);
       const tabMatch = hash.match(/gsc\.tab=([^&]*)/);
-      const url = new URL(window.location.href);
 
-      if (!qMatch || !qMatch[1]) {
-        url.search = '';
-        url.hash = '';
-        window.history.replaceState(null, '', url.toString());
-        return;
-      }
+      if (!qMatch || !qMatch[1]) return; // nothing useful in hash — leave URL alone
 
       const gscQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).trim();
-      if (!gscQuery) {
-        url.search = '';
-        url.hash = '';
-        window.history.replaceState(null, '', url.toString());
-        return;
-      }
+      if (!gscQuery) return; // empty query — leave URL alone
 
-      const tab        = tabMatch ? tabMatch[1] : '0';
-      const currentQ   = url.searchParams.get('q') || '';
-      const currentTab = url.searchParams.get('tab') || '0';
+      const tab      = tabMatch ? tabMatch[1] : '0';
+      const base     = location.pathname;
+      const curQ     = new URLSearchParams(location.search).get('q') || '';
 
-      if (gscQuery !== currentQ || tab !== currentTab) {
-        // Use %20 encoding
-        const base = location.pathname;
-        window.history.replaceState(null, '', `${base}?q=${encodeURIComponent(gscQuery)}&tab=${encodeURIComponent(tab)}`);
+      // Only update if it differs from what we already have
+      if (gscQuery !== curQ) {
+        window.history.replaceState(null, '',
+          `${base}?q=${encodeURIComponent(gscQuery)}&tab=${encodeURIComponent(tab)}`);
       } else {
+        // Same query — just strip the hash fragment
+        const url = new URL(window.location.href);
         url.hash = '';
         window.history.replaceState(null, '', url.toString());
       }
@@ -1583,7 +1580,8 @@
 
     history.pushState = function(...args) {
       _origPushState(...args);
-      setTimeout(syncGcsQuery, 50);
+      // Only sync if GCSE put its own hash in
+      if (args[2] && String(args[2]).includes('gsc.')) setTimeout(syncGcsQuery, 50);
     };
     history.replaceState = function(...args) {
       if (args[2] && String(args[2]).includes('gsc.')) {
@@ -1594,7 +1592,9 @@
       }
     };
 
-    window.addEventListener('hashchange', syncGcsQuery);
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash.includes('gsc.')) syncGcsQuery();
+    });
     window.addEventListener('load', () => setTimeout(syncGcsQuery, 300));
 
     // Also detect going offline/online while the page is open
@@ -1747,79 +1747,75 @@
 
     /* ─────────────────────────────────
        GO TO PAGE
-       Navigate GCSE to the exact requested page.
-       GCSE's cursor only shows a window of pages, so
-       we step through prev/next as needed to reach
-       pages not currently in its cursor list.
+       Each pagination button click must:
+       1. Tell GCSE to navigate to that page
+       2. Wait for GCSE DOM to update
+       3. Re-scrape and render the new results
+
+       GCSE's cursor shows a sliding window of page
+       buttons. We click the numbered button directly
+       if visible, otherwise click Next/Prev repeatedly
+       until we reach the target page.
     ───────────────────────────────── */
-    function goToPage(page) {
-      if (page < 1 || page === state.page) return;
+    function goToPage(targetPage) {
+      if (targetPage < 1) return;
+      if (targetPage === state.page) return;
 
       showLoading();
 
-      const diff = page - state.page;
-      state.page = page;
-
-      // Try direct click on the GCSE numbered cursor button first
-      const gcsePages = document.querySelectorAll('#gcse-hidden-container .gsc-cursor-page');
-      let directClicked = false;
-
-      gcsePages.forEach(btn => {
-        if (parseInt(btn.textContent.trim()) === page && !btn.classList.contains('gsc-cursor-current-page')) {
-          btn.click();
-          directClicked = true;
-        }
-      });
-
-      if (directClicked) {
-        // Wait for GCSE to load the new page then scrape
-        waitAndScrape(1400);
-        return;
-      }
-
-      // GCSE cursor doesn't have that page visible — step through prev/next
-      // We need to click prev/next |diff| times sequentially
-      stepGcsePage(diff, () => waitAndScrape(1400));
-    }
-
-    function stepGcsePage(diff, done) {
-      if (diff === 0) { done(); return; }
-
-      const isForward = diff > 0;
-      const btn = isForward
-        ? document.querySelector('#gcse-hidden-container .gsc-cursor-next-page, #gcse-hidden-container [aria-label="Next page"]')
-        : document.querySelector('#gcse-hidden-container .gsc-cursor-previous-page, #gcse-hidden-container [aria-label="Previous page"]');
-
-      if (!btn) {
-        // No nav button found — try clicking GCSE numbered page closest to target
-        const gcsePages = document.querySelectorAll('#gcse-hidden-container .gsc-cursor-page');
-        if (gcsePages.length) {
-          const last = isForward ? gcsePages[gcsePages.length - 1] : gcsePages[0];
-          last.click();
-        }
-        waitAndScrape(1400);
-        return;
-      }
-
-      btn.click();
-      // After each click, wait for GCSE to settle then step again
-      const remaining = diff > 0 ? diff - 1 : diff + 1;
-      if (remaining !== 0) {
-        setTimeout(() => stepGcsePage(remaining, done), 900);
-      } else {
-        done();
-      }
-    }
-
-    function waitAndScrape(ms) {
-      // Set up a one-shot observer that fires scrapeAndRender as soon
-      // as GCSE DOM settles, with ms as the maximum wait fallback.
+      // Kill the observer during navigation to avoid partial scrapes
+      if (gcseObserver) { gcseObserver.disconnect(); gcseObserver = null; }
       clearTimeout(stableTimer);
       clearTimeout(safetyTimer);
 
-      safetyTimer = setTimeout(() => {
-        scrapeAndRender();
-      }, ms);
+      navigateGcseTo(targetPage, () => {
+        // Re-attach observer then scrape
+        setupGcseObserver();
+        // Also force a scrape after a generous delay
+        safetyTimer = setTimeout(() => scrapeAndRender(), 2000);
+      });
+
+      state.page = targetPage;
+    }
+
+    function navigateGcseTo(targetPage, done) {
+      const gcseContainer = document.getElementById('gcse-hidden-container');
+
+      // Check if target page button is directly clickable in GCSE's cursor
+      const cursorBtns = gcseContainer.querySelectorAll('.gsc-cursor-page');
+      for (const btn of cursorBtns) {
+        const num = parseInt(btn.textContent.trim());
+        if (num === targetPage && !btn.classList.contains('gsc-cursor-current-page')) {
+          btn.click();
+          setTimeout(done, 300);
+          return;
+        }
+      }
+
+      // Target not directly visible — need to step via Next or Prev
+      // Figure out current GCSE page from cursor
+      const currentBtn = gcseContainer.querySelector('.gsc-cursor-current-page');
+      const currentGcsePage = currentBtn ? parseInt(currentBtn.textContent.trim()) : state.page;
+
+      const goForward = targetPage > currentGcsePage;
+      const navBtn = goForward
+        ? gcseContainer.querySelector('.gsc-cursor-next-page')
+        : gcseContainer.querySelector('.gsc-cursor-previous-page');
+
+      if (!navBtn) {
+        // No nav button found — just scrape whatever is there
+        setTimeout(done, 300);
+        return;
+      }
+
+      // Click one step, then recurse after GCSE updates (500ms grace)
+      navBtn.click();
+      setTimeout(() => navigateGcseTo(targetPage, done), 600);
+    }
+
+    function waitAndScrape(ms) {
+      clearTimeout(safetyTimer);
+      safetyTimer = setTimeout(() => scrapeAndRender(), ms);
     }
 
     /* ─────────────────────────────────
