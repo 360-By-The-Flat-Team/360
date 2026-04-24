@@ -1,6 +1,6 @@
 /* ============================================================
-   360 — MAIN.JS V2.1.1
-   Fixes: Ripple, click-outside menus, OAuth SVG icons
+   360 — MAIN.JS V2.2.0
+   User chip with Gravatar + initials fallback, full dropdown
    ============================================================ */
 
 const $ = s => document.querySelector(s);
@@ -14,6 +14,137 @@ const supabaseClient = supabase.createClient(
   "https://wiswfpfsjiowtrdyqpxy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM"
 );
+
+/* ============================================================
+   GRAVATAR HELPER
+   MD5 is needed for Gravatar — we use a lightweight implementation
+   ============================================================ */
+async function getGravatarUrl(email, size = 40) {
+  const clean = email.trim().toLowerCase();
+  const msgBuffer = new TextEncoder().encode(clean);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  // Gravatar now accepts SHA-256
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `https://www.gravatar.com/avatar/${hashHex}?s=${size}&d=404`;
+}
+
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/* ============================================================
+   BUILD USER CHIP
+   Replaces the three auth buttons (signIn / signUp / signOut)
+   with a single pill containing PFP + @username + dropdown.
+   ============================================================ */
+async function buildUserChip(user) {
+  // Remove existing chip if present
+  document.querySelector(".user-chip")?.remove();
+
+  // Hide the three legacy buttons
+  const signInBtn  = $("#signInBtn");
+  const signUpBtn  = $("#signUpBtn");
+  const signOutBtn = $("#signOutBtn");
+  if (signInBtn)  signInBtn.style.display  = "none";
+  if (signUpBtn)  signUpBtn.style.display  = "none";
+  if (signOutBtn) signOutBtn.style.display = "none";
+
+  // Fetch profile for username + avatar_url
+  let username = user.user_metadata?.username
+              || user.user_metadata?.full_name
+              || user.email?.split("@")[0]
+              || "User";
+  let avatarUrl = user.user_metadata?.avatar_url || null;
+
+  try {
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.username)   username  = profile.username;
+    if (profile?.avatar_url) avatarUrl = profile.avatar_url;
+  } catch {}
+
+  // Try Gravatar if no avatar
+  if (!avatarUrl) {
+    try {
+      const gUrl = await getGravatarUrl(user.email || "", 80);
+      // Probe to see if Gravatar exists for this email
+      const probe = await fetch(gUrl, { method: "HEAD" });
+      if (probe.ok) avatarUrl = gUrl;
+    } catch {}
+  }
+
+  const initials = getInitials(username);
+  const displayName = "@" + username;
+
+  // Build the chip HTML
+  const chip = document.createElement("div");
+  chip.className = "user-chip";
+  chip.setAttribute("role", "button");
+  chip.setAttribute("aria-haspopup", "true");
+  chip.setAttribute("aria-expanded", "false");
+
+  const avatarHTML = avatarUrl
+    ? `<div class="user-chip-avatar-wrap">
+         <img class="user-chip-avatar" src="${avatarUrl}" alt="${initials}"
+              onerror="this.outerHTML='<div class=\\'user-chip-initials\\'>${initials}</div>'" />
+       </div>`
+    : `<div class="user-chip-avatar-wrap">
+         <div class="user-chip-initials">${initials}</div>
+       </div>`;
+
+  chip.innerHTML = `
+    ${avatarHTML}
+    <span class="user-chip-name">${displayName}</span>
+    <span class="user-chip-caret">▾</span>
+    <div class="user-chip-dropdown">
+      <div class="ucd-header">
+        ${avatarUrl
+          ? `<div class="ucd-avatar-wrap"><img class="user-chip-avatar" src="${avatarUrl}" alt="${initials}"
+               onerror="this.outerHTML='<div class=\\'user-chip-initials\\'>${initials}</div>'" /></div>`
+          : `<div class="ucd-avatar-wrap"><div class="user-chip-initials">${initials}</div></div>`}
+        <div>
+          <div class="ucd-username">${username}</div>
+          <div class="ucd-email">${user.email || ""}</div>
+        </div>
+      </div>
+      <div class="ucd-divider"></div>
+      <a class="ucd-item" href="/accounts.html"><span>👤</span> My Account</a>
+      <div class="ucd-divider"></div>
+      <button class="ucd-item ucd-signout" id="chipSignOut"><span>🚪</span> Sign Out</button>
+    </div>`;
+
+  // Insert into .auth-top-right if it exists, otherwise body
+  const container = document.querySelector(".auth-top-right") || document.body;
+  container.appendChild(chip);
+
+  // Toggle dropdown
+  chip.addEventListener("click", e => {
+    e.stopPropagation();
+    const isOpen = chip.classList.toggle("open");
+    chip.setAttribute("aria-expanded", isOpen);
+  });
+
+  // Close on outside click
+  document.addEventListener("click", () => {
+    chip.classList.remove("open");
+    chip.setAttribute("aria-expanded", "false");
+  });
+
+  // Sign out
+  document.getElementById("chipSignOut")?.addEventListener("click", async e => {
+    e.stopPropagation();
+    await supabaseClient.auth.signOut();
+    location.href = "/accounts.html?login&from=logout";
+  });
+}
 
 /* ============================================================
    AUTH SYSTEM
@@ -39,7 +170,6 @@ if (signInBtn) signInBtn.onclick = () => location.href = "/accounts.html?signin"
 if (signUpBtn) signUpBtn.onclick = () => location.href = "/accounts.html?signup";
 if (authCloseBtn) authCloseBtn.onclick = closeAuth;
 
-/* Click backdrop to close auth popup */
 if (authPopup) {
   authPopup.addEventListener("click", e => {
     if (e.target === authPopup) closeAuth();
@@ -50,9 +180,9 @@ if (authSignupBtn) {
   authSignupBtn.onclick = async () => {
     const email    = authEmail?.value.trim();
     const password = authPassword?.value.trim();
-    if (!email || !password) { authError.textContent = "Email and password required."; return; }
+    if (!email || !password) { if (authError) authError.textContent = "Email and password required."; return; }
     const { error } = await supabaseClient.auth.signUp({ email, password });
-    authError.textContent = error ? error.message : "Check your email to confirm your account!";
+    if (authError) authError.textContent = error ? error.message : "Check your email to confirm your account!";
   };
 }
 
@@ -60,9 +190,9 @@ if (authLoginBtn) {
   authLoginBtn.onclick = async () => {
     const email    = authEmail?.value.trim();
     const password = authPassword?.value.trim();
-    if (!email || !password) { authError.textContent = "Email and password required."; return; }
+    if (!email || !password) { if (authError) authError.textContent = "Email and password required."; return; }
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) authError.textContent = error.message;
+    if (error) { if (authError) authError.textContent = error.message; }
     else { closeAuth(); updateAuthUI(); }
   };
 }
@@ -70,22 +200,20 @@ if (authLoginBtn) {
 const githubBtn = $("#github-login");
 if (githubBtn) {
   githubBtn.onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
+    await supabaseClient.auth.signInWithOAuth({
       provider: "github",
       options: { redirectTo: window.location.origin }
     });
-    if (error) console.error("GitHub OAuth error:", error.message);
   };
 }
 
 const googleBtn = $("#google-login");
 if (googleBtn) {
   googleBtn.onclick = async () => {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
+    await supabaseClient.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin }
     });
-    if (error) console.error("Google OAuth error:", error.message);
   };
 }
 
@@ -98,76 +226,84 @@ if (signOutBtn) {
 
 async function updateAuthUI() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (signInBtn)  signInBtn.style.display  = session ? "none"         : "inline-block";
-  if (signUpBtn)  signUpBtn.style.display  = session ? "none"         : "inline-block";
-  if (signOutBtn) signOutBtn.style.display = session ? "inline-block" : "none";
+  const user = session?.user ?? null;
+
+  if (user) {
+    // Show chip, hide legacy buttons
+    await buildUserChip(user);
+  } else {
+    // Remove chip if present
+    document.querySelector(".user-chip")?.remove();
+    // Show sign in / sign up buttons
+    if (signInBtn)  signInBtn.style.display  = "inline-block";
+    if (signUpBtn)  signUpBtn.style.display  = "inline-block";
+    if (signOutBtn) signOutBtn.style.display = "none";
+  }
 }
+
+// Run on load
 updateAuthUI();
+
+// React to auth state changes (e.g. OAuth redirect)
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  if (session?.user) {
+    buildUserChip(session.user);
+  } else {
+    document.querySelector(".user-chip")?.remove();
+    if (signInBtn)  signInBtn.style.display  = "inline-block";
+    if (signUpBtn)  signUpBtn.style.display  = "inline-block";
+    if (signOutBtn) signOutBtn.style.display = "none";
+  }
+});
 
 /* ============================================================
    SIDEBAR — click outside to close
    ============================================================ */
-const sidebar = document.querySelector(".sidebar");
+const sidebar       = document.querySelector(".sidebar");
 const settingsPanel = document.querySelector(".settings-panel");
-const overlay = document.querySelector(".overlay");
+const overlay       = document.querySelector(".overlay");
 const sidebarToggle = document.querySelector(".sidebar-toggle");
-const settingsBtn = document.getElementById("settingsBtn");
+const settingsBtn   = document.getElementById("settingsBtn");
 
-/* Helper: update overlay based on open panels */
 function updateOverlay() {
-  const anyOpen =
-    sidebar.classList.contains("open") ||
-    settingsPanel.classList.contains("open");
-
-  if (anyOpen) {
-    overlay.classList.add("active");
-  } else {
-    overlay.classList.remove("active");
-  }
+  const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
+  overlay?.classList.toggle("active", !!anyOpen);
 }
 
-/* Sidebar toggle */
 sidebarToggle?.addEventListener("click", e => {
   e.stopPropagation();
-  sidebar.classList.toggle("open");
+  sidebar?.classList.toggle("open");
   updateOverlay();
 });
 
-/* Settings toggle */
 settingsBtn?.addEventListener("click", e => {
   e.stopPropagation();
-  settingsPanel.classList.toggle("open");
+  settingsPanel?.classList.toggle("open");
   updateOverlay();
 });
 
-/* Clicking overlay closes everything */
 overlay?.addEventListener("click", () => {
-  sidebar.classList.remove("open");
-  settingsPanel.classList.remove("open");
+  sidebar?.classList.remove("open");
+  settingsPanel?.classList.remove("open");
   updateOverlay();
 });
 
-/* Clicking anywhere outside closes everything */
 document.addEventListener("click", e => {
-  const insideSidebar = e.target.closest(".sidebar");
-  const insideSettings = e.target.closest(".settings-panel");
-  const onToggle = e.target.closest(".sidebar-toggle");
-  const onSettingsBtn = e.target.closest("#settingsBtn");
-
-  if (!insideSidebar && !insideSettings && !onToggle && !onSettingsBtn) {
-    sidebar.classList.remove("open");
-    settingsPanel.classList.remove("open");
+  if (!e.target.closest(".sidebar") && !e.target.closest(".settings-panel")
+    && !e.target.closest(".sidebar-toggle") && !e.target.closest("#settingsBtn")) {
+    sidebar?.classList.remove("open");
+    settingsPanel?.classList.remove("open");
     updateOverlay();
   }
 });
 
-/* Nav items */
 $$(".nav-item").forEach(item => {
   item.onclick = e => {
     e.stopPropagation();
     const href = item.dataset.href;
     if (href) window.location.href = href;
-    closeSidebar();
+    sidebar?.classList.remove("open");
+    updateOverlay();
   };
 });
 
@@ -178,9 +314,7 @@ $$(".swatch").forEach(swatch => {
   swatch.onclick = e => {
     e.stopPropagation();
     const theme = swatch.dataset.theme;
-    body.classList.forEach(cls => {
-      if (cls.startsWith("theme-")) body.classList.remove(cls);
-    });
+    body.classList.forEach(cls => { if (cls.startsWith("theme-")) body.classList.remove(cls); });
     body.classList.add("theme-" + theme);
     localStorage.setItem("theme", theme);
     $$(".swatch").forEach(s => s.classList.remove("active"));
@@ -259,14 +393,10 @@ if (bgResetBtn) {
 }
 
 /* ============================================================
-   RIPPLE EFFECT — FIXED
-   Double rAF ensures transition fires correctly.
-   Cleans up after itself via transitionend.
+   RIPPLE EFFECT
    ============================================================ */
 document.addEventListener("click", e => {
-  const target = e.target.closest(
-    "[data-ripple], button, .nav-item, .swatch, .auth-btn"
-  );
+  const target = e.target.closest("[data-ripple], button, .nav-item, .swatch, .auth-btn");
   if (!target) return;
   if (target.matches("input, textarea, select, .overlay, .auth-popup")) return;
 
@@ -296,7 +426,6 @@ document.addEventListener("click", e => {
   target.style.overflow = "hidden";
   target.appendChild(ripple);
 
-  /* Double rAF — ensures browser paints scale(0) before animating */
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       ripple.style.transform = "scale(2.5)";
@@ -342,6 +471,16 @@ window.addEventListener("beforeinstallprompt", e => {
 if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
 
 /* ============================================================
-   READY LOG
+   ACTIVE NAV MARK
    ============================================================ */
-console.log("%c360 V2.1 — main.js loaded (cursor handled by cursor.js)", "color:#4ade80;font-weight:bold;font-size:14px;");
+(function markActiveNav() {
+  const path = location.pathname.replace(/\/+$/, "") || "/";
+  $$(".nav-item[data-href]").forEach(item => {
+    const href = item.dataset.href.replace(/\/+$/, "") || "/";
+    // Normalise: strip leading ../
+    const normHref = href.replace(/^(\.\.\/)+/, "/");
+    item.classList.toggle("active", path === normHref || path.endsWith(normHref));
+  });
+})();
+
+console.log("%c360 V2.2.0 — main.js loaded (user chip active)", "color:#4ade80;font-weight:bold;font-size:14px;");
