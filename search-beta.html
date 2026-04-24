@@ -859,6 +859,25 @@
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
 
   <script>
+    async function fetch360(q, tab = "web", page = 1, safe = "moderate") {
+  try {
+    const res = await fetch("https://wiswfpfsjiowtrdyqpxy.supabase.co/functions/v1/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q, tab, page, safe })
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error("Edge function error: " + err);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("360 Edge Error:", err);
+    return { error: err.message };
+  }
+}
   (() => {
     /* ─────────────────────────────────
        STATE
