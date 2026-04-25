@@ -10,6 +10,8 @@ const version = "v2.2.0";
 const _sidebarVer = document.getElementById("sidebar-ver");
 if (_sidebarVer) _sidebarVer.textContent = "© " + new Date().getFullYear() + " 360 INC. · " + version;
 
+let _chipBuilding = false;  // prevents concurrent buildUserChip calls
+
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const body = document.body;
@@ -50,6 +52,9 @@ function getInitials(name) {
    with a single pill containing PFP + @username + dropdown.
    ============================================================ */
 async function buildUserChip(user) {
+  if (_chipBuilding) return;   // already building — drop duplicate call
+  _chipBuilding = true;
+  try {
   // Remove existing chip if present
   document.querySelector(".user-chip")?.remove();
 
@@ -151,6 +156,9 @@ async function buildUserChip(user) {
     await supabaseClient.auth.signOut();
     location.href = "/accounts.html?login&from=logout";
   });
+  } finally {
+    _chipBuilding = false;
+  }
 }
 
 /* ============================================================
@@ -255,9 +263,12 @@ async function updateAuthUI() {
 updateAuthUI();
 
 // React to auth state changes (e.g. OAuth redirect)
-supabaseClient.auth.onAuthStateChange((_event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
   // accounts.html manages its own auth UI — skip the chip there
   if (window.SKIP_AUTH_CHIP) return;
+  // Only act on meaningful events — ignore TOKEN_REFRESHED, USER_UPDATED, etc.
+  // updateAuthUI() on load already handles INITIAL_SESSION
+  if (!["SIGNED_IN", "SIGNED_OUT", "PASSWORD_RECOVERY"].includes(event)) return;
 
   if (session?.user) {
     buildUserChip(session.user);
