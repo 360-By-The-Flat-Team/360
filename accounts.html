@@ -394,12 +394,25 @@
     const isLogout = param === "login" && qs.includes("from=logout");
     const content  = document.getElementById("acContent");
 
+    const _signInBtn  = document.getElementById("signInBtn");
+    const _signUpBtn  = document.getElementById("signUpBtn");
+    const _signOutBtn = document.getElementById("signOutBtn");
+
     (async () => {
       if (isLogout) { showLogout(); return; }
       const { data: { session } } = await sb.auth.getSession();
-      if (session)                 showProfile(session.user);
-      else if (param === "signup") renderSignUp();
-      else                         renderSignIn();
+      if (session) {
+        if (_signInBtn)  _signInBtn.style.display  = "none";
+        if (_signUpBtn)  _signUpBtn.style.display  = "none";
+        if (_signOutBtn) _signOutBtn.style.display = "inline-block";
+        showProfile(session.user);
+      } else {
+        if (_signInBtn)  _signInBtn.style.display  = "inline-block";
+        if (_signUpBtn)  _signUpBtn.style.display  = "inline-block";
+        if (_signOutBtn) _signOutBtn.style.display = "none";
+        if (param === "signup") renderSignUp();
+        else                    renderSignIn();
+      }
     })();
 
     /* ════════════════════════════════════════
