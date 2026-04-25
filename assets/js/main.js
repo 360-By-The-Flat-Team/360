@@ -6,8 +6,8 @@
 //CHANGE THE FOLLOWING TO CHANGE ALL THE PAGE'S VERSION!!
 const version = "v2.2.0";
 
-//CHANGES THE VERSION IN ALL PAGES!!
-document.getElementById("version").textContent = version;
+//CHANGES THE FOOTER IN ALL PAGES!!
+document.getElementById("footer").textContent = "© " + getFullYear() + "360Digital, Co. • " + version;
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
