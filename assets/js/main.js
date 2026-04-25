@@ -267,7 +267,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     if (signInBtn)  signInBtn.style.display  = "inline-block";
     if (signUpBtn)  signUpBtn.style.display  = "inline-block";
     if (signOutBtn) signOutBtn.style.display = "none";
-  } else if (event === "SIGNED_IN" && session?.user) {
+  } else if (event === "SIGNED_IN" && session?.user && !document.querySelector(".user-chip")) {
     buildUserChip(session.user);
   }
 });
