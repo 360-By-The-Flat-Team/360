@@ -695,9 +695,10 @@
       <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
       <div class="nav-item" data-href="../chat">Chat</div>
       <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item" data-href="../apps">Apps</div>
       <div class="nav-item" data-href="../games">Games</div>
     </nav>
-    <div class="sidebar-footer">© 2026 360 INC. · V2.2.0</div>
+    <div class="sidebar-footer">© 2026 360 INC. · <span id="version">v0.0.0</span></div>
   </aside>
   <div class="overlay" id="overlay"></div>
   <div class="settings-panel" id="settingsPanel">
@@ -731,6 +732,25 @@
       <input type="color" id="cursorColorPicker" value="#3b82f6" />
       <button id="cursorColorReset">Reset</button>
     </div>
+    <div class="temp-unit-box" style="margin-top:20px;">
+      Temp Unit: <span id="tempUnitLabel">°C</span>
+      <button id="tempUnitBtn">Switch</button>
+    </div>
+    <div class="settings-box" style="margin-top:20px;">
+      <div class="settings-label">Background Image</div>
+      <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
+      <input type="text" id="bgUrlInput" placeholder="Paste image URL…" class="settings-input" />
+      <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
+      <button id="bgResetBtn" class="settings-btn">Reset</button>
+    </div>
+    <h3 style="margin-top:25px;">Legal</h3>
+    <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
+    <a href="tos.html" class="legal-link">📜 Terms of Service</a>
+    <h3 style="margin-top:25px;">About</h3>
+    <details class="about-dropdown">
+      <summary>ℹ️ What is 360?</summary>
+      <p>360 is a next-generation search engine and digital workspace. Search, chat, translate, check weather, monitor stocks, and interact with AI — all in one unified interface. Built by 360 Digital, Co.</p>
+    </details>
   </div>
   <div id="auth-popup" class="auth-popup hidden">
     <div class="auth-box">
@@ -1180,50 +1200,48 @@
     }
 
     function scrapeImageResults(gcseContainer) {
+      // A standard web GCSE widget never renders .gsc-imageResult elements —
+      // those only appear in image-search-configured CSEs.
+      // The only images available are the thumbnails GCSE embeds inside
+      // each web result card. Collect every non-trivial <img> from results.
       const seenSrcs = new Set();
       const results  = [];
 
-      // Try GCSE image-specific elements first
-      gcseContainer.querySelectorAll('.gsc-imageResult, [class*="imageResult"]').forEach(el => {
-        const anchor = el.querySelector('a');
-        const imgEl  = el.querySelector('img');
-        if (!imgEl) return;
-        const src = imgEl.getAttribute('data-src') || imgEl.src || '';
-        if (!src || src.startsWith('data:') || src.includes('blank') || seenSrcs.has(src)) return;
-        seenSrcs.add(src);
-        let href = anchor ? (anchor.getAttribute('data-ctorig') || anchor.href || '#') : '#';
-        if (href.includes('google.com/url')) { try { href = new URL(href).searchParams.get('q') || href; } catch(e) {} }
-        const alt = imgEl.alt || 'Image';
+      gcseContainer.querySelectorAll('.gsc-webResult.gsc-result').forEach(el => {
+        const titleEl = el.querySelector('.gs-title a');
+
+        // Get destination URL
+        let href = titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#';
+        if (href.includes('google.com/url')) {
+          try { href = new URL(href).searchParams.get('q') || href; } catch(e) {}
+        }
+        const altBase = titleEl ? titleEl.textContent.trim() : 'Image';
         let displayUrl = '';
         try { displayUrl = new URL(href).hostname.replace(/^www\./, ''); } catch(e) { displayUrl = href; }
-        results.push({ src, href, alt, displayUrl });
-      });
 
-      // Fall back: collect every non-tiny image from all result elements
-      if (!results.length) {
-        gcseContainer.querySelectorAll('.gsc-result, .gs-result, .gsc-webResult').forEach(el => {
-          el.querySelectorAll('img').forEach(imgEl => {
-            const src = imgEl.getAttribute('data-src') || imgEl.src || '';
-            if (!src || src.startsWith('data:') || src.includes('blank') ||
-                src.includes('favicon') || src.includes('1x1') || seenSrcs.has(src)) return;
-            if ((imgEl.width && imgEl.width < 30) || (imgEl.height && imgEl.height < 30)) return;
-            seenSrcs.add(src);
-            const anchor  = imgEl.closest('a');
-            const titleEl = el.querySelector('.gs-title a');
-            let href = anchor ? (anchor.getAttribute('data-ctorig') || anchor.href || '#') :
-                       titleEl ? (titleEl.getAttribute('data-ctorig') || titleEl.href || '#') : '#';
-            if (href.includes('google.com/url')) { try { href = new URL(href).searchParams.get('q') || href; } catch(e) {} }
-            const alt = imgEl.alt || (titleEl ? titleEl.textContent.trim() : 'Image');
-            let displayUrl = '';
-            try { displayUrl = new URL(href).hostname.replace(/^www\./, ''); } catch(e) { displayUrl = href; }
-            results.push({ src, href, alt, displayUrl });
-          });
+        // Collect all imgs inside this result — GCSE may put several thumbnails
+        el.querySelectorAll('img').forEach(imgEl => {
+          // Prefer data-src (lazy-loaded) over src
+          let src = imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || '';
+          // Skip data URIs, blanks, favicons, and tiny tracker pixels
+          if (!src || src.startsWith('data:') || /blank|favicon|1x1|pixel|spacer/i.test(src)) return;
+          // Skip if already seen
+          if (seenSrcs.has(src)) return;
+          // Skip images with explicit tiny dimensions
+          const w = parseInt(imgEl.getAttribute('width') || '0');
+          const h = parseInt(imgEl.getAttribute('height') || '0');
+          if ((w > 0 && w < 40) || (h > 0 && h < 40)) return;
+          seenSrcs.add(src);
+
+          const alt = imgEl.alt || altBase;
+          results.push({ src, href, alt, displayUrl });
         });
-      }
+      });
 
       if (!results.length) {
         const noResults = gcseContainer.querySelector('.gs-no-results-result, .gsc-no-results-result');
         if (noResults) { renderNoResults(); return; }
+        // Still loading — don't show anything yet
         return;
       }
 
