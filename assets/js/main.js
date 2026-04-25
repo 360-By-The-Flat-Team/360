@@ -232,6 +232,9 @@ if (signOutBtn) {
 }
 
 async function updateAuthUI() {
+  // accounts.html manages its own auth UI — skip the chip there
+  if (window.SKIP_AUTH_CHIP) return;
+
   const { data: { session } } = await supabaseClient.auth.getSession();
   const user = session?.user ?? null;
 
@@ -253,6 +256,9 @@ updateAuthUI();
 
 // React to auth state changes (e.g. OAuth redirect)
 supabaseClient.auth.onAuthStateChange((_event, session) => {
+  // accounts.html manages its own auth UI — skip the chip there
+  if (window.SKIP_AUTH_CHIP) return;
+
   if (session?.user) {
     buildUserChip(session.user);
   } else {
