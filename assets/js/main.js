@@ -7,7 +7,8 @@
 const version = "v2.2.0";
 
 //CHANGES THE FOOTER IN ALL PAGES!!
-document.getElementById("footer").textContent = "© " + getFullYear() + "360Digital, Co. • " + version;
+const _sidebarVer = document.getElementById("sidebar-ver");
+if (_sidebarVer) _sidebarVer.textContent = "© " + new Date().getFullYear() + " 360 INC. · " + version;
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
