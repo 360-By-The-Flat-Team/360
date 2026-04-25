@@ -50,10 +50,14 @@ function getInitials(name) {
    with a single pill containing PFP + @username + dropdown.
    ============================================================ */
 async function buildUserChip(user) {
-  // Never allow more than one .user-chip in the DOM
-  if (document.querySelectorAll(".user-chip").length > 0) return;
-
-  try {
+  // Claim the spot synchronously before any awaits — if a chip already
+  // exists (real or placeholder) every concurrent call bails out here.
+  const container = document.querySelector(".auth-top-right") || document.body;
+  if (container.querySelector(".user-chip")) return;
+  const chip = document.createElement("div");
+  chip.className = "user-chip";
+  chip.style.display = "none"; // hidden until fully built
+  container.appendChild(chip); // in the DOM NOW — blocks all other calls
 
   // Hide the three legacy buttons
   const signInBtn  = $("#signInBtn");
@@ -84,7 +88,6 @@ async function buildUserChip(user) {
   if (!avatarUrl) {
     try {
       const gUrl = await getGravatarUrl(user.email || "", 80);
-      // Probe to see if Gravatar exists for this email
       const probe = await fetch(gUrl, { method: "HEAD" });
       if (probe.ok) avatarUrl = gUrl;
     } catch {}
@@ -93,9 +96,7 @@ async function buildUserChip(user) {
   const initials = getInitials(username);
   const displayName = "@" + username;
 
-  // Build the chip HTML
-  const chip = document.createElement("div");
-  chip.className = "user-chip";
+  // Populate the chip that's already in the DOM
   chip.setAttribute("role", "button");
   chip.setAttribute("aria-haspopup", "true");
   chip.setAttribute("aria-expanded", "false");
@@ -130,9 +131,8 @@ async function buildUserChip(user) {
       <button class="ucd-item ucd-signout" id="chipSignOut"><span>🚪</span> Sign Out</button>
     </div>`;
 
-  // Insert into .auth-top-right if it exists, otherwise body
-  const container = document.querySelector(".auth-top-right") || document.body;
-  container.appendChild(chip);
+  // Chip is already in the DOM — just make it visible now
+  chip.style.display = "";
 
   // Toggle dropdown
   chip.addEventListener("click", e => {
@@ -153,10 +153,6 @@ async function buildUserChip(user) {
     await supabaseClient.auth.signOut();
     location.href = "/accounts.html?login&from=logout";
   });
-  } finally {
-    // Remove placeholder lock regardless of success/failure
-    document.querySelector(".user-chip[data-building]")?.remove();
-  }
 }
 
 /* ============================================================
