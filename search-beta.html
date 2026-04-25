@@ -611,6 +611,47 @@
     }
     #ai-panel.active { display: flex; }
 
+    /* ── News panel ── */
+    #news-panel {
+      width: 100%;
+      max-width: 900px;
+      padding: 16px 20px 60px;
+      box-sizing: border-box;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #news-panel.active { display: flex; }
+    .news-result-card {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px 18px;
+      background: var(--glass-light-mid);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: 18px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset);
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      animation: cardIn 0.22s ease both;
+    }
+    .news-result-card:hover { transform: translateY(-2px); box-shadow: var(--glass-shadow), var(--glass-inset); border-color: var(--a); }
+    body.dark .news-result-card { background: var(--glass-dark-mid); border-color: var(--glass-border-dk); box-shadow: var(--glass-shadow-sm), var(--glass-inset-dk); }
+    body.dark .news-result-card:hover { border-color: var(--a); box-shadow: var(--glass-shadow), var(--glass-inset-dk); }
+    .news-result-thumb { width: 100px; height: 68px; object-fit: cover; border-radius: 10px; flex-shrink: 0; border: 1px solid var(--glass-border); }
+    body.dark .news-result-thumb { border-color: var(--glass-border-dk); }
+    .news-result-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .news-result-source { font-size: 12px; color: var(--mut); font-weight: 600; }
+    body.dark .news-result-source { color: var(--mutd); }
+    .news-result-title { font-size: 16px; font-weight: 700; color: var(--a); line-height: 1.35; }
+    .news-result-desc { font-size: 13px; color: var(--mut); line-height: 1.5; }
+    body.dark .news-result-desc { color: var(--mutd); }
+    .news-result-date { font-size: 12px; color: var(--mut); margin-top: 2px; }
+    body.dark .news-result-date { color: var(--mutd); }
+
     .ai-response-card {
       background: var(--glass-light-mid);
       backdrop-filter: var(--glass-blur);
@@ -695,7 +736,6 @@
       <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
       <div class="nav-item" data-href="../chat">Chat</div>
       <div class="nav-item" data-href="../news">News</div>
-      <div class="nav-item" data-href="../apps">Apps</div>
       <div class="nav-item" data-href="../games">Games</div>
     </nav>
     <div class="sidebar-footer"><span id="sidebar-ver">Loading...</span></div>
@@ -732,25 +772,6 @@
       <input type="color" id="cursorColorPicker" value="#3b82f6" />
       <button id="cursorColorReset">Reset</button>
     </div>
-    <div class="temp-unit-box" style="margin-top:20px;">
-      Temp Unit: <span id="tempUnitLabel">°C</span>
-      <button id="tempUnitBtn">Switch</button>
-    </div>
-    <div class="settings-box" style="margin-top:20px;">
-      <div class="settings-label">Background Image</div>
-      <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
-      <input type="text" id="bgUrlInput" placeholder="Paste image URL…" class="settings-input" />
-      <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
-      <button id="bgResetBtn" class="settings-btn">Reset</button>
-    </div>
-    <h3 style="margin-top:25px;">Legal</h3>
-    <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
-    <a href="tos.html" class="legal-link">📜 Terms of Service</a>
-    <h3 style="margin-top:25px;">About</h3>
-    <details class="about-dropdown">
-      <summary>ℹ️ What is 360?</summary>
-      <p>360 is a next-generation search engine and digital workspace. Search, chat, translate, check weather, monitor stocks, and interact with AI — all in one unified interface. Built by 360 Digital, Co.</p>
-    </details>
   </div>
   <div id="auth-popup" class="auth-popup hidden">
     <div class="auth-box">
@@ -816,6 +837,10 @@
 
     <!-- Tab bar -->
     <div class="results-tabs" id="results-tabs">
+      <div class="results-tab" data-tab="ai">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        AI
+      </div>
       <div class="results-tab active" data-tab="web">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         Web
@@ -824,9 +849,9 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         Images
       </div>
-      <div class="results-tab" data-tab="ai">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 5 5"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        AI
+      <div class="results-tab" data-tab="news">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
+        News
       </div>
     </div>
 
@@ -841,6 +866,9 @@
 
     <!-- AI panel -->
     <div id="ai-panel"></div>
+
+    <!-- News panel -->
+    <div id="news-panel"></div>
   </div>
 
   <!-- Image lightbox -->
@@ -867,7 +895,7 @@
   <script src="/assets/js/cursor.js"></script>
   <!-- Load GCSE silently -->
   <script async src="https://cse.google.com/cse.js?cx=e003eb0834b6b4be8"></script>
-
+  <!-- PAGE SCRIPT -->
   <script src="/assets/js/360-search.js"></script>
 </body>
 </html>
