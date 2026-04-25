@@ -10,8 +10,6 @@ const version = "v2.2.0";
 const _sidebarVer = document.getElementById("sidebar-ver");
 if (_sidebarVer) _sidebarVer.textContent = "© " + new Date().getFullYear() + " 360 INC. · " + version;
 
-let _chipBuilding = false;  // prevents concurrent buildUserChip calls
-
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const body = document.body;
@@ -52,11 +50,19 @@ function getInitials(name) {
    with a single pill containing PFP + @username + dropdown.
    ============================================================ */
 async function buildUserChip(user) {
-  if (_chipBuilding) return;   // already building — drop duplicate call
-  _chipBuilding = true;
+  // Use a DOM attribute as lock — immune to async race conditions
+  if (document.querySelector(".user-chip[data-building]")) return;
+  const existing = document.querySelector(".user-chip");
+  if (existing) existing.remove();
+
+  // Plant a placeholder immediately so concurrent calls see it and bail
+  const lock = document.createElement("div");
+  lock.className = "user-chip";
+  lock.setAttribute("data-building", "1");
+  lock.style.display = "none";
+  (document.querySelector(".auth-top-right") || document.body).appendChild(lock);
+
   try {
-  // Remove existing chip if present
-  document.querySelector(".user-chip")?.remove();
 
   // Hide the three legacy buttons
   const signInBtn  = $("#signInBtn");
@@ -157,7 +163,8 @@ async function buildUserChip(user) {
     location.href = "/accounts.html?login&from=logout";
   });
   } finally {
-    _chipBuilding = false;
+    // Remove placeholder lock regardless of success/failure
+    document.querySelector(".user-chip[data-building]")?.remove();
   }
 }
 
@@ -266,17 +273,15 @@ updateAuthUI();
 supabaseClient.auth.onAuthStateChange((event, session) => {
   // accounts.html manages its own auth UI — skip the chip there
   if (window.SKIP_AUTH_CHIP) return;
-  // Only act on meaningful events — ignore TOKEN_REFRESHED, USER_UPDATED, etc.
-  // updateAuthUI() on load already handles INITIAL_SESSION
-  if (!["SIGNED_IN", "SIGNED_OUT", "PASSWORD_RECOVERY"].includes(event)) return;
-
-  if (session?.user) {
-    buildUserChip(session.user);
-  } else {
+  // INITIAL_SESSION is handled by updateAuthUI() above — skip it here
+  // TOKEN_REFRESHED, USER_UPDATED etc. don't need a chip rebuild
+  if (event === "SIGNED_OUT") {
     document.querySelector(".user-chip")?.remove();
     if (signInBtn)  signInBtn.style.display  = "inline-block";
     if (signUpBtn)  signUpBtn.style.display  = "inline-block";
     if (signOutBtn) signOutBtn.style.display = "none";
+  } else if (event === "SIGNED_IN" && session?.user) {
+    buildUserChip(session.user);
   }
 });
 
