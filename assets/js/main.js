@@ -50,17 +50,8 @@ function getInitials(name) {
    with a single pill containing PFP + @username + dropdown.
    ============================================================ */
 async function buildUserChip(user) {
-  // Use a DOM attribute as lock — immune to async race conditions
-  if (document.querySelector(".user-chip[data-building]")) return;
-  const existing = document.querySelector(".user-chip");
-  if (existing) existing.remove();
-
-  // Plant a placeholder immediately so concurrent calls see it and bail
-  const lock = document.createElement("div");
-  lock.className = "user-chip";
-  lock.setAttribute("data-building", "1");
-  lock.style.display = "none";
-  (document.querySelector(".auth-top-right") || document.body).appendChild(lock);
+  // Never allow more than one .user-chip in the DOM
+  if (document.querySelectorAll(".user-chip").length > 0) return;
 
   try {
 
