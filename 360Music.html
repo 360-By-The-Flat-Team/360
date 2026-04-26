@@ -148,7 +148,12 @@
       color: var(--vid-accent);
     }
     .vids-nav-item.active { font-weight: 700; }
-    .vids-nav-icon { font-size: 17px; min-width: 22px; text-align: center; }
+    .vids-nav-icon {
+      font-size: 17px;
+      min-width: 22px;
+      text-align: center;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
     .vids-nav-divider {
       height: 1px; background: var(--vid-border);
       margin: 10px 16px;
@@ -246,7 +251,10 @@
       justify-content: center; gap: 12px; padding: 80px 20px;
       color: var(--vid-mut); text-align: center;
     }
-    .vids-empty-icon { font-size: 52px; }
+    .vids-empty-icon {
+      font-size: 52px;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
     .vids-empty h3 { font-size: 18px; font-weight: 700; color: var(--vid-txt); }
     .vids-empty p { font-size: 13px; max-width: 300px; line-height: 1.6; }
 
@@ -312,7 +320,11 @@
     .vids-dropzone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
-    .vids-dropzone-icon { font-size: 36px; margin-bottom: 8px; }
+    .vids-dropzone-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
     .vids-dropzone p { font-size: 13px; color: var(--vid-mut); }
     .vids-dropzone strong { color: var(--vid-accent); }
     .vids-file-chosen {
@@ -558,7 +570,7 @@
 
   <div class="vids-topbar">
     <div class="vids-topbar-left">
-      <button class="vids-back-btn" onclick="window.location.href='apps.html'">← Apps</button>
+      <button class="vids-back-btn" onclick="history.length > 1 ? history.back() : location.assign('apps.html')">← Apps</button>
       <div class="vids-logo">360<span>|</span>Music</div>
     </div>
 

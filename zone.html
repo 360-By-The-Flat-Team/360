@@ -92,7 +92,7 @@
       background: var(--border);
       color: var(--sub);
       transition: var(--tr);
-      font-family: inherit;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", system-ui, -apple-system, sans-serif;
     }
     .tab:hover { background: var(--accent-light); color: white; transform: translateY(-1px); }
     .tab.active { background: var(--accent); color: white; box-shadow: 0 4px 14px rgba(74,108,255,.3); }
@@ -351,6 +351,7 @@
   <div class="header">
     <h1>Zone <span>Essay & Math Helper</span></h1>
     <div class="header-actions">
+      <button class="hbtn" onclick="goBackToApps()">← Apps</button>
       <button class="hbtn" id="darkBtn" onclick="toggleDark()">🌙 Dark</button>
       <a href="/" class="hbtn" style="text-decoration:none;">← Back to 360</a>
     </div>
@@ -558,6 +559,14 @@
   </div>
 
   <script>
+  function goBackToApps() {
+    if (document.referrer && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.assign('apps.html');
+  }
+
   /* =============================================================
      ZONE V2 — All systems operational
   ============================================================= */
