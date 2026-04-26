@@ -1,5 +1,5 @@
 # 360
-![Version](https://img.shields.io/badge/version-2.0.2-blue)
+![Version](https://img.shields.io/badge/version-2.0.3-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Web-lightgrey)
 ![Reddit](https://img.shields.io/badge/Reddit-r%2F360Search-orange)
 
@@ -44,12 +44,12 @@ With many search engines and browsers losing trust from core users, this is a gr
 Just visit [360-search.com](https://360-search.com) — no install needed.
 
 ### Windows
-1. Download `360 Setup 2.0.1.exe` from [Releases](https://github.com/360-By-360Digital/360/releases)
+1. Download `360 Setup 2.0.3.exe` from [Releases](https://github.com/360-By-360Digital/360/releases)
 2. Double click and it installs silently
 3. 360 launches automatically when done
 
 ### Linux (Ubuntu/Debian/Zorin/Mint/Pop!_OS)
-1. Download `360-desktop_2.0.1_amd64.deb` from [Releases](https://github.com/360-By-360Digital/360/releases)
+1. Download `360-desktop_2.0.3_amd64.deb` from [Releases](https://github.com/360-By-360Digital/360/releases)
 2. Run:
 ```bash
 sudo apt update
@@ -57,7 +57,7 @@ sudo apt update
 Then:
 
 ```bash
-sudo dpkg -i 360-desktop_2.0.1_amd64.deb
+sudo dpkg -i 360-desktop_2.0.3_amd64.deb
 ```
 Or install gdebi for double-click install:
 ```bash
@@ -83,13 +83,13 @@ Coming soon via Samsung Galaxy Store.
 
 ## Releases
 
-<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.1">Release V.2.0.1</a>
+<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.3">Release V.2.0.3</a>
 
-<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.2">Release V.2.0.1 — Windows .exe (unstable)</a>
+<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.3">Release V.2.0.3 — Windows .exe (unstable)</a>
 
-<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.3">Release V.2.0.2 — Windows .exe (stable)</a>
+<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.3">Release V.2.0.3 — Windows .exe (stable)</a>
 
-<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.4">Release V.2.0.2 — Linux .deb (stable)</a>
+<a href="https://github.com/360-By-360Digital/360/releases/tag/V.2.0.3">Release V.2.0.3 — Linux .deb (stable)</a>
 
 ---
 

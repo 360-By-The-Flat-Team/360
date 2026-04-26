@@ -647,7 +647,7 @@
   <div class="docs-root">
     <header class="docs-topbar">
       <div class="docs-topbar-left">
-        <button class="docs-pill-btn" onclick="window.location.href='apps.html'">← Apps</button>
+        <button class="docs-pill-btn" onclick="if (document.referrer && history.length > 1) { history.back(); } else { window.location.href='apps.html'; }">← Apps</button>
         <div class="docs-logo">
           <span class="docs-logo-main">360</span>
           <span>|</span>

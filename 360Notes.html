@@ -479,7 +479,7 @@
   <div class="notes-root">
     <header class="notes-topbar">
       <div class="notes-topbar-left">
-        <button class="notes-pill-btn" onclick="window.location.href='apps.html'">← Apps</button>
+        <button class="notes-pill-btn" onclick="if (document.referrer && history.length > 1) { history.back(); } else { window.location.href='apps.html'; }">← Apps</button>
         <div class="notes-logo">
           <span class="notes-logo-main">360</span>
           <span>|</span>

@@ -93,6 +93,7 @@
       color: var(--sub);
       transition: var(--tr);
       font-family: inherit;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", system-ui, -apple-system, sans-serif;
     }
     .tab:hover { background: var(--accent-light); color: white; transform: translateY(-1px); }
     .tab.active { background: var(--accent); color: white; box-shadow: 0 4px 14px rgba(74,108,255,.3); }
@@ -351,6 +352,7 @@
   <div class="header">
     <h1>Zone <span>Essay & Math Helper</span></h1>
     <div class="header-actions">
+      <button class="hbtn" onclick="if (document.referrer && history.length > 1) { history.back(); } else { window.location.href='apps.html'; }">← Apps</button>
       <button class="hbtn" id="darkBtn" onclick="toggleDark()">🌙 Dark</button>
       <a href="/" class="hbtn" style="text-decoration:none;">← Back to 360</a>
     </div>
