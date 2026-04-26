@@ -1,10 +1,10 @@
 /* ============================================================
-   360 — MAIN.JS V2.2.0
+   360 — MAIN.JS V.2.0.3
    User chip with Gravatar + initials fallback, full dropdown
    ============================================================ */
 
 //CHANGE THE FOLLOWING TO CHANGE ALL THE PAGE'S VERSION!!
-const version = "v2.2.0";
+const version = "V.2.0.3";
 
 //CHANGES THE FOOTER IN ALL PAGES!!
 const _sidebarVer = document.getElementById("sidebar-ver");
@@ -499,4 +499,4 @@ if (installBtn) installBtn.onclick = () => deferredPrompt?.prompt();
   });
 })();
 
-console.log("%c360 V2.2.0 — main.js loaded (user chip active)", "color:#4ade80;font-weight:bold;font-size:14px;");
+console.log("%c360 V.2.0.3 — main.js loaded (user chip active)", "color:#4ade80;font-weight:bold;font-size:14px;");
