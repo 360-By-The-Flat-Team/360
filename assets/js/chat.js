@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════
-   360 CHAT V2.1.1
+   360 CHAT V.2.0.3
    Fixes: community join (maybeSingle + enterCommunity),
           lag (batched reactions), upload+send (isSending guard),
           direct replies, PFP popup with email, DM by email

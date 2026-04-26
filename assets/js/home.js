@@ -1,5 +1,5 @@
 /* ============================================================
-   360 — HOME.JS V2.0.1
+   360 — HOME.JS V.2.0.3
    Home page only logic.
    Handles: Clock, Weather, Temp Unit, Music
    Search: native form → searxng.html (no CSE)
@@ -119,4 +119,4 @@ syncMusicUI();
 /* ============================================================
    READY LOG
    ============================================================ */
-console.log("%c360 V2.0.1 — home.js loaded", "color:#38bdf8;font-weight:bold;font-size:14px;");
+console.log("%c360 V.2.0.3 — home.js loaded", "color:#38bdf8;font-weight:bold;font-size:14px;");
