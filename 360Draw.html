@@ -98,6 +98,7 @@
       cursor: pointer;
       color: #f5f5f5;
       font-size: 18px;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
     }
 
     .tool-btn.active {
@@ -201,6 +202,7 @@
         <div class="draw-title">Untitled canvas · 360Draw</div>
       </div>
       <div class="draw-topbar-right">
+        <button class="draw-share-btn" onclick="history.length > 1 ? history.back() : location.assign('apps.html')">← Apps</button>
         <span id="draw-presence">You</span>
         <button class="draw-share-btn" id="draw-share-btn">Share</button>
       </div>
