@@ -1247,3 +1247,90 @@ button:active { transform: scale(.97); }
   html, body, * { cursor: auto !important; }
   .cursor-dot, .cursor-trail { display: none !important; }
 }
+
+/* ============================================================
+   360 — EMOJI FIX
+   Prevents theme/gradient colors from tinting emoji characters
+   ============================================================ */
+
+/* Nav item emojis — active state forces dark text which kills emoji color */
+.nav-item .vids-nav-icon,
+.nav-item span,
+.vids-nav-item .vids-nav-icon {
+  -webkit-text-fill-color: initial !important;
+  color: initial !important;
+}
+
+/* Active nav item: keep text white/dark but let emojis render naturally */
+.nav-item.active .vids-nav-icon,
+.vids-nav-item.active .vids-nav-icon {
+  -webkit-text-fill-color: initial !important;
+}
+
+/* Any element using gradient text clip — emojis inside must be exempt */
+.logo-main span,
+.vids-logo,
+.hero-temp,
+.quote-ticker,
+.strip-logo {
+  /* These use -webkit-text-fill-color: transparent for gradient effect */
+  /* Emojis inside will be invisible — wrap emoji in a plain <span> instead */
+}
+
+/* Global rule: emoji characters should never inherit -webkit-text-fill-color */
+/* This targets the Unicode emoji ranges */
+@supports (color: #000) {
+  .nav-item,
+  .nav-item.active,
+  .vids-nav-item,
+  .vids-nav-item.active,
+  .vids-chip,
+  .vids-chip.active,
+  .news-cat,
+  .news-cat.active,
+  .tab,
+  .tab.active,
+  .results-tab,
+  .results-tab.active,
+  .chip,
+  .app-card,
+  .game-card,
+  .sidebar-footer,
+  .ucd-item {
+    -webkit-text-fill-color: initial;
+  }
+}
+
+/* Specific fix for nav items with emoji icons */
+.nav-item {
+  -webkit-text-fill-color: initial !important;
+  /* color is still set by the cascade, just not the fill override */
+}
+
+.nav-item.active {
+  color: #050816;
+  -webkit-text-fill-color: initial !important;
+  /* text renders as solid color — emojis show correctly */
+}
+
+body.dark .nav-item {
+  -webkit-text-fill-color: initial !important;
+}
+
+/* Chips and pills */
+.vids-chip.active,
+.news-cat.active,
+.tab.active,
+.results-tab.active,
+.pill-btn.active {
+  -webkit-text-fill-color: initial !important;
+}
+
+/* Sidebar nav label emojis in vids sidebar */
+.vids-nav-item {
+  -webkit-text-fill-color: initial !important;
+}
+
+.vids-nav-item.active {
+  -webkit-text-fill-color: initial !important;
+}
