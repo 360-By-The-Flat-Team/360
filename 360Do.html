@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>360Do</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #05060a;
+      color: #f5f5f5;
+      overflow: hidden;
+    }
+
+    .do-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .do-topbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(10, 12, 20, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+    }
+
+    .do-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .do-logo {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: radial-gradient(circle at 20% 20%, #ffb347, #ff5c7b);
+    }
+
+    .do-title {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .do-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .do-share-btn {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+      color: #f5f5f5;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .do-main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .do-sidebar {
+      width: 220px;
+      background: rgba(10, 12, 20, 0.96);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .do-sidebar-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+
+    .do-list-item {
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .do-list-item.active {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .do-list-badge {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .do-new-list {
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    .do-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top, #151827, #05060a);
+      padding: 16px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .do-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .do-list-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .do-list-meta {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .do-share-pill {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .do-items {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 8px;
+    }
+
+    .do-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      margin-bottom: 6px;
+    }
+
+    .do-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .do-item-text {
+      flex: 1;
+      font-size: 14px;
+    }
+
+    .do-item-text.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .do-item-meta {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    .do-new-item {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .do-new-item input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #f5f5f5;
+      font-size: 14px;
+    }
+
+    .do-new-item button {
+      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      color: #f5f5f5;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .do-bottom-bar {
+      height: 32px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="do-shell">
+    <div class="do-topbar">
+      <div class="do-topbar-left">
+        <div class="do-logo"></div>
+        <div class="do-title">360Do · Lists & Notes</div>
+      </div>
+      <div class="do-topbar-right">
+        <span id="do-presence">Private</span>
+        <button class="do-share-btn" id="do-share-btn">Share list</button>
+      </div>
+    </div>
+
+    <div class="do-main">
+      <div class="do-sidebar">
+        <div>
+          <div class="do-sidebar-title">Lists</div>
+          <div class="do-list-item active" data-list-id="inbox">
+            <span>Inbox</span>
+            <span class="do-list-badge" id="badge-inbox">0</span>
+          </div>
+          <div class="do-list-item" data-list-id="today">
+            <span>Today</span>
+            <span class="do-list-badge" id="badge-today">0</span>
+          </div>
+          <div class="do-list-item" data-list-id="ideas">
+            <span>Ideas</span>
+            <span class="do-list-badge" id="badge-ideas">0</span>
+          </div>
+        </div>
+        <div class="do-new-list" id="do-new-list">+ New list</div>
+      </div>
+
+      <div class="do-content">
+        <div class="do-list-header">
+          <div>
+            <div class="do-list-title" id="do-list-title">Inbox</div>
+            <div class="do-list-meta" id="do-list-meta">Shared with: just you (for now)</div>
+          </div>
+          <div class="do-share-pill">
+            <span>👥</span>
+            <span id="do-share-label">Not shared</span>
+          </div>
+        </div>
+
+        <div class="do-items" id="do-items"></div>
+
+        <div class="do-new-item">
+          <input id="do-new-item-input" placeholder="Add a task..." />
+          <button id="do-add-item-btn">Add</button>
+        </div>
+
+        <div class="do-bottom-bar">
+          <span id="do-count">0 items</span>
+          <span>List sharing coming soon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const lists = {
+      inbox: [],
+      today: [],
+      ideas: []
+    };
+
+    let currentList = 'inbox';
+
+    const listEls = document.querySelectorAll('.do-list-item');
+    const itemsEl = document.getElementById('do-items');
+    const countEl = document.getElementById('do-count');
+    const badgeInbox = document.getElementById('badge-inbox');
+    const badgeToday = document.getElementById('badge-today');
+    const badgeIdeas = document.getElementById('badge-ideas');
+    const titleEl = document.getElementById('do-list-title');
+    const newInput = document.getElementById('do-new-item-input');
+    const addBtn = document.getElementById('do-add-item-btn');
+
+    function renderList() {
+      const items = lists[currentList];
+      itemsEl.innerHTML = '';
+
+      items.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'do-item';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.done;
+        checkbox.addEventListener('change', () => {
+          item.done = checkbox.checked;
+          renderList();
+          updateBadges();
+        });
+
+        const text = document.createElement('div');
+        text.className = 'do-item-text' + (item.done ? ' completed' : '');
+        text.textContent = item.text;
+
+        const meta = document.createElement('div');
+        meta.className = 'do-item-meta';
+        meta.textContent = item.added || 'Just now';
+
+        row.appendChild(checkbox);
+        row.appendChild(text);
+        row.appendChild(meta);
+        itemsEl.appendChild(row);
+      });
+
+      countEl.textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
+      updateBadges();
+    }
+
+    function updateBadges() {
+      badgeInbox.textContent = lists.inbox.length;
+      badgeToday.textContent = lists.today.length;
+      badgeIdeas.textContent = lists.ideas.length;
+    }
+
+    listEls.forEach(el => {
+      el.addEventListener('click', () => {
+        listEls.forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        currentList = el.dataset.listId;
+        titleEl.textContent = el.textContent.trim();
+        renderList();
+      });
+    });
+
+    function addItem() {
+      const text = newInput.value.trim();
+      if (!text) return;
+      lists[currentList].push({
+        text,
+        done: false,
+        added: 'Just now'
+      });
+      newInput.value = '';
+      renderList();
+    }
+
+    addBtn.addEventListener('click', addItem);
+    newInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItem();
+    });
+
+    document.getElementById('do-share-btn').addEventListener('click', () => {
+      alert('List sharing will use invite links + roles (viewer/editor).');
+    });
+
+    renderList();
+  </script>
+</body>
+</html>
