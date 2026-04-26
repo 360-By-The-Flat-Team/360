@@ -202,7 +202,7 @@
         <div class="draw-title">Untitled canvas · 360Draw</div>
       </div>
       <div class="draw-topbar-right">
-        <button class="draw-share-btn" onclick="history.length > 1 ? history.back() : location.assign('apps.html')">← Apps</button>
+        <button class="draw-share-btn" onclick="goBackToApps()">← Apps</button>
         <span id="draw-presence">You</span>
         <button class="draw-share-btn" id="draw-share-btn">Share</button>
       </div>
@@ -242,6 +242,14 @@
   </div>
 
   <script>
+    function goBackToApps() {
+      if (history.length > 1) {
+        history.back();
+        return;
+      }
+      location.assign('apps.html');
+    }
+
     const canvas = document.getElementById('draw-canvas');
     const ctx = canvas.getContext('2d');
     const tools = document.querySelectorAll('.tool-btn');

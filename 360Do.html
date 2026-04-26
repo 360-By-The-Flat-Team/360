@@ -242,7 +242,7 @@
         <div class="do-title">360Do · Lists & Notes</div>
       </div>
       <div class="do-topbar-right">
-        <button class="do-share-btn" onclick="history.length > 1 ? history.back() : location.assign('apps.html')">← Apps</button>
+        <button class="do-share-btn" onclick="goBackToApps()">← Apps</button>
         <span id="do-presence">Private</span>
         <button class="do-share-btn" id="do-share-btn">Share list</button>
       </div>
@@ -296,6 +296,14 @@
   </div>
 
   <script>
+    function goBackToApps() {
+      if (history.length > 1) {
+        history.back();
+        return;
+      }
+      location.assign('apps.html');
+    }
+
     const lists = {
       inbox: [],
       today: [],
