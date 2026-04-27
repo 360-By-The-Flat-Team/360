@@ -99,14 +99,6 @@ body.dark .sidebar { background: rgba(9,9,11,.97); }
   transition: .2s;
   font-size: 14px;
   color: var(--txt);
-  opacity: 0;
-  transform: translateX(-16px);
-   transition:
-       transform 160ms cubic-bezier(.2,.8,.2,1),
-       opacity 160ms ease,
-       background .2s ease,
-       color .2s ease;
-  transition-delay: 0s;
 }
 body.dark .nav-item { color: var(--txtd); }
 .nav-item:hover { background: rgba(148,163,184,.15); }
@@ -114,12 +106,6 @@ body.dark .nav-item { color: var(--txtd); }
   background: linear-gradient(120deg, var(--a), var(--a2));
   color: #050816;
   font-weight: 700;
-}
-
-.sidebar.open .nav-item {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: calc(var(--nav-index, 0) * 0.2s);
 }
 
 .sidebar-footer {
