@@ -1,0 +1,368 @@
+/* ============================================================
+   360 — WIDE.CSS
+   "360 Wide" glassmorphism overlay mode.
+   Toggled via body.wide-mode class.
+   Drop this stylesheet AFTER main.css.
+   ============================================================ */
+
+/* ── WIDE MODE VARIABLES ── */
+body.wide-mode {
+  --wide-blur:        blur(28px) saturate(180%);
+  --wide-blur-sm:     blur(14px) saturate(150%);
+  --wide-glass:       rgba(255, 255, 255, 0.14);
+  --wide-glass-mid:   rgba(255, 255, 255, 0.26);
+  --wide-glass-high:  rgba(255, 255, 255, 0.46);
+  --wide-border:      rgba(255, 255, 255, 0.38);
+  --wide-border-sm:   rgba(255, 255, 255, 0.18);
+  --wide-shadow:      0 12px 48px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.10);
+  --wide-shadow-sm:   0 4px 20px rgba(0, 0, 0, 0.10);
+  --wide-inset:       inset 0 1.5px 0 rgba(255, 255, 255, 0.45);
+  --wide-inset-sm:    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  --wide-radius:      22px;
+  --wide-radius-sm:   14px;
+  --wide-radius-xs:   10px;
+}
+
+body.wide-mode.dark {
+  --wide-glass:       rgba(10, 15, 35, 0.38);
+  --wide-glass-mid:   rgba(10, 15, 35, 0.56);
+  --wide-glass-high:  rgba(10, 15, 35, 0.76);
+  --wide-border:      rgba(255, 255, 255, 0.16);
+  --wide-border-sm:   rgba(255, 255, 255, 0.09);
+  --wide-shadow:      0 16px 56px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --wide-inset:       inset 0 1.5px 0 rgba(255, 255, 255, 0.12);
+  --wide-inset-sm:    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* ── ANIMATED BACKGROUND AMBIENT ──
+   Soft floating gradient blobs that sit behind everything.
+   Completely non-interactive. */
+body.wide-mode::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 72% 56% at 14% 18%,  rgba(59, 130, 246, 0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 58% 72% at 86% 80%,  rgba(6, 182, 212, 0.15)  0%, transparent 65%),
+    radial-gradient(ellipse 50% 44% at 50% 50%,  rgba(139, 92, 246, 0.09) 0%, transparent 70%);
+  animation: wideAmbient 18s ease-in-out infinite alternate;
+}
+
+body.wide-mode.dark::before {
+  background:
+    radial-gradient(ellipse 72% 56% at 14% 18%,  rgba(59, 130, 246, 0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 58% 72% at 86% 80%,  rgba(6, 182, 212, 0.18)  0%, transparent 65%),
+    radial-gradient(ellipse 50% 44% at 50% 50%,  rgba(139, 92, 246, 0.14) 0%, transparent 70%);
+}
+
+@keyframes wideAmbient {
+  0%   { opacity: 1; transform: scale(1)    rotate(0deg); }
+  33%  { opacity: 0.85; transform: scale(1.04) rotate(1deg); }
+  66%  { opacity: 0.95; transform: scale(0.98) rotate(-1.5deg); }
+  100% { opacity: 1; transform: scale(1.02) rotate(0.5deg); }
+}
+
+/* Ensure all page content sits above the ambient layer */
+body.wide-mode > *:not(style):not(script):not(.cursor-dot):not(.cursor-trail):not(.cursor-crosshair):not(.cursor-blob) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── SIDEBAR ── */
+body.wide-mode .sidebar {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border-right: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+}
+
+/* ── SETTINGS PANEL ── */
+body.wide-mode .settings-panel {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border-left: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+}
+
+/* ── CARDS & RESULT CARDS ── */
+body.wide-mode .result-card,
+body.wide-mode .game-card,
+body.wide-mode .stat-card,
+body.wide-mode .ai-bubble.assistant,
+body.wide-mode #quoteCard,
+body.wide-mode #weatherContent,
+body.wide-mode #ai-output,
+body.wide-mode #shortResult,
+body.wide-mode .translator-box,
+body.wide-mode .infobox {
+  background: var(--wide-glass-mid) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1px solid var(--wide-border) !important;
+  border-radius: var(--wide-radius) !important;
+  box-shadow: var(--wide-shadow-sm), var(--wide-inset) !important;
+}
+
+body.wide-mode .result-card:hover,
+body.wide-mode .game-card:hover {
+  background: var(--wide-glass-high) !important;
+  border-color: var(--a) !important;
+  box-shadow: var(--wide-shadow), var(--wide-inset) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── INPUTS ── */
+body.wide-mode input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+body.wide-mode textarea,
+body.wide-mode select {
+  background: var(--wide-glass) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1.5px solid var(--wide-border-sm) !important;
+  border-radius: var(--wide-radius-xs) !important;
+}
+
+body.wide-mode input:focus,
+body.wide-mode textarea:focus {
+  border-color: var(--a) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+}
+
+/* ── PILL SEARCH BAR (home page & search bar strip) ── */
+body.wide-mode #search-form,
+body.wide-mode .custom-search-form,
+body.wide-mode #strip-search-form,
+body.wide-mode #chat-input-row {
+  background: var(--wide-glass-mid) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1.5px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow-sm), var(--wide-inset) !important;
+}
+
+/* ── TOP BARS / FIXED STRIPS ── */
+body.wide-mode .search-bar-strip,
+body.wide-mode .chat-header {
+  background: var(--wide-glass-mid) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border-bottom: 1px solid var(--wide-border) !important;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.12), var(--wide-inset-sm) !important;
+}
+
+/* ── LOGO PILL (home page) ── */
+body.wide-mode .logo-main {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+  border-radius: 22px !important;
+}
+
+/* ── CLOCK & WEATHER CHIPS ── */
+body.wide-mode .clock-pill,
+body.wide-mode .weather-chip {
+  background: var(--wide-glass-mid) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow-sm) !important;
+}
+
+/* ── AUTH BOX ── */
+body.wide-mode .auth-box {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+  border-radius: var(--wide-radius) !important;
+}
+
+/* ── PAGINATION BUTTONS ── */
+body.wide-mode .page-btn,
+body.wide-mode .pill-btn {
+  background: var(--wide-glass-mid) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1px solid var(--wide-border) !important;
+}
+
+body.wide-mode .page-btn:hover,
+body.wide-mode .pill-btn:hover {
+  background: var(--wide-glass-high) !important;
+  border-color: var(--a) !important;
+}
+
+/* ── CHAT SIDEBAR & MESSAGES ── */
+body.wide-mode .chat-left {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border-right: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+}
+
+body.wide-mode .chat-message:hover {
+  background: var(--wide-glass) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border-color: var(--wide-border-sm) !important;
+}
+
+body.wide-mode .msg-actions {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1px solid var(--wide-border) !important;
+}
+
+body.wide-mode .reaction-pill {
+  background: var(--wide-glass) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1px solid var(--wide-border-sm) !important;
+}
+
+/* ── OVERLAY (sidebar open) ── */
+body.wide-mode .overlay.active {
+  background: rgba(0, 0, 0, 0.30) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+/* ── SEARCH RESULT CARDS (360-search.js) ── */
+body.wide-mode .result-card {
+  border-radius: var(--wide-radius) !important;
+}
+
+/* ── KNOWLEDGE PANEL & PAA ── */
+body.wide-mode .knowledge-panel,
+body.wide-mode .paa-section {
+  background: var(--wide-glass-mid) !important;
+  backdrop-filter: var(--wide-blur-sm) !important;
+  -webkit-backdrop-filter: var(--wide-blur-sm) !important;
+  border: 1px solid var(--wide-border) !important;
+  border-radius: var(--wide-radius) !important;
+  box-shadow: var(--wide-shadow-sm), var(--wide-inset) !important;
+}
+
+/* ── SUGGESTIONS DROPDOWN ── */
+body.wide-mode #suggestions-dropdown {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+  border-radius: var(--wide-radius-sm) !important;
+}
+
+/* ── MODALS (chat) ── */
+body.wide-mode .modal-box {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1px solid var(--wide-border) !important;
+  border-radius: var(--wide-radius) !important;
+  box-shadow: var(--wide-shadow) !important;
+}
+
+/* ── EMOJI PICKER ── */
+body.wide-mode .emoji-picker {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+}
+
+/* ── PROFILE POPUP ── */
+body.wide-mode #profile-popup {
+  background: var(--wide-glass-high) !important;
+  backdrop-filter: var(--wide-blur) !important;
+  -webkit-backdrop-filter: var(--wide-blur) !important;
+  border: 1px solid var(--wide-border) !important;
+  box-shadow: var(--wide-shadow) !important;
+  border-radius: var(--wide-radius-sm) !important;
+}
+
+/* ── LIGHTBOX ── */
+body.wide-mode #lightbox,
+body.wide-mode #img-lightbox {
+  background: rgba(0, 0, 0, 0.80) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+/* ── SETTINGS TOGGLE BUTTON (the wide toggle itself) ── */
+.wide-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.wide-toggle-track {
+  width: 40px;
+  height: 23px;
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.24s;
+  border: none;
+  outline: none;
+}
+
+.wide-toggle-track::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 17px;
+  height: 17px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.24s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.wide-toggle-track.on {
+  background: var(--a, #3b82f6);
+}
+
+.wide-toggle-track.on::before {
+  transform: translateX(17px);
+}
+
+/* ── TRANSITION SMOOTHING ──
+   Apply a gentle cross-fade when wide mode activates / deactivates */
+body,
+body .sidebar,
+body .settings-panel,
+body .result-card,
+body .game-card,
+body .chat-left,
+body .chat-header,
+body .logo-main,
+body .clock-pill,
+body .weather-chip,
+body .auth-box,
+body .search-bar-strip,
+body #search-form,
+body .custom-search-form {
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    backdrop-filter 0.35s ease !important;
+}
