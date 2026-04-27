@@ -126,9 +126,9 @@ async function buildUserChip(user) {
         </div>
       </div>
       <div class="ucd-divider"></div>
-      <a class="ucd-item" href="/settings"><span><img src="/assets/images/accounts.png"></img></span> My Account</a>
+      <a class="ucd-item" href="/settings"><span><img style="height: 1em; width: auto;" src="/assets/images/accounts.png"></img></span> My Account</a>
       <div class="ucd-divider"></div>
-      <button class="ucd-item ucd-signout" id="chipSignOut"><span><img src="/assets/images/signout.gif"></img></span> Sign Out</button>
+      <button class="ucd-item ucd-signout" id="chipSignOut"><span><img style="height: 1em; width: auto;" src="/assets/images/signout.gif"></img></span> Sign Out</button>
     </div>`;
 
   // Chip is already in the DOM — just make it visible now
