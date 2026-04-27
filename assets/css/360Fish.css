@@ -1,0 +1,417 @@
+/* ============================
+   GLOBAL RESET + BASE
+============================ */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #02040a;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f5f5f5;
+}
+
+/* ============================
+   TOPBAR
+============================ */
+#topbar {
+  height: 48px;
+  background: rgba(5, 8, 20, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 1000;
+  position: relative;
+}
+
+#topbar .left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: radial-gradient(circle at 20% 20%, #4f9cff, #7b5cff);
+}
+
+#topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* ============================
+   GAME WORLD LAYERS
+============================ */
+#game-shell {
+  position: relative;
+  height: calc(100vh - 48px);
+  width: 100vw;
+  overflow: hidden;
+}
+
+#game-world {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ============================
+   SKY LAYERS
+============================ */
+.sky-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 50%;
+  background-size: cover;
+  background-repeat: repeat-x;
+  animation: skyScroll 120s linear infinite;
+  opacity: 0.9;
+}
+
+#sky-layer-1 { background-image: linear-gradient(to bottom, #1b3b7a, #0a1220); }
+#sky-layer-2 { background-image: linear-gradient(to bottom, #0f1e3f, #050814); opacity: 0.7; }
+#sky-layer-3 { background-image: linear-gradient(to bottom, #050814, #02040a); opacity: 0.5; }
+
+@keyframes skyScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ============================
+   SUN & MOON
+============================ */
+#sun, #moon {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+
+#sun {
+  background: radial-gradient(circle, #ffe28a, #ffb347);
+  box-shadow: 0 0 40px #ffb347aa;
+}
+
+#moon {
+  background: radial-gradient(circle, #dfe7ff, #9aa4c8);
+  box-shadow: 0 0 30px #9aa4c8aa;
+}
+
+/* ============================
+   CLOUDS
+============================ */
+.cloud-layer {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  width: 200%;
+  height: 40%;
+  background-image: url('https://i.imgur.com/5cX9Q0G.png');
+  background-size: contain;
+  background-repeat: repeat-x;
+  opacity: 0.4;
+  animation: cloudScroll 60s linear infinite;
+}
+
+#cloud-layer-2 { top: 10%; opacity: 0.25; animation-duration: 90s; }
+#cloud-layer-3 { top: 15%; opacity: 0.15; animation-duration: 120s; }
+
+@keyframes cloudScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ============================
+   WEATHER
+============================ */
+#rain-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: url('https://i.imgur.com/8kZtY0T.png');
+  background-size: cover;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+#fog-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #ffffff08, #ffffff00);
+  opacity: 0;
+  transition: opacity 2s ease;
+  pointer-events: none;
+}
+
+#storm-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================
+   WATER CANVAS
+============================ */
+#water-back,
+#water-mid,
+#water-front {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60%;
+  pointer-events: none;
+}
+
+#water-back { opacity: 0.4; }
+#water-mid { opacity: 0.7; }
+#water-front { opacity: 1; }
+
+/* ============================
+   PARTICLES
+============================ */
+#particle-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ============================
+   BOAT
+============================ */
+#boat {
+  position: absolute;
+  bottom: 55%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 60px;
+  pointer-events: none;
+  animation: boatBob 4s ease-in-out infinite;
+}
+
+@keyframes boatBob {
+  0% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
+  100% { transform: translate(-50%, 0); }
+}
+
+#boat-hull {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 28px;
+  background: linear-gradient(to right, #5b3b24, #8a5a33);
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.6);
+}
+
+#boat-cabin {
+  position: absolute;
+  bottom: 22px;
+  left: 20px;
+  width: 60px;
+  height: 26px;
+  background: rgba(240,244,255,0.9);
+  border-radius: 6px;
+}
+
+#boat-window {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  width: 16px;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #9fd4ff, #4f8ad1);
+}
+
+/* ============================
+   FISHING ELEMENTS
+============================ */
+#bobber {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #ff5c7b;
+  border: 2px solid #ffffff;
+  transform: translate(-50%, -50%);
+  display: none;
+}
+
+#splash {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.8);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+
+#loot-popup {
+  position: absolute;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.6);
+  font-size: 12px;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ============================
+   RARE EVENTS
+============================ */
+#event-banner {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 12px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+#leviathan-shadow,
+#whale-surface,
+#ghost-ship {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease;
+}
+
+/* ============================
+   HUD
+============================ */
+#hud {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  width: 280px;
+  height: calc(100vh - 48px);
+  background: rgba(5,8,20,0.96);
+  border-left: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(18px);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.hud-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.hud-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  margin-bottom: 8px;
+}
+
+.res-row,
+.upgrade-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.upgrade-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.04);
+  color: #f5f5f5;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* ============================
+   INVENTORY GRID
+============================ */
+#inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+#inventory-grid div {
+  height: 40px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+}
+
+/* ============================
+   STATUS PANEL
+============================ */
+#status-text {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 8px;
+}
+
+#tension-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+#tension-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(to right, #4f9cff, #7b5cff);
+  transition: width 0.1s linear;
+}
+
+#depth-meter {
+  font-size: 12px;
+  opacity: 0.8;
+}
