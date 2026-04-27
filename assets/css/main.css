@@ -503,6 +503,13 @@ body.dark .user-chip-dropdown {
   font-weight: 700;
   color: var(--txt);
 }
+.ucd-item img {
+  height: 1em;
+  width: auto;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
 body.dark .ucd-username { color: var(--txtd); }
 .ucd-email {
   font-size: 11px;
