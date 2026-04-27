@@ -10,7 +10,7 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360 — Settings</title>
+  <title>360 — Account</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -24,312 +24,240 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    body.dark {
-      --page-bg: #07071a;
-      --card-bg: rgba(255,255,255,.04);
-      --card-border: rgba(255,255,255,.08);
-      --txt: #e2e8f0;
-      --mut: #64748b;
-      --br: rgba(255,255,255,.09);
-      --sidebar-bg: rgba(255,255,255,.025);
-    }
-    body:not(.dark) {
-      --page-bg: #f0f4f8;
-      --card-bg: rgba(255,255,255,.92);
-      --card-border: rgba(0,0,0,.07);
-      --txt: #0f172a;
-      --mut: #64748b;
-      --br: rgba(0,0,0,.08);
-      --sidebar-bg: rgba(255,255,255,.7);
-    }
-    body { background: var(--page-bg); color: var(--txt); }
-
-    /* TOP BAR */
-    .st-topbar {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: 54px;
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--br);
-      display: flex; align-items: center;
-      padding: 0 22px; gap: 14px;
-      z-index: 300;
-    }
-    .st-topbar-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
-    .st-logo-mark {
-      width: 28px; height: 28px; border-radius: 8px;
-      background: linear-gradient(135deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
-    }
-    .st-logo-text { font-size: 17px; font-weight: 900; letter-spacing: -.02em; color: var(--txt); }
-    .st-topbar-sep { color: var(--mut); font-size: 18px; opacity: .4; }
-    .st-topbar-section { font-size: 14px; font-weight: 600; color: var(--txt); }
-    .st-topbar-right { margin-left: auto; }
-    .st-back-btn {
-      padding: 7px 14px; border-radius: 8px;
-      border: 1px solid var(--br); background: transparent;
-      color: var(--txt); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: background .18s;
-    }
-    .st-back-btn:hover { background: rgba(148,163,184,.15); }
-
-    /* PAGE LAYOUT */
-    .page-wrap {
       display: flex;
-      min-height: 100vh;
-      padding-top: 54px;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* SETTINGS SIDEBAR */
-    .st-sidebar {
-      width: 230px; flex-shrink: 0;
-      background: var(--sidebar-bg);
-      backdrop-filter: blur(14px);
-      border-right: 1px solid var(--br);
-      padding: 20px 10px;
-      position: sticky; top: 54px;
-      height: calc(100vh - 54px);
-      overflow-y: auto;
-    }
-    .st-sidebar-group-label {
-      font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .08em;
-      color: var(--mut); padding: 0 10px;
-      margin: 18px 0 5px;
-    }
-    .st-sidebar-group-label:first-child { margin-top: 0; }
-    .st-nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 10px; border-radius: 9px;
-      font-size: 13px; font-weight: 500; color: var(--txt);
-      cursor: pointer; transition: background .15s;
-      margin-bottom: 2px; user-select: none;
-    }
-    .st-nav-item:hover { background: rgba(148,163,184,.13); }
-    .st-nav-item.active {
-      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
-      color: #fff; font-weight: 700;
-    }
-    .st-nav-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
-
-    /* MAIN CONTENT */
-    .st-main {
-      flex: 1; padding: 32px 36px;
-      max-width: 860px; overflow-y: auto;
-    }
-    @media (max-width: 680px) {
-      .st-sidebar { width: 58px; padding: 16px 6px; }
-      .st-nav-label { display: none; }
-      .st-sidebar-group-label { display: none; }
-      .st-main { padding: 20px 14px; }
+    .ac-wrap {
+      margin: 80px 20px;
+      width: 420px;
+      max-width: calc(100vw - 40px);
+      position: relative;
+      z-index: 1;
     }
 
-    /* PANELS */
-    .st-panel { display: none; }
-    .st-panel.active { display: block; }
-    .st-panel-header { margin-bottom: 26px; }
-    .st-panel-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
-    .st-panel-sub { font-size: 13px; color: var(--mut); margin-top: 4px; }
-
-    /* CARD */
-    .st-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px 22px;
-      margin-bottom: 16px;
-      backdrop-filter: blur(10px);
-    }
-    .st-card-title {
-      font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .07em;
-      color: var(--mut); margin-bottom: 14px;
-    }
-
-    /* ROW */
-    .st-row {
-      display: flex; align-items: center;
-      justify-content: space-between; gap: 14px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--br);
-    }
-    .st-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .st-row:first-of-type { padding-top: 0; }
-    .st-row-label { font-size: 14px; font-weight: 500; }
-    .st-row-sub { font-size: 12px; color: var(--mut); margin-top: 2px; }
-    .st-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-    /* TOGGLE */
-    .st-toggle {
-      width: 40px; height: 23px;
-      background: rgba(148,163,184,.3);
-      border-radius: 999px; position: relative;
-      cursor: pointer; transition: background .22s;
-      flex-shrink: 0; border: none; outline: none;
-    }
-    .st-toggle::before {
-      content: ""; position: absolute;
-      top: 3px; left: 3px;
-      width: 17px; height: 17px;
-      background: #fff; border-radius: 50%;
-      transition: transform .22s;
-      box-shadow: 0 1px 3px rgba(0,0,0,.25);
-    }
-    .st-toggle.on { background: var(--a,#3b82f6); }
-    .st-toggle.on::before { transform: translateX(17px); }
-
-    /* BUTTONS */
-    .st-btn {
-      padding: 8px 14px; border-radius: 8px;
+    .ac-card {
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(22px);
       border: 1px solid var(--br);
-      background: rgba(148,163,184,.1);
-      color: var(--txt); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: background .15s; white-space: nowrap;
+      border-radius: 20px;
+      padding: 40px 38px 34px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.10), 0 4px 16px rgba(0,0,0,.05);
+      display: flex;
+      flex-direction: column;
+      animation: cardIn .42s cubic-bezier(.22,.68,0,1.1);
     }
-    .st-btn:hover { background: rgba(148,163,184,.2); }
-    .st-btn:disabled { opacity: .45; cursor: not-allowed; }
-    .st-btn.primary {
-      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
-      color: #fff; border-color: transparent;
+    body.dark .ac-card {
+      background: rgba(9,9,20,.97);
+      border-color: rgba(255,255,255,.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
     }
-    .st-btn.primary:hover { opacity: .88; }
-    .st-btn.danger { background: rgba(239,68,68,.09); border-color: rgba(239,68,68,.28); color: #ef4444; }
-    .st-btn.danger:hover { background: rgba(239,68,68,.18); }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(26px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);   }
+    }
 
-    /* INPUT */
-    .st-input {
-      padding: 9px 12px; border-radius: 8px;
-      border: 1.5px solid var(--br);
-      background: rgba(148,163,184,.07);
+    .ac-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .ac-logo-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--a), var(--a2));
+      flex-shrink: 0;
+    }
+    .ac-logo-text { font-size: 21px; font-weight: 900; letter-spacing: -.02em; color: var(--txt); }
+    body.dark .ac-logo-text { color: var(--txtd); }
+
+    .ac-tabs {
+      display: flex;
+      background: rgba(148,163,184,.12);
+      border-radius: 10px;
+      padding: 3px; gap: 2px;
+      margin-bottom: 22px;
+    }
+    .ac-tab {
+      flex: 1; padding: 8px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; text-align: center;
+      cursor: pointer; transition: .2s;
+      color: var(--mut); border: none; background: transparent;
+    }
+    body.dark .ac-tab { color: var(--mutd); }
+    .ac-tab.active { background: linear-gradient(110deg, var(--a), var(--a2)); color: #050816; }
+    .ac-tab:not(.active):hover { background: rgba(148,163,184,.15); }
+
+    .ac-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .ac-field label {
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--mut);
+    }
+    body.dark .ac-field label { color: var(--mutd); }
+    .ac-field input {
+      width: 100%; padding: 11px 13px;
+      border-radius: 9px; border: 1.5px solid var(--br);
+      background: rgba(255,255,255,.75);
       color: var(--txt); font-size: 14px; outline: none;
-      transition: border-color .18s; width: 100%;
+      transition: border-color .18s, box-shadow .18s;
     }
-    .st-input:focus { border-color: var(--a,#3b82f6); }
-
-    /* MSG */
-    .st-msg { font-size: 13px; min-height: 18px; margin-top: 8px; }
-    .st-msg.ok  { color: #10b981; }
-    .st-msg.err { color: #ef4444; }
-
-    /* SIGN-IN WALL */
-    .ac-wall {
-      display: flex; flex-direction: column;
-      align-items: center; text-align: center;
-      padding: 48px 24px; gap: 14px;
+    body.dark .ac-field input {
+      background: rgba(255,255,255,.06);
+      color: var(--txtd);
+      border-color: rgba(255,255,255,.12);
     }
-    .ac-wall-icon { font-size: 52px; line-height: 1; }
-    .ac-wall-title { font-size: 20px; font-weight: 800; }
-    .ac-wall-sub { font-size: 14px; color: var(--mut); max-width: 320px; line-height: 1.5; }
-    .ac-wall-btns { display: flex; gap: 10px; margin-top: 6px; }
-
-    /* PROFILE */
-    .ac-user-row { display: flex; align-items: center; gap: 14px; }
-    .ac-avatar {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; font-weight: 800; color: #fff; flex-shrink: 0;
+    .ac-field input:focus {
+      border-color: var(--a);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
     }
-    .ac-name  { font-size: 16px; font-weight: 700; }
-    .ac-email { font-size: 12px; color: var(--mut); margin-top: 2px; }
-
-    /* THEME */
-    .st-theme-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-    .st-theme-opt {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 5px;
-      cursor: pointer; font-size: 11px; color: var(--mut);
-    }
-    .st-swatch {
-      width: 36px; height: 36px; border-radius: 10px;
-      border: 2.5px solid transparent;
-      transition: transform .15s, border-color .15s;
-    }
-    .st-swatch:hover { transform: scale(1.1); }
-    .st-swatch.active { border-color: var(--a,#3b82f6); }
-    .st-swatch[data-theme="ocean"]    { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
-    .st-swatch[data-theme="midnight"] { background: linear-gradient(135deg,#1e293b,#334155); }
-    .st-swatch[data-theme="sunset"]   { background: linear-gradient(135deg,#f97316,#ec4899); }
-    .st-swatch[data-theme="mint"]     { background: linear-gradient(135deg,#10b981,#06b6d4); }
-    .st-swatch[data-theme="neon"]     { background: linear-gradient(135deg,#22d3ee,#a3e635); }
-    .st-swatch[data-theme="mono"]     { background: linear-gradient(135deg,#475569,#94a3b8); }
-
-    /* CURSOR OPTIONS */
-    .st-cursor-grid { display: flex; gap: 8px; flex-wrap: wrap; }
-    .st-cursor-opt {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 4px;
-      padding: 8px 12px; border-radius: 10px;
-      border: 1.5px solid var(--br); background: transparent;
-      cursor: pointer; font-size: 11px; color: var(--mut);
-      transition: border-color .15s, background .15s;
-    }
-    .st-cursor-opt.active {
-      border-color: var(--a,#3b82f6);
-      background: rgba(59,130,246,.1);
-      color: var(--a,#3b82f6); font-weight: 600;
+    .ac-field input.invalid {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,.12);
     }
 
-    /* BOB */
+    .ac-hint { font-size: 11px; color: var(--mut); margin-top: 3px; min-height: 14px; }
+    body.dark .ac-hint { color: var(--mutd); }
+    .ac-hint.err { color: #ef4444; }
+    .ac-hint.ok  { color: #10b981; }
+
+    .ac-btn {
+      width: 100%; padding: 12px;
+      border-radius: 10px; border: none;
+      background: linear-gradient(110deg, var(--a), var(--a2));
+      color: #050816; font-weight: 700; font-size: 15px;
+      cursor: pointer; transition: opacity .18s, transform .15s;
+      margin-top: 6px;
+    }
+    .ac-btn:hover:not(:disabled) { opacity: .87; transform: translateY(-1px); }
+    .ac-btn:active:not(:disabled) { transform: translateY(0); }
+    .ac-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .ac-msg { font-size: 13px; text-align: center; min-height: 18px; margin-top: 10px; }
+    .ac-msg.err { color: #ef4444; }
+    .ac-msg.ok  { color: #10b981; }
+
+    .ac-divider {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--mut); font-size: 12px;
+      margin: 16px 0 14px;
+    }
+    body.dark .ac-divider { color: var(--mutd); }
+    .ac-divider::before, .ac-divider::after { content: ""; flex: 1; height: 1px; background: var(--br); }
+
+    .ac-oauth { display: flex; flex-direction: column; gap: 8px; }
+    .ac-oauth-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 11px 14px;
+      border-radius: 9px; border: 1px solid var(--br);
+      background: rgba(255,255,255,.85);
+      cursor: pointer; font-size: 14px; font-weight: 500;
+      transition: background .18s, transform .15s; color: var(--txt);
+    }
+    body.dark .ac-oauth-btn { background: rgba(255,255,255,.05); color: var(--txtd); border-color: rgba(255,255,255,.1); }
+    .ac-oauth-btn:hover { background: rgba(148,163,184,.18); transform: translateY(-1px); }
+
+    .ac-switch { font-size: 13px; text-align: center; margin-top: 14px; color: var(--mut); }
+    body.dark .ac-switch { color: var(--mutd); }
+    .ac-switch a { color: var(--a); font-weight: 600; text-decoration: none; }
+    .ac-switch a:hover { text-decoration: underline; }
+
+    .ac-profile { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0; text-align: center; }
+    .ac-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--a), var(--a2)); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; }
+    .ac-pname  { font-size: 19px; font-weight: 700; color: var(--txt); }
+    body.dark .ac-pname { color: var(--txtd); }
+    .ac-pemail { font-size: 13px; color: var(--mut); }
+    body.dark .ac-pemail { color: var(--mutd); }
+    .ac-sec-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--br); background: rgba(148,163,184,.12); color: var(--txt); font-weight: 600; font-size: 14px; cursor: pointer; transition: .18s; }
+    body.dark .ac-sec-btn { color: var(--txtd); border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.05); }
+    .ac-sec-btn:hover { background: rgba(148,163,184,.22); }
+    .ac-signout-btn { background: rgba(239,68,68,.09) !important; border-color: rgba(239,68,68,.28) !important; color: #ef4444 !important; }
+    .ac-signout-btn:hover { background: rgba(239,68,68,.17) !important; }
+
+    .ac-logout { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0; text-align: center; }
+    .ac-logout-icon { font-size: 44px; }
+    .ac-logout-title { font-size: 19px; font-weight: 700; color: var(--txt); }
+    body.dark .ac-logout-title { color: var(--txtd); }
+    .ac-logout-sub { font-size: 13px; color: var(--mut); }
+    body.dark .ac-logout-sub { color: var(--mutd); }
+
+    /* ── PASSWORD STRENGTH METER ── */
+    .pw-strength-wrap { margin-top: 6px; }
+    .pw-bar-track { height: 3px; background: rgba(148,163,184,.2); border-radius: 999px; overflow: hidden; margin-bottom: 5px; }
+    .pw-bar-fill { height: 100%; width: 0%; border-radius: 999px; transition: width .35s cubic-bezier(.34,1.56,.64,1), background .25s; }
+    .pw-meta { display: flex; justify-content: space-between; align-items: center; min-height: 14px; }
+    .pw-strength-label { font-size: 11px; font-weight: 600; transition: color .2s; }
+    .pw-strength-hint { font-size: 11px; color: var(--mut); }
+    body.dark .pw-strength-hint { color: var(--mutd); }
+    .pw-checks { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+    .pw-pill {
+      display: flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 999px;
+      font-size: 10px; font-weight: 500;
+      border: 1px solid var(--br);
+      background: rgba(148,163,184,.08);
+      color: var(--mut); transition: background .2s, border-color .2s, color .2s;
+    }
+    body.dark .pw-pill { color: var(--mutd); border-color: rgba(255,255,255,.1); }
+    .pw-pill.pass { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); color: #059669; }
+    body.dark .pw-pill.pass { color: #34d399; background: rgba(52,211,153,.1); border-color: rgba(52,211,153,.3); }
+    .pw-pip { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; transition: opacity .2s; flex-shrink: 0; }
+    .pw-pill.pass .pw-pip { opacity: 1; }
+
+    /* ── SETTINGS BOB SECTION ── */
+    .settings-bob-section {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(148,163,184,.07);
+      border: 1px solid var(--br);
+    }
+    body.dark .settings-bob-section { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+
     .bob-toggle-row {
       display: flex; align-items: center;
-      justify-content: space-between; gap: 14px;
+      justify-content: space-between;
+      cursor: pointer; user-select: none;
     }
-    .bob-toggle-label { font-size: 14px; font-weight: 500; }
-    .bob-toggle-sub   { font-size: 12px; color: var(--mut); margin-top: 2px; }
+    .bob-toggle-label { font-size: 13px; font-weight: 600; color: var(--txt); }
+    body.dark .bob-toggle-label { color: var(--txtd); }
+    .bob-toggle-sub { font-size: 11px; color: var(--mut); margin-top: 1px; }
+    body.dark .bob-toggle-sub { color: var(--mutd); }
 
-    /* SYSTEM STATS */
-    .sys-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px,1fr));
-      gap: 12px;
+    .bob-track {
+      width: 38px; height: 22px;
+      background: rgba(148,163,184,.3);
+      border-radius: 999px; position: relative;
+      cursor: pointer; transition: background .25s;
+      flex-shrink: 0; border: none;
     }
-    .sys-stat {
-      background: rgba(148,163,184,.07);
-      border: 1px solid var(--br);
-      border-radius: 12px; padding: 14px 16px;
+    .bob-track::before {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: white; border-radius: 50%;
+      transition: transform .25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
     }
-    .sys-stat-label {
-      font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .07em;
-      color: var(--mut); margin-bottom: 5px;
-    }
-    .sys-stat-val { font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
-    .sys-stat-sub { font-size: 11px; color: var(--mut); margin-top: 3px; }
-    .sys-bar-track {
-      height: 4px; background: rgba(148,163,184,.2);
-      border-radius: 999px; overflow: hidden; margin-top: 8px;
-    }
-    .sys-bar-fill {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
-      transition: width .6s ease;
-    }
-    .sys-info-row {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      padding: 8px 0; border-bottom: 1px solid var(--br);
-      font-size: 13px; gap: 12px;
-    }
-    .sys-info-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .sys-info-key { color: var(--mut); flex-shrink: 0; }
-    .sys-info-val { font-weight: 600; text-align: right; word-break: break-all; }
+    .bob-track.on { background: var(--a); }
+    .bob-track.on::before { transform: translateX(16px); }
 
-    /* DANGER CARD */
-    .st-card.danger-card { border-color: rgba(239,68,68,.28); }
-
-    /* LEGAL */
-    .st-legal-link {
-      display: block; padding: 9px 0; font-size: 14px;
-      color: var(--a,#3b82f6); text-decoration: none;
-      border-bottom: 1px solid var(--br);
+    /* Bob canvas badge in search bar — injected by JS */
+    #bob-search-canvas-wrap {
+      position: absolute;
+      right: 48px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
     }
-    .st-legal-link:last-child { border-bottom: none; }
-    .st-legal-link:hover { text-decoration: underline; }
+    #bob-search-canvas-wrap.visible { display: flex; }
+
+    @media (max-width: 600px) {
+      .ac-wrap { margin: 70px 12px 20px; }
+      .ac-card { padding: 28px 20px 24px; }
+    }
   </style>
 </head>
 <body>
@@ -339,372 +267,119 @@
   <div class="cursor-crosshair"></div>
   <div class="cursor-blob"></div>
 
-  <!-- Hidden scaffolding that main.js / cursor.js expect to find -->
+  <div class="auth-top-right">
+    <button id="signInBtn"  class="auth-btn">Sign In</button>
+    <button id="signUpBtn"  class="auth-btn">Sign Up</button>
+    <button id="signOutBtn" class="auth-btn" style="display:none;">Sign Out</button>
+  </div>
+
   <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
-  <button class="sidebar-toggle" id="sidebarToggle" style="display:none;">☰</button>
-  <aside class="sidebar" id="sidebar" style="display:none;">
+  <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo-mark"></div>
       <button id="settingsBtn">⚙</button>
     </div>
     <nav class="nav-list">
-      <div class="nav-item" data-href="/">Home</div>
-      <div class="nav-item" data-href="../ai">AI</div>
-      <div class="nav-item" data-href="../weather">Weather</div>
-      <div class="nav-item" data-href="../translator">Translator</div>
-      <div class="nav-item" data-href="../stocks">Stocks</div>
-      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
-      <div class="nav-item" data-href="../chat">Chat</div>
-      <div class="nav-item" data-href="../news">News</div>
-      <div class="nav-item" data-href="../apps">Apps</div>
-      <div class="nav-item" data-href="../games">Games</div>
-      <div class="nav-item" data-href="../accounts">Accounts</div>
+      <div class="nav-item"        data-href="/">Home</div>
+      <div class="nav-item"        data-href="../ai">AI</div>
+      <div class="nav-item"        data-href="../weather">Weather</div>
+      <div class="nav-item"        data-href="../translator">Translator</div>
+      <div class="nav-item"        data-href="../stocks">Stocks</div>
+      <div class="nav-item"        data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item"        data-href="../chat">Chat</div>
+      <div class="nav-item"        data-href="../news">News</div>
+      <div class="nav-item"        data-href="../apps">Apps</div>
+      <div class="nav-item"        data-href="../games">Games</div>
+      <div class="nav-item active" data-href="../accounts">Accounts</div>
     </nav>
     <div class="sidebar-footer"><span id="sidebar-ver">Loading...</span></div>
   </aside>
+
   <div class="overlay" id="overlay"></div>
 
-  <!-- Hidden settings panel so main.js hooks work (theme, dark, cursor, bg, temp, bob) -->
-  <div class="settings-panel" id="settingsPanel" style="display:none !important; visibility:hidden; position:absolute; pointer-events:none;">
+  <!-- SETTINGS PANEL — includes Bob toggle -->
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Appearance</h3>
+    <div class="settings-label">Theme</div>
     <div class="theme-swatches">
-      <div class="theme-option"><div class="swatch" data-theme="ocean"></div></div>
-      <div class="theme-option"><div class="swatch" data-theme="midnight"></div></div>
-      <div class="theme-option"><div class="swatch" data-theme="sunset"></div></div>
-      <div class="theme-option"><div class="swatch" data-theme="mint"></div></div>
-      <div class="theme-option"><div class="swatch" data-theme="neon"></div></div>
-      <div class="theme-option"><div class="swatch" data-theme="mono"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div><span>Ocean</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div><span>Midnight</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div><span>Sunset</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div><span>Mint</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div><span>Neon</span></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div><span>Mono</span></div>
     </div>
-    <input type="checkbox" id="darkToggle" />
+
+    <div class="settings-label" style="margin-top:20px;">Mode</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="font-size:14px;">Dark mode</span>
+      <input type="checkbox" id="darkToggle" />
+    </label>
+
+    <h3 style="margin-top:20px;">Cursor</h3>
+    <div class="settings-label">Style</div>
     <div class="cursor-options">
-      <div class="cursor-option active" data-cursor="default"></div>
-      <div class="cursor-option" data-cursor="dot"></div>
-      <div class="cursor-option" data-cursor="ring"></div>
-      <div class="cursor-option" data-cursor="crosshair"></div>
-      <div class="cursor-option" data-cursor="blob"></div>
-      <div class="cursor-option" data-cursor="system"></div>
+      <div class="cursor-option active" data-cursor="default"><div class="cursor-preview preview-default"></div>Default</div>
+      <div class="cursor-option" data-cursor="dot"><div class="cursor-preview preview-dot"></div>Dot</div>
+      <div class="cursor-option" data-cursor="ring"><div class="cursor-preview preview-ring"></div>Ring</div>
+      <div class="cursor-option" data-cursor="crosshair"><div class="cursor-preview preview-crosshair"></div>Crosshair</div>
+      <div class="cursor-option" data-cursor="blob"><div class="cursor-preview preview-blob"></div>Blob</div>
+      <div class="cursor-option" data-cursor="system"><div class="cursor-preview preview-system"></div>System</div>
     </div>
     <div class="cursor-color-row">
+      <label>Cursor color</label>
       <input type="color" id="cursorColorPicker" value="#3b82f6" />
       <button id="cursorColorReset">Reset</button>
     </div>
-    <div class="temp-unit-box">
-      <span id="tempUnitLabel">°C</span>
+
+    <div class="temp-unit-box" style="margin-top:20px;">
+      Temp Unit: <span id="tempUnitLabel">°C</span>
       <button id="tempUnitBtn">Switch</button>
     </div>
-    <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
-    <input type="text" id="bgUrlInput" class="settings-input" />
-    <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
-    <button id="bgResetBtn" class="settings-btn">Reset</button>
-    <div id="settingsBobToggleRow">
-      <div class="bob-track" id="settingsBobTrack"></div>
+
+    <div class="settings-box" style="margin-top:20px;">
+      <div class="settings-label">Background Image</div>
+      <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
+      <input type="text" id="bgUrlInput" placeholder="Paste image URL…" class="settings-input" />
+      <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
+      <button id="bgResetBtn" class="settings-btn">Reset</button>
     </div>
+
+    <!-- ── BOB SECTION in Settings ── -->
+    <h3 style="margin-top:20px;">Bob</h3>
+    <div class="settings-bob-section">
+      <div class="bob-toggle-row" id="settingsBobToggleRow">
+        <div>
+          <div class="bob-toggle-label">Enable Bob</div>
+          <div class="bob-toggle-sub">Stick figure reacts to your search typing</div>
+        </div>
+        <div class="bob-track" id="settingsBobTrack"></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:25px;">Legal</h3>
+    <a href="privacypolicy.html" class="legal-link">🔒 Privacy Policy</a>
+    <a href="tos.html" class="legal-link">📜 Terms of Service</a>
+
+    <h3 style="margin-top:25px;">About</h3>
+    <details class="about-dropdown">
+      <summary>ℹ️ What is 360?</summary>
+      <p>360 is a next-generation search engine and digital workspace. Search, chat, translate, check weather, monitor stocks, and interact with AI — all in one unified interface. Built by 360 Digital, Co.</p>
+    </details>
   </div>
 
-  <!-- ═══════════ TOP BAR ═══════════ -->
-  <div class="st-topbar">
-    <a class="st-topbar-logo" href="/">
-      <div class="st-logo-mark"></div>
-      <span class="st-logo-text">360</span>
-    </a>
-    <span class="st-topbar-sep">/</span>
-    <span class="st-topbar-section" id="topbarSection">Settings</span>
-    <div class="st-topbar-right">
-      <button class="st-back-btn" onclick="window.location.href='/'">← Back to 360</button>
+  <!-- ACCOUNT CARD -->
+  <div class="ac-wrap">
+    <div class="ac-card" id="acCard">
+      <div class="ac-logo">
+        <div class="ac-logo-mark"></div>
+        <span class="ac-logo-text">360</span>
+      </div>
+      <div id="acContent"></div>
     </div>
   </div>
-
-  <!-- ═══════════ PAGE WRAP ═══════════ -->
-  <div class="page-wrap">
-
-    <!-- SETTINGS NAV SIDEBAR -->
-    <nav class="st-sidebar">
-      <div class="st-sidebar-group-label">Account</div>
-      <div class="st-nav-item" data-tab="account" onclick="switchTab('account')">
-        <span class="st-nav-icon">🔐</span>
-        <span class="st-nav-label">Account Settings</span>
-      </div>
-
-      <div class="st-sidebar-group-label">App</div>
-      <div class="st-nav-item" data-tab="preference" onclick="switchTab('preference')">
-        <span class="st-nav-icon">🎨</span>
-        <span class="st-nav-label">360 Preferences</span>
-      </div>
-
-      <div class="st-sidebar-group-label">Device</div>
-      <div class="st-nav-item" data-tab="sys" onclick="switchTab('sys')">
-        <span class="st-nav-icon">🖥️</span>
-        <span class="st-nav-label">System Info</span>
-      </div>
-    </nav>
-
-    <!-- MAIN CONTENT -->
-    <main class="st-main">
-
-      <!-- ══════════════════════════════
-           ACCOUNT SETTINGS
-      ══════════════════════════════ -->
-      <div class="st-panel" id="panel-account">
-        <div class="st-panel-header">
-          <div class="st-panel-title">Account Settings</div>
-          <div class="st-panel-sub">Manage your 360 account, profile, and security.</div>
-        </div>
-
-        <!-- SIGN-IN WALL -->
-        <div class="st-card" id="acWallCard">
-          <div class="ac-wall">
-            <div class="ac-wall-icon">🔒</div>
-            <div class="ac-wall-title">Sign in to continue</div>
-            <div class="ac-wall-sub">You need to be signed in to view and manage your account settings.</div>
-            <div class="ac-wall-btns">
-              <button class="st-btn primary" onclick="window.location.href='/accounts.html?signin&from=settings'">Sign In</button>
-              <button class="st-btn" onclick="window.location.href='/accounts.html?signup&from=settings'">Create Account</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- SIGNED-IN CONTENT -->
-        <div id="acSignedInContent" style="display:none;">
-
-          <!-- Profile -->
-          <div class="st-card">
-            <div class="st-card-title">Profile</div>
-            <div class="ac-user-row">
-              <div class="ac-avatar" id="acAvatar">?</div>
-              <div style="flex:1;min-width:0;">
-                <div class="ac-name"  id="acName">—</div>
-                <div class="ac-email" id="acEmail">—</div>
-              </div>
-              <button class="st-btn" onclick="window.location.href='/accounts.html'">Full Profile →</button>
-            </div>
-          </div>
-
-          <!-- Phone Verification -->
-          <div class="st-card">
-            <div class="st-card-title">Phone Verification</div>
-            <div class="st-row">
-              <div>
-                <div class="st-row-label">Verify Phone Number</div>
-                <div class="st-row-sub">Add a verified phone to secure your account.</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:12px;">
-              <input class="st-input" id="phoneInput" type="tel" placeholder="+1 555 123 4567" />
-              <button class="st-btn primary" id="sendPhoneOtpBtn" style="white-space:nowrap;">Send Code</button>
-            </div>
-            <div id="otpSection" style="display:none;margin-top:10px;">
-              <div style="display:flex;gap:8px;">
-                <input class="st-input" id="otpInput" type="text" placeholder="6-digit code" maxlength="6" />
-                <button class="st-btn primary" id="verifyPhoneOtpBtn">Verify</button>
-              </div>
-            </div>
-            <div class="st-msg" id="phoneMsg"></div>
-          </div>
-
-          <!-- Legal -->
-          <div class="st-card">
-            <div class="st-card-title">Legal</div>
-            <a class="st-legal-link" href="privacypolicy.html">🔒 Privacy Policy</a>
-            <a class="st-legal-link" href="tos.html">📜 Terms of Service</a>
-          </div>
-
-          <!-- Danger Zone: Sign Out -->
-          <div class="st-card danger-card">
-            <div class="st-card-title">Session</div>
-            <div class="st-row" id="signOutRow">
-              <div>
-                <div class="st-row-label">Sign Out</div>
-                <div class="st-row-sub">End your current 360 session on this device.</div>
-              </div>
-              <div class="st-row-right">
-                <button class="st-btn danger" id="signOutTrigger">Sign Out</button>
-              </div>
-            </div>
-            <div id="signOutConfirm" style="display:none;margin-top:12px;">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span style="font-size:13px;color:var(--mut);">Are you sure you want to sign out?</span>
-                <button class="st-btn danger" id="confirmSignOutBtn">Yes, sign out</button>
-                <button class="st-btn" id="cancelSignOutBtn">Cancel</button>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- /acSignedInContent -->
-      </div>
-
-      <!-- ══════════════════════════════
-           360 PREFERENCES
-      ══════════════════════════════ -->
-      <div class="st-panel" id="panel-preference">
-        <div class="st-panel-header">
-          <div class="st-panel-title">360 Preferences</div>
-          <div class="st-panel-sub">Customize the look, feel, and behavior of 360.</div>
-        </div>
-
-        <!-- Theme -->
-        <div class="st-card">
-          <div class="st-card-title">Theme</div>
-          <div class="st-theme-grid" id="themeGrid">
-            <div class="st-theme-opt"><div class="st-swatch" data-theme="ocean"></div><span>Ocean</span></div>
-            <div class="st-theme-opt"><div class="st-swatch" data-theme="midnight"></div><span>Midnight</span></div>
-            <div class="st-theme-opt"><div class="st-swatch" data-theme="sunset"></div><span>Sunset</span></div>
-            <div class="st-theme-opt"><div class="st-swatch" data-theme="mint"></div><span>Mint</span></div>
-            <div class="st-theme-opt"><div class="st-swatch" data-theme="neon"></div><span>Neon</span></div>
-            <div class="st-theme-opt"><div class="st-swatch" data-theme="mono"></div><span>Mono</span></div>
-          </div>
-          <div class="st-row" style="margin-top:16px;">
-            <div>
-              <div class="st-row-label">Dark Mode</div>
-              <div class="st-row-sub">Switch between light and dark interface.</div>
-            </div>
-            <button class="st-toggle" id="darkModeToggle"></button>
-          </div>
-        </div>
-
-        <!-- Cursor -->
-        <div class="st-card">
-          <div class="st-card-title">Cursor Style</div>
-          <div class="st-cursor-grid" id="cursorGrid">
-            <div class="st-cursor-opt" data-cursor="default"><span style="font-size:18px;">🖱️</span><span>Default</span></div>
-            <div class="st-cursor-opt" data-cursor="dot"><span style="font-size:18px;">⚬</span><span>Dot</span></div>
-            <div class="st-cursor-opt" data-cursor="ring"><span style="font-size:18px;">◯</span><span>Ring</span></div>
-            <div class="st-cursor-opt" data-cursor="crosshair"><span style="font-size:18px;">✛</span><span>Cross</span></div>
-            <div class="st-cursor-opt" data-cursor="blob"><span style="font-size:18px;">🫧</span><span>Blob</span></div>
-            <div class="st-cursor-opt" data-cursor="system"><span style="font-size:18px;">↖</span><span>System</span></div>
-          </div>
-          <div class="st-row" style="margin-top:14px;">
-            <div class="st-row-label">Cursor Color</div>
-            <div class="st-row-right">
-              <input type="color" id="visibleCursorColor" value="#3b82f6"
-                style="width:34px;height:34px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
-              <button class="st-btn" id="visibleCursorReset">Reset</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Units -->
-        <div class="st-card">
-          <div class="st-card-title">Units</div>
-          <div class="st-row">
-            <div>
-              <div class="st-row-label">Temperature Unit</div>
-              <div class="st-row-sub">Used across Weather and other 360 features.</div>
-            </div>
-            <div class="st-row-right">
-              <span id="visTempLabel" style="font-size:15px;font-weight:700;">°C</span>
-              <button class="st-btn" id="visTempSwitch">Switch</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Background Image -->
-        <div class="st-card">
-          <div class="st-card-title">Background Image</div>
-          <div class="st-row">
-            <div>
-              <div class="st-row-label">Upload Image</div>
-              <div class="st-row-sub">Set a custom background on the 360 home page.</div>
-            </div>
-            <label class="st-btn" style="cursor:pointer;">
-              Choose File
-              <input type="file" id="visBgUpload" accept="image/*" style="display:none;" />
-            </label>
-          </div>
-          <div class="st-row" style="flex-wrap:wrap;gap:8px;">
-            <div style="flex:1;min-width:180px;">
-              <div class="st-row-label">Image URL</div>
-              <div class="st-row-sub">Paste a direct link to any image.</div>
-            </div>
-            <div style="display:flex;gap:6px;flex:2;min-width:200px;">
-              <input class="st-input" type="text" id="visBgUrl" placeholder="https://…" />
-              <button class="st-btn primary" id="visBgUrlApply">Apply</button>
-              <button class="st-btn" id="visBgReset">Reset</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bob -->
-        <div class="st-card">
-          <div class="st-card-title">Bob</div>
-          <div class="bob-toggle-row">
-            <div>
-              <div class="bob-toggle-label">Enable Bob</div>
-              <div class="bob-toggle-sub">Animated stick figure that reacts to your search typing.</div>
-            </div>
-            <button class="st-toggle" id="visBobToggle"></button>
-          </div>
-        </div>
-
-        <!-- About -->
-        <div class="st-card">
-          <div class="st-card-title">About 360</div>
-          <div style="font-size:14px;line-height:1.6;color:var(--txt);">
-            360 is a next-generation search engine and digital workspace — search, chat, translate, weather, stocks, and AI all in one place.
-            <br><br>
-            <span style="color:var(--mut);font-size:12px;">Built by 360 Digital, Co.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════
-           SYSTEM INFO
-      ══════════════════════════════ -->
-      <div class="st-panel" id="panel-sys">
-        <div class="st-panel-header">
-          <div class="st-panel-title">System Info</div>
-          <div class="st-panel-sub">Hardware and browser details for this device.</div>
-        </div>
-
-        <div class="st-card">
-          <div class="st-card-title">Hardware Overview</div>
-          <div class="sys-grid">
-            <div class="sys-stat">
-              <div class="sys-stat-label">CPU Cores</div>
-              <div class="sys-stat-val" id="sCpu">—</div>
-              <div class="sys-stat-sub">Logical processors</div>
-            </div>
-            <div class="sys-stat">
-              <div class="sys-stat-label">Device RAM</div>
-              <div class="sys-stat-val" id="sRam">—</div>
-              <div class="sys-stat-sub">Approximate memory</div>
-            </div>
-            <div class="sys-stat">
-              <div class="sys-stat-label">Battery</div>
-              <div class="sys-stat-val" id="sBat">—</div>
-              <div class="sys-stat-sub" id="sBatSub">Checking…</div>
-              <div class="sys-bar-track"><div class="sys-bar-fill" id="sBatBar" style="width:0%"></div></div>
-            </div>
-            <div class="sys-stat">
-              <div class="sys-stat-label">GPU</div>
-              <div class="sys-stat-val" id="sGpu" style="font-size:13px;font-weight:700;word-break:break-word;">—</div>
-              <div class="sys-stat-sub" id="sGpuSub"></div>
-            </div>
-            <div class="sys-stat">
-              <div class="sys-stat-label">Origin Storage</div>
-              <div class="sys-stat-val" id="sStorage">—</div>
-              <div class="sys-stat-sub" id="sStorageSub">Browser quota</div>
-              <div class="sys-bar-track"><div class="sys-bar-fill" id="sStorageBar" style="width:0%"></div></div>
-            </div>
-            <div class="sys-stat">
-              <div class="sys-stat-label">Network</div>
-              <div class="sys-stat-val" id="sNet">—</div>
-              <div class="sys-stat-sub" id="sNetSub">Connection type</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="st-card">
-          <div class="st-card-title">Browser & Platform</div>
-          <div id="sysBrowserRows"></div>
-        </div>
-
-        <div class="st-card">
-          <div class="st-card-title">Display</div>
-          <div id="sysScreenRows"></div>
-        </div>
-      </div>
-
-    </main>
-  </div><!-- /page-wrap -->
 
   <script>window.SKIP_AUTH_CHIP = true;</script>
   <script src="/assets/js/main.js"></script>
@@ -712,355 +387,510 @@
   <script src="/assets/js/cursor.js"></script>
 
   <script>
-  // ────────────────────────────────────────
-  // TAB ROUTING
-  // ────────────────────────────────────────
-  const TAB_NAMES = {
-    account:    'Account Settings',
-    preference: '360 Preferences',
-    sys:        'System Info',
-  };
+    const sb = supabaseClient;
 
-  function getTab() {
-    const p = new URLSearchParams(location.search);
-    const t = p.get('tab');
-    return (t && TAB_NAMES[t]) ? t : 'account';
-  }
+    const qs       = location.search.slice(1);
+    const param    = qs.split("&")[0].toLowerCase();
+    const isLogout = param === "login" && qs.includes("from=logout");
+    const content  = document.getElementById("acContent");
 
-  function switchTab(tab) {
-    const url = tab === 'account' ? location.pathname : `${location.pathname}?tab=${tab}`;
-    history.pushState(null, '', url);
+    const _signInBtn  = document.getElementById("signInBtn");
+    const _signUpBtn  = document.getElementById("signUpBtn");
+    const _signOutBtn = document.getElementById("signOutBtn");
 
-    document.querySelectorAll('.st-nav-item').forEach(el =>
-      el.classList.toggle('active', el.dataset.tab === tab));
-
-    document.querySelectorAll('.st-panel').forEach(el =>
-      el.classList.toggle('active', el.id === `panel-${tab}`));
-
-    document.getElementById('topbarSection').textContent = TAB_NAMES[tab];
-
-    if (tab === 'sys') loadSystemInfo();
-  }
-
-  switchTab(getTab());
-  window.addEventListener('popstate', () => switchTab(getTab()));
-
-
-  // ────────────────────────────────────────
-  // AUTH
-  // ────────────────────────────────────────
-  const sb = supabaseClient;
-
-  (async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      await showSignedIn(session.user);
-    }
-    // If no session, the wall stays visible by default
-  })();
-
-  async function showSignedIn(user) {
-    document.getElementById('acWallCard').style.display = 'none';
-    document.getElementById('acSignedInContent').style.display = 'block';
-
-    const { data: profile } = await sb.from('profiles')
-      .select('username,avatar_url').eq('id', user.id).maybeSingle();
-
-    const username = profile?.username
-      || user.user_metadata?.username
-      || user.user_metadata?.full_name
-      || user.email?.split('@')[0]
-      || 'User';
-
-    document.getElementById('acAvatar').textContent = username.charAt(0).toUpperCase();
-    document.getElementById('acName').textContent   = username;
-    document.getElementById('acEmail').textContent  = user.email || '';
-
-    // Phone OTP
-    document.getElementById('sendPhoneOtpBtn').onclick = async () => {
-      const phone = document.getElementById('phoneInput').value.trim();
-      const msg   = document.getElementById('phoneMsg');
-      if (!phone) { setMsg(msg, 'Please enter a phone number.', 'err'); return; }
-      const { error } = await sb.auth.signInWithOtp({ phone });
-      if (error) { setMsg(msg, error.message, 'err'); return; }
-      setMsg(msg, '✓ Code sent! Check your phone.', 'ok');
-      document.getElementById('otpSection').style.display = 'block';
-    };
-
-    document.getElementById('verifyPhoneOtpBtn').onclick = async () => {
-      const phone = document.getElementById('phoneInput').value.trim();
-      const token = document.getElementById('otpInput').value.trim();
-      const msg   = document.getElementById('phoneMsg');
-      const { error } = await sb.auth.verifyOtp({ phone, token, type: 'sms' });
-      if (error) { setMsg(msg, 'Incorrect code. Please try again.', 'err'); return; }
-      setMsg(msg, '✓ Phone verified!', 'ok');
-    };
-
-    // Sign Out
-    document.getElementById('signOutTrigger').onclick = () => {
-      document.getElementById('signOutTrigger').style.display = 'none';
-      document.getElementById('signOutConfirm').style.display = 'block';
-    };
-    document.getElementById('cancelSignOutBtn').onclick = () => {
-      document.getElementById('signOutConfirm').style.display = 'none';
-      document.getElementById('signOutTrigger').style.display = 'inline-flex';
-    };
-    document.getElementById('confirmSignOutBtn').onclick = async () => {
-      const btn = document.getElementById('confirmSignOutBtn');
-      btn.disabled = true; btn.textContent = 'Signing out…';
-      await sb.auth.signOut();
-      location.href = '/accounts.html?login&from=logout';
-    };
-  }
-
-
-  // ────────────────────────────────────────
-  // PREFERENCES — wire to hidden main.js hooks
-  // ────────────────────────────────────────
-
-  // Dark Mode
-  const darkModeToggle = document.getElementById('darkModeToggle');
-  function syncDark() {
-    darkModeToggle.classList.toggle('on', document.body.classList.contains('dark'));
-  }
-  syncDark();
-  darkModeToggle.addEventListener('click', () => {
-    const h = document.getElementById('darkToggle');
-    if (h) { h.checked = !h.checked; h.dispatchEvent(new Event('change')); }
-    else document.body.classList.toggle('dark');
-    setTimeout(syncDark, 60);
-  });
-  new MutationObserver(syncDark).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-  // Theme swatches
-  document.querySelectorAll('#themeGrid .st-swatch').forEach(sw => {
-    sw.addEventListener('click', () => {
-      document.querySelectorAll('#themeGrid .st-swatch').forEach(s => s.classList.remove('active'));
-      sw.classList.add('active');
-      const h = document.querySelector(`.settings-panel .swatch[data-theme="${sw.dataset.theme}"]`);
-      if (h) h.click();
-    });
-  });
-  // Sync active swatch on load (check localStorage for theme)
-  const savedTheme = localStorage.getItem('360_theme') || 'ocean';
-  const activeSwatch = document.querySelector(`#themeGrid .st-swatch[data-theme="${savedTheme}"]`);
-  if (activeSwatch) activeSwatch.classList.add('active');
-
-  // Cursor style
-  document.querySelectorAll('#cursorGrid .st-cursor-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      document.querySelectorAll('#cursorGrid .st-cursor-opt').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      const h = document.querySelector(`.cursor-option[data-cursor="${opt.dataset.cursor}"]`);
-      if (h) h.click();
-    });
-  });
-  // Sync active cursor on load
-  const savedCursor = localStorage.getItem('360_cursor') || 'default';
-  const activeCursor = document.querySelector(`#cursorGrid .st-cursor-opt[data-cursor="${savedCursor}"]`);
-  if (activeCursor) activeCursor.classList.add('active');
-
-  // Cursor color
-  const visCursorColor = document.getElementById('visibleCursorColor');
-  visCursorColor.value = localStorage.getItem('360_cursor_color') || '#3b82f6';
-  visCursorColor.addEventListener('input', () => {
-    const h = document.getElementById('cursorColorPicker');
-    if (h) { h.value = visCursorColor.value; h.dispatchEvent(new Event('input')); }
-  });
-  document.getElementById('visibleCursorReset').addEventListener('click', () => {
-    const h = document.getElementById('cursorColorReset');
-    if (h) h.click();
-    visCursorColor.value = '#3b82f6';
-  });
-
-  // Temp unit
-  const visTempLabel = document.getElementById('visTempLabel');
-  const storedUnit = localStorage.getItem('360_temp_unit') || 'C';
-  visTempLabel.textContent = `°${storedUnit}`;
-  document.getElementById('visTempSwitch').addEventListener('click', () => {
-    const h = document.getElementById('tempUnitBtn');
-    if (h) h.click();
-    const lbl = document.getElementById('tempUnitLabel');
-    visTempLabel.textContent = lbl ? lbl.textContent : (visTempLabel.textContent === '°C' ? '°F' : '°C');
-  });
-
-  // Background image
-  document.getElementById('visBgUpload').addEventListener('change', function() {
-    const h = document.getElementById('bgUpload');
-    if (!h || !this.files[0]) return;
-    try { const dt = new DataTransfer(); dt.items.add(this.files[0]); h.files = dt.files; h.dispatchEvent(new Event('change')); } catch(e) {}
-  });
-  document.getElementById('visBgUrlApply').addEventListener('click', () => {
-    const v = document.getElementById('visBgUrl').value;
-    const h = document.getElementById('bgUrlInput');
-    if (h) h.value = v;
-    const btn = document.getElementById('bgUrlBtn');
-    if (btn) btn.click();
-  });
-  document.getElementById('visBgReset').addEventListener('click', () => {
-    document.getElementById('visBgUrl').value = '';
-    const h = document.getElementById('bgResetBtn');
-    if (h) h.click();
-  });
-
-  // Bob toggle
-  const visBobToggle = document.getElementById('visBobToggle');
-  let bobOn = localStorage.getItem('360_bob_on') === 'true';
-  visBobToggle.classList.toggle('on', bobOn);
-  visBobToggle.addEventListener('click', () => {
-    bobOn = !bobOn;
-    localStorage.setItem('360_bob_on', bobOn);
-    visBobToggle.classList.toggle('on', bobOn);
-    const ht = document.getElementById('settingsBobTrack');
-    if (ht) ht.classList.toggle('on', bobOn);
-  });
-
-
-  // ────────────────────────────────────────
-  // SYSTEM INFO
-  // ────────────────────────────────────────
-  let sysLoaded = false;
-
-  async function loadSystemInfo() {
-    if (sysLoaded) return;
-    sysLoaded = true;
-
-    // CPU
-    setText('sCpu', navigator.hardwareConcurrency || 'N/A');
-
-    // RAM
-    const ram = navigator.deviceMemory;
-    setText('sRam', ram ? `${ram} GB` : 'N/A');
-
-    // Battery
-    if ('getBattery' in navigator) {
-      try {
-        const bat = await navigator.getBattery();
-        const updateBat = () => {
-          const pct = Math.round(bat.level * 100);
-          setText('sBat', `${pct}%`);
-          setText('sBatSub', bat.charging ? '⚡ Charging' : 'On battery');
-          document.getElementById('sBatBar').style.width = pct + '%';
-        };
-        updateBat();
-        bat.addEventListener('levelchange', updateBat);
-        bat.addEventListener('chargingchange', updateBat);
-      } catch {
-        setText('sBat', 'N/A'); setText('sBatSub', 'Unavailable');
-      }
-    } else {
-      setText('sBat', 'N/A'); setText('sBatSub', 'Not supported');
-    }
-
-    // GPU via WebGL
-    try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (gl) {
-        const ext = gl.getExtension('WEBGL_debug_renderer_info');
-        const renderer = ext
-          ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)
-          : gl.getParameter(gl.RENDERER);
-        const vendor = ext
-          ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)
-          : gl.getParameter(gl.VENDOR);
-        const clean = renderer.replace(/\/\/.*/,'').trim();
-        setText('sGpu', clean.length > 42 ? clean.slice(0, 42) + '…' : clean);
-        setText('sGpuSub', vendor || '');
+    (async () => {
+      if (isLogout) { showLogout(); return; }
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        if (_signInBtn)  _signInBtn.style.display  = "none";
+        if (_signUpBtn)  _signUpBtn.style.display  = "none";
+        if (_signOutBtn) _signOutBtn.style.display = "inline-block";
+        showProfile(session.user);
       } else {
-        setText('sGpu', 'WebGL unavailable');
+        if (_signInBtn)  _signInBtn.style.display  = "inline-block";
+        if (_signUpBtn)  _signUpBtn.style.display  = "inline-block";
+        if (_signOutBtn) _signOutBtn.style.display = "none";
+        if (param === "signup") renderSignUp();
+        else                    renderSignIn();
       }
-    } catch { setText('sGpu', 'N/A'); }
+    })();
 
-    // Storage — StorageManager.estimate() reports browser origin quota, not disk
-    if ('storage' in navigator && 'estimate' in navigator.storage) {
-      try {
-        const { quota, usage } = await navigator.storage.estimate();
-        if (quota > 0) {
-          const usedMB = (usage  / 1e6).toFixed(1);
-          const totMB  = (quota  / 1e6).toFixed(0);
-          const pct    = Math.min(Math.round((usage / quota) * 100), 100);
-          setText('sStorage', `${usedMB} MB used`);
-          setText('sStorageSub', `of ~${totMB} MB browser quota`);
-          document.getElementById('sStorageBar').style.width = pct + '%';
-        } else {
-          setText('sStorage', 'N/A');
-          setText('sStorageSub', 'Quota not reported by browser');
+    /* ════════════════════════════════════════
+       BOB ENGINE — now lives in Settings,
+       attaches to #search-input on index page.
+       Persisted in localStorage("360_bob_on").
+    ════════════════════════════════════════ */
+    let bobRAF = null;
+    let bobFrame = 0;
+    let bobEnergy = 0;
+    let typingVelocity = 0;
+    let lastTypeTime = 0;
+    let lastCharCount = 0;
+
+    // Bob state persisted across pages
+    let bobOn = localStorage.getItem("360_bob_on") === "true";
+    const settingsBobTrack = document.getElementById("settingsBobTrack");
+    if (bobOn) settingsBobTrack.classList.add("on");
+
+    document.getElementById("settingsBobToggleRow").addEventListener("click", () => {
+      bobOn = !bobOn;
+      localStorage.setItem("360_bob_on", bobOn);
+      settingsBobTrack.classList.toggle("on", bobOn);
+    });
+
+    function initBob(canvasEl, inputEl) {
+      const ctx = canvasEl.getContext('2d');
+      if (bobRAF) cancelAnimationFrame(bobRAF);
+      bobFrame = 0; bobEnergy = 0; typingVelocity = 0;
+
+      inputEl.addEventListener('input', () => {
+        const now = Date.now();
+        const dt = now - lastTypeTime;
+        const chars = Math.abs(inputEl.value.length - lastCharCount);
+        typingVelocity = Math.min((chars / Math.max(dt, 50)) * 1000, 25);
+        lastTypeTime = now;
+        lastCharCount = inputEl.value.length;
+        bobEnergy = Math.min(bobEnergy + typingVelocity * 0.15, 10);
+      });
+
+      function drawBob(frame, energy) {
+        ctx.clearRect(0, 0, 32, 32);
+        const t = frame * 0.12;
+        const isDark = document.body.classList.contains('dark');
+        const clr = isDark ? '#e5e7eb' : '#374151';
+        ctx.strokeStyle = clr;
+        ctx.fillStyle   = clr;
+        ctx.lineWidth   = 1.5;
+        ctx.lineCap     = 'round';
+
+        const cx = 16, cy = 8;
+        const bounce = energy > 0 ? Math.sin(t * 3) * energy * 1.2 : 0;
+        const wobble = energy > 5 ? Math.sin(t * 7) * 2 : 0;
+        const shake  = energy > 7 ? (Math.random() - 0.5) * energy * 0.5 : 0;
+        const bx = cx + shake, by = cy + bounce * 0.3;
+
+        ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill();
+
+        const bodyTop = by + 4;
+        const bodyBot = by + 12 + Math.abs(bounce) * 0.2;
+        ctx.beginPath(); ctx.moveTo(bx, bodyTop); ctx.lineTo(bx, bodyBot); ctx.stroke();
+
+        const armSwing = energy > 0 ? Math.sin(t * 3) * Math.min(energy * 3, 30) : 0;
+        const armAlt   = energy > 7 ? Math.cos(t * 5) * 10 : 0;
+        ctx.save(); ctx.translate(bx, bodyTop + 3);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-5 + wobble, 5 + armSwing); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo( 5 + wobble, 5 - armSwing + armAlt); ctx.stroke();
+        ctx.restore();
+
+        const legPhase = energy > 0 ? t * 3 : 0;
+        const legKick  = Math.min(energy * 4, 28);
+        ctx.save(); ctx.translate(bx, bodyBot);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-3 + Math.sin(legPhase) * legKick * 0.4, 7 + Math.cos(legPhase) * legKick * 0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo( 3 - Math.sin(legPhase) * legKick * 0.4, 7 - Math.cos(legPhase) * legKick * 0.2); ctx.stroke();
+        ctx.restore();
+
+        if (energy > 6) {
+          const starCount = Math.floor(energy - 5);
+          for (let i = 0; i < starCount; i++) {
+            const angle = t * 2 + i * (Math.PI * 2 / starCount);
+            const r  = 10 + energy * 0.5;
+            const sx = bx + Math.cos(angle) * r;
+            const sy = by - 2 + Math.sin(angle) * r * 0.5;
+            ctx.save(); ctx.translate(sx, sy);
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            for (let j = 0; j < 5; j++) {
+              const a  = j * 1.2566 - Math.PI / 2;
+              const ra = j * 1.2566 - Math.PI / 2 + 0.6283;
+              if (j === 0) ctx.moveTo(Math.cos(a) * 2.5, Math.sin(a) * 2.5);
+              else { ctx.lineTo(Math.cos(ra) * 1.2, Math.sin(ra) * 1.2); ctx.lineTo(Math.cos(a) * 2.5, Math.sin(a) * 2.5); }
+            }
+            ctx.closePath(); ctx.fill(); ctx.restore();
+          }
         }
-      } catch {
-        setText('sStorage', 'N/A');
-        setText('sStorageSub', 'Error reading estimate');
       }
-    } else {
-      setText('sStorage', 'N/A');
-      setText('sStorageSub', 'StorageManager not supported');
+
+      function tick() {
+        bobFrame++;
+        const now = Date.now();
+        if (now - lastTypeTime > 800) typingVelocity = Math.max(typingVelocity * 0.9, 0);
+        bobEnergy = Math.max(bobEnergy - 0.08, 0);
+        drawBob(bobFrame, bobEnergy);
+        bobRAF = requestAnimationFrame(tick);
+      }
+      tick();
     }
 
-    // Network
-    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (conn) {
-      setText('sNet', (conn.effectiveType || conn.type || '—').toUpperCase());
-      const parts = [];
-      if (conn.downlink) parts.push(`↓ ${conn.downlink} Mbps`);
-      if (conn.rtt != null) parts.push(`RTT ${conn.rtt} ms`);
-      setText('sNetSub', parts.join(' · ') || 'Connected');
-    } else {
-      setText('sNet', navigator.onLine ? 'Online' : 'Offline');
-      setText('sNetSub', 'Network API not supported');
+    /* ════════════════
+       SIGN IN
+    ════════════════ */
+    function renderSignIn() {
+      content.innerHTML = `
+        <div class="ac-tabs">
+          <button class="ac-tab active" id="tabSI">Sign In</button>
+          <button class="ac-tab"        id="tabSU">Sign Up</button>
+        </div>
+        <div class="ac-field">
+          <label>Username or Email</label>
+          <input id="siLogin" type="text" placeholder="your_username or email@example.com" autocomplete="username" />
+        </div>
+        <div class="ac-field">
+          <label>Password</label>
+          <input id="siPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <p class="ac-msg" id="siMsg"></p>
+        <button class="ac-btn" id="siBtn">Sign In</button>
+        <div class="ac-divider">or continue with</div>
+        <div class="ac-oauth">
+          <button class="ac-oauth-btn" id="siGithub">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            Continue with GitHub
+          </button>
+          <button class="ac-oauth-btn" id="siGoogle">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <button class="ac-oauth-btn" id="siSpotify">
+            🎧 Continue with Spotify
+          </button>
+        </div>
+        <p class="ac-switch">Don't have an account? <a href="/accounts.html?signup">Sign Up</a></p>
+      `;
+      document.getElementById("tabSI").onclick = () => { history.replaceState(null,"","/accounts.html?signin"); renderSignIn(); };
+      document.getElementById("tabSU").onclick = () => { history.replaceState(null,"","/accounts.html?signup"); renderSignUp(); };
+      const siLogin = document.getElementById("siLogin");
+      const siPass  = document.getElementById("siPass");
+      siLogin.addEventListener("keydown", e => { if (e.key==="Enter") siPass.focus(); });
+      siPass.addEventListener("keydown",  e => { if (e.key==="Enter") doSignIn(); });
+      document.getElementById("siBtn").onclick    = doSignIn;
+      document.getElementById("siGithub").onclick = () => oAuth("github");
+      document.getElementById("siGoogle").onclick = () => oAuth("google");
+      document.getElementById("siSpotify").onclick = () => oAuth("spotify");
     }
 
-    // Browser details
-    const ua = navigator.userAgent;
-    let browser = 'Unknown';
-    if      (/Edg\//.test(ua))          browser = 'Microsoft Edge';
-    else if (/OPR\/|Opera/.test(ua))    browser = 'Opera';
-    else if (/Chrome\//.test(ua))       browser = 'Google Chrome';
-    else if (/Firefox\//.test(ua))      browser = 'Mozilla Firefox';
-    else if (/Safari\//.test(ua))       browser = 'Apple Safari';
+    async function doSignIn() {
+      const loginVal = document.getElementById("siLogin").value.trim();
+      const passVal  = document.getElementById("siPass").value;
+      const btn = document.getElementById("siBtn");
+      const msg = document.getElementById("siMsg");
+      if (!loginVal || !passVal) { setMsg(msg,"Username/email and password are required.","err"); return; }
+      btn.disabled = true; btn.textContent = "Signing in…"; setMsg(msg,"","");
+      let emailToUse = loginVal;
+      if (!loginVal.includes("@")) {
+        const { data: profile } = await sb.from("profiles").select("email").eq("username", loginVal).single();
+        if (!profile?.email) {
+          setMsg(msg,"No account found with that username.","err");
+          btn.disabled=false; btn.textContent="Sign In"; return;
+        }
+        emailToUse = profile.email;
+      }
+      const { error } = await sb.auth.signInWithPassword({ email: emailToUse, password: passVal });
+      if (error) {
+        setMsg(msg, error.message, "err");
+        btn.disabled=false; btn.textContent="Sign In";
+      } else {
+        setMsg(msg,"Signed in! Redirecting…","ok");
+        setTimeout(() => location.href="/", 800);
+      }
+    }
 
-    renderRows('sysBrowserRows', [
-      ['Browser',          browser],
-      ['Platform',         navigator.platform || '—'],
-      ['Language',         navigator.language || '—'],
-      ['Cookies',          navigator.cookieEnabled ? 'Enabled' : 'Disabled'],
-      ['Touch Input',      navigator.maxTouchPoints > 0 ? `Yes (${navigator.maxTouchPoints} pts)` : 'No'],
-      ['Do Not Track',     navigator.doNotTrack === '1' ? 'Enabled' : navigator.doNotTrack === '0' ? 'Disabled' : 'Unset'],
-      ['User Agent',       ua],
-    ]);
+    /* ════════════════
+       SIGN UP
+    ════════════════ */
+    function renderSignUp() {
+      content.innerHTML = `
+        <div class="ac-tabs">
+          <button class="ac-tab"        id="tabSI">Sign In</button>
+          <button class="ac-tab active" id="tabSU">Sign Up</button>
+        </div>
+        <div class="ac-field">
+          <label>Email</label>
+          <input id="suEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="ac-field">
+          <label>Username</label>
+          <input id="suUser" type="text" placeholder="your_username" autocomplete="username" maxlength="32" />
+          <span class="ac-hint" id="userHint"></span>
+        </div>
+        <div class="ac-field">
+          <label>Password</label>
+          <input id="suPass" type="password" placeholder="Min. 6 characters" autocomplete="new-password" />
+          <div class="pw-strength-wrap" id="pwStrengthWrap">
+            <div class="pw-bar-track"><div class="pw-bar-fill"></div></div>
+            <div class="pw-meta">
+              <span class="pw-strength-label"></span>
+              <span class="pw-strength-hint"></span>
+            </div>
+            <div class="pw-checks">
+              <div class="pw-pill" id="pw-c-len"><span class="pw-pip"></span>8+ chars</div>
+              <div class="pw-pill" id="pw-c-up"><span class="pw-pip"></span>uppercase</div>
+              <div class="pw-pill" id="pw-c-num"><span class="pw-pip"></span>number</div>
+              <div class="pw-pill" id="pw-c-sym"><span class="pw-pip"></span>symbol</div>
+            </div>
+          </div>
+          <span class="ac-hint" id="passHint"></span>
+        </div>
+        <div class="ac-field">
+          <label>Confirm Password</label>
+          <input id="suConfirm" type="password" placeholder="Repeat your password" autocomplete="new-password" />
+          <span class="ac-hint" id="confirmHint"></span>
+        </div>
+        <p class="ac-msg" id="suMsg"></p>
+        <button class="ac-btn" id="suBtn">Create Account</button>
+        <div class="ac-divider">or sign up with</div>
+        <div class="ac-oauth">
+          <button class="ac-oauth-btn" id="suGithub">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            Continue with GitHub
+          </button>
+          <button class="ac-oauth-btn" id="suGoogle">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <button class="ac-oauth-btn" id="suSpotify">
+            🎧 Continue with Spotify
+          </button>
+        </div>
+        <p class="ac-switch">Already have an account? <a href="/accounts.html?signin">Sign In</a></p>
+      `;
 
-    renderRows('sysScreenRows', [
-      ['Resolution',         `${screen.width} × ${screen.height} px`],
-      ['Viewport',           `${window.innerWidth} × ${window.innerHeight} px`],
-      ['Device Pixel Ratio', `${window.devicePixelRatio}×`],
-      ['Color Depth',        `${screen.colorDepth}-bit`],
-      ['Orientation',        screen.orientation?.type || '—'],
-    ]);
-  }
+      document.getElementById("tabSI").onclick = () => { history.replaceState(null,"","/accounts.html?signin"); renderSignIn(); };
+      document.getElementById("tabSU").onclick = () => { history.replaceState(null,"","/accounts.html?signup"); renderSignUp(); };
 
-  function renderRows(id, rows) {
-    document.getElementById(id).innerHTML = rows.map(([k, v]) => `
-      <div class="sys-info-row">
-        <span class="sys-info-key">${k}</span>
-        <span class="sys-info-val">${esc(String(v))}</span>
-      </div>`).join('');
-  }
+      initStrengthMeter(document.getElementById("suPass"), "pwStrengthWrap");
 
-  function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  }
+      let usernameOk = false, usernameTimer = null;
+      const suUser      = document.getElementById("suUser"),      userHint    = document.getElementById("userHint");
+      const suPass      = document.getElementById("suPass"),      passHint    = document.getElementById("passHint");
+      const suConfirm   = document.getElementById("suConfirm"),   confirmHint = document.getElementById("confirmHint");
 
-  function setMsg(el, text, type) {
-    if (!el) return;
-    el.textContent = text;
-    el.className = 'st-msg' + (type ? ' ' + type : '');
-  }
+      suUser.addEventListener("input", () => {
+        const v=suUser.value.trim(); usernameOk=false; clearTimeout(usernameTimer); suUser.classList.remove("invalid");
+        if (!v) { setHint(userHint,"",""); return; }
+        if (!/^[a-zA-Z0-9_]{3,32}$/.test(v)) { setHint(userHint,"3–32 characters, letters/numbers/underscores only.","err"); suUser.classList.add("invalid"); return; }
+        setHint(userHint,"Checking…","");
+        usernameTimer = setTimeout(async () => {
+          const { data } = await sb.from("profiles").select("id").eq("username",v).maybeSingle();
+          if (data) { setHint(userHint,"Username already taken.","err"); suUser.classList.add("invalid"); }
+          else { setHint(userHint,"✓ Username available","ok"); suUser.classList.remove("invalid"); usernameOk=true; }
+        }, 500);
+      });
+      suPass.addEventListener("input", () => {
+        const v=suPass.value;
+        if (!v) { setHint(passHint,"",""); suPass.classList.remove("invalid"); return; }
+        if (v.length<6) { setHint(passHint,"Must be at least 6 characters.","err"); suPass.classList.add("invalid"); }
+        else { setHint(passHint,"",""); suPass.classList.remove("invalid"); }
+        if (suConfirm.value) validateConfirm();
+      });
+      suConfirm.addEventListener("input", validateConfirm);
+      function validateConfirm() {
+        if (!suConfirm.value) { setHint(confirmHint,"",""); suConfirm.classList.remove("invalid"); return; }
+        if (suConfirm.value===suPass.value) { setHint(confirmHint,"✓ Passwords match","ok"); suConfirm.classList.remove("invalid"); }
+        else { setHint(confirmHint,"Passwords do not match.","err"); suConfirm.classList.add("invalid"); }
+      }
+      document.getElementById("suEmail").addEventListener("keydown", e => { if(e.key==="Enter") suUser.focus(); });
+      suUser.addEventListener("keydown",    e => { if(e.key==="Enter") suPass.focus(); });
+      suPass.addEventListener("keydown",    e => { if(e.key==="Enter") suConfirm.focus(); });
+      suConfirm.addEventListener("keydown", e => { if(e.key==="Enter") doSignUp(usernameOk); });
+      document.getElementById("suBtn").onclick    = () => doSignUp(usernameOk);
+      document.getElementById("suGithub").onclick = () => oAuth("github");
+      document.getElementById("suGoogle").onclick = () => oAuth("google");
+      document.getElementById("suSpotify").onclick = () => oAuth("spotify");
+    }
 
-  function esc(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+    async function doSignUp(usernameOk) {
+      const email    = document.getElementById("suEmail").value.trim();
+      const username = document.getElementById("suUser").value.trim();
+      const password = document.getElementById("suPass").value;
+      const confirm  = document.getElementById("suConfirm").value;
+      const btn=document.getElementById("suBtn"), msg=document.getElementById("suMsg");
+      if (!email||!username||!password||!confirm) { setMsg(msg,"All fields are required.","err"); return; }
+      if (!email.includes("@"))                   { setMsg(msg,"Please enter a valid email address.","err"); return; }
+      if (!/^[a-zA-Z0-9_]{3,32}$/.test(username)) { setMsg(msg,"Username must be 3–32 chars, letters/numbers/underscores only.","err"); return; }
+      if (password.length<6)                       { setMsg(msg,"Password must be at least 6 characters.","err"); return; }
+      if (password!==confirm)                      { setMsg(msg,"Passwords do not match.","err"); return; }
+      const { data: existing } = await sb.from("profiles").select("id").eq("username",username).maybeSingle();
+      if (existing) { setMsg(msg,"That username is already taken.","err"); return; }
+      btn.disabled=true; btn.textContent="Creating account…"; setMsg(msg,"","");
+      const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
+        email, password, options: { data: { username } }
+      });
+      if (signUpErr) { setMsg(msg,signUpErr.message,"err"); btn.disabled=false; btn.textContent="Create Account"; return; }
+      const userId=signUpData?.user?.id;
+      if (userId) await sb.from("profiles").upsert({ id:userId, username, email }, { onConflict:"id" });
+      setMsg(msg,"Account created! Check your email to confirm, then sign in.","ok");
+      btn.textContent="Check your email ✓";
+    }
+
+    /* ════════════════
+       PROFILE
+    ════════════════ */
+    async function showProfile(user) {
+      const { data: profile } = await sb.from("profiles").select("username,avatar_url").eq("id",user.id).maybeSingle();
+      const username = profile?.username || user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+      content.innerHTML = `
+        <div class="ac-profile">
+          <div class="ac-avatar">${username.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="ac-pname">${esc(username)}</div>
+            <div class="ac-pemail">${esc(user.email||"")}</div>
+          </div>
+          <p class="ac-msg" id="profMsg"></p>
+
+          <div class="ac-field" style="margin-top:18px;">
+            <label>Phone Number</label>
+            <input id="phoneInput" type="tel" placeholder="+1 555 123 4567" />
+          </div>
+
+          <button class="ac-sec-btn" id="sendPhoneOtp">Send Verification Code</button>
+
+          <div class="ac-field" id="otpField" style="display:none;">
+            <label>Enter Code</label>
+            <input id="otpInput" type="text" placeholder="123456" />
+          </div>
+
+          <button class="ac-sec-btn" id="verifyPhoneOtp" style="display:none;">Verify</button>
+
+          <p class="ac-msg" id="phoneMsg"></p>
+
+          <button class="ac-sec-btn" onclick="window.location.href='/';">← Back to 360</button>
+          <button class="ac-sec-btn ac-signout-btn" id="pgSignOut">Sign Out</button>
+        </div>
+      `;
+      document.getElementById("pgSignOut").onclick = async () => {
+        const b=document.getElementById("pgSignOut");
+        b.textContent="Signing out…"; b.disabled=true;
+        await sb.auth.signOut();
+        location.href="/accounts.html?login&from=logout";
+      };
+
+      const sendBtn = document.getElementById("sendPhoneOtp");
+      const verifyBtn = document.getElementById("verifyPhoneOtp");
+      const phoneInput = document.getElementById("phoneInput");
+      const otpField = document.getElementById("otpField");
+      const otpInput = document.getElementById("otpInput");
+      const phoneMsg = document.getElementById("phoneMsg");
+
+      sendBtn.onclick = async () => {
+        const phone = phoneInput.value.trim();
+        if (!phone) {
+          phoneMsg.textContent = "Enter a phone number.";
+          phoneMsg.className = "ac-msg err";
+          return;
+        }
+        const { error } = await sb.auth.signInWithOtp({ phone });
+        if (error) {
+          phoneMsg.textContent = error.message;
+          phoneMsg.className = "ac-msg err";
+          return;
+        }
+        phoneMsg.textContent = "Code sent!";
+        phoneMsg.className = "ac-msg ok";
+        otpField.style.display = "block";
+        verifyBtn.style.display = "block";
+      };
+
+      verifyBtn.onclick = async () => {
+        const phone = phoneInput.value.trim();
+        const token = otpInput.value.trim();
+        const { data, error } = await sb.auth.verifyOtp({
+          phone,
+          token,
+          type: "sms"
+        });
+        if (error) {
+          phoneMsg.textContent = "Incorrect code.";
+          phoneMsg.className = "ac-msg err";
+          return;
+        }
+        phoneMsg.textContent = "Phone verified!";
+        phoneMsg.className = "ac-msg ok";
+      };
+    }
+
+    /* ════════════════
+       LOGOUT
+    ════════════════ */
+    function showLogout() {
+      content.innerHTML = `
+        <div class="ac-logout">
+          <img src="/favicon-32x32.png" class="ac-logout-icon" alt="Logout icon">
+          <div class="ac-logout-title">You've been signed out</div>
+          <p class="ac-logout-sub">Thanks for using 360. See you next time!</p>
+          <button class="ac-btn" onclick="history.replaceState(null,'','/accounts.html?signin');renderSignIn();">Sign Back In</button>
+          <button class="ac-sec-btn" style="margin-top:6px;" onclick="window.location.href='/';">← Back to 360</button>
+        </div>
+      `;
+    }
+
+    /* ════════════════
+       OAUTH
+    ════════════════ */
+    async function oAuth(provider) {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin + "/accounts.html?signin" }
+      });
+      if (error) alert("OAuth error: " + error.message);
+    }
+
+    /* ════════════════
+       PASSWORD STRENGTH
+    ════════════════ */
+    const PW_COLORS = ['#ef4444','#f97316','#eab308','#10b981','#3b82f6'];
+    const PW_LABELS = ['Weak','Fair','Moderate','Strong','Very Strong'];
+    const PW_HINTS  = ['Add more variety','Try a number or symbol','Getting better!','Add a symbol to max out',''];
+
+    function getStrength(v) {
+      let s = 0;
+      if (v.length >= 6)  s++;
+      if (v.length >= 10) s++;
+      if (/[A-Z]/.test(v)) s++;
+      if (/[0-9]/.test(v)) s++;
+      if (/[^A-Za-z0-9]/.test(v)) s++;
+      return Math.min(s, 5);
+    }
+
+    function initStrengthMeter(inputEl, wrapperId) {
+      const wrap = document.getElementById(wrapperId);
+      if (!wrap) return;
+      const bar   = wrap.querySelector('.pw-bar-fill');
+      const label = wrap.querySelector('.pw-strength-label');
+      const hint  = wrap.querySelector('.pw-strength-hint');
+
+      function togglePill(id, pass) {
+        const el = wrap.querySelector('#' + id);
+        if (el) el.classList.toggle('pass', pass);
+      }
+
+      inputEl.addEventListener('input', () => {
+        const v = inputEl.value;
+        const s = getStrength(v);
+        if (!v) {
+          bar.style.width = '0%';
+          label.textContent = '';
+          hint.textContent = '';
+          ['pw-c-len','pw-c-up','pw-c-num','pw-c-sym'].forEach(id => togglePill(id, false));
+          return;
+        }
+        bar.style.width = (s * 20) + '%';
+        bar.style.background = PW_COLORS[Math.max(s - 1, 0)];
+        label.textContent = PW_LABELS[Math.max(s - 1, 0)];
+        label.style.color = PW_COLORS[Math.max(s - 1, 0)];
+        hint.textContent  = PW_HINTS[Math.max(s - 1, 0)];
+        togglePill('pw-c-len', v.length >= 8);
+        togglePill('pw-c-up',  /[A-Z]/.test(v));
+        togglePill('pw-c-num', /[0-9]/.test(v));
+        togglePill('pw-c-sym', /[^A-Za-z0-9]/.test(v));
+      });
+    }
+
+    /* ════════════════
+       UTILS
+    ════════════════ */
+    function setMsg(el,text,type)  { if(!el)return; el.textContent=text; el.className="ac-msg"+(type?" "+type:""); }
+    function setHint(el,text,type) { if(!el)return; el.textContent=text; el.className="ac-hint"+(type?" "+type:""); }
+    function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   </script>
 </body>
 </html>
