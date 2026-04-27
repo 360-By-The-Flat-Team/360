@@ -101,11 +101,11 @@ body.dark .sidebar { background: rgba(9,9,11,.97); }
   color: var(--txt);
   opacity: 0;
   transform: translateX(-16px);
-  transition:
-    background .2s,
-    color .2s,
-    opacity .28s ease,
-    transform .32s cubic-bezier(.22,.68,0,1.01);
+   transition:
+       transform 160ms cubic-bezier(.2,.8,.2,1),
+       opacity 160ms ease,
+       background .2s ease,
+       color .2s ease;
   transition-delay: 0s;
 }
 body.dark .nav-item { color: var(--txtd); }
