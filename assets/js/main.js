@@ -126,7 +126,7 @@ async function buildUserChip(user) {
         </div>
       </div>
       <div class="ucd-divider"></div>
-      <a class="ucd-item" href="/accounts.html"><span><img src="/assets/images/accounts.png"></img></span> My Account</a>
+      <a class="ucd-item" href="/settings"><span><img src="/assets/images/accounts.png"></img></span> My Account</a>
       <div class="ucd-divider"></div>
       <button class="ucd-item ucd-signout" id="chipSignOut"><span><img src="/assets/images/signout.gif"></img></span> Sign Out</button>
     </div>`;
@@ -151,7 +151,7 @@ async function buildUserChip(user) {
   document.getElementById("chipSignOut")?.addEventListener("click", async e => {
     e.stopPropagation();
     await supabaseClient.auth.signOut();
-    location.href = "/accounts.html?login&from=logout";
+    location.href = "/accounts?login&from=logout";
   });
 }
 
