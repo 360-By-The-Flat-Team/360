@@ -1,61 +1,1066 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>360 Settings</title>
-    <link rel="stylesheet" href="/assets/css/settings.css">
-</head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-89NN1P6CEV');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Settings</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="360" />
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body.dark {
+      --page-bg: #07071a;
+      --card-bg: rgba(255,255,255,.04);
+      --card-border: rgba(255,255,255,.08);
+      --txt: #e2e8f0;
+      --mut: #64748b;
+      --br: rgba(255,255,255,.09);
+      --sidebar-bg: rgba(255,255,255,.025);
+    }
+    body:not(.dark) {
+      --page-bg: #f0f4f8;
+      --card-bg: rgba(255,255,255,.92);
+      --card-border: rgba(0,0,0,.07);
+      --txt: #0f172a;
+      --mut: #64748b;
+      --br: rgba(0,0,0,.08);
+      --sidebar-bg: rgba(255,255,255,.7);
+    }
+    body { background: var(--page-bg); color: var(--txt); }
+
+    /* TOP BAR */
+    .st-topbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 54px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--br);
+      display: flex; align-items: center;
+      padding: 0 22px; gap: 14px;
+      z-index: 300;
+    }
+    .st-topbar-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+    .st-logo-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+    }
+    .st-logo-text { font-size: 17px; font-weight: 900; letter-spacing: -.02em; color: var(--txt); }
+    .st-topbar-sep { color: var(--mut); font-size: 18px; opacity: .4; }
+    .st-topbar-section { font-size: 14px; font-weight: 600; color: var(--txt); }
+    .st-topbar-right { margin-left: auto; }
+    .st-back-btn {
+      padding: 7px 14px; border-radius: 8px;
+      border: 1px solid var(--br); background: transparent;
+      color: var(--txt); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background .18s;
+    }
+    .st-back-btn:hover { background: rgba(148,163,184,.15); }
+
+    /* PAGE LAYOUT */
+    .page-wrap {
+      display: flex;
+      min-height: 100vh;
+      padding-top: 54px;
+    }
+
+    /* SETTINGS SIDEBAR */
+    .st-sidebar {
+      width: 230px; flex-shrink: 0;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(14px);
+      border-right: 1px solid var(--br);
+      padding: 20px 10px;
+      position: sticky; top: 54px;
+      height: calc(100vh - 54px);
+      overflow-y: auto;
+    }
+    .st-sidebar-group-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--mut); padding: 0 10px;
+      margin: 18px 0 5px;
+    }
+    .st-sidebar-group-label:first-child { margin-top: 0; }
+    .st-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 9px;
+      font-size: 13px; font-weight: 500; color: var(--txt);
+      cursor: pointer; transition: background .15s;
+      margin-bottom: 2px; user-select: none;
+    }
+    .st-nav-item:hover { background: rgba(148,163,184,.13); }
+    .st-nav-item.active {
+      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      color: #fff; font-weight: 700;
+    }
+    .st-nav-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+
+    /* MAIN CONTENT */
+    .st-main {
+      flex: 1; padding: 32px 36px;
+      max-width: 860px; overflow-y: auto;
+    }
+    @media (max-width: 680px) {
+      .st-sidebar { width: 58px; padding: 16px 6px; }
+      .st-nav-label { display: none; }
+      .st-sidebar-group-label { display: none; }
+      .st-main { padding: 20px 14px; }
+    }
+
+    /* PANELS */
+    .st-panel { display: none; }
+    .st-panel.active { display: block; }
+    .st-panel-header { margin-bottom: 26px; }
+    .st-panel-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+    .st-panel-sub { font-size: 13px; color: var(--mut); margin-top: 4px; }
+
+    /* CARD */
+    .st-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .st-card-title {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--mut); margin-bottom: 14px;
+    }
+
+    /* ROW */
+    .st-row {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--br);
+    }
+    .st-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .st-row:first-of-type { padding-top: 0; }
+    .st-row-label { font-size: 14px; font-weight: 500; }
+    .st-row-sub { font-size: 12px; color: var(--mut); margin-top: 2px; }
+    .st-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    /* TOGGLE */
+    .st-toggle {
+      width: 40px; height: 23px;
+      background: rgba(148,163,184,.3);
+      border-radius: 999px; position: relative;
+      cursor: pointer; transition: background .22s;
+      flex-shrink: 0; border: none; outline: none;
+    }
+    .st-toggle::before {
+      content: ""; position: absolute;
+      top: 3px; left: 3px;
+      width: 17px; height: 17px;
+      background: #fff; border-radius: 50%;
+      transition: transform .22s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    .st-toggle.on { background: var(--a,#3b82f6); }
+    .st-toggle.on::before { transform: translateX(17px); }
+
+    /* BUTTONS */
+    .st-btn {
+      padding: 8px 14px; border-radius: 8px;
+      border: 1px solid var(--br);
+      background: rgba(148,163,184,.1);
+      color: var(--txt); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background .15s; white-space: nowrap;
+    }
+    .st-btn:hover { background: rgba(148,163,184,.2); }
+    .st-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .st-btn.primary {
+      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      color: #fff; border-color: transparent;
+    }
+    .st-btn.primary:hover { opacity: .88; }
+    .st-btn.danger { background: rgba(239,68,68,.09); border-color: rgba(239,68,68,.28); color: #ef4444; }
+    .st-btn.danger:hover { background: rgba(239,68,68,.18); }
+
+    /* INPUT */
+    .st-input {
+      padding: 9px 12px; border-radius: 8px;
+      border: 1.5px solid var(--br);
+      background: rgba(148,163,184,.07);
+      color: var(--txt); font-size: 14px; outline: none;
+      transition: border-color .18s; width: 100%;
+    }
+    .st-input:focus { border-color: var(--a,#3b82f6); }
+
+    /* MSG */
+    .st-msg { font-size: 13px; min-height: 18px; margin-top: 8px; }
+    .st-msg.ok  { color: #10b981; }
+    .st-msg.err { color: #ef4444; }
+
+    /* SIGN-IN WALL */
+    .ac-wall {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      padding: 48px 24px; gap: 14px;
+    }
+    .ac-wall-icon { font-size: 52px; line-height: 1; }
+    .ac-wall-title { font-size: 20px; font-weight: 800; }
+    .ac-wall-sub { font-size: 14px; color: var(--mut); max-width: 320px; line-height: 1.5; }
+    .ac-wall-btns { display: flex; gap: 10px; margin-top: 6px; }
+
+    /* PROFILE */
+    .ac-user-row { display: flex; align-items: center; gap: 14px; }
+    .ac-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .ac-name  { font-size: 16px; font-weight: 700; }
+    .ac-email { font-size: 12px; color: var(--mut); margin-top: 2px; }
+
+    /* THEME */
+    .st-theme-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+    .st-theme-opt {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 5px;
+      cursor: pointer; font-size: 11px; color: var(--mut);
+    }
+    .st-swatch {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 2.5px solid transparent;
+      transition: transform .15s, border-color .15s;
+    }
+    .st-swatch:hover { transform: scale(1.1); }
+    .st-swatch.active { border-color: var(--a,#3b82f6); }
+    .st-swatch[data-theme="ocean"]    { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
+    .st-swatch[data-theme="midnight"] { background: linear-gradient(135deg,#1e293b,#334155); }
+    .st-swatch[data-theme="sunset"]   { background: linear-gradient(135deg,#f97316,#ec4899); }
+    .st-swatch[data-theme="mint"]     { background: linear-gradient(135deg,#10b981,#06b6d4); }
+    .st-swatch[data-theme="neon"]     { background: linear-gradient(135deg,#22d3ee,#a3e635); }
+    .st-swatch[data-theme="mono"]     { background: linear-gradient(135deg,#475569,#94a3b8); }
+
+    /* CURSOR OPTIONS */
+    .st-cursor-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+    .st-cursor-opt {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      padding: 8px 12px; border-radius: 10px;
+      border: 1.5px solid var(--br); background: transparent;
+      cursor: pointer; font-size: 11px; color: var(--mut);
+      transition: border-color .15s, background .15s;
+    }
+    .st-cursor-opt.active {
+      border-color: var(--a,#3b82f6);
+      background: rgba(59,130,246,.1);
+      color: var(--a,#3b82f6); font-weight: 600;
+    }
+
+    /* BOB */
+    .bob-toggle-row {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 14px;
+    }
+    .bob-toggle-label { font-size: 14px; font-weight: 500; }
+    .bob-toggle-sub   { font-size: 12px; color: var(--mut); margin-top: 2px; }
+
+    /* SYSTEM STATS */
+    .sys-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px,1fr));
+      gap: 12px;
+    }
+    .sys-stat {
+      background: rgba(148,163,184,.07);
+      border: 1px solid var(--br);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .sys-stat-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--mut); margin-bottom: 5px;
+    }
+    .sys-stat-val { font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
+    .sys-stat-sub { font-size: 11px; color: var(--mut); margin-top: 3px; }
+    .sys-bar-track {
+      height: 4px; background: rgba(148,163,184,.2);
+      border-radius: 999px; overflow: hidden; margin-top: 8px;
+    }
+    .sys-bar-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      transition: width .6s ease;
+    }
+    .sys-info-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 8px 0; border-bottom: 1px solid var(--br);
+      font-size: 13px; gap: 12px;
+    }
+    .sys-info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .sys-info-key { color: var(--mut); flex-shrink: 0; }
+    .sys-info-val { font-weight: 600; text-align: right; word-break: break-all; }
+
+    /* DANGER CARD */
+    .st-card.danger-card { border-color: rgba(239,68,68,.28); }
+
+    /* LEGAL */
+    .st-legal-link {
+      display: block; padding: 9px 0; font-size: 14px;
+      color: var(--a,#3b82f6); text-decoration: none;
+      border-bottom: 1px solid var(--br);
+    }
+    .st-legal-link:last-child { border-bottom: none; }
+    .st-legal-link:hover { text-decoration: underline; }
+  </style>
+</head>
 <body>
 
-    <div class="settings-topbar">
-        <div class="settings-title">System Settings</div>
-        <button class="back-btn" onclick="window.location.href='/'">← Back to 360</button>
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <!-- Hidden scaffolding that main.js / cursor.js expect to find -->
+  <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
+  <button class="sidebar-toggle" id="sidebarToggle" style="display:none;">☰</button>
+  <aside class="sidebar" id="sidebar" style="display:none;">
+    <div class="sidebar-header">
+      <div class="logo-mark"></div>
+      <button id="settingsBtn">⚙</button>
     </div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="/">Home</div>
+      <div class="nav-item" data-href="../ai">AI</div>
+      <div class="nav-item" data-href="../weather">Weather</div>
+      <div class="nav-item" data-href="../translator">Translator</div>
+      <div class="nav-item" data-href="../stocks">Stocks</div>
+      <div class="nav-item" data-href="../url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="../chat">Chat</div>
+      <div class="nav-item" data-href="../news">News</div>
+      <div class="nav-item" data-href="../apps">Apps</div>
+      <div class="nav-item" data-href="../games">Games</div>
+      <div class="nav-item" data-href="../accounts">Accounts</div>
+    </nav>
+    <div class="sidebar-footer"><span id="sidebar-ver">Loading...</span></div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
 
-    <div class="settings-container">
+  <!-- Hidden settings panel so main.js hooks work (theme, dark, cursor, bg, temp, bob) -->
+  <div class="settings-panel" id="settingsPanel" style="display:none !important; visibility:hidden; position:absolute; pointer-events:none;">
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div></div>
+    </div>
+    <input type="checkbox" id="darkToggle" />
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"></div>
+      <div class="cursor-option" data-cursor="dot"></div>
+      <div class="cursor-option" data-cursor="ring"></div>
+      <div class="cursor-option" data-cursor="crosshair"></div>
+      <div class="cursor-option" data-cursor="blob"></div>
+      <div class="cursor-option" data-cursor="system"></div>
+    </div>
+    <div class="cursor-color-row">
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+    <div class="temp-unit-box">
+      <span id="tempUnitLabel">°C</span>
+      <button id="tempUnitBtn">Switch</button>
+    </div>
+    <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
+    <input type="text" id="bgUrlInput" class="settings-input" />
+    <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
+    <button id="bgResetBtn" class="settings-btn">Reset</button>
+    <div id="settingsBobToggleRow">
+      <div class="bob-track" id="settingsBobTrack"></div>
+    </div>
+  </div>
 
-        <section class="settings-section">
-            <h2>Hardware Overview</h2>
+  <!-- ═══════════ TOP BAR ═══════════ -->
+  <div class="st-topbar">
+    <a class="st-topbar-logo" href="/">
+      <div class="st-logo-mark"></div>
+      <span class="st-logo-text">360</span>
+    </a>
+    <span class="st-topbar-sep">/</span>
+    <span class="st-topbar-section" id="topbarSection">Settings</span>
+    <div class="st-topbar-right">
+      <button class="st-back-btn" onclick="window.location.href='/'">← Back to 360</button>
+    </div>
+  </div>
 
-            <div class="stats-grid">
+  <!-- ═══════════ PAGE WRAP ═══════════ -->
+  <div class="page-wrap">
 
-                <div class="stat-card">
-                    <h3>CPU Cores</h3>
-                    <p id="cpuCores">Loading...</p>
-                </div>
+    <!-- SETTINGS NAV SIDEBAR -->
+    <nav class="st-sidebar">
+      <div class="st-sidebar-group-label">Account</div>
+      <div class="st-nav-item" data-tab="account" onclick="switchTab('account')">
+        <span class="st-nav-icon">🔐</span>
+        <span class="st-nav-label">Account Settings</span>
+      </div>
 
-                <div class="stat-card">
-                    <h3>Memory</h3>
-                    <p id="memoryInfo">Loading...</p>
-                </div>
+      <div class="st-sidebar-group-label">App</div>
+      <div class="st-nav-item" data-tab="preference" onclick="switchTab('preference')">
+        <span class="st-nav-icon">🎨</span>
+        <span class="st-nav-label">360 Preferences</span>
+      </div>
 
-                <div class="stat-card">
-                    <h3>Battery</h3>
-                    <p id="batteryInfo">Loading...</p>
-                </div>
+      <div class="st-sidebar-group-label">Device</div>
+      <div class="st-nav-item" data-tab="sys" onclick="switchTab('sys')">
+        <span class="st-nav-icon">🖥️</span>
+        <span class="st-nav-label">System Info</span>
+      </div>
+    </nav>
 
-                <div class="stat-card">
-                    <h3>GPU</h3>
-                    <p id="gpuInfo">Loading...</p>
-                </div>
+    <!-- MAIN CONTENT -->
+    <main class="st-main">
 
-                <div class="stat-card">
-                    <h3>Network</h3>
-                    <p id="networkInfo">Loading...</p>
-                </div>
+      <!-- ══════════════════════════════
+           ACCOUNT SETTINGS
+      ══════════════════════════════ -->
+      <div class="st-panel" id="panel-account">
+        <div class="st-panel-header">
+          <div class="st-panel-title">Account Settings</div>
+          <div class="st-panel-sub">Manage your 360 account, profile, and security.</div>
+        </div>
 
-                <div class="stat-card">
-                    <h3>Storage</h3>
-                    <p id="storageInfo">Loading...</p>
-                </div>
-
+        <!-- SIGN-IN WALL -->
+        <div class="st-card" id="acWallCard">
+          <div class="ac-wall">
+            <div class="ac-wall-icon">🔒</div>
+            <div class="ac-wall-title">Sign in to continue</div>
+            <div class="ac-wall-sub">You need to be signed in to view and manage your account settings.</div>
+            <div class="ac-wall-btns">
+              <button class="st-btn primary" onclick="window.location.href='/accounts.html?signin&from=settings'">Sign In</button>
+              <button class="st-btn" onclick="window.location.href='/accounts.html?signup&from=settings'">Create Account</button>
             </div>
-        </section>
+          </div>
+        </div>
 
-    </div>
+        <!-- SIGNED-IN CONTENT -->
+        <div id="acSignedInContent" style="display:none;">
 
-    <script src="/assets/js/settings.js"></script>
+          <!-- Profile -->
+          <div class="st-card">
+            <div class="st-card-title">Profile</div>
+            <div class="ac-user-row">
+              <div class="ac-avatar" id="acAvatar">?</div>
+              <div style="flex:1;min-width:0;">
+                <div class="ac-name"  id="acName">—</div>
+                <div class="ac-email" id="acEmail">—</div>
+              </div>
+              <button class="st-btn" onclick="window.location.href='/accounts.html'">Full Profile →</button>
+            </div>
+          </div>
+
+          <!-- Phone Verification -->
+          <div class="st-card">
+            <div class="st-card-title">Phone Verification</div>
+            <div class="st-row">
+              <div>
+                <div class="st-row-label">Verify Phone Number</div>
+                <div class="st-row-sub">Add a verified phone to secure your account.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <input class="st-input" id="phoneInput" type="tel" placeholder="+1 555 123 4567" />
+              <button class="st-btn primary" id="sendPhoneOtpBtn" style="white-space:nowrap;">Send Code</button>
+            </div>
+            <div id="otpSection" style="display:none;margin-top:10px;">
+              <div style="display:flex;gap:8px;">
+                <input class="st-input" id="otpInput" type="text" placeholder="6-digit code" maxlength="6" />
+                <button class="st-btn primary" id="verifyPhoneOtpBtn">Verify</button>
+              </div>
+            </div>
+            <div class="st-msg" id="phoneMsg"></div>
+          </div>
+
+          <!-- Legal -->
+          <div class="st-card">
+            <div class="st-card-title">Legal</div>
+            <a class="st-legal-link" href="privacypolicy.html">🔒 Privacy Policy</a>
+            <a class="st-legal-link" href="tos.html">📜 Terms of Service</a>
+          </div>
+
+          <!-- Danger Zone: Sign Out -->
+          <div class="st-card danger-card">
+            <div class="st-card-title">Session</div>
+            <div class="st-row" id="signOutRow">
+              <div>
+                <div class="st-row-label">Sign Out</div>
+                <div class="st-row-sub">End your current 360 session on this device.</div>
+              </div>
+              <div class="st-row-right">
+                <button class="st-btn danger" id="signOutTrigger">Sign Out</button>
+              </div>
+            </div>
+            <div id="signOutConfirm" style="display:none;margin-top:12px;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:13px;color:var(--mut);">Are you sure you want to sign out?</span>
+                <button class="st-btn danger" id="confirmSignOutBtn">Yes, sign out</button>
+                <button class="st-btn" id="cancelSignOutBtn">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /acSignedInContent -->
+      </div>
+
+      <!-- ══════════════════════════════
+           360 PREFERENCES
+      ══════════════════════════════ -->
+      <div class="st-panel" id="panel-preference">
+        <div class="st-panel-header">
+          <div class="st-panel-title">360 Preferences</div>
+          <div class="st-panel-sub">Customize the look, feel, and behavior of 360.</div>
+        </div>
+
+        <!-- Theme -->
+        <div class="st-card">
+          <div class="st-card-title">Theme</div>
+          <div class="st-theme-grid" id="themeGrid">
+            <div class="st-theme-opt"><div class="st-swatch" data-theme="ocean"></div><span>Ocean</span></div>
+            <div class="st-theme-opt"><div class="st-swatch" data-theme="midnight"></div><span>Midnight</span></div>
+            <div class="st-theme-opt"><div class="st-swatch" data-theme="sunset"></div><span>Sunset</span></div>
+            <div class="st-theme-opt"><div class="st-swatch" data-theme="mint"></div><span>Mint</span></div>
+            <div class="st-theme-opt"><div class="st-swatch" data-theme="neon"></div><span>Neon</span></div>
+            <div class="st-theme-opt"><div class="st-swatch" data-theme="mono"></div><span>Mono</span></div>
+          </div>
+          <div class="st-row" style="margin-top:16px;">
+            <div>
+              <div class="st-row-label">Dark Mode</div>
+              <div class="st-row-sub">Switch between light and dark interface.</div>
+            </div>
+            <button class="st-toggle" id="darkModeToggle"></button>
+          </div>
+        </div>
+
+        <!-- Cursor -->
+        <div class="st-card">
+          <div class="st-card-title">Cursor Style</div>
+          <div class="st-cursor-grid" id="cursorGrid">
+            <div class="st-cursor-opt" data-cursor="default"><span style="font-size:18px;">🖱️</span><span>Default</span></div>
+            <div class="st-cursor-opt" data-cursor="dot"><span style="font-size:18px;">⚬</span><span>Dot</span></div>
+            <div class="st-cursor-opt" data-cursor="ring"><span style="font-size:18px;">◯</span><span>Ring</span></div>
+            <div class="st-cursor-opt" data-cursor="crosshair"><span style="font-size:18px;">✛</span><span>Cross</span></div>
+            <div class="st-cursor-opt" data-cursor="blob"><span style="font-size:18px;">🫧</span><span>Blob</span></div>
+            <div class="st-cursor-opt" data-cursor="system"><span style="font-size:18px;">↖</span><span>System</span></div>
+          </div>
+          <div class="st-row" style="margin-top:14px;">
+            <div class="st-row-label">Cursor Color</div>
+            <div class="st-row-right">
+              <input type="color" id="visibleCursorColor" value="#3b82f6"
+                style="width:34px;height:34px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
+              <button class="st-btn" id="visibleCursorReset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Units -->
+        <div class="st-card">
+          <div class="st-card-title">Units</div>
+          <div class="st-row">
+            <div>
+              <div class="st-row-label">Temperature Unit</div>
+              <div class="st-row-sub">Used across Weather and other 360 features.</div>
+            </div>
+            <div class="st-row-right">
+              <span id="visTempLabel" style="font-size:15px;font-weight:700;">°C</span>
+              <button class="st-btn" id="visTempSwitch">Switch</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Background Image -->
+        <div class="st-card">
+          <div class="st-card-title">Background Image</div>
+          <div class="st-row">
+            <div>
+              <div class="st-row-label">Upload Image</div>
+              <div class="st-row-sub">Set a custom background on the 360 home page.</div>
+            </div>
+            <label class="st-btn" style="cursor:pointer;">
+              Choose File
+              <input type="file" id="visBgUpload" accept="image/*" style="display:none;" />
+            </label>
+          </div>
+          <div class="st-row" style="flex-wrap:wrap;gap:8px;">
+            <div style="flex:1;min-width:180px;">
+              <div class="st-row-label">Image URL</div>
+              <div class="st-row-sub">Paste a direct link to any image.</div>
+            </div>
+            <div style="display:flex;gap:6px;flex:2;min-width:200px;">
+              <input class="st-input" type="text" id="visBgUrl" placeholder="https://…" />
+              <button class="st-btn primary" id="visBgUrlApply">Apply</button>
+              <button class="st-btn" id="visBgReset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bob -->
+        <div class="st-card">
+          <div class="st-card-title">Bob</div>
+          <div class="bob-toggle-row">
+            <div>
+              <div class="bob-toggle-label">Enable Bob</div>
+              <div class="bob-toggle-sub">Animated stick figure that reacts to your search typing.</div>
+            </div>
+            <button class="st-toggle" id="visBobToggle"></button>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="st-card">
+          <div class="st-card-title">About 360</div>
+          <div style="font-size:14px;line-height:1.6;color:var(--txt);">
+            360 is a next-generation search engine and digital workspace — search, chat, translate, weather, stocks, and AI all in one place.
+            <br><br>
+            <span style="color:var(--mut);font-size:12px;">Built by 360 Digital, Co.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════
+           SYSTEM INFO
+      ══════════════════════════════ -->
+      <div class="st-panel" id="panel-sys">
+        <div class="st-panel-header">
+          <div class="st-panel-title">System Info</div>
+          <div class="st-panel-sub">Hardware and browser details for this device.</div>
+        </div>
+
+        <div class="st-card">
+          <div class="st-card-title">Hardware Overview</div>
+          <div class="sys-grid">
+            <div class="sys-stat">
+              <div class="sys-stat-label">CPU Cores</div>
+              <div class="sys-stat-val" id="sCpu">—</div>
+              <div class="sys-stat-sub">Logical processors</div>
+            </div>
+            <div class="sys-stat">
+              <div class="sys-stat-label">Device RAM</div>
+              <div class="sys-stat-val" id="sRam">—</div>
+              <div class="sys-stat-sub">Approximate memory</div>
+            </div>
+            <div class="sys-stat">
+              <div class="sys-stat-label">Battery</div>
+              <div class="sys-stat-val" id="sBat">—</div>
+              <div class="sys-stat-sub" id="sBatSub">Checking…</div>
+              <div class="sys-bar-track"><div class="sys-bar-fill" id="sBatBar" style="width:0%"></div></div>
+            </div>
+            <div class="sys-stat">
+              <div class="sys-stat-label">GPU</div>
+              <div class="sys-stat-val" id="sGpu" style="font-size:13px;font-weight:700;word-break:break-word;">—</div>
+              <div class="sys-stat-sub" id="sGpuSub"></div>
+            </div>
+            <div class="sys-stat">
+              <div class="sys-stat-label">Origin Storage</div>
+              <div class="sys-stat-val" id="sStorage">—</div>
+              <div class="sys-stat-sub" id="sStorageSub">Browser quota</div>
+              <div class="sys-bar-track"><div class="sys-bar-fill" id="sStorageBar" style="width:0%"></div></div>
+            </div>
+            <div class="sys-stat">
+              <div class="sys-stat-label">Network</div>
+              <div class="sys-stat-val" id="sNet">—</div>
+              <div class="sys-stat-sub" id="sNetSub">Connection type</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="st-card">
+          <div class="st-card-title">Browser & Platform</div>
+          <div id="sysBrowserRows"></div>
+        </div>
+
+        <div class="st-card">
+          <div class="st-card-title">Display</div>
+          <div id="sysScreenRows"></div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /page-wrap -->
+
+  <script>window.SKIP_AUTH_CHIP = true;</script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
+
+  <script>
+  // ────────────────────────────────────────
+  // TAB ROUTING
+  // ────────────────────────────────────────
+  const TAB_NAMES = {
+    account:    'Account Settings',
+    preference: '360 Preferences',
+    sys:        'System Info',
+  };
+
+  function getTab() {
+    const p = new URLSearchParams(location.search);
+    const t = p.get('tab');
+    return (t && TAB_NAMES[t]) ? t : 'account';
+  }
+
+  function switchTab(tab) {
+    const url = tab === 'account' ? location.pathname : `${location.pathname}?tab=${tab}`;
+    history.pushState(null, '', url);
+
+    document.querySelectorAll('.st-nav-item').forEach(el =>
+      el.classList.toggle('active', el.dataset.tab === tab));
+
+    document.querySelectorAll('.st-panel').forEach(el =>
+      el.classList.toggle('active', el.id === `panel-${tab}`));
+
+    document.getElementById('topbarSection').textContent = TAB_NAMES[tab];
+
+    if (tab === 'sys') loadSystemInfo();
+  }
+
+  switchTab(getTab());
+  window.addEventListener('popstate', () => switchTab(getTab()));
+
+
+  // ────────────────────────────────────────
+  // AUTH
+  // ────────────────────────────────────────
+  const sb = supabaseClient;
+
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      await showSignedIn(session.user);
+    }
+    // If no session, the wall stays visible by default
+  })();
+
+  async function showSignedIn(user) {
+    document.getElementById('acWallCard').style.display = 'none';
+    document.getElementById('acSignedInContent').style.display = 'block';
+
+    const { data: profile } = await sb.from('profiles')
+      .select('username,avatar_url').eq('id', user.id).maybeSingle();
+
+    const username = profile?.username
+      || user.user_metadata?.username
+      || user.user_metadata?.full_name
+      || user.email?.split('@')[0]
+      || 'User';
+
+    document.getElementById('acAvatar').textContent = username.charAt(0).toUpperCase();
+    document.getElementById('acName').textContent   = username;
+    document.getElementById('acEmail').textContent  = user.email || '';
+
+    // Phone OTP
+    document.getElementById('sendPhoneOtpBtn').onclick = async () => {
+      const phone = document.getElementById('phoneInput').value.trim();
+      const msg   = document.getElementById('phoneMsg');
+      if (!phone) { setMsg(msg, 'Please enter a phone number.', 'err'); return; }
+      const { error } = await sb.auth.signInWithOtp({ phone });
+      if (error) { setMsg(msg, error.message, 'err'); return; }
+      setMsg(msg, '✓ Code sent! Check your phone.', 'ok');
+      document.getElementById('otpSection').style.display = 'block';
+    };
+
+    document.getElementById('verifyPhoneOtpBtn').onclick = async () => {
+      const phone = document.getElementById('phoneInput').value.trim();
+      const token = document.getElementById('otpInput').value.trim();
+      const msg   = document.getElementById('phoneMsg');
+      const { error } = await sb.auth.verifyOtp({ phone, token, type: 'sms' });
+      if (error) { setMsg(msg, 'Incorrect code. Please try again.', 'err'); return; }
+      setMsg(msg, '✓ Phone verified!', 'ok');
+    };
+
+    // Sign Out
+    document.getElementById('signOutTrigger').onclick = () => {
+      document.getElementById('signOutTrigger').style.display = 'none';
+      document.getElementById('signOutConfirm').style.display = 'block';
+    };
+    document.getElementById('cancelSignOutBtn').onclick = () => {
+      document.getElementById('signOutConfirm').style.display = 'none';
+      document.getElementById('signOutTrigger').style.display = 'inline-flex';
+    };
+    document.getElementById('confirmSignOutBtn').onclick = async () => {
+      const btn = document.getElementById('confirmSignOutBtn');
+      btn.disabled = true; btn.textContent = 'Signing out…';
+      await sb.auth.signOut();
+      location.href = '/accounts.html?login&from=logout';
+    };
+  }
+
+
+  // ────────────────────────────────────────
+  // PREFERENCES — wire to hidden main.js hooks
+  // ────────────────────────────────────────
+
+  // Dark Mode
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  function syncDark() {
+    darkModeToggle.classList.toggle('on', document.body.classList.contains('dark'));
+  }
+  syncDark();
+  darkModeToggle.addEventListener('click', () => {
+    const h = document.getElementById('darkToggle');
+    if (h) { h.checked = !h.checked; h.dispatchEvent(new Event('change')); }
+    else document.body.classList.toggle('dark');
+    setTimeout(syncDark, 60);
+  });
+  new MutationObserver(syncDark).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  // Theme swatches
+  document.querySelectorAll('#themeGrid .st-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('#themeGrid .st-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      const h = document.querySelector(`.settings-panel .swatch[data-theme="${sw.dataset.theme}"]`);
+      if (h) h.click();
+    });
+  });
+  // Sync active swatch on load (check localStorage for theme)
+  const savedTheme = localStorage.getItem('360_theme') || 'ocean';
+  const activeSwatch = document.querySelector(`#themeGrid .st-swatch[data-theme="${savedTheme}"]`);
+  if (activeSwatch) activeSwatch.classList.add('active');
+
+  // Cursor style
+  document.querySelectorAll('#cursorGrid .st-cursor-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#cursorGrid .st-cursor-opt').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      const h = document.querySelector(`.cursor-option[data-cursor="${opt.dataset.cursor}"]`);
+      if (h) h.click();
+    });
+  });
+  // Sync active cursor on load
+  const savedCursor = localStorage.getItem('360_cursor') || 'default';
+  const activeCursor = document.querySelector(`#cursorGrid .st-cursor-opt[data-cursor="${savedCursor}"]`);
+  if (activeCursor) activeCursor.classList.add('active');
+
+  // Cursor color
+  const visCursorColor = document.getElementById('visibleCursorColor');
+  visCursorColor.value = localStorage.getItem('360_cursor_color') || '#3b82f6';
+  visCursorColor.addEventListener('input', () => {
+    const h = document.getElementById('cursorColorPicker');
+    if (h) { h.value = visCursorColor.value; h.dispatchEvent(new Event('input')); }
+  });
+  document.getElementById('visibleCursorReset').addEventListener('click', () => {
+    const h = document.getElementById('cursorColorReset');
+    if (h) h.click();
+    visCursorColor.value = '#3b82f6';
+  });
+
+  // Temp unit
+  const visTempLabel = document.getElementById('visTempLabel');
+  const storedUnit = localStorage.getItem('360_temp_unit') || 'C';
+  visTempLabel.textContent = `°${storedUnit}`;
+  document.getElementById('visTempSwitch').addEventListener('click', () => {
+    const h = document.getElementById('tempUnitBtn');
+    if (h) h.click();
+    const lbl = document.getElementById('tempUnitLabel');
+    visTempLabel.textContent = lbl ? lbl.textContent : (visTempLabel.textContent === '°C' ? '°F' : '°C');
+  });
+
+  // Background image
+  document.getElementById('visBgUpload').addEventListener('change', function() {
+    const h = document.getElementById('bgUpload');
+    if (!h || !this.files[0]) return;
+    try { const dt = new DataTransfer(); dt.items.add(this.files[0]); h.files = dt.files; h.dispatchEvent(new Event('change')); } catch(e) {}
+  });
+  document.getElementById('visBgUrlApply').addEventListener('click', () => {
+    const v = document.getElementById('visBgUrl').value;
+    const h = document.getElementById('bgUrlInput');
+    if (h) h.value = v;
+    const btn = document.getElementById('bgUrlBtn');
+    if (btn) btn.click();
+  });
+  document.getElementById('visBgReset').addEventListener('click', () => {
+    document.getElementById('visBgUrl').value = '';
+    const h = document.getElementById('bgResetBtn');
+    if (h) h.click();
+  });
+
+  // Bob toggle
+  const visBobToggle = document.getElementById('visBobToggle');
+  let bobOn = localStorage.getItem('360_bob_on') === 'true';
+  visBobToggle.classList.toggle('on', bobOn);
+  visBobToggle.addEventListener('click', () => {
+    bobOn = !bobOn;
+    localStorage.setItem('360_bob_on', bobOn);
+    visBobToggle.classList.toggle('on', bobOn);
+    const ht = document.getElementById('settingsBobTrack');
+    if (ht) ht.classList.toggle('on', bobOn);
+  });
+
+
+  // ────────────────────────────────────────
+  // SYSTEM INFO
+  // ────────────────────────────────────────
+  let sysLoaded = false;
+
+  async function loadSystemInfo() {
+    if (sysLoaded) return;
+    sysLoaded = true;
+
+    // CPU
+    setText('sCpu', navigator.hardwareConcurrency || 'N/A');
+
+    // RAM
+    const ram = navigator.deviceMemory;
+    setText('sRam', ram ? `${ram} GB` : 'N/A');
+
+    // Battery
+    if ('getBattery' in navigator) {
+      try {
+        const bat = await navigator.getBattery();
+        const updateBat = () => {
+          const pct = Math.round(bat.level * 100);
+          setText('sBat', `${pct}%`);
+          setText('sBatSub', bat.charging ? '⚡ Charging' : 'On battery');
+          document.getElementById('sBatBar').style.width = pct + '%';
+        };
+        updateBat();
+        bat.addEventListener('levelchange', updateBat);
+        bat.addEventListener('chargingchange', updateBat);
+      } catch {
+        setText('sBat', 'N/A'); setText('sBatSub', 'Unavailable');
+      }
+    } else {
+      setText('sBat', 'N/A'); setText('sBatSub', 'Not supported');
+    }
+
+    // GPU via WebGL
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl) {
+        const ext = gl.getExtension('WEBGL_debug_renderer_info');
+        const renderer = ext
+          ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)
+          : gl.getParameter(gl.RENDERER);
+        const vendor = ext
+          ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)
+          : gl.getParameter(gl.VENDOR);
+        const clean = renderer.replace(/\/\/.*/,'').trim();
+        setText('sGpu', clean.length > 42 ? clean.slice(0, 42) + '…' : clean);
+        setText('sGpuSub', vendor || '');
+      } else {
+        setText('sGpu', 'WebGL unavailable');
+      }
+    } catch { setText('sGpu', 'N/A'); }
+
+    // Storage — StorageManager.estimate() reports browser origin quota, not disk
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+      try {
+        const { quota, usage } = await navigator.storage.estimate();
+        if (quota > 0) {
+          const usedMB = (usage  / 1e6).toFixed(1);
+          const totMB  = (quota  / 1e6).toFixed(0);
+          const pct    = Math.min(Math.round((usage / quota) * 100), 100);
+          setText('sStorage', `${usedMB} MB used`);
+          setText('sStorageSub', `of ~${totMB} MB browser quota`);
+          document.getElementById('sStorageBar').style.width = pct + '%';
+        } else {
+          setText('sStorage', 'N/A');
+          setText('sStorageSub', 'Quota not reported by browser');
+        }
+      } catch {
+        setText('sStorage', 'N/A');
+        setText('sStorageSub', 'Error reading estimate');
+      }
+    } else {
+      setText('sStorage', 'N/A');
+      setText('sStorageSub', 'StorageManager not supported');
+    }
+
+    // Network
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn) {
+      setText('sNet', (conn.effectiveType || conn.type || '—').toUpperCase());
+      const parts = [];
+      if (conn.downlink) parts.push(`↓ ${conn.downlink} Mbps`);
+      if (conn.rtt != null) parts.push(`RTT ${conn.rtt} ms`);
+      setText('sNetSub', parts.join(' · ') || 'Connected');
+    } else {
+      setText('sNet', navigator.onLine ? 'Online' : 'Offline');
+      setText('sNetSub', 'Network API not supported');
+    }
+
+    // Browser details
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    if      (/Edg\//.test(ua))          browser = 'Microsoft Edge';
+    else if (/OPR\/|Opera/.test(ua))    browser = 'Opera';
+    else if (/Chrome\//.test(ua))       browser = 'Google Chrome';
+    else if (/Firefox\//.test(ua))      browser = 'Mozilla Firefox';
+    else if (/Safari\//.test(ua))       browser = 'Apple Safari';
+
+    renderRows('sysBrowserRows', [
+      ['Browser',          browser],
+      ['Platform',         navigator.platform || '—'],
+      ['Language',         navigator.language || '—'],
+      ['Cookies',          navigator.cookieEnabled ? 'Enabled' : 'Disabled'],
+      ['Touch Input',      navigator.maxTouchPoints > 0 ? `Yes (${navigator.maxTouchPoints} pts)` : 'No'],
+      ['Do Not Track',     navigator.doNotTrack === '1' ? 'Enabled' : navigator.doNotTrack === '0' ? 'Disabled' : 'Unset'],
+      ['User Agent',       ua],
+    ]);
+
+    renderRows('sysScreenRows', [
+      ['Resolution',         `${screen.width} × ${screen.height} px`],
+      ['Viewport',           `${window.innerWidth} × ${window.innerHeight} px`],
+      ['Device Pixel Ratio', `${window.devicePixelRatio}×`],
+      ['Color Depth',        `${screen.colorDepth}-bit`],
+      ['Orientation',        screen.orientation?.type || '—'],
+    ]);
+  }
+
+  function renderRows(id, rows) {
+    document.getElementById(id).innerHTML = rows.map(([k, v]) => `
+      <div class="sys-info-row">
+        <span class="sys-info-key">${k}</span>
+        <span class="sys-info-val">${esc(String(v))}</span>
+      </div>`).join('');
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function setMsg(el, text, type) {
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'st-msg' + (type ? ' ' + type : '');
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  </script>
 </body>
 </html>
