@@ -376,8 +376,9 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 });
 
 /* ============================================================
-   SIDEBAR — click outside to close
+   SIDEBAR — click outside to close (optimized + animations)
    ============================================================ */
+
 const sidebar       = document.querySelector(".sidebar");
 const settingsPanel = document.querySelector(".settings-panel");
 const overlay       = document.querySelector(".overlay");
@@ -385,50 +386,69 @@ const sidebarToggle = document.querySelector(".sidebar-toggle");
 const settingsBtn   = document.getElementById("settingsBtn");
 const navItems      = Array.from(document.querySelectorAll(".sidebar .nav-item"));
 
+/* Faster nav animation (reduce perceived lag) */
 navItems.forEach((item, idx) => {
-  item.style.setProperty("--nav-index", String(idx));
+  // Keep stagger but make it MUCH faster
+  item.style.setProperty("--nav-index", idx);
+
+  // Optional override: force quicker timing via JS
+  item.style.setProperty("--nav-delay", `${idx * 25}ms`);
 });
 
 function updateOverlay() {
-  const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
+  const anyOpen =
+    sidebar?.classList.contains("open") ||
+    settingsPanel?.classList.contains("open");
+
   overlay?.classList.toggle("active", !!anyOpen);
 }
 
+/* Sidebar toggle */
 sidebarToggle?.addEventListener("click", e => {
   e.stopPropagation();
   sidebar?.classList.toggle("open");
   updateOverlay();
 });
 
+/* Settings toggle */
 settingsBtn?.addEventListener("click", e => {
   e.stopPropagation();
   settingsPanel?.classList.toggle("open");
   updateOverlay();
 });
 
+/* Click overlay closes everything */
 overlay?.addEventListener("click", () => {
   sidebar?.classList.remove("open");
   settingsPanel?.classList.remove("open");
   updateOverlay();
 });
 
+/* Click outside closes everything */
 document.addEventListener("click", e => {
-  if (!e.target.closest(".sidebar") && !e.target.closest(".settings-panel")
-    && !e.target.closest(".sidebar-toggle") && !e.target.closest("#settingsBtn")) {
+  if (
+    !e.target.closest(".sidebar") &&
+    !e.target.closest(".settings-panel") &&
+    !e.target.closest(".sidebar-toggle") &&
+    !e.target.closest("#settingsBtn")
+  ) {
     sidebar?.classList.remove("open");
     settingsPanel?.classList.remove("open");
     updateOverlay();
   }
 });
 
-$$(".nav-item").forEach(item => {
-  item.onclick = e => {
+/* Nav item navigation */
+navItems.forEach(item => {
+  item.addEventListener("click", e => {
     e.stopPropagation();
+
     const href = item.dataset.href;
     if (href) window.location.href = href;
+
     sidebar?.classList.remove("open");
     updateOverlay();
-  };
+  });
 });
 
 /* ============================================================
