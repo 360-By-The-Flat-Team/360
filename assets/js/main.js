@@ -383,6 +383,75 @@ const settingsPanel = document.querySelector(".settings-panel");
 const overlay       = document.querySelector(".overlay");
 const sidebarToggle = document.querySelector(".sidebar-toggle");
 const settingsBtn   = document.getElementById("settingsBtn");
+const navItems      = Array.from(document.querySelectorAll(".sidebar .nav-item"));
+const NAV_STAGGER_MS = 120;
+const NAV_ANIM_MS = 220;
+let sidebarCloseTimer = null;
+
+navItems.forEach((item, idx) => {
+  item.style.setProperty("--nav-index", String(idx));
+});
+
+function animateNavItemsIn() {
+  navItems.forEach((item, idx) => {
+    item.getAnimations().forEach(a => a.cancel());
+    item.style.opacity = "0";
+    item.style.transform = "translateX(-18px)";
+    item.animate(
+      [
+        { opacity: 0, transform: "translateX(-18px)" },
+        { opacity: 1, transform: "translateX(0)" }
+      ],
+      {
+        duration: NAV_ANIM_MS,
+        delay: idx * NAV_STAGGER_MS,
+        easing: "cubic-bezier(.22,.68,0,1.01)",
+        fill: "forwards"
+      }
+    );
+  });
+}
+
+function animateNavItemsOut() {
+  navItems.forEach((item, idx) => {
+    item.getAnimations().forEach(a => a.cancel());
+    const reverseIdx = navItems.length - 1 - idx;
+    item.animate(
+      [
+        { opacity: 1, transform: "translateX(0)" },
+        { opacity: 0, transform: "translateX(-18px)" }
+      ],
+      {
+        duration: NAV_ANIM_MS - 40,
+        delay: reverseIdx * 80,
+        easing: "ease-in",
+        fill: "forwards"
+      }
+    );
+  });
+}
+
+function openSidebar() {
+  if (!sidebar) return;
+  clearTimeout(sidebarCloseTimer);
+  sidebar.classList.remove("animating-out");
+  sidebar.classList.add("open");
+  updateOverlay();
+  animateNavItemsIn();
+}
+
+function closeSidebar() {
+  if (!sidebar?.classList.contains("open")) return;
+  clearTimeout(sidebarCloseTimer);
+  sidebar.classList.add("animating-out");
+  animateNavItemsOut();
+
+  const totalMs = (NAV_ANIM_MS - 40) + (Math.max(navItems.length - 1, 0) * 80) + 20;
+  sidebarCloseTimer = setTimeout(() => {
+    sidebar.classList.remove("open", "animating-out");
+    updateOverlay();
+  }, totalMs);
+}
 
 function updateOverlay() {
   const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
@@ -391,8 +460,8 @@ function updateOverlay() {
 
 sidebarToggle?.addEventListener("click", e => {
   e.stopPropagation();
-  sidebar?.classList.toggle("open");
-  updateOverlay();
+  if (sidebar?.classList.contains("open")) closeSidebar();
+  else openSidebar();
 });
 
 settingsBtn?.addEventListener("click", e => {
@@ -402,7 +471,7 @@ settingsBtn?.addEventListener("click", e => {
 });
 
 overlay?.addEventListener("click", () => {
-  sidebar?.classList.remove("open");
+  closeSidebar();
   settingsPanel?.classList.remove("open");
   updateOverlay();
 });
@@ -410,7 +479,7 @@ overlay?.addEventListener("click", () => {
 document.addEventListener("click", e => {
   if (!e.target.closest(".sidebar") && !e.target.closest(".settings-panel")
     && !e.target.closest(".sidebar-toggle") && !e.target.closest("#settingsBtn")) {
-    sidebar?.classList.remove("open");
+    closeSidebar();
     settingsPanel?.classList.remove("open");
     updateOverlay();
   }
@@ -421,7 +490,7 @@ $$(".nav-item").forEach(item => {
     e.stopPropagation();
     const href = item.dataset.href;
     if (href) window.location.href = href;
-    sidebar?.classList.remove("open");
+    closeSidebar();
     updateOverlay();
   };
 });
