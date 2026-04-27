@@ -383,6 +383,11 @@ const settingsPanel = document.querySelector(".settings-panel");
 const overlay       = document.querySelector(".overlay");
 const sidebarToggle = document.querySelector(".sidebar-toggle");
 const settingsBtn   = document.getElementById("settingsBtn");
+const navItems      = Array.from(document.querySelectorAll(".sidebar .nav-item"));
+
+navItems.forEach((item, idx) => {
+  item.style.setProperty("--nav-index", String(idx));
+});
 
 function updateOverlay() {
   const anyOpen = sidebar?.classList.contains("open") || settingsPanel?.classList.contains("open");
