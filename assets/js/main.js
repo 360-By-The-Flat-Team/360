@@ -148,10 +148,113 @@ async function buildUserChip(user) {
   });
 
   // Sign out
-  document.getElementById("chipSignOut")?.addEventListener("click", async e => {
-    e.stopPropagation();
-    await supabaseClient.auth.signOut();
-    location.href = "/accounts?login&from=logout";
+     document.getElementById("chipSignOut")?.addEventListener("click", async e => {
+     e.stopPropagation();
+   
+     const confirmed = await confirmSignOut();
+     if (!confirmed) return;
+   
+     await supabaseClient.auth.signOut();
+     location.href = "/accounts?login&from=logout";
+   });
+}
+
+// ============================================================
+// GLOBAL SIGN-OUT CONFIRM MODAL (created once)
+// ============================================================
+function createSignOutModal() {
+  if (document.getElementById("signout-modal")) return;
+
+  const modal = document.createElement("div");
+  modal.id = "signout-modal";
+  modal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+
+  modal.innerHTML = `
+    <div style="
+      background: var(--bg);
+      color: var(--txt);
+      padding: 20px;
+      border-radius: 14px;
+      width: 280px;
+      text-align: center;
+      border: 1px solid var(--br);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    ">
+      <div style="font-size:15px; font-weight:600; margin-bottom:10px;">
+        Sign out?
+      </div>
+      <div style="font-size:13px; opacity:.7; margin-bottom:16px;">
+        Are you sure you want to sign out?
+      </div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="confirmSignOutCancel" style="
+          padding:8px 12px;
+          border-radius:8px;
+          border:1px solid var(--br);
+          background:transparent;
+          cursor:pointer;
+        ">Cancel</button>
+
+        <button id="confirmSignOutOk" style="
+          padding:8px 12px;
+          border-radius:8px;
+          border:none;
+          background:linear-gradient(110deg, var(--a), var(--a2));
+          color:#050816;
+          font-weight:600;
+          cursor:pointer;
+        ">Sign Out</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close handlers
+  modal.addEventListener("click", e => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  document.getElementById("confirmSignOutCancel").onclick = () => {
+    modal.style.display = "none";
+  };
+}
+
+// Show modal and return a Promise
+function confirmSignOut() {
+  createSignOutModal();
+
+  const modal = document.getElementById("signout-modal");
+  modal.style.display = "flex";
+
+  return new Promise(resolve => {
+    const okBtn = document.getElementById("confirmSignOutOk");
+    const cancelBtn = document.getElementById("confirmSignOutCancel");
+
+    const cleanup = () => {
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+    };
+
+    okBtn.onclick = () => {
+      modal.style.display = "none";
+      cleanup();
+      resolve(true);
+    };
+
+    cancelBtn.onclick = () => {
+      modal.style.display = "none";
+      cleanup();
+      resolve(false);
+    };
   });
 }
 
