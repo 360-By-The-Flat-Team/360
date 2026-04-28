@@ -67,7 +67,7 @@ body.dark {
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
-  transition: .3s;
+  transition: transform .3s ease;
   z-index: 60;
 }
 body.dark .sidebar { background: rgba(9,9,11,.97); }
@@ -165,7 +165,7 @@ body.dark .sidebar-footer { color: var(--mutd); }
   border-left: 1px solid var(--br);
   padding: 20px 16px;
   transform: translateX(100%);
-  transition: transform .3s;
+  transition: transform .3s ease;
   z-index: 65;
   overflow-y: auto;
 }
