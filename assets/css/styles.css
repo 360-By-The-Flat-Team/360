@@ -99,7 +99,7 @@ body.dark {
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
-  transition: .3s;
+  transition: transform .3s ease;
   z-index: 60;
 }
 
@@ -217,7 +217,7 @@ body.dark .sidebar-footer {
   border-left: 1px solid var(--br);
   padding: 16px;
   transform: translateX(100%);
-  transition: .3s;
+  transition: transform .3s ease;
   z-index: 65;
 }
 
