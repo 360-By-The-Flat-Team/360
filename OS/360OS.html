@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>360 OS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Google Sans',system-ui,sans-serif;overflow:hidden;background:#e8eaf0;height:100vh}
+#root{height:100vh;position:relative;overflow:hidden}
+
+/* ══ LOCK SCREEN — ALWAYS LIGHT ══ */
+#lock{position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;background:linear-gradient(160deg,#dde8f5,#e8eaf0,#dfe6f5)}
+.lock-top{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:30px 20px 0}
+.lock-time{font-size:88px;font-weight:200;color:#1a1a2e;letter-spacing:-4px;line-height:1;text-align:center}
+.lock-date{font-size:17px;color:#5f6368;margin-top:6px;text-align:center}
+.lock-profiles{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:38px}
+.lp-tile{display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;padding:14px 12px;border-radius:16px;transition:background .18s;border:2px solid transparent;user-select:none}
+.lp-tile:hover{background:rgba(0,0,0,.05)}
+.lp-tile.sel{background:rgba(66,133,244,.08);border-color:rgba(66,133,244,.3)}
+.lp-av{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.lp-name{font-size:13px;color:#202124;font-weight:500}
+.lp-add-icon{width:72px;height:72px;border-radius:50%;border:2px dashed #bdc1c6;display:flex;align-items:center;justify-content:center;color:#80868b;font-size:24px}
+.lock-action{display:flex;flex-direction:column;align-items:center;gap:11px;padding:24px 20px 0;min-height:110px}
+.lock-action.hidden{visibility:hidden;pointer-events:none}
+.lk-input{background:#fff;border:1.5px solid #dadce0;border-radius:28px;padding:11px 22px;font-size:15px;color:#202124;outline:none;text-align:center;width:230px;font-family:inherit;transition:border-color .2s}
+.lk-input:focus{border-color:#4285f4;box-shadow:0 0 0 3px rgba(66,133,244,.15)}
+.lk-row{display:flex;gap:10px}
+.lk-btn{padding:10px 26px;border-radius:28px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.lk-btn.primary{background:#4285f4;color:#fff}.lk-btn.primary:hover{background:#3367d6}
+.lk-btn.ghost{background:transparent;color:#4285f4;border:1.5px solid #dadce0}.lk-btn.ghost:hover{background:rgba(66,133,244,.06)}
+.lk-err{font-size:12px;color:#d93025;min-height:16px;text-align:center}
+.lk-link{font-size:13px;color:#4285f4;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}.lk-link:hover{text-decoration:underline}
+.lock-shelf{background:rgba(255,255,255,.65);backdrop-filter:blur(16px);border-top:1px solid rgba(0,0,0,.08);padding:7px 20px;display:flex;align-items:center}
+.lock-shelf-time{font-size:12px;color:#5f6368;margin-right:auto}
+.ls-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}.ls-icon:hover{background:rgba(0,0,0,.06)}
+.ls-icon svg{width:17px;height:17px;fill:#5f6368}
+
+/* ══ AUTH MODAL ══ */
+#auth-modal{display:none;position:absolute;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(232,234,240,.88);backdrop-filter:blur(8px)}
+#auth-modal.show{display:flex}
+.am-card{background:#fff;border-radius:22px;padding:34px 30px 26px;width:370px;max-width:calc(100% - 32px);box-shadow:0 8px 40px rgba(0,0,0,.14);animation:cardIn .26s cubic-bezier(.22,.68,0,1.1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.am-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.am-logo{display:flex;align-items:center;gap:8px}
+.am-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#4285f4,#06d6c8)}
+.am-text{font-size:19px;font-weight:900;letter-spacing:-.02em;color:#111}
+.am-x{width:26px;height:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;font-size:15px;color:#80868b;display:flex;align-items:center;justify-content:center}.am-x:hover{background:#f1f3f4}
+.am-tabs{display:flex;background:#f1f3f4;border-radius:9px;padding:3px;gap:2px;margin-bottom:16px}
+.am-tab{flex:1;padding:7px;border-radius:7px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;color:#5f6368;border:none;background:transparent;font-family:inherit;transition:.15s}
+.am-tab.on{background:linear-gradient(110deg,#4285f4,#06d6c8);color:#fff}
+.am-f{display:flex;flex-direction:column;gap:4px;margin-bottom:9px}
+.am-f label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9aa0a6}
+.am-f input{padding:10px 12px;border-radius:8px;border:1.5px solid #e5e7eb;font-size:13px;outline:none;color:#111;font-family:inherit;transition:border-color .15s}
+.am-f input:focus{border-color:#4285f4;box-shadow:0 0 0 3px rgba(66,133,244,.12)}
+.am-btn{width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(110deg,#4285f4,#06d6c8);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px}.am-btn:hover{opacity:.9}
+.am-div{text-align:center;font-size:12px;color:#bdc1c6;margin:12px 0;position:relative}
+.am-div::before,.am-div::after{content:'';position:absolute;top:50%;width:35%;height:1px;background:#e5e7eb}
+.am-div::before{left:0}.am-div::after{right:0}
+.am-oauth{display:flex;gap:6px}
+.am-ob{flex:1;padding:8px 4px;border-radius:9px;border:1.5px solid #e5e7eb;background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#202124;transition:border-color .15s}.am-ob:hover{border-color:#4285f4}
+.am-msg{font-size:12px;text-align:center;min-height:16px;margin-top:7px}
+.am-msg.err{color:#d93025}.am-msg.ok{color:#1e8e3e}
+
+/* ══ DESKTOP ══ */
+#desktop{display:none;position:absolute;inset:0;flex-direction:column;height:100vh}
+#desktop.show{display:flex}
+.desk-wall{position:absolute;inset:0;background:linear-gradient(145deg,#c9d8f0,#dde8f5,#cfd9ec);transition:background .4s}
+#desktop.dark .desk-wall{background:linear-gradient(145deg,#1a2540,#0f1f3d,#1e2d50)}
+
+/* taskbar */
+#taskbar{position:relative;z-index:10;background:rgba(255,255,255,.75);backdrop-filter:blur(20px);border-top:1px solid rgba(0,0,0,.1);padding:4px 14px;display:flex;align-items:center;gap:3px;order:2;flex-shrink:0;height:52px}
+#desktop.dark #taskbar{background:rgba(15,21,40,.78);border-top-color:rgba(255,255,255,.1)}
+.tbi{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,transform .12s;position:relative;flex-shrink:0}
+.tbi:hover{background:rgba(0,0,0,.07);transform:scale(1.08)}
+#desktop.dark .tbi:hover{background:rgba(255,255,255,.1)}
+.tbi svg{width:21px;height:21px;fill:#3c4043}
+#desktop.dark .tbi svg{fill:rgba(255,255,255,.85)}
+.tbi.open::after{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#4285f4}
+.tb-sep{width:1px;height:28px;background:rgba(0,0,0,.1);margin:0 2px;flex-shrink:0}
+#desktop.dark .tb-sep{background:rgba(255,255,255,.12)}
+#tb-right{margin-left:auto;display:flex;align-items:center;gap:4px}
+#tb-clock{font-size:11px;color:#3c4043;text-align:right;line-height:1.5;padding:0 5px;cursor:default;white-space:nowrap}
+#desktop.dark #tb-clock{color:rgba(255,255,255,.8)}
+.tb-user{display:flex;align-items:center;gap:5px;padding:4px 9px 4px 4px;border-radius:20px;border:1px solid rgba(0,0,0,.12);cursor:pointer;transition:background .15s}
+.tb-user:hover{background:rgba(0,0,0,.05)}
+#desktop.dark .tb-user{border-color:rgba(255,255,255,.15)}
+#desktop.dark .tb-user:hover{background:rgba(255,255,255,.08)}
+.tb-av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#06d6c8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.tb-av-name{font-size:12px;color:#3c4043;font-weight:500;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#desktop.dark .tb-av-name{color:rgba(255,255,255,.8)}
+
+/* desk icons area */
+#desk-area{flex:1;position:relative;z-index:5;padding:16px;order:1;overflow:hidden}
+.di{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:9px;border-radius:12px;width:76px;transition:background .15s;user-select:none}
+.di:hover{background:rgba(0,0,0,.08)}
+#desktop.dark .di:hover{background:rgba(255,255,255,.1)}
+.di-img{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.di-lbl{font-size:11px;color:#202124;text-align:center;font-weight:500;line-height:1.3;word-break:break-word}
+#desktop.dark .di-lbl{color:rgba(255,255,255,.9)}
+
+/* windows layer */
+#wlayer{position:absolute;inset:0 0 52px 0;z-index:20;pointer-events:none;overflow:hidden}
+.win{position:absolute;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.22);pointer-events:all;display:flex;flex-direction:column;min-width:300px;min-height:220px}
+#desktop.dark .win{background:#1e2535}
+.win.maximized{top:0!important;left:0!important;width:100%!important;height:100%!important;border-radius:0!important}
+.win-bar{background:#e8eaed;padding:7px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:move;user-select:none}
+#desktop.dark .win-bar{background:#273048}
+.wdots{display:flex;gap:5px}
+.wd{width:12px;height:12px;border-radius:50%;cursor:pointer;flex-shrink:0;transition:opacity .15s}
+.wd:hover{opacity:.75}
+.wd.cl{background:#ff5f57}.wd.mn{background:#febc2e}.wd.mx{background:#28c840}
+.win-ttl{flex:1;font-size:12px;color:#5f6368;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#desktop.dark .win-ttl{color:rgba(255,255,255,.5)}
+.win-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+
+/* ══ BROWSER ══ */
+.br-tabstrip{background:#dee1e6;padding:6px 6px 0;display:flex;align-items:flex-end;gap:1px;flex-shrink:0}
+#desktop.dark .br-tabstrip{background:#1a2035}
+.br-tabs-con{display:flex;flex:1;gap:1px;overflow:hidden;min-width:0}
+.btab{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px 8px 0 0;font-size:11px;color:#5f6368;background:transparent;cursor:pointer;max-width:160px;min-width:70px;flex-shrink:1;user-select:none;transition:background .1s}
+.btab:hover{background:#c8cbd0}
+.btab.on{background:#f1f3f4;color:#202124}
+#desktop.dark .btab.on{background:#273048;color:rgba(255,255,255,.9)}
+.btab-ttl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;pointer-events:none}
+.btab-x{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;color:#80868b}
+.btab-x:hover{background:#bdc1c6;color:#202124}
+.br-newtab-btn{width:24px;height:24px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-bottom:2px;flex-shrink:0;color:#5f6368}
+.br-newtab-btn:hover{background:#c8cbd0}
+
+.br-toolbar{background:#f1f3f4;padding:5px 8px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #dadce0;flex-shrink:0}
+#desktop.dark .br-toolbar{background:#273048;border-bottom-color:rgba(255,255,255,.08)}
+.brtb{width:28px;height:28px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s}
+.brtb:hover{background:#e8eaed}
+.brtb:disabled{opacity:.32;cursor:default}
+#desktop.dark .brtb:hover{background:rgba(255,255,255,.1)}
+.brtb svg{width:15px;height:15px;fill:#5f6368}
+#desktop.dark .brtb svg{fill:rgba(255,255,255,.65)}
+.br-omni{flex:1;background:#fff;border-radius:20px;height:30px;display:flex;align-items:center;padding:0 11px;gap:5px;outline:1px solid #dadce0;cursor:text;min-width:0}
+#desktop.dark .br-omni{background:rgba(255,255,255,.07);outline-color:rgba(255,255,255,.12)}
+.br-omni:focus-within{outline:2px solid #4285f4}
+.br-omni input{flex:1;border:none;outline:none;font-size:13px;color:#202124;background:transparent;font-family:inherit;min-width:0}
+#desktop.dark .br-omni input{color:rgba(255,255,255,.9)}
+.br-omni input::placeholder{color:#9aa0a6}
+.br-menu-btn{width:28px;height:28px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.br-menu-btn:hover{background:#e8eaed}
+#desktop.dark .br-menu-btn:hover{background:rgba(255,255,255,.1)}
+.br-menu-btn svg{width:15px;height:15px;fill:#5f6368}
+#desktop.dark .br-menu-btn svg{fill:rgba(255,255,255,.65)}
+.br-dd{display:none;position:absolute;top:32px;right:0;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);border:1px solid #e5e7eb;width:180px;z-index:999;padding:5px 0;animation:fadeDown .15s ease}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.br-dd.show{display:block}
+#desktop.dark .br-dd{background:#273048;border-color:rgba(255,255,255,.1)}
+.br-dd-item{padding:8px 14px;font-size:13px;color:#202124;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s}
+.br-dd-item:hover{background:#f1f3f4}
+#desktop.dark .br-dd-item{color:rgba(255,255,255,.85)}
+#desktop.dark .br-dd-item:hover{background:rgba(255,255,255,.08)}
+
+/* viewport — scrolling stays INSIDE */
+.br-viewport{flex:1;position:relative;overflow:hidden;min-height:0}
+.bscreen{position:absolute;inset:0;display:none;overflow:hidden}
+.bscreen.on{display:flex;flex-direction:column}
+
+/* new tab */
+.nt-bg{background:#f8f9fa;align-items:center;justify-content:center;gap:16px;padding:20px;overflow-y:auto}
+#desktop.dark .nt-bg{background:#1a2035}
+.nt-logo{font-size:40px;font-weight:900;background:linear-gradient(120deg,#4285f4,#06d6c8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;flex-shrink:0}
+.nt-sbar{display:flex;align-items:center;background:#fff;border:1px solid #dfe1e5;border-radius:22px;padding:0 14px;height:42px;width:min(440px,90%);gap:9px;box-shadow:0 1px 6px rgba(0,0,0,.07);flex-shrink:0}
+#desktop.dark .nt-sbar{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12)}
+.nt-sbar svg{fill:#9aa0a6;flex-shrink:0;width:16px;height:16px}
+.nt-sbar input{flex:1;border:none;outline:none;font-size:14px;color:#202124;font-family:inherit;background:transparent}
+#desktop.dark .nt-sbar input{color:rgba(255,255,255,.9)}
+.nt-ql-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:460px;flex-shrink:0}
+.nt-ql{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 7px;border-radius:10px;cursor:pointer;font-size:11px;color:#5f6368;font-weight:500;min-width:58px;transition:background .15s}
+.nt-ql:hover{background:rgba(0,0,0,.06)}
+#desktop.dark .nt-ql{color:rgba(255,255,255,.6)}
+#desktop.dark .nt-ql:hover{background:rgba(255,255,255,.08)}
+.nt-ql-i{font-size:20px;margin-bottom:2px}
+
+/* blocked */
+.bscreen-bl{background:#f8f9fa;align-items:center;justify-content:center;text-align:center;padding:20px;gap:8px;overflow-y:auto}
+#desktop.dark .bscreen-bl{background:#1a2035}
+.b-circle{width:48px;height:48px;border-radius:50%;background:#f1f3f4;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.b-circle svg{width:24px;height:24px;fill:#bdc1c6}
+.b-t{font-size:15px;font-weight:500;color:#202124}
+#desktop.dark .b-t{color:rgba(255,255,255,.9)}
+.b-s{font-size:12px;color:#5f6368;line-height:1.75;max-width:280px}
+#desktop.dark .b-s{color:rgba(255,255,255,.45)}
+
+/* loading */
+.bscreen-load{background:#fff;align-items:center;justify-content:center;gap:12px}
+#desktop.dark .bscreen-load{background:#1e2535}
+.b-spin{width:28px;height:28px;border:3px solid #e8eaed;border-top-color:#4285f4;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.b-load-t{font-size:13px;color:#5f6368}
+
+/* loaded iframe — fills space, iframe handles its own scroll */
+.bscreen-iframe{padding:0;background:#fff}
+.bscreen-iframe iframe{width:100%;height:100%;border:none;display:block}
+
+/* quick settings */
+#qs-panel{display:none;position:absolute;bottom:56px;right:8px;width:268px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.16);border:1px solid #e8eaed;z-index:50;padding:13px;animation:fadeUp .18s ease}
+#desktop.dark #qs-panel{background:#273048;border-color:rgba(255,255,255,.1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+#qs-panel.show{display:block}
+.qs-urow{display:flex;align-items:center;gap:9px;padding:9px;border-radius:10px;background:#f8f9fa;margin-bottom:10px}
+#desktop.dark .qs-urow{background:rgba(255,255,255,.06)}
+.qs-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#06d6c8);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+.qs-uname{font-size:13px;font-weight:600;color:#202124}
+#desktop.dark .qs-uname{color:rgba(255,255,255,.9)}
+.qs-uemail{font-size:11px;color:#80868b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.qs-so{margin-left:auto;padding:4px 9px;border-radius:7px;border:1px solid #dadce0;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:#d93025;font-family:inherit;flex-shrink:0}.qs-so:hover{background:#fce8e6}
+#desktop.dark .qs-so{background:transparent;border-color:rgba(255,255,255,.15);color:#f28b82}
+.qs-cta{padding:9px;border-radius:9px;background:#e8f0fe;cursor:pointer;font-size:12px;color:#1a73e8;text-align:center;font-weight:600;margin-bottom:10px}.qs-cta:hover{background:#d2e3fc}
+.qs-toggles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.qs-t{background:#f1f3f4;border-radius:9px;padding:9px 6px;cursor:pointer;text-align:center;font-size:11px;color:#3c4043;font-weight:500;user-select:none;transition:background .15s}.qs-t:hover{background:#e8eaed}
+#desktop.dark .qs-t{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
+#desktop.dark .qs-t:hover{background:rgba(255,255,255,.12)}
+.qs-t.on{background:#e8f0fe;color:#1a73e8}
+#desktop.dark .qs-t.on{background:rgba(66,133,244,.2);color:#8ab4f8}
+.qs-t-icon{font-size:17px;margin-bottom:3px}
+.qs-theme-row{display:flex;align-items:center;justify-content:space-between;padding:6px 3px 0}
+.qs-theme-lbl{font-size:12px;color:#5f6368;font-weight:500}
+#desktop.dark .qs-theme-lbl{color:rgba(255,255,255,.55)}
+.qs-tog{width:40px;height:22px;border-radius:11px;background:#dadce0;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}.qs-tog.on{background:#4285f4}
+.qs-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}.qs-tog.on .qs-thumb{left:21px}
+
+/* generic app */
+.app-body{padding:18px;overflow-y:auto;color:#202124;height:100%;font-size:13px;line-height:1.6}
+#desktop.dark .app-body{color:rgba(255,255,255,.85)}
+.app-body h3{font-size:14px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f1f3f4}
+#desktop.dark .app-body h3{border-bottom-color:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+
+/* store */
+.store-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+.store-card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:flex-start;transition:border-color .15s,box-shadow .15s}
+.store-card:hover{border-color:#4285f4;box-shadow:0 2px 8px rgba(66,133,244,.1)}
+#desktop.dark .store-card{border-color:rgba(255,255,255,.1)}.#desktop.dark .store-card:hover{border-color:#4285f4}
+.store-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.store-name{font-size:13px;font-weight:600;color:#202124;margin-bottom:2px}
+#desktop.dark .store-name{color:rgba(255,255,255,.9)}
+.store-cat{font-size:11px;color:#80868b;margin-bottom:6px}
+.store-btn{padding:4px 12px;border-radius:7px;border:none;background:#4285f4;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}.store-btn:hover{opacity:.85}
+.store-btn.installed{background:#e8f0fe;color:#1a73e8;cursor:default}
+</style>
+</head>
+<body>
+<div id="root">
+
+<!-- LOCK -->
+<div id="lock">
+  <div class="lock-top">
+    <div class="lock-time" id="lock-time">12:00</div>
+    <div class="lock-date" id="lock-date">Monday, January 1</div>
+    <div class="lock-profiles" id="lock-profiles"></div>
+    <div class="lock-action hidden" id="lock-action">
+      <input class="lk-input" id="lk-pass" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')doUnlock()"/>
+      <div class="lk-row">
+        <button class="lk-btn ghost" onclick="cancelSel()">Back</button>
+        <button class="lk-btn primary" onclick="doUnlock()">Sign in</button>
+      </div>
+      <div class="lk-err" id="lk-err"></div>
+      <button class="lk-link" onclick="showAuthModal('in')">Use 360 account</button>
+    </div>
+  </div>
+  <div class="lock-shelf">
+    <span class="lock-shelf-time" id="lock-shelf-t">12:00</span>
+    <div class="ls-icon" onclick="showAuthModal('in')"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal">
+  <div class="am-card">
+    <div class="am-hdr">
+      <div class="am-logo"><div class="am-mark"></div><div class="am-text">360</div></div>
+      <button class="am-x" onclick="closeAuthModal()">✕</button>
+    </div>
+    <div class="am-tabs">
+      <button class="am-tab on" id="atab-in" onclick="switchATab('in')">Sign in</button>
+      <button class="am-tab" id="atab-up" onclick="switchATab('up')">Create account</button>
+    </div>
+    <div id="af-in">
+      <div class="am-f"><label>Email</label><input id="si-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doSignIn()"/></div>
+      <div class="am-f"><label>Password</label><input id="si-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSignIn()"/></div>
+      <button class="am-btn" onclick="doSignIn()">Sign In</button>
+      <div class="am-div">or continue with</div>
+      <div class="am-oauth">
+        <button class="am-ob" onclick="oAuth('google')">🌐 Google</button>
+        <button class="am-ob" onclick="oAuth('github')">🐙 GitHub</button>
+        <button class="am-ob" onclick="oAuth('spotify')">🎵 Spotify</button>
+      </div>
+      <div class="am-msg" id="si-msg"></div>
+    </div>
+    <div id="af-up" style="display:none">
+      <div class="am-f"><label>Username</label><input id="su-user" type="text" placeholder="cooluser123"/></div>
+      <div class="am-f"><label>Email</label><input id="su-email" type="email" placeholder="you@example.com"/></div>
+      <div class="am-f"><label>Password</label><input id="su-pass" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doSignUp()"/></div>
+      <button class="am-btn" onclick="doSignUp()">Create Account</button>
+      <div class="am-div">or continue with</div>
+      <div class="am-oauth">
+        <button class="am-ob" onclick="oAuth('google')">🌐 Google</button>
+        <button class="am-ob" onclick="oAuth('github')">🐙 GitHub</button>
+        <button class="am-ob" onclick="oAuth('spotify')">🎵 Spotify</button>
+      </div>
+      <div class="am-msg" id="su-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop">
+  <div class="desk-wall"></div>
+  <div id="desk-area"></div>
+  <div id="wlayer"></div>
+  <div id="taskbar">
+    <div class="tbi open" onclick="openBrowser()" title="Browser" id="tbi-br">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+    </div>
+    <div class="tbi" onclick="open360('360 AI','https://360-search.com/ai')" title="360 AI">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    </div>
+    <div class="tbi" onclick="open360('360 Games','https://360-search.com/games')" title="Games">
+      <svg viewBox="0 0 24 24"><path d="M15 7.5V2H9v5.5l3 3 3-3zM7.5 9H2v6h5.5l3-3-3-3zm1 6.5V21h6v-5.5l-3-3-3 3zm7.5-6.5l-3 3 3 3H21V9h-5.5z"/></svg>
+    </div>
+    <div class="tbi" onclick="openStore()" title="360 Apps">
+      <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tbi" onclick="open360('Settings','https://360-search.com/settings')" title="Settings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </div>
+    <div id="tb-right">
+      <div class="tb-user" onclick="toggleQS()" id="tb-user-btn">
+        <div class="tb-av" id="tb-av">?</div>
+        <span class="tb-av-name" id="tb-av-name">Account</span>
+      </div>
+      <div id="tb-clock"></div>
+    </div>
+  </div>
+  <div id="qs-panel">
+    <div class="qs-urow">
+      <div class="qs-av" id="qs-av">?</div>
+      <div style="flex:1;min-width:0"><div class="qs-uname" id="qs-uname">Guest</div><div class="qs-uemail" id="qs-uemail"></div></div>
+      <button class="qs-so" id="qs-so" onclick="signOut()" style="display:none">Sign out</button>
+    </div>
+    <div class="qs-cta" id="qs-cta" style="display:none" onclick="showAuthModal('in')">Sign in to your 360 account →</div>
+    <div class="qs-toggles">
+      <div class="qs-t" onclick="this.classList.toggle('on')"><div class="qs-t-icon">🔇</div>Mute</div>
+      <div class="qs-t" onclick="this.classList.toggle('on')"><div class="qs-t-icon">📶</div>Wi-Fi</div>
+      <div class="qs-t" onclick="this.classList.toggle('on')"><div class="qs-t-icon">🔵</div>Bluetooth</div>
+      <div class="qs-t" onclick="this.classList.toggle('on')"><div class="qs-t-icon">🔋</div>Battery</div>
+    </div>
+    <div class="qs-theme-row">
+      <span class="qs-theme-lbl">Dark mode</span>
+      <button class="qs-tog" id="qs-dark-btn" onclick="toggleDark()"><div class="qs-thumb"></div></button>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+const sb=window.supabase.createClient('https://wiswfpfsjiowtrdyqpxy.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc3dmcGZzamlvd3RyZHlxcHh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzg4OTcsImV4cCI6MjA4MzkxNDg5N30.z_4FtM2c8UwgrRlafPYjolQuod4IoHQats95XHio1zM')
+let currentUser=null,isDark=false,winZ=30
+const COLORS=['#4285f4','#ea4335','#fbbc04','#34a853','#9c27b0','#ff5722']
+
+function tick(){
+  const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0')
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+  const MON=['January','February','March','April','May','June','July','August','September','October','November','December']
+  const ts=h+':'+m,ds=DAYS[n.getDay()]+', '+MON[n.getMonth()]+' '+n.getDate()
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v}
+  set('lock-time',ts);set('lock-date',ds);set('lock-shelf-t',ts)
+  const tc=document.getElementById('tb-clock');if(tc)tc.innerHTML=ts+'<br>'+MON[n.getMonth()].slice(0,3)+' '+n.getDate()
+}
+setInterval(tick,1000);tick()
+
+sb.auth.onAuthStateChange((_e,s)=>{currentUser=s?.user??null;onAuth()})
+sb.auth.getUser().then(({data})=>{currentUser=data.user;onAuth()})
+function onAuth(){updateUI();renderLockProfiles();if(currentUser){const p=currentUser.user_metadata?.darkMode;if(typeof p==='boolean')setDark(p,false)}}
+
+function getU(){
+  if(!currentUser)return{name:'Guest',email:'',initial:'G',color:'#9aa0a6'}
+  const email=currentUser.email||''
+  const name=currentUser.user_metadata?.username||currentUser.user_metadata?.full_name||email.split('@')[0]||'User'
+  return{name,email,initial:name[0].toUpperCase(),color:COLORS[name.charCodeAt(0)%COLORS.length]}
+}
+function updateUI(){
+  const u=getU(),grad=currentUser?`linear-gradient(135deg,${u.color},#06d6c8)`:'#9aa0a6'
+  const se=(id,prop,val)=>{const e=document.getElementById(id);if(e)e[prop]=val}
+  const ss=(id,prop,val)=>{const e=document.getElementById(id);if(e)e.style[prop]=val}
+  se('tb-av','textContent',u.initial);ss('tb-av','background',grad)
+  se('tb-av-name','textContent',u.name)
+  se('qs-av','textContent',u.initial);ss('qs-av','background',grad)
+  se('qs-uname','textContent',u.name);se('qs-uemail','textContent',u.email)
+  const so=document.getElementById('qs-so');if(so)so.style.display=currentUser?'block':'none'
+  const cta=document.getElementById('qs-cta');if(cta)cta.style.display=currentUser?'none':'block'
+}
+
+function renderLockProfiles(){
+  const c=document.getElementById('lock-profiles');if(!c)return;c.innerHTML=''
+  const profiles=[]
+  if(currentUser){const u=getU();profiles.push({name:u.name,initial:u.initial,color:u.color,isAuth:true})}
+  profiles.push({name:'Guest',initial:'G',color:'#9aa0a6',isGuest:true})
+  profiles.forEach(p=>{
+    const d=document.createElement('div');d.className='lp-tile'
+    d.innerHTML=`<div class="lp-av" style="background:linear-gradient(135deg,${p.color},${p.color}bb)">${p.initial}</div><div class="lp-name">${p.name}</div>`
+    d.onclick=()=>selectProfile(p,d)
+    c.appendChild(d)
+  })
+  const add=document.createElement('div');add.className='lp-tile'
+  add.innerHTML=`<div class="lp-add-icon">+</div><div class="lp-name" style="color:#80868b">Add account</div>`
+  add.onclick=()=>showAuthModal('up')
+  c.appendChild(add)
+}
+
+function selectProfile(p,el){
+  document.querySelectorAll('.lp-tile').forEach(t=>t.classList.remove('sel'));el.classList.add('sel')
+  if(p.isGuest||p.isAuth){bootDesktop();return}
+  const la=document.getElementById('lock-action');la.classList.remove('hidden');document.getElementById('lk-pass').focus()
+}
+function cancelSel(){document.getElementById('lock-action').classList.add('hidden');document.getElementById('lk-err').textContent='';document.querySelectorAll('.lp-tile').forEach(t=>t.classList.remove('sel'))}
+function doUnlock(){document.getElementById('lk-err').textContent='';bootDesktop()}
+
+function bootDesktop(){
+  document.getElementById('lock').style.display='none'
+  document.getElementById('desktop').classList.add('show')
+  closeAuthModal();updateUI();renderDesktop();renderLockProfiles()
+}
+
+function showAuthModal(tab){document.getElementById('auth-modal').classList.add('show');switchATab(tab)}
+function closeAuthModal(){document.getElementById('auth-modal').classList.remove('show')}
+function switchATab(t){
+  document.getElementById('af-in').style.display=t==='in'?'':'none'
+  document.getElementById('af-up').style.display=t==='up'?'':'none'
+  document.getElementById('atab-in').classList.toggle('on',t==='in')
+  document.getElementById('atab-up').classList.toggle('on',t==='up')
+}
+function setMsg(id,txt,cls){const e=document.getElementById(id);if(e){e.textContent=txt;e.className='am-msg '+(cls||'')}}
+
+async function doSignIn(){
+  const email=document.getElementById('si-email').value.trim(),pass=document.getElementById('si-pass').value
+  if(!email||!pass)return setMsg('si-msg','Fill in all fields','err')
+  setMsg('si-msg','Signing in…')
+  const{error}=await sb.auth.signInWithPassword({email,password:pass})
+  if(error)setMsg('si-msg',error.message,'err')
+  else{setMsg('si-msg','Success! ✓','ok');setTimeout(()=>{closeAuthModal();bootDesktop()},500)}
+}
+async function doSignUp(){
+  const user=document.getElementById('su-user').value.trim(),email=document.getElementById('su-email').value.trim(),pass=document.getElementById('su-pass').value
+  if(!user||!email||!pass)return setMsg('su-msg','Fill in all fields','err')
+  if(pass.length<6)return setMsg('su-msg','Password must be 6+ characters','err')
+  setMsg('su-msg','Creating account…')
+  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{username:user}}})
+  if(error)setMsg('su-msg',error.message,'err')
+  else setMsg('su-msg','Account created! Check your email.','ok')
+}
+async function oAuth(provider){
+  const{error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo:'https://360-search.com/accounts.html'}})
+  if(error)alert('OAuth error: '+error.message)
+}
+async function signOut(){
+  await sb.auth.signOut();document.getElementById('qs-panel').classList.remove('show');setDark(false,false)
+  document.getElementById('desktop').classList.remove('show');document.getElementById('lock').style.display='';renderLockProfiles()
+}
+
+function toggleDark(){setDark(!isDark,true)}
+function setDark(val,save){
+  isDark=val;document.getElementById('desktop').classList.toggle('dark',val)
+  const btn=document.getElementById('qs-dark-btn');if(btn)btn.classList.toggle('on',val)
+  if(save&&currentUser)sb.auth.updateUser({data:{darkMode:val}}).catch(()=>{})
+}
+function toggleQS(){document.getElementById('qs-panel').classList.toggle('show')}
+document.addEventListener('click',e=>{if(!e.target.closest('#qs-panel')&&!e.target.closest('#tb-user-btn'))document.getElementById('qs-panel').classList.remove('show')})
+
+const DESK_APPS=[
+  {l:'Browser',icon:'🌐',c:'#4285f4',x:20,y:16,action:()=>openBrowser()},
+  {l:'360 AI',icon:'🤖',c:'#34a853',x:20,y:110,action:()=>open360('360 AI','https://360-search.com/ai')},
+  {l:'360 Games',icon:'🎮',c:'#fbbc04',x:20,y:204,action:()=>open360('360 Games','https://360-search.com/games')},
+  {l:'360 Apps',icon:'🛍️',c:'#9c27b0',x:20,y:298,action:()=>openStore()},
+  {l:'Settings',icon:'⚙️',c:'#607d8b',x:20,y:392,action:()=>open360('Settings','https://360-search.com/settings')},
+]
+function renderDesktop(){
+  const da=document.getElementById('desk-area');da.innerHTML=''
+  DESK_APPS.forEach(a=>{
+    const d=document.createElement('div');d.className='di';d.style.cssText=`left:${a.x}px;top:${a.y}px`
+    d.innerHTML=`<div class="di-img" style="background:${a.c}">${a.icon}</div><div class="di-lbl">${a.l}</div>`
+    d.ondblclick=a.action
+    d.onclick=()=>{document.querySelectorAll('.di').forEach(x=>x.style.outline='');d.style.outline='2px solid rgba(66,133,244,.5)'}
+    da.appendChild(d)
+  })
+}
+
+function makeWin(title,w,h,bodyHTML){
+  const wl=document.getElementById('wlayer'),ww=wl.offsetWidth||800,wh=wl.offsetHeight||600
+  const win=document.createElement('div');win.className='win'
+  const left=Math.max(10,Math.min(60+Math.random()*120,ww-w-10))
+  const top=Math.max(10,Math.min(30+Math.random()*60,wh-h-10))
+  win.style.cssText=`left:${left}px;top:${top}px;width:${w}px;height:${h}px;z-index:${++winZ}`
+  win.innerHTML=`<div class="win-bar"><div class="wdots"><div class="wd cl"></div><div class="wd mn"></div><div class="wd mx"></div></div><div class="win-ttl">${title}</div><div style="width:52px"></div></div><div class="win-body">${bodyHTML}</div>`
+  const[cl,mn,mx]=win.querySelectorAll('.wd')
+  cl.onclick=()=>win.remove()
+  mn.onclick=()=>win.style.visibility=win.style.visibility==='hidden'?'':'hidden'
+  mx.onclick=()=>win.classList.toggle('maximized')
+  const bar=win.querySelector('.win-bar')
+  let drag=false,ox=0,oy=0
+  bar.onmousedown=e=>{if(e.target.classList.contains('wd'))return;drag=true;win.style.zIndex=++winZ;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;e.preventDefault()}
+  document.addEventListener('mousemove',e=>{if(drag){win.style.left=(e.clientX-ox)+'px';win.style.top=(e.clientY-oy)+'px'}})
+  document.addEventListener('mouseup',()=>drag=false)
+  win.onmousedown=()=>win.style.zIndex=++winZ
+  wl.appendChild(win);return win
+}
+
+// ══ BROWSER ══
+const QL=[
+  {i:'🤖',l:'AI',h:'https://360-search.com/ai'},
+  {i:'📰',l:'News',h:'https://360-search.com/news'},
+  {i:'🌦️',l:'Weather',h:'https://360-search.com/weather'},
+  {i:'📈',l:'Stocks',h:'https://360-search.com/stocks'},
+  {i:'🎮',l:'Games',h:'https://360-search.com/games'},
+  {i:'🌍',l:'Translate',h:'https://360-search.com/translator'},
+]
+const FRIENDLY=['en.wikipedia.org','example.com','httpbin.org','neverssl.com','info.cern.ch']
+let browsers=[],nextBid=1
+
+function openBrowser(initUrl){
+  const bid='br'+nextBid++
+  const state={id:bid,tabs:[{id:1,title:'New Tab',url:'',screen:'nt',hist:[],hIdx:-1}],active:1,ntid:2}
+  browsers.push(state)
+
+  const qlHtml=QL.map(q=>`<div class="nt-ql" onclick="bLoad('${bid}','${q.h}')"><div class="nt-ql-i">${q.i}</div>${q.l}</div>`).join('')
+
+  const body=`
+  <div class="br-tabstrip">
+    <div class="br-tabs-con" id="${bid}-tc"></div>
+    <button class="br-newtab-btn" onclick="bNewTab('${bid}')" title="New tab">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3v5H3v1h5v5h1V9h5V8H9V3H8z"/></svg>
+    </button>
+  </div>
+  <div class="br-toolbar">
+    <button class="brtb" id="${bid}-back" onclick="bHistNav('${bid}','back')" disabled>
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    </button>
+    <button class="brtb" id="${bid}-fwd" onclick="bHistNav('${bid}','fwd')" disabled>
+      <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+    </button>
+    <button class="brtb" onclick="bReload('${bid}')">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    </button>
+    <div class="br-omni">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#9aa0a6" style="flex-shrink:0"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      <input id="${bid}-url" type="text" placeholder="Search 360 or type a URL" onkeydown="if(event.key==='Enter')bGo('${bid}')"/>
+    </div>
+    <div style="position:relative;flex-shrink:0">
+      <button class="br-menu-btn" onclick="bToggleMenu('${bid}',event)">
+        <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      </button>
+      <div class="br-dd" id="${bid}-dd">
+        <div class="br-dd-item" onclick="bNewTab('${bid}');bCloseDd('${bid}')">📄 New tab</div>
+        <div class="br-dd-item" onclick="bReload('${bid}');bCloseDd('${bid}')">🔄 Reload</div>
+        <div class="br-dd-item" onclick="bHistNav('${bid}','back');bCloseDd('${bid}')">⬅️ Back</div>
+        <div class="br-dd-item" onclick="bHistNav('${bid}','fwd');bCloseDd('${bid}')">➡️ Forward</div>
+        <div class="br-dd-item" onclick="bLoad('${bid}','https://360-search.com');bCloseDd('${bid}')">🏠 360 Home</div>
+        <div class="br-dd-item" onclick="bZoom('${bid}',1.15);bCloseDd('${bid}')">🔍 Zoom in</div>
+        <div class="br-dd-item" onclick="bZoom('${bid}',0.87);bCloseDd('${bid}')">🔎 Zoom out</div>
+      </div>
+    </div>
+  </div>
+  <div class="br-viewport" id="${bid}-vp">
+    <div class="bscreen nt-bg on" id="${bid}-nt">
+      <div class="nt-logo">360</div>
+      <div class="nt-sbar">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" placeholder="Search 360 or type a URL" onkeydown="if(event.key==='Enter'){document.getElementById('${bid}-url').value=this.value;bGo('${bid}')}"/>
+      </div>
+      <div class="nt-ql-row">${qlHtml}</div>
+    </div>
+    <div class="bscreen bscreen-load" id="${bid}-load">
+      <div class="b-spin"></div>
+      <div class="b-load-t" id="${bid}-load-t">Loading…</div>
+    </div>
+    <div class="bscreen bscreen-bl" id="${bid}-bl">
+      <div class="b-circle"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+      <div class="b-t">This page can't be embedded</div>
+      <div class="b-s" id="${bid}-bl-sub">This site blocks iframe embedding. A server-side Playwright backend is required for unrestricted browsing.</div>
+    </div>
+    <div class="bscreen bscreen-iframe" id="${bid}-iframe" style="display:none">
+      <iframe id="${bid}-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock" style="width:100%;height:100%;border:none;display:block"></iframe>
+    </div>
+  </div>`
+
+  makeWin('360 Browser',680,520,body)
+  bRenderTabs(bid)
+  if(initUrl)setTimeout(()=>bLoad(bid,initUrl),40)
+}
+
+function bS(bid){return browsers.find(b=>b.id===bid)}
+function bAT(bid){const s=bS(bid);return s?.tabs.find(t=>t.id===s.active)}
+
+function bRenderTabs(bid){
+  const s=bS(bid);if(!s)return
+  const tc=document.getElementById(bid+'-tc');if(!tc)return
+  tc.innerHTML=''
+  s.tabs.forEach(t=>{
+    const d=document.createElement('div');d.className='btab'+(t.id===s.active?' on':'')
+    d.innerHTML=`<span class="btab-ttl">${t.title}</span><span class="btab-x">✕</span>`
+    d.querySelector('.btab-x').onclick=e=>{e.stopPropagation();bCloseTab(bid,t.id)}
+    d.onclick=e=>{if(!e.target.classList.contains('btab-x'))bSwitch(bid,t.id)}
+    tc.appendChild(d)
+  })
+}
+
+function bShowScreen(bid,which){
+  // Hide all screens first
+  const screens=['nt','load','bl','iframe']
+  screens.forEach(s=>{
+    const el=document.getElementById(bid+'-'+s);if(!el)return
+    if(s==='iframe'){el.style.display='none';el.classList.remove('on')}
+    else{el.classList.remove('on')}
+  })
+  // Show target
+  const target=document.getElementById(bid+'-'+which);if(!target)return
+  if(which==='iframe'){target.style.display='flex';target.classList.add('on')}
+  else{target.classList.add('on')}
+}
+
+function bSwitch(bid,tid){
+  const s=bS(bid);if(!s)return;s.active=tid
+  const t=s.tabs.find(x=>x.id===tid)
+  const urlEl=document.getElementById(bid+'-url');if(urlEl)urlEl.value=t.url||''
+  // Restore this tab's screen — don't reload, just show correct screen
+  bShowScreen(bid,t.screen||'nt')
+  // If it was showing an iframe, make sure the iframe has the right URL
+  if(t.screen==='iframe'&&t.url){
+    const fr=document.getElementById(bid+'-frame')
+    if(fr&&fr.getAttribute('data-loaded')!==t.url){fr.src=t.url;fr.setAttribute('data-loaded',t.url)}
+  }
+  bRenderTabs(bid);bNavBtns(bid)
+}
+
+function bNewTab(bid){
+  const s=bS(bid);if(!s)return
+  const nt={id:s.ntid++,title:'New Tab',url:'',screen:'nt',hist:[],hIdx:-1}
+  s.tabs.push(nt);s.active=nt.id
+  const urlEl=document.getElementById(bid+'-url');if(urlEl)urlEl.value=''
+  bShowScreen(bid,'nt');bRenderTabs(bid);bNavBtns(bid)
+  setTimeout(()=>{const inp=document.querySelector(`#${bid}-nt input`);if(inp)inp.focus()},30)
+}
+
+function bCloseTab(bid,tid){
+  const s=bS(bid);if(!s)return
+  if(s.tabs.length===1){bNewTab(bid);s.tabs=s.tabs.filter(t=>t.id!==tid);bRenderTabs(bid);return}
+  const idx=s.tabs.findIndex(t=>t.id===tid),wasActive=s.active===tid
+  s.tabs.splice(idx,1)
+  if(wasActive){const ni=s.tabs[Math.min(idx,s.tabs.length-1)];s.active=ni.id;bSwitch(bid,ni.id)}
+  bRenderTabs(bid)
+}
+
+function bGo(bid){const u=document.getElementById(bid+'-url');if(u)bLoad(bid,u.value.trim())}
+
+function bLoad(bid,raw){
+  if(!raw)return
+  let url=raw
+  const isSearch=!raw.startsWith('http')&&(!raw.includes('.')||raw.includes(' '))
+  if(isSearch)url='https://360-search.com/search?q='+encodeURIComponent(raw)
+  else if(!url.startsWith('http'))url='https://'+url
+
+  const urlEl=document.getElementById(bid+'-url');if(urlEl)urlEl.value=url
+  const s=bS(bid);if(!s)return
+  const t=bAT(bid);if(!t)return
+
+  // Push to tab history
+  t.hist=t.hist.slice(0,t.hIdx+1);t.hist.push(url);t.hIdx=t.hist.length-1
+  t.url=url;try{t.title=new URL(url).hostname.replace('www.','')}catch{t.title=url.slice(0,20)}
+  t.screen='load';bShowScreen(bid,'load')
+  document.getElementById(bid+'-load-t').textContent='Loading '+t.title+'…'
+  bRenderTabs(bid);bNavBtns(bid)
+
+  const frame=document.getElementById(bid+'-frame');if(!frame)return
+  let done=false
+  const finish=(screen,sub)=>{
+    if(done)return;done=true
+    t.screen=screen;bShowScreen(bid,screen)
+    if(screen==='bl'&&sub){const el=document.getElementById(bid+'-bl-sub');if(el)el.textContent=sub}
+    if(screen==='iframe'){try{t.title=frame.contentDocument?.title||t.title}catch{}}
+    bRenderTabs(bid);bNavBtns(bid)
+  }
+  frame.onload=()=>finish('iframe')
+  frame.onerror=()=>finish('bl',t.title+' refused to connect.')
+  frame.src=url;frame.setAttribute('data-loaded',url)
+  setTimeout(()=>finish('bl',t.title+' blocked iframe embedding. A Playwright backend is required for full browsing.'),8000)
+}
+
+function bHistNav(bid,dir){
+  const t=bAT(bid);if(!t||!t.hist||!t.hist.length)return
+  let newIdx=t.hIdx+(dir==='back'?-1:1)
+  if(newIdx<0||newIdx>=t.hist.length)return
+  t.hIdx=newIdx;const url=t.hist[newIdx]
+  const urlEl=document.getElementById(bid+'-url');if(urlEl)urlEl.value=url
+  t.url=url;try{t.title=new URL(url).hostname.replace('www.','')}catch{}
+  t.screen='load';bShowScreen(bid,'load');bRenderTabs(bid);bNavBtns(bid)
+  const frame=document.getElementById(bid+'-frame');if(!frame)return
+  let done=false
+  const fin=scr=>{if(done)return;done=true;t.screen=scr;bShowScreen(bid,scr);bRenderTabs(bid);bNavBtns(bid)}
+  frame.onload=()=>fin('iframe');frame.onerror=()=>fin('bl')
+  frame.src=url;setTimeout(()=>fin('bl'),8000)
+}
+
+function bReload(bid){
+  const t=bAT(bid);if(!t||!t.url||t.screen==='nt')return
+  const url=t.url;t.screen='load';bShowScreen(bid,'load')
+  const frame=document.getElementById(bid+'-frame');if(!frame)return
+  let done=false
+  const fin=scr=>{if(done)return;done=true;t.screen=scr;bShowScreen(bid,scr);bRenderTabs(bid)}
+  frame.onload=()=>fin('iframe');frame.onerror=()=>fin('bl')
+  frame.src=url;setTimeout(()=>fin('bl'),8000)
+}
+
+function bNavBtns(bid){
+  const t=bAT(bid)
+  const back=document.getElementById(bid+'-back');if(back)back.disabled=!t?.hist?.length||t.hIdx<=0
+  const fwd=document.getElementById(bid+'-fwd');if(fwd)fwd.disabled=!t?.hist?.length||t.hIdx>=t.hist.length-1
+}
+
+function bToggleMenu(bid,e){e.stopPropagation();document.getElementById(bid+'-dd')?.classList.toggle('show')}
+function bCloseDd(bid){document.getElementById(bid+'-dd')?.classList.remove('show')}
+function bZoom(bid,f){const fr=document.getElementById(bid+'-frame');if(fr){const c=parseFloat(fr.style.zoom||1);fr.style.zoom=c*f}}
+document.addEventListener('click',()=>document.querySelectorAll('.br-dd.show').forEach(d=>d.classList.remove('show')))
+
+function open360(title,url){openBrowser(url)}
+
+// ══ STORE ══
+const STORE=[
+  {name:'Spotify',cat:'Music',icon:'🎵',c:'#1DB954',url:'https://apps.microsoft.com/detail/9NCBCSZSJRSB'},
+  {name:'Discord',cat:'Social',icon:'🎮',c:'#5865F2',url:'https://apps.microsoft.com/detail/XPDC2RH70K22MN'},
+  {name:'Slack',cat:'Productivity',icon:'💬',c:'#4A154B',url:'https://apps.microsoft.com/detail/9WZDNCRDK3WP'},
+  {name:'Notion',cat:'Productivity',icon:'📝',c:'#000',url:'https://apps.microsoft.com/detail/9MV0B1K9589'},
+  {name:'VS Code',cat:'Dev Tools',icon:'💻',c:'#007ACC',url:'https://apps.microsoft.com/detail/XP9KHM4BK9FZ7Q'},
+  {name:'VLC',cat:'Media',icon:'🎬',c:'#FF8800',url:'https://apps.microsoft.com/detail/9NBLGGH4VVNH'},
+  {name:'WhatsApp',cat:'Communication',icon:'📱',c:'#25D366',url:'https://apps.microsoft.com/detail/9NKSQGP7F2NH'},
+  {name:'Zoom',cat:'Communication',icon:'📹',c:'#2D8CFF',url:'https://apps.microsoft.com/detail/XP99J3KP4XZ4VV'},
+  {name:'OBS Studio',cat:'Video',icon:'📡',c:'#302E31',url:'https://apps.microsoft.com/detail/XPFFH613W8V6LV'},
+  {name:'Adobe Express',cat:'Design',icon:'🎨',c:'#FF0000',url:'https://apps.microsoft.com/detail/9PP5G1T0V4CW'},
+]
+let installed=JSON.parse(localStorage.getItem('360-apps')||'[]')
+
+function openStore(){
+  const grid=STORE.map(a=>{
+    const inst=installed.includes(a.name)
+    return `<div class="store-card">
+      <div class="store-icon" style="background:${a.c}22">${a.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="store-name">${a.name}</div>
+        <div class="store-cat">${a.cat}</div>
+        <button class="store-btn${inst?' installed':''}" id="sb-${a.name.replace(/\s/g,'')}" onclick="installApp('${a.name}','${a.url}',this)">${inst?'✓ Installed':'Get'}</button>
+      </div>
+    </div>`
+  }).join('')
+  const body=`<div class="app-body"><h3>🛍️ 360 Apps — Microsoft Store</h3><p style="font-size:12px;color:#80868b;margin-bottom:12px">Get apps from the Microsoft Store. Click an installed app to open its Store page.</p><div class="store-grid">${grid}</div></div>`
+  makeWin('360 Apps',520,480,body)
+}
+
+function installApp(name,url,btn){
+  if(installed.includes(name)){open360(name,url);return}
+  btn.textContent='Installing…';btn.disabled=true
+  setTimeout(()=>{
+    installed.push(name);localStorage.setItem('360-apps',JSON.stringify(installed))
+    btn.textContent='✓ Installed';btn.classList.add('installed');btn.disabled=false
+  },1200)
+}
+
+renderLockProfiles()
+</script>
+</body>
+</html>
