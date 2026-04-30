@@ -1,0 +1,25 @@
+body.gallium-enabled {
+  background:
+    radial-gradient(900px 500px at 10% -10%, rgba(255,255,255,.35), transparent 55%),
+    radial-gradient(700px 420px at 90% 0%, rgba(147,197,253,.28), transparent 55%),
+    linear-gradient(165deg, #eaf2ff 0%, #f6f8ff 45%, #eef6ff 100%);
+}
+body.gallium-enabled .st-shell,
+body.gallium-enabled .st-sidebar,
+body.gallium-enabled .st-card,
+body.gallium-enabled .sys-stat,
+body.gallium-enabled .settings-panel {
+  background: rgba(255,255,255,.42);
+  border-color: rgba(255,255,255,.55);
+  box-shadow: 0 14px 36px rgba(15,23,42,.14), inset 0 1px 0 rgba(255,255,255,.55);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+}
+body.gallium-enabled .st-btn,
+body.gallium-enabled .st-input,
+body.gallium-enabled .st-toggle {
+  background: rgba(255,255,255,.48);
+  border-color: rgba(255,255,255,.58);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}

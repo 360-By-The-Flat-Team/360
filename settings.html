@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="/assets/css/main.css" />
   <link rel="stylesheet" href="/assets/css/wide.css" />
   <link rel="stylesheet" href="/assets/css/cursor.css" />
+  <link rel="stylesheet" href="/assets/css/gallium.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -247,11 +248,32 @@
       cursor: pointer; font-size: 11px; color: var(--mut);
     }
     .st-swatch {
-      width: 36px; height: 36px; border-radius: 10px;
+      width: 36px; height: 36px; border-radius: 50%;
       border: 2.5px solid transparent;
-      transition: transform .15s, border-color .15s;
+      transition: transform .18s ease, border-color .15s, box-shadow .18s ease;
     }
-    .st-swatch:hover { transform: scale(1.1); }
+    .st-swatch:hover {
+      transform: scale(1.15);
+      box-shadow: 0 8px 18px rgba(0,0,0,.18);
+    }
+
+    .st-upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      border-color: rgba(59,130,246,.35);
+      background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(139,92,246,.12));
+    }
+    .st-upload-btn::before { content: "🖼️"; font-size: 14px; }
+    .st-upload-btn:hover {
+      border-color: rgba(59,130,246,.6);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(59,130,246,.18);
+    }
+
+
     .st-swatch.active { border-color: var(--a,#3b82f6); }
     .st-swatch[data-theme="ocean"]    { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
     .st-swatch[data-theme="midnight"] { background: linear-gradient(135deg,#1e293b,#334155); }
@@ -605,8 +627,8 @@
               <div class="st-row-label">Upload Image</div>
               <div class="st-row-sub">Set a custom background on the 360 home page.</div>
             </div>
-            <label class="st-btn" style="cursor:pointer;">
-              Choose File
+            <label class="st-btn st-upload-btn">
+              Choose Background Image
               <input type="file" id="visBgUpload" accept="image/*" style="display:none;" />
             </label>
           </div>
@@ -632,6 +654,19 @@
               <div class="bob-toggle-sub">Animated stick figure that reacts to your search typing.</div>
             </div>
             <button class="st-toggle" id="visBobToggle"></button>
+          </div>
+        </div>
+
+
+        <!-- 360 Gallium -->
+        <div class="st-card">
+          <div class="st-card-title">360 Gallium</div>
+          <div class="bob-toggle-row">
+            <div>
+              <div class="bob-toggle-label">Liquid Glass UI</div>
+              <div class="bob-toggle-sub">Gives the interface a translucent Apple-like glass appearance.</div>
+            </div>
+            <button class="st-toggle" id="visGalliumToggle"></button>
           </div>
         </div>
 
@@ -712,6 +747,7 @@
   <script src="/assets/js/wide.js"></script>
   <script src="/assets/js/cookie.js"></script>
   <script src="/assets/js/cursor.js"></script>
+  <script src="/assets/js/gallium.js"></script>
 
   <script>
   // ────────────────────────────────────────

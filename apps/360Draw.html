@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>360Draw</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #05060a;
+      color: #f5f5f5;
+      overflow: hidden;
+    }
+
+    .draw-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .draw-topbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(10, 12, 20, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+    }
+
+    .draw-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .draw-logo {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: radial-gradient(circle at 20% 20%, #4f9cff, #7b5cff);
+    }
+
+    .draw-title {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .draw-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .draw-share-btn {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+      color: #f5f5f5;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .draw-main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .draw-toolbar {
+      width: 64px;
+      background: rgba(10, 12, 20, 0.95);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 8px;
+    }
+
+    .tool-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #f5f5f5;
+      font-size: 18px;
+    }
+
+    .tool-btn.active {
+      border-color: rgba(79, 156, 255, 0.9);
+      background: rgba(79, 156, 255, 0.12);
+    }
+
+    .draw-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top, #151827, #05060a);
+    }
+
+    .draw-canvas-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #draw-canvas {
+      background: #11131c;
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      cursor: crosshair;
+    }
+
+    .draw-bottom-bar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 11px;
+      background: rgba(10, 12, 20, 0.9);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .draw-right {
+      width: 260px;
+      background: rgba(10, 12, 20, 0.96);
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .draw-panel-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+
+    .draw-layers,
+    .draw-collab {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .layer-item {
+      padding: 4px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .collab-user {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      margin: 2px 0;
+    }
+
+    .collab-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4f9cff;
+    }
+  </style>
+</head>
+<body>
+  <div class="draw-shell">
+    <div class="draw-topbar">
+      <div class="draw-topbar-left">
+        <div class="draw-logo"></div>
+        <div class="draw-title">Untitled canvas · 360Draw</div>
+      </div>
+      <div class="draw-topbar-right">
+        <button class="draw-share-btn" onclick="window.location.href='/apps'">← Apps</button>
+        <span id="draw-presence">You</span>
+        <button class="draw-share-btn" id="draw-share-btn">Share</button>
+      </div>
+    </div>
+
+    <div class="draw-main">
+      <div class="draw-toolbar">
+        <button class="tool-btn active" data-tool="brush">✏️</button>
+        <button class="tool-btn" data-tool="eraser">🩹</button>
+        <button class="tool-btn" data-tool="line">／</button>
+        <button class="tool-btn" data-tool="rect">▢</button>
+        <button class="tool-btn" data-tool="circle">◯</button>
+      </div>
+
+      <div class="draw-center">
+        <div class="draw-canvas-wrapper">
+          <canvas id="draw-canvas" width="1200" height="700"></canvas>
+        </div>
+        <div class="draw-bottom-bar">
+          <span id="draw-status">Brush · 4px · #ffffff</span>
+          <span>Live collab coming soon</span>
+        </div>
+      </div>
+
+      <div class="draw-right">
+        <div class="draw-layers">
+          <div class="draw-panel-title">Layers</div>
+          <div class="layer-item"><span>Layer 1</span><span>👁</span></div>
+          <div class="layer-item"><span>Background</span><span>🔒</span></div>
+        </div>
+        <div class="draw-collab">
+          <div class="draw-panel-title">Collaborators</div>
+          <div class="collab-user"><span class="collab-dot"></span><span>You</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('draw-canvas');
+    const ctx = canvas.getContext('2d');
+    const tools = document.querySelectorAll('.tool-btn');
+    const statusEl = document.getElementById('draw-status');
+
+    let drawing = false;
+    let tool = 'brush';
+    let lastX = 0;
+    let lastY = 0;
+    let color = '#ffffff';
+    let size = 4;
+
+    tools.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tools.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tool = btn.dataset.tool;
+        statusEl.textContent = `${tool.charAt(0).toUpperCase() + tool.slice(1)} · ${size}px · ${color}`;
+      });
+    });
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left);
+      const y = (e.clientY - rect.top);
+      return { x, y };
+    }
+
+    canvas.addEventListener('mousedown', e => {
+      drawing = true;
+      const pos = getPos(e);
+      lastX = pos.x;
+      lastY = pos.y;
+    });
+
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+
+    canvas.addEventListener('mousemove', e => {
+      if (!drawing) return;
+      const pos = getPos(e);
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+
+      if (tool === 'brush') {
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      } else if (tool === 'eraser') {
+        ctx.clearRect(pos.x - size, pos.y - size, size * 2, size * 2);
+      }
+
+      lastX = pos.x;
+      lastY = pos.y;
+    });
+
+    // Placeholder for future live collab
+    document.getElementById('draw-share-btn').addEventListener('click', () => {
+      alert('Live collab will use a shared link + WebSockets.');
+    });
+  </script>
+</body>
+</html>
