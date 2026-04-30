@@ -12,6 +12,26 @@
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/cursor.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .game-card .card-ripple {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      animation: card-ripple .55s ease-out;
+      background: rgba(255,255,255,.45);
+      pointer-events: none;
+      z-index: 1;
+    }
+    @keyframes card-ripple {
+      to { transform: scale(4); opacity: 0; }
+    }
+  </style>
 </head>
 <body>
 
@@ -165,6 +185,30 @@
   </div>
 </div>
     
+
+  <script>
+    (function () {
+      const cards = document.querySelectorAll('.game-card');
+      cards.forEach((card) => {
+        card.addEventListener('click', (event) => {
+          const ripple = document.createElement('span');
+          ripple.className = 'card-ripple';
+
+          const rect = card.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          ripple.style.width = ripple.style.height = `${size}px`;
+          ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+          ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+
+          const oldRipple = card.querySelector('.card-ripple');
+          if (oldRipple) oldRipple.remove();
+
+          card.appendChild(ripple);
+          ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+        });
+      });
+    })();
+  </script>
   <audio id="clickSound" src="../click-sound.mp3" preload="auto"></audio>
   <script src="/assets/js/main.js"></script>
   <script src="/assets/js/wide.js"></script>
