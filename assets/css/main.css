@@ -1341,3 +1341,39 @@ body.dark .nav-item {
 .vids-nav-item.active {
   -webkit-text-fill-color: initial !important;
 }
+
+
+/* Sidebar nav interactions */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  animation: navRipple 420ms ease-out;
+}
+
+body.dark .nav-ripple {
+  background: rgba(56, 189, 248, 0.35);
+}
+
+@keyframes navRipple {
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+/* Keep emoji glyphs visible regardless of theme text-fill tricks */
+.nav-item,
+.sidebar-toggle,
+#settingsBtn {
+  -webkit-text-fill-color: currentColor !important;
+  text-fill-color: currentColor;
+  font-variant-emoji: emoji;
+}

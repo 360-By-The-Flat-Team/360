@@ -386,6 +386,49 @@ const sidebarToggle = document.querySelector(".sidebar-toggle");
 const settingsBtn   = document.getElementById("settingsBtn");
 const navItems      = Array.from(document.querySelectorAll(".sidebar .nav-item"));
 
+
+function trackPageVisit() {
+  const key = "navHistory";
+  const current = window.location.pathname || "/";
+  const raw = sessionStorage.getItem(key);
+  const history = raw ? JSON.parse(raw) : [];
+
+  if (!history.length || history[history.length - 1] !== current) {
+    history.push(current);
+  }
+
+  if (history.length > 30) history.splice(0, history.length - 30);
+  sessionStorage.setItem(key, JSON.stringify(history));
+}
+
+function goToLastVisitedPage() {
+  const key = "navHistory";
+  const current = window.location.pathname || "/";
+  const raw = sessionStorage.getItem(key);
+  const history = raw ? JSON.parse(raw) : [];
+
+  while (history.length && history[history.length - 1] === current) {
+    history.pop();
+  }
+
+  const target = history.pop();
+  sessionStorage.setItem(key, JSON.stringify(history));
+
+  if (target) {
+    window.location.href = target;
+    return;
+  }
+
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = "/";
+  }
+}
+
+trackPageVisit();
+
+
 /* Faster nav animation (reduce perceived lag) */
 navItems.forEach((item, idx) => {
   // Keep stagger but make it MUCH faster
@@ -443,11 +486,39 @@ navItems.forEach(item => {
   item.addEventListener("click", e => {
     e.stopPropagation();
 
+    const ripple = document.createElement("span");
+    ripple.className = "nav-ripple";
+    const rect = item.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+    item.appendChild(ripple);
+    ripple.addEventListener("animationend", () => ripple.remove(), { once: true });
+
     const href = item.dataset.href;
-    if (href) window.location.href = href;
+    if (href) {
+      const current = window.location.pathname || "/";
+      const targetPath = new URL(href, window.location.origin).pathname;
+      if (targetPath !== current) {
+        const raw = sessionStorage.getItem("navHistory");
+        const history = raw ? JSON.parse(raw) : [];
+        if (!history.length || history[history.length - 1] !== current) history.push(current);
+        sessionStorage.setItem("navHistory", JSON.stringify(history.slice(-30)));
+      }
+      setTimeout(() => { window.location.href = href; }, 140);
+    }
 
     sidebar?.classList.remove("open");
     updateOverlay();
+  });
+});
+
+Array.from(document.querySelectorAll(".back-btn")).forEach(btn => {
+  btn.addEventListener("click", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    goToLastVisitedPage();
   });
 });
 
