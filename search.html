@@ -328,6 +328,33 @@
       box-sizing: border-box;
     }
 
+
+    .results-layout {
+      width: 100%;
+      max-width: 1240px;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 18px;
+      padding: 16px 20px 60px;
+      box-sizing: border-box;
+      align-items: start;
+    }
+
+    #knowledge-panel {
+      position: sticky;
+      top: 92px;
+      border-radius: 18px;
+      padding: 14px;
+      background: var(--glass-light-mid);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow-sm), var(--glass-inset);
+      display: none;
+    }
+    body.dark #knowledge-panel { background: var(--glass-dark-mid); border-color: var(--glass-border-dk); box-shadow: var(--glass-shadow-sm), var(--glass-inset-dk);}
+    #knowledge-panel.active { display:block; }
+    .kp-image { width: 100%; height: 170px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
+
     .results-info {
       font-size: 13px;
       color: var(--mut);
@@ -674,6 +701,8 @@
       .search-bar-strip { padding: 9px 12px; }
       .result-thumbnail { display: none; }
       #image-results-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+      .results-layout { grid-template-columns: 1fr; }
+      #knowledge-panel { position: static; order: -1; }
       .results-tabs { gap: 4px; padding: 8px; }
       .results-tab { padding: 6px 12px; font-size: 12px; }
     }
@@ -831,12 +860,15 @@
       </div>
     </div>
 
-    <!-- Results area -->
-    <div id="custom-results-area">
+    <div class="results-layout">
+      <aside id="knowledge-panel"></aside>
+      <!-- Results area -->
+      <div id="custom-results-area">
       <div class="state-box" id="empty-state">
         <div class="big-icon">🔍</div>
         <h3>Search anything</h3>
         <p>Type in the bar above and press Search or Enter</p>
+      </div>
       </div>
     </div>
 
@@ -899,6 +931,7 @@
     const resultsArea = document.getElementById('custom-results-area');
     const aiPanel     = document.getElementById('ai-panel');
     const tabsEl      = document.getElementById('results-tabs');
+    const knowledgePanel = document.getElementById('knowledge-panel');
 
     /* ─────────────────────────────────
        INIT FROM URL
@@ -918,6 +951,7 @@
           runAiSearch(q);
         } else {
           showResultsArea(true);
+          loadKnowledgePanel(q);
           waitForGcseAndSearch(q, t);
         }
       }
@@ -934,6 +968,29 @@
     /* ─────────────────────────────────
        WAIT FOR GCSE THEN SEARCH
     ───────────────────────────────── */
+    
+    async function loadKnowledgePanel(q) {
+      if (!q?.trim()) { knowledgePanel.classList.remove('active'); knowledgePanel.innerHTML=''; return; }
+      knowledgePanel.classList.add('active');
+      knowledgePanel.innerHTML = '<div class="kp-subtext">Loading knowledge panel…</div>';
+      try {
+        const [wikiRes, ddgRes] = await Promise.all([
+          fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`),
+          fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`)
+        ]);
+        const wiki = wikiRes.ok ? await wikiRes.json() : {};
+        const ddg = ddgRes.ok ? await ddgRes.json() : {};
+        const img = wiki.thumbnail?.source || ddg.Image || '';
+        const title = wiki.title || ddg.Heading || q;
+        const desc = wiki.extract || ddg.AbstractText || 'No summary available yet.';
+        const source = wiki.content_urls?.desktop?.page || ddg.AbstractURL || '';
+        const related = (ddg.RelatedTopics || []).slice(0,4).map((x)=>x.Text).filter(Boolean);
+        knowledgePanel.innerHTML = `${img ? `<img class="kp-image" src="${img}" alt="${title}">` : ''}<div class="kp-title">${title}</div><div class="kp-subtext">Relevant context from Wikipedia + DuckDuckGo</div><div class="kp-desc">${desc}</div>${source ? `<div class="kp-source"><a href="${source}" target="_blank" rel="noopener noreferrer">Open source page</a></div>` : ''}${related.length ? `<ul class="kp-facts">${related.map((f)=>`<li>• ${f}</li>`).join('')}</ul>` : ''}`;
+      } catch (e) {
+        knowledgePanel.innerHTML = '<div class="kp-subtext">Knowledge panel is unavailable right now.</div>';
+      }
+    }
+
     function waitForGcseAndSearch(q, tab) {
       if (state.gcseReady) {
         triggerGcseSearch(q, tab);
@@ -1756,6 +1813,7 @@
       }
 
       showResultsArea(true);
+      loadKnowledgePanel(q);
       waitForGcseAndSearch(q, state.tab);
     }
 

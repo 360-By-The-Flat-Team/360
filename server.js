@@ -4,6 +4,22 @@ const path = require("path");
 
 const app = express();
 
+const appRedirects = [
+  "360Do",
+  "360Docs",
+  "360Draw",
+  "360Music",
+  "360Notes",
+  "360mail",
+  "360vids",
+  "360zone",
+];
+
+appRedirects.forEach((name) => {
+  app.get(`/${name}`, (req, res) => res.redirect(302, `/apps/${name}.html`));
+  app.get(`/${name}.html`, (req, res) => res.redirect(302, `/apps/${name}.html`));
+});
+
 // Enable CORS
 app.use(cors());
 
