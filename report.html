@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-89NN1P6CEV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-89NN1P6CEV');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>360 — Report</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="360" />
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/wide.css" />
+  <link rel="stylesheet" href="/assets/css/cursor.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body.dark {
+      --page-bg: #07071a;
+      --card-bg: rgba(255,255,255,.04);
+      --card-border: rgba(255,255,255,.08);
+      --txt: #e2e8f0;
+      --mut: #64748b;
+      --br: rgba(255,255,255,.09);
+      --sidebar-bg: rgba(255,255,255,.025);
+    }
+    body:not(.dark) {
+      --page-bg: #f0f4f8;
+      --card-bg: rgba(255,255,255,.92);
+      --card-border: rgba(0,0,0,.07);
+      --txt: #0f172a;
+      --mut: #64748b;
+      --br: rgba(0,0,0,.08);
+      --sidebar-bg: rgba(255,255,255,.7);
+    }
+    body { background: var(--page-bg); color: var(--txt); }
+
+    /* TOP BAR */
+    .st-topbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 54px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--br);
+      display: flex; align-items: center;
+      padding: 0 22px; gap: 14px;
+      z-index: 300;
+    }
+    .st-topbar-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+    .st-logo-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+    }
+    .st-logo-text { font-size: 17px; font-weight: 900; letter-spacing: -.02em; color: var(--txt); }
+    .st-topbar-sep { color: var(--mut); font-size: 18px; opacity: .4; }
+    .st-topbar-section { font-size: 14px; font-weight: 600; color: var(--txt); }
+    .st-topbar-right { margin-left: auto; }
+    .st-back-btn {
+      padding: 7px 14px; border-radius: 8px;
+      border: 1px solid var(--br); background: transparent;
+      color: var(--txt); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background .18s;
+    }
+    .st-back-btn:hover { background: rgba(148,163,184,.15); }
+
+    /* PAGE LAYOUT */
+    .page-wrap {
+      display: flex;
+      min-height: 100vh;
+      padding-top: 54px;
+    }
+
+    /* SIDEBAR */
+    .st-sidebar {
+      width: 230px; flex-shrink: 0;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(14px);
+      border-right: 1px solid var(--br);
+      padding: 20px 10px;
+      position: sticky; top: 54px;
+      height: calc(100vh - 54px);
+      overflow-y: auto;
+    }
+    .st-sidebar-group-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--mut); padding: 0 10px;
+      margin: 18px 0 5px;
+    }
+    .st-sidebar-group-label:first-child { margin-top: 0; }
+    .st-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 9px;
+      font-size: 13px; font-weight: 500; color: var(--txt);
+      cursor: pointer; transition: background .15s;
+      margin-bottom: 2px; user-select: none;
+      text-decoration: none;
+    }
+    .st-nav-item:hover { background: rgba(148,163,184,.13); }
+    .st-nav-item.active {
+      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      color: #fff; font-weight: 700;
+    }
+    .st-nav-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+
+    /* MAIN CONTENT */
+    .st-main {
+      flex: 1; padding: 32px 36px;
+      max-width: 860px; overflow-y: auto;
+    }
+    @media (max-width: 680px) {
+      .st-sidebar { width: 58px; padding: 16px 6px; }
+      .st-nav-label { display: none; }
+      .st-sidebar-group-label { display: none; }
+      .st-main { padding: 20px 14px; }
+    }
+
+    /* PANELS */
+    .st-panel { display: none; }
+    .st-panel.active { display: block; }
+    .st-panel-header { margin-bottom: 26px; }
+    .st-panel-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+    .st-panel-sub { font-size: 13px; color: var(--mut); margin-top: 4px; }
+
+    /* CARD */
+    .st-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .st-card-title {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--mut); margin-bottom: 14px;
+    }
+
+    /* FORM FIELDS */
+    .rp-field { margin-bottom: 16px; }
+    .rp-label {
+      display: block;
+      font-size: 13px; font-weight: 600;
+      color: var(--txt); margin-bottom: 6px;
+    }
+    .rp-label span.rp-req { color: #ef4444; margin-left: 2px; }
+    .rp-input, .rp-textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 9px;
+      border: 1.5px solid var(--br);
+      background: rgba(148,163,184,.07);
+      color: var(--txt);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .rp-input:focus, .rp-textarea:focus {
+      border-color: var(--a,#3b82f6);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+    .rp-textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+
+    /* ── CUSTOM DROPDOWN ── */
+    .rp-dropdown {
+      position: relative;
+      width: 100%;
+      user-select: none;
+    }
+    .rp-dropdown-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 10px 13px;
+      border-radius: 9px;
+      border: 1.5px solid var(--br);
+      background: rgba(148,163,184,.07);
+      color: var(--txt);
+      font-size: 14px; font-family: inherit;
+      cursor: pointer;
+      transition: border-color .18s, box-shadow .18s, background .15s;
+    }
+    .rp-dropdown-trigger:hover {
+      background: rgba(148,163,184,.13);
+    }
+    .rp-dropdown-trigger.open {
+      border-color: var(--a,#3b82f6);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .rp-dropdown-trigger.placeholder { color: var(--mut); }
+    .rp-dropdown-trigger.selected { color: var(--txt); }
+
+    .rp-dropdown-arrow {
+      font-size: 11px; color: var(--mut);
+      transition: transform .22s ease;
+      flex-shrink: 0; margin-left: 8px;
+    }
+    .rp-dropdown-trigger.open .rp-dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .rp-dropdown-menu {
+      display: none;
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--card-bg);
+      border: 1.5px solid var(--a,#3b82f6);
+      border-top: none;
+      border-bottom-left-radius: 9px;
+      border-bottom-right-radius: 9px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      z-index: 200;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      animation: ddSlideIn .18s ease;
+    }
+    @keyframes ddSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rp-dropdown-menu.open { display: block; }
+
+    .rp-dropdown-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      font-size: 14px; font-family: inherit;
+      color: var(--txt);
+      cursor: pointer;
+      transition: background .12s;
+      border-bottom: 1px solid var(--br);
+    }
+    .rp-dropdown-option:last-child { border-bottom: none; }
+    .rp-dropdown-option:hover {
+      background: rgba(59,130,246,.09);
+    }
+    .rp-dropdown-option.selected {
+      background: rgba(59,130,246,.12);
+      font-weight: 700;
+      color: var(--a,#3b82f6);
+    }
+    .rp-dropdown-option .dd-emoji { font-size: 15px; flex-shrink: 0; }
+    .rp-dropdown-option .dd-check {
+      margin-left: auto; font-size: 13px;
+      color: var(--a,#3b82f6);
+      opacity: 0;
+    }
+    .rp-dropdown-option.selected .dd-check { opacity: 1; }
+
+    /* RADIO GROUP */
+    .rp-radio-group {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 4px;
+    }
+    .rp-radio-label {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px; border-radius: 9px;
+      border: 1.5px solid var(--br);
+      background: rgba(148,163,184,.06);
+      font-size: 13px; font-weight: 500;
+      color: var(--txt); cursor: pointer;
+      transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+    .rp-radio-label input[type="radio"] { display: none; }
+    .rp-radio-label:has(input:checked) {
+      border-color: var(--a,#3b82f6);
+      background: rgba(59,130,246,.1);
+      color: var(--a,#3b82f6);
+      font-weight: 700;
+    }
+
+    /* SUBMIT BUTTON */
+    .rp-submit {
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      color: #fff;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      transition: opacity .18s, transform .15s;
+      margin-top: 4px;
+    }
+    .rp-submit:hover { opacity: .88; }
+    .rp-submit:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* STATUS MESSAGES */
+    .rp-msg {
+      font-size: 13px; min-height: 20px;
+      margin-top: 10px; border-radius: 8px;
+      padding: 10px 14px; display: none;
+    }
+    .rp-msg.ok  { display: block; background: rgba(16,185,129,.12); color: #10b981; border: 1px solid rgba(16,185,129,.25); }
+    .rp-msg.err { display: block; background: rgba(239,68,68,.1);  color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+
+    /* SUCCESS STATE */
+    .rp-success-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 40px 24px; gap: 12px;
+    }
+    .rp-success-state.show { display: flex; }
+    .rp-success-icon { font-size: 54px; line-height: 1; }
+    .rp-success-title { font-size: 20px; font-weight: 800; }
+    .rp-success-sub { font-size: 14px; color: var(--mut); max-width: 360px; line-height: 1.6; }
+    .rp-success-btns { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+
+    /* ST-BTN */
+    .st-btn {
+      padding: 9px 18px; border-radius: 8px;
+      border: 1px solid var(--br);
+      background: rgba(148,163,184,.1);
+      color: var(--txt); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+      text-decoration: none; display: inline-block;
+    }
+    .st-btn:hover { background: rgba(148,163,184,.2); }
+    .st-btn.primary {
+      background: linear-gradient(110deg, var(--a,#3b82f6), var(--a2,#8b5cf6));
+      color: #fff; border-color: transparent;
+    }
+    .st-btn.primary:hover { opacity: .88; }
+
+    /* DIVIDER */
+    .rp-divider {
+      height: 1px; background: var(--br);
+      margin: 18px 0;
+    }
+
+    /* INFO ROW */
+    .rp-info-row {
+      display: flex; gap: 10px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      background: rgba(59,130,246,.07);
+      border: 1px solid rgba(59,130,246,.18);
+      font-size: 13px; color: var(--mut);
+      line-height: 1.5;
+    }
+    .rp-info-row-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* CHARACTER COUNTER */
+    .rp-char-count {
+      font-size: 11px; color: var(--mut);
+      text-align: right; margin-top: 4px;
+    }
+    .rp-char-count.warn { color: #f97316; }
+    .rp-char-count.over { color: #ef4444; }
+
+    /* DANGER CARD */
+    .st-card.danger-card { border-color: rgba(239,68,68,.28); }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"></div>
+  <div class="cursor-trail"></div>
+  <div class="cursor-crosshair"></div>
+  <div class="cursor-blob"></div>
+
+  <!-- Hidden scaffolding that main.js / cursor.js expect -->
+  <button id="installBtn" class="install-banner" style="display:none;">Install 360</button>
+  <button class="sidebar-toggle" id="sidebarToggle" style="display:none;">☰</button>
+  <aside class="sidebar" id="sidebar" style="display:none;">
+    <div class="sidebar-header">
+      <div class="logo-mark"></div>
+      <button id="settingsBtn">⚙</button>
+    </div>
+    <nav class="nav-list">
+      <div class="nav-item" data-href="/">Home</div>
+      <div class="nav-item" data-href="/ai">AI</div>
+      <div class="nav-item" data-href="/weather">Weather</div>
+      <div class="nav-item" data-href="/translator">Translator</div>
+      <div class="nav-item" data-href="/stocks">Stocks</div>
+      <div class="nav-item" data-href="/url-shortener">URL Shortener</div>
+      <div class="nav-item" data-href="/chat">Chat</div>
+      <div class="nav-item" data-href="/news">News</div>
+      <div class="nav-item" data-href="/apps">Apps</div>
+      <div class="nav-item" data-href="/games">Games</div>
+      <div class="nav-item" data-href="/accounts">Accounts</div>
+    </nav>
+    <div class="sidebar-footer"><span id="sidebar-ver">Loading...</span></div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Hidden settings panel so main.js hooks work -->
+  <div class="settings-panel" id="settingsPanel" style="display:none !important; visibility:hidden; position:absolute; pointer-events:none;">
+    <div class="theme-swatches">
+      <div class="theme-option"><div class="swatch" data-theme="ocean"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="midnight"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="sunset"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="mint"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="neon"></div></div>
+      <div class="theme-option"><div class="swatch" data-theme="mono"></div></div>
+    </div>
+    <input type="checkbox" id="darkToggle" />
+    <div class="cursor-options">
+      <div class="cursor-option active" data-cursor="default"></div>
+      <div class="cursor-option" data-cursor="dot"></div>
+      <div class="cursor-option" data-cursor="ring"></div>
+      <div class="cursor-option" data-cursor="crosshair"></div>
+      <div class="cursor-option" data-cursor="blob"></div>
+      <div class="cursor-option" data-cursor="system"></div>
+    </div>
+    <div class="cursor-color-row">
+      <input type="color" id="cursorColorPicker" value="#3b82f6" />
+      <button id="cursorColorReset">Reset</button>
+    </div>
+    <div class="temp-unit-box">
+      <span id="tempUnitLabel">°C</span>
+      <button id="tempUnitBtn">Switch</button>
+    </div>
+    <input type="file" id="bgUpload" accept="image/*" class="settings-input" />
+    <input type="text" id="bgUrlInput" class="settings-input" />
+    <button id="bgUrlBtn" class="settings-btn">Apply URL</button>
+    <button id="bgResetBtn" class="settings-btn">Reset</button>
+    <div id="settingsBobToggleRow">
+      <div class="bob-track" id="settingsBobTrack"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TOP BAR ═══════════ -->
+  <div class="st-topbar">
+    <a class="st-topbar-logo" href="/">
+      <div class="st-logo-mark"></div>
+      <span class="st-logo-text">360</span>
+    </a>
+    <span class="st-topbar-sep">/</span>
+    <span class="st-topbar-section">Report</span>
+    <div class="st-topbar-right">
+      <button class="st-back-btn" onclick="window.location.href='/'">← Back to 360</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE WRAP ═══════════ -->
+  <div class="page-wrap">
+
+    <!-- REPORT NAV SIDEBAR -->
+    <nav class="st-sidebar">
+      <div class="st-sidebar-group-label">Report Type</div>
+      <div class="st-nav-item active" data-tab="issue" onclick="switchTab('issue')">
+        <span class="st-nav-icon">🐛</span>
+        <span class="st-nav-label">Report an Issue</span>
+      </div>
+      <div class="st-nav-item" data-tab="user" onclick="switchTab('user')">
+        <span class="st-nav-icon">🚩</span>
+        <span class="st-nav-label">Report a User</span>
+      </div>
+
+      <div class="st-sidebar-group-label">Other</div>
+      <a class="st-nav-item" href="/contact.html">
+        <span class="st-nav-icon">✉️</span>
+        <span class="st-nav-label">Contact Us</span>
+      </a>
+      <a class="st-nav-item" href="/privacypolicy.html">
+        <span class="st-nav-icon">🔒</span>
+        <span class="st-nav-label">Privacy Policy</span>
+      </a>
+      <a class="st-nav-item" href="/tos.html">
+        <span class="st-nav-icon">📜</span>
+        <span class="st-nav-label">Terms of Service</span>
+      </a>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="st-main">
+
+      <!-- ══════════════════════════════
+           REPORT AN ISSUE
+      ══════════════════════════════ -->
+      <div class="st-panel active" id="panel-issue">
+        <div class="st-panel-header">
+          <div class="st-panel-title">Report an Issue</div>
+          <div class="st-panel-sub">Found a bug or something broken? Let us know and we'll get it fixed.</div>
+        </div>
+
+        <!-- Success state -->
+        <div class="st-card">
+          <div class="rp-success-state" id="issueSuccess">
+            <div class="rp-success-icon">✅</div>
+            <div class="rp-success-title">Report Submitted!</div>
+            <div class="rp-success-sub">Thanks for helping us improve 360. We'll review your issue and follow up if needed.</div>
+            <div class="rp-success-btns">
+              <button class="st-btn primary" onclick="resetForm('issue')">Submit Another</button>
+              <a class="st-btn" href="/">Back to 360</a>
+            </div>
+          </div>
+
+          <div id="issueForm">
+            <div class="st-card-title">Issue Details</div>
+
+            <div class="rp-info-row" style="margin-bottom:18px;">
+              <span class="rp-info-row-icon">ℹ️</span>
+              <span>Your report will be emailed to our team at <strong>report@360-search.com</strong>. For urgent matters, you can also reach us at <strong>help@360-search.com</strong>.</span>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label">Category <span class="rp-req">*</span></label>
+              <input type="hidden" id="issueCategory" />
+              <div class="rp-dropdown" id="dd-issueCategory">
+                <div class="rp-dropdown-trigger placeholder" onclick="toggleDropdown('issueCategory')">
+                  <span class="dd-label">Select a category…</span>
+                  <span class="rp-dropdown-arrow">▼</span>
+                </div>
+                <div class="rp-dropdown-menu">
+                  <div class="rp-dropdown-option" data-value="bug"         onclick="selectOption('issueCategory','bug','🐛 Bug / Error')">                <span class="dd-emoji">🐛</span><span>Bug / Error</span>              <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="ui"          onclick="selectOption('issueCategory','ui','🎨 UI / Visual Glitch')">          <span class="dd-emoji">🎨</span><span>UI / Visual Glitch</span>        <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="performance" onclick="selectOption('issueCategory','performance','⚡ Performance Issue')">  <span class="dd-emoji">⚡</span><span>Performance Issue</span>          <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="search"      onclick="selectOption('issueCategory','search','🔍 Search Not Working')">      <span class="dd-emoji">🔍</span><span>Search Not Working</span>         <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="account"     onclick="selectOption('issueCategory','account','🔐 Account / Login Problem')"><span class="dd-emoji">🔐</span><span>Account / Login Problem</span>   <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="feature"     onclick="selectOption('issueCategory','feature','💡 Feature Request')">        <span class="dd-emoji">💡</span><span>Feature Request</span>            <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="security"    onclick="selectOption('issueCategory','security','🔒 Security Concern')">      <span class="dd-emoji">🔒</span><span>Security Concern</span>           <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="other"       onclick="selectOption('issueCategory','other','📌 Other')">                    <span class="dd-emoji">📌</span><span>Other</span>                      <span class="dd-check">✓</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="issuePage">Page / URL Where Issue Occurred</label>
+              <input class="rp-input" type="url" id="issuePage" placeholder="e.g. https://360-search.com/search" />
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="issueTitle">Issue Title <span class="rp-req">*</span></label>
+              <input class="rp-input" type="text" id="issueTitle" placeholder="Short summary of the issue" maxlength="120" required />
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="issueDesc">Description <span class="rp-req">*</span></label>
+              <textarea class="rp-textarea" id="issueDesc" maxlength="2000"
+                placeholder="Describe what happened, what you expected, and how to reproduce it…"></textarea>
+              <div class="rp-char-count" id="issueDescCount">0 / 2000</div>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label">Severity</label>
+              <div class="rp-radio-group">
+                <label class="rp-radio-label"><input type="radio" name="issueSeverity" value="low" /> 🟢 Low</label>
+                <label class="rp-radio-label"><input type="radio" name="issueSeverity" value="medium" checked /> 🟡 Medium</label>
+                <label class="rp-radio-label"><input type="radio" name="issueSeverity" value="high" /> 🔴 High</label>
+                <label class="rp-radio-label"><input type="radio" name="issueSeverity" value="critical" /> 🚨 Critical</label>
+              </div>
+            </div>
+
+            <div class="rp-divider"></div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="issueEmail">Your Email <span style="color:var(--mut);font-weight:400;">(optional — for follow-up)</span></label>
+              <input class="rp-input" type="email" id="issueEmail" placeholder="you@example.com" />
+            </div>
+
+            <button class="rp-submit" id="issueSubmitBtn" onclick="submitIssueReport()">
+              Submit Issue Report
+            </button>
+            <div class="rp-msg" id="issueMsg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════
+           REPORT A USER
+      ══════════════════════════════ -->
+      <div class="st-panel" id="panel-user">
+        <div class="st-panel-header">
+          <div class="st-panel-title">Report a User</div>
+          <div class="st-panel-sub">Help us keep 360 safe. Reports are confidential and reviewed by our moderation team.</div>
+        </div>
+
+        <!-- Success state -->
+        <div class="st-card">
+          <div class="rp-success-state" id="userSuccess">
+            <div class="rp-success-icon">🛡️</div>
+            <div class="rp-success-title">Report Received</div>
+            <div class="rp-success-sub">Thank you for reporting. Our moderation team will review the report and take appropriate action.</div>
+            <div class="rp-success-btns">
+              <button class="st-btn primary" onclick="resetForm('user')">Submit Another</button>
+              <a class="st-btn" href="/">Back to 360</a>
+            </div>
+          </div>
+
+          <div id="userForm">
+            <div class="st-card-title">User Report Details</div>
+
+            <div class="rp-info-row" style="margin-bottom:18px;">
+              <span class="rp-info-row-icon">🔒</span>
+              <span>All user reports are <strong>confidential</strong>. The reported user will not be notified of who filed this report. Reports are sent to <strong>report@360-search.com</strong>.</span>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="reportedUsername">Reported Username <span class="rp-req">*</span></label>
+              <input class="rp-input" type="text" id="reportedUsername" placeholder="Enter their 360 username" required />
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label">Reason for Report <span class="rp-req">*</span></label>
+              <input type="hidden" id="reportReason" />
+              <div class="rp-dropdown" id="dd-reportReason">
+                <div class="rp-dropdown-trigger placeholder" onclick="toggleDropdown('reportReason')">
+                  <span class="dd-label">Select a reason…</span>
+                  <span class="rp-dropdown-arrow">▼</span>
+                </div>
+                <div class="rp-dropdown-menu">
+                  <div class="rp-dropdown-option" data-value="harassment"    onclick="selectOption('reportReason','harassment','😡 Harassment / Bullying')">       <span class="dd-emoji">😡</span><span>Harassment / Bullying</span>      <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="spam"          onclick="selectOption('reportReason','spam','📧 Spam')">                              <span class="dd-emoji">📧</span><span>Spam</span>                        <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="hate"          onclick="selectOption('reportReason','hate','🚫 Hate Speech / Discrimination')">      <span class="dd-emoji">🚫</span><span>Hate Speech / Discrimination</span><span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="impersonation" onclick="selectOption('reportReason','impersonation','🎭 Impersonation')">            <span class="dd-emoji">🎭</span><span>Impersonation</span>              <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="threats"       onclick="selectOption('reportReason','threats','⚠️ Threats / Violence')">             <span class="dd-emoji">⚠️</span><span>Threats / Violence</span>         <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="inappropriate" onclick="selectOption('reportReason','inappropriate','🔞 Inappropriate Content')">    <span class="dd-emoji">🔞</span><span>Inappropriate Content</span>       <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="scam"          onclick="selectOption('reportReason','scam','💸 Scam / Fraud')">                     <span class="dd-emoji">💸</span><span>Scam / Fraud</span>               <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="underage"      onclick="selectOption('reportReason','underage','👶 Underage User')">                <span class="dd-emoji">👶</span><span>Underage User</span>              <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="other"         onclick="selectOption('reportReason','other','📌 Other')">                           <span class="dd-emoji">📌</span><span>Other</span>                       <span class="dd-check">✓</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label">Where Did This Happen? <span class="rp-req">*</span></label>
+              <input type="hidden" id="reportContext" />
+              <div class="rp-dropdown" id="dd-reportContext">
+                <div class="rp-dropdown-trigger placeholder" onclick="toggleDropdown('reportContext')">
+                  <span class="dd-label">Select a location…</span>
+                  <span class="rp-dropdown-arrow">▼</span>
+                </div>
+                <div class="rp-dropdown-menu">
+                  <div class="rp-dropdown-option" data-value="chat"     onclick="selectOption('reportContext','chat','💬 360 Chat')">          <span class="dd-emoji">💬</span><span>360 Chat</span>          <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="profile"  onclick="selectOption('reportContext','profile','👤 User Profile')">   <span class="dd-emoji">👤</span><span>User Profile</span>       <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="comments" onclick="selectOption('reportContext','comments','📝 Comments / Posts')"><span class="dd-emoji">📝</span><span>Comments / Posts</span>  <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="dms"      onclick="selectOption('reportContext','dms','📩 Direct Messages')">    <span class="dd-emoji">📩</span><span>Direct Messages</span>    <span class="dd-check">✓</span></div>
+                  <div class="rp-dropdown-option" data-value="other"    onclick="selectOption('reportContext','other','📌 Other')">            <span class="dd-emoji">📌</span><span>Other</span>             <span class="dd-check">✓</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="userReportDesc">Additional Details <span class="rp-req">*</span></label>
+              <textarea class="rp-textarea" id="userReportDesc" maxlength="2000"
+                placeholder="Please describe the incident in detail. Include any relevant messages, links, or context…"></textarea>
+              <div class="rp-char-count" id="userDescCount">0 / 2000</div>
+            </div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="evidenceUrl">Evidence Link <span style="color:var(--mut);font-weight:400;">(optional)</span></label>
+              <input class="rp-input" type="url" id="evidenceUrl" placeholder="Link to screenshot, post, or message" />
+            </div>
+
+            <div class="rp-divider"></div>
+
+            <div class="rp-field">
+              <label class="rp-label" for="reporterEmail">Your Email <span style="color:var(--mut);font-weight:400;">(optional — for follow-up)</span></label>
+              <input class="rp-input" type="email" id="reporterEmail" placeholder="you@example.com" />
+            </div>
+
+            <!-- Danger-styled card note -->
+            <div class="st-card danger-card" style="margin-bottom:16px; padding:14px 16px;">
+              <div style="font-size:13px; line-height:1.6; color:var(--txt);">
+                ⚠️ <strong>False reports are taken seriously.</strong> Submitting a report in bad faith may result in action being taken against your own account.
+              </div>
+            </div>
+
+            <button class="rp-submit" id="userSubmitBtn" onclick="submitUserReport()">
+              Submit User Report
+            </button>
+            <div class="rp-msg" id="userMsg"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /page-wrap -->
+
+  <script>window.SKIP_AUTH_CHIP = true;</script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/wide.js"></script>
+  <script src="/assets/js/cookie.js"></script>
+  <script src="/assets/js/cursor.js"></script>
+
+  <script>
+  // ────────────────────────────────────────
+  // TAB ROUTING
+  // ────────────────────────────────────────
+  const TAB_NAMES = { issue: 'Report an Issue', user: 'Report a User' };
+
+  function getTab() {
+    const p = new URLSearchParams(location.search);
+    const t = p.get('tab');
+    return (t && TAB_NAMES[t]) ? t : 'issue';
+  }
+
+  function switchTab(tab) {
+    const url = tab === 'issue' ? location.pathname : `${location.pathname}?tab=${tab}`;
+    history.pushState(null, '', url);
+    document.querySelectorAll('.st-nav-item[data-tab]').forEach(el =>
+      el.classList.toggle('active', el.dataset.tab === tab));
+    document.querySelectorAll('.st-panel').forEach(el =>
+      el.classList.toggle('active', el.id === `panel-${tab}`));
+  }
+
+  switchTab(getTab());
+  window.addEventListener('popstate', () => switchTab(getTab()));
+
+
+  // ────────────────────────────────────────
+  // CHARACTER COUNTERS
+  // ────────────────────────────────────────
+  function setupCharCounter(textareaId, counterId, max) {
+    const ta = document.getElementById(textareaId);
+    const ct = document.getElementById(counterId);
+    if (!ta || !ct) return;
+    ta.addEventListener('input', () => {
+      const len = ta.value.length;
+      ct.textContent = `${len} / ${max}`;
+      ct.className = 'rp-char-count' + (len > max * .9 ? (len >= max ? ' over' : ' warn') : '');
+    });
+  }
+  setupCharCounter('issueDesc',     'issueDescCount',  2000);
+  setupCharCounter('userReportDesc','userDescCount',   2000);
+
+
+  // ────────────────────────────────────────
+  // FORM RESET
+  // ────────────────────────────────────────
+  function resetForm(type) {
+    if (type === 'issue') {
+      document.getElementById('issueForm').style.display = 'block';
+      document.getElementById('issueSuccess').classList.remove('show');
+      resetDropdown('issueCategory', 'Select a category…');
+      document.getElementById('issuePage').value = '';
+      document.getElementById('issueTitle').value = '';
+      document.getElementById('issueDesc').value = '';
+      document.getElementById('issueEmail').value = '';
+      document.getElementById('issueDescCount').textContent = '0 / 2000';
+      document.querySelector('input[name="issueSeverity"][value="medium"]').checked = true;
+      setMsg('issueMsg', '', '');
+    } else {
+      document.getElementById('userForm').style.display = 'block';
+      document.getElementById('userSuccess').classList.remove('show');
+      document.getElementById('reportedUsername').value = '';
+      resetDropdown('reportReason',  'Select a reason…');
+      resetDropdown('reportContext', 'Select a location…');
+      document.getElementById('userReportDesc').value = '';
+      document.getElementById('evidenceUrl').value = '';
+      document.getElementById('reporterEmail').value = '';
+      document.getElementById('userDescCount').textContent = '0 / 2000';
+      setMsg('userMsg', '', '');
+    }
+  }
+
+
+  // ────────────────────────────────────────
+  // HELPERS
+  // ────────────────────────────────────────
+  function setMsg(id, text, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'rp-msg' + (type ? ' ' + type : '');
+  }
+
+  function buildMailtoBody(lines) {
+    return lines.map(([k, v]) => `${k}: ${v || '(not provided)'}`).join('\n');
+  }
+
+
+  // ────────────────────────────────────────
+  // SUBMIT — ISSUE REPORT
+  // ────────────────────────────────────────
+  function submitIssueReport() {
+    const category  = document.getElementById('issueCategory').value;
+    const page      = document.getElementById('issuePage').value.trim();
+    const title     = document.getElementById('issueTitle').value.trim();
+    const desc      = document.getElementById('issueDesc').value.trim();
+    const severity  = document.querySelector('input[name="issueSeverity"]:checked')?.value || 'medium';
+    const email     = document.getElementById('issueEmail').value.trim();
+
+    // Validation
+    if (!category) { setMsg('issueMsg', '⚠️ Please select an issue category.', 'err'); return; }
+    if (!title)    { setMsg('issueMsg', '⚠️ Please enter an issue title.', 'err'); return; }
+    if (!desc)     { setMsg('issueMsg', '⚠️ Please describe the issue.', 'err'); return; }
+
+    const btn = document.getElementById('issueSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const subject = encodeURIComponent(`[360 Issue Report] ${title}`);
+    const body = encodeURIComponent(
+      buildMailtoBody([
+        ['Category',  category],
+        ['Title',     title],
+        ['Severity',  severity.toUpperCase()],
+        ['Page / URL', page],
+        ['Description', '\n' + desc],
+        ['Reporter Email', email],
+        ['Submitted', new Date().toLocaleString()],
+      ])
+    );
+
+    const mailtoLink = `mailto:report@360-search.com?subject=${subject}&body=${body}`;
+
+    // Open mailto then show success
+    window.location.href = mailtoLink;
+
+    setTimeout(() => {
+      document.getElementById('issueForm').style.display = 'none';
+      document.getElementById('issueSuccess').classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Submit Issue Report';
+    }, 600);
+  }
+
+
+  // ────────────────────────────────────────
+  // SUBMIT — USER REPORT
+  // ────────────────────────────────────────
+  function submitUserReport() {
+    const username  = document.getElementById('reportedUsername').value.trim();
+    const reason    = document.getElementById('reportReason').value;
+    const context   = document.getElementById('reportContext').value;
+    const desc      = document.getElementById('userReportDesc').value.trim();
+    const evidence  = document.getElementById('evidenceUrl').value.trim();
+    const email     = document.getElementById('reporterEmail').value.trim();
+
+    // Validation
+    if (!username) { setMsg('userMsg', '⚠️ Please enter the username you are reporting.', 'err'); return; }
+    if (!reason)   { setMsg('userMsg', '⚠️ Please select a reason for this report.', 'err'); return; }
+    if (!context)  { setMsg('userMsg', '⚠️ Please select where this occurred.', 'err'); return; }
+    if (!desc)     { setMsg('userMsg', '⚠️ Please provide additional details.', 'err'); return; }
+
+    const btn = document.getElementById('userSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const subject = encodeURIComponent(`[360 User Report] User: ${username} — ${reason}`);
+    const body = encodeURIComponent(
+      buildMailtoBody([
+        ['Reported User',   username],
+        ['Reason',          reason],
+        ['Location',        context],
+        ['Details',         '\n' + desc],
+        ['Evidence Link',   evidence],
+        ['Reporter Email',  email],
+        ['Submitted',       new Date().toLocaleString()],
+      ])
+    );
+
+    const mailtoLink = `mailto:report@360-search.com?subject=${subject}&body=${body}`;
+
+    window.location.href = mailtoLink;
+
+    setTimeout(() => {
+      document.getElementById('userForm').style.display = 'none';
+      document.getElementById('userSuccess').classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Submit User Report';
+    }, 600);
+  }
+
+  // ────────────────────────────────────────
+  // CUSTOM DROPDOWN SYSTEM
+  // ────────────────────────────────────────
+  function toggleDropdown(id) {
+    const dd      = document.getElementById('dd-' + id);
+    const trigger = dd.querySelector('.rp-dropdown-trigger');
+    const menu    = dd.querySelector('.rp-dropdown-menu');
+    const isOpen  = menu.classList.contains('open');
+
+    // Close all other dropdowns first
+    closeAllDropdowns();
+
+    if (!isOpen) {
+      menu.classList.add('open');
+      trigger.classList.add('open');
+    }
+  }
+
+  function closeAllDropdowns() {
+    document.querySelectorAll('.rp-dropdown-menu.open').forEach(m => {
+      m.classList.remove('open');
+      m.closest('.rp-dropdown').querySelector('.rp-dropdown-trigger').classList.remove('open');
+    });
+  }
+
+  function selectOption(id, value, label) {
+    const hidden  = document.getElementById(id);
+    const dd      = document.getElementById('dd-' + id);
+    const trigger = dd.querySelector('.rp-dropdown-trigger');
+    const menu    = dd.querySelector('.rp-dropdown-menu');
+
+    // Set hidden input value
+    hidden.value = value;
+
+    // Update trigger label and style
+    trigger.querySelector('.dd-label').textContent = label;
+    trigger.classList.remove('placeholder');
+    trigger.classList.add('selected');
+
+    // Mark selected option
+    menu.querySelectorAll('.rp-dropdown-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.value === value);
+    });
+
+    // Close
+    menu.classList.remove('open');
+    trigger.classList.remove('open');
+  }
+
+  function resetDropdown(id, placeholder) {
+    const hidden  = document.getElementById(id);
+    const dd      = document.getElementById('dd-' + id);
+    const trigger = dd.querySelector('.rp-dropdown-trigger');
+    const menu    = dd.querySelector('.rp-dropdown-menu');
+    hidden.value = '';
+    trigger.querySelector('.dd-label').textContent = placeholder;
+    trigger.classList.add('placeholder');
+    trigger.classList.remove('selected', 'open');
+    menu.classList.remove('open');
+    menu.querySelectorAll('.rp-dropdown-option').forEach(o => o.classList.remove('selected'));
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.rp-dropdown')) closeAllDropdowns();
+  });
+
+  </script>
+</body>
+</html>
