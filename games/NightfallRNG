@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nightfall RNG</title>
+<style>
+/* System font substitutions — no external requests */
+/* 'Cinzel Decorative' -> Palatino/Georgia serif for headings */
+/* 'Crimson Pro' -> Georgia serif for body */
+/* 'Rajdhani' -> system condensed sans for labels */
+</style>
+<style>
+:root{
+  --bg:#06030e;--bg2:#0e071e;--h1:#ff6b35;--h2:#ff9a3c;--h3:#ffc857;
+  --p1:#7c3aed;--p2:#a78bfa;--gold:#ffd700;--gold2:#e8b800;
+  --text:#ede8ff;--dim:#6b6085;--border:rgba(255,150,60,.13);
+  --go:0 0 24px rgba(255,107,53,.55);--gg:0 0 24px rgba(255,215,0,.55);--gp:0 0 24px rgba(124,58,237,.55);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+.sky{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,#020107 0%,#07031a 15%,#11062c 28%,#1e0d46 40%,#380f60 50%,#601f58 60%,#a03030 70%,#d85520 78%,#f07828 86%,#ffaa44 93%,#ffe070 100%);transition:filter 4s ease}
+.stars-layer{position:fixed;inset:0;z-index:1;pointer-events:none}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--dur,3s) ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:var(--mo,.15)}to{opacity:1}}
+.nebula{position:fixed;border-radius:50%;pointer-events:none;z-index:1;filter:blur(55px);animation:nebdrift var(--nd,28s) ease-in-out infinite alternate}
+@keyframes nebdrift{from{transform:translate(0,0)}to{transform:translate(25px,-18px)}}
+.horizon-glow{position:fixed;bottom:0;left:0;right:0;height:42%;background:radial-gradient(ellipse 120% 60% at 50% 100%,rgba(255,130,35,.2) 0%,transparent 70%);z-index:1;pointer-events:none}
+.w-overlay{position:fixed;inset:0;z-index:2;pointer-events:none}
+.wp{position:absolute;animation:wpfall var(--wdur,4s) linear infinite;animation-delay:var(--wdel,0s)}
+@keyframes wpfall{0%{transform:translateY(-30px) translateX(0);opacity:.85}100%{transform:translateY(105vh) translateX(var(--wx,0px));opacity:0}}
+.app{position:relative;z-index:3;display:flex;flex-direction:column;min-height:100vh}
+.header{text-align:center;padding:26px 16px 12px;background:linear-gradient(180deg,rgba(2,1,7,.75) 0%,transparent 100%)}
+.header::after{content:'';display:block;height:1px;margin-top:14px;background:linear-gradient(90deg,transparent,rgba(255,107,53,.22) 20%,rgba(255,200,80,.65) 50%,rgba(255,107,53,.22) 80%,transparent)}
+.title-eyebrow{font-family:Arial,sans-serif;font-size:.65rem;letter-spacing:.42em;font-weight:500;color:var(--h2);opacity:.68;text-transform:uppercase}
+.game-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:clamp(1.7rem,5vw,3.2rem);font-weight:900;letter-spacing:.1em;background:linear-gradient(135deg,#ff6035,#ffd060 40%,#ff9a3c 65%,#ff5a28);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 28px rgba(255,140,45,.55));animation:tglow 5s ease-in-out infinite}
+@keyframes tglow{0%,100%{filter:drop-shadow(0 0 18px rgba(255,140,45,.4))}50%{filter:drop-shadow(0 0 48px rgba(255,140,45,.85))}}
+.title-rule{display:flex;align-items:center;gap:12px;justify-content:center;margin:5px 0}
+.title-rule-line{flex:1;max-width:110px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,150,55,.5))}
+.title-rule-line.r{background:linear-gradient(90deg,rgba(255,150,55,.5),transparent)}
+.game-subtitle{font-style:italic;color:var(--dim);font-size:.84rem;letter-spacing:.24em;margin-top:3px}
+.w-pill{display:flex;align-items:center;gap:7px;padding:5px 15px;border:1px solid var(--border);border-radius:20px;margin:5px auto;font-family:Arial,sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.1em;color:var(--dim);background:rgba(5,3,12,.65);width:fit-content;max-width:92%;transition:all 1.5s ease}
+.w-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0;animation:wdot 2s ease-in-out infinite}
+@keyframes wdot{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.35)}}
+.curr-bar{display:flex;justify-content:center;background:rgba(4,2,11,.9);border-top:1px solid var(--border);border-bottom:1px solid var(--border);backdrop-filter:blur(10px);flex-wrap:wrap}
+.curr-item{display:flex;align-items:center;gap:8px;padding:9px 16px;position:relative}
+.curr-item+.curr-item::before{content:'';position:absolute;left:0;top:22%;height:56%;width:1px;background:var(--border)}
+.curr-icon{font-size:1.2rem;filter:drop-shadow(0 0 7px var(--gold))}
+.curr-lbl{color:var(--dim);font-size:.58rem;letter-spacing:.16em;font-family:Arial,sans-serif;text-transform:uppercase}
+.curr-val{color:var(--gold);font-weight:600;font-size:1.05rem;font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;line-height:1;transition:all .3s}
+.curr-val.bump{animation:bump .4s ease}
+@keyframes bump{0%,100%{transform:scale(1)}40%{transform:scale(1.38);color:#fff}}
+.tabs{display:flex;justify-content:center;gap:2px;padding:13px 14px 0;flex-wrap:wrap}
+.tab-btn{font-family:Arial,sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:8px 18px;border:1px solid rgba(255,150,60,.18);background:rgba(4,2,11,.72);color:var(--dim);border-radius:5px 5px 0 0;transition:all .2s;position:relative;bottom:-1px}
+.tab-btn:hover{color:var(--text);border-color:rgba(255,150,60,.4)}
+.tab-btn.active{color:var(--h2);border-color:var(--h1);border-bottom-color:var(--bg2);background:var(--bg2);box-shadow:0 -4px 20px rgba(255,107,53,.2)}
+.main-panel{flex:1;background:rgba(6,3,14,.84);border-top:1px solid rgba(255,107,53,.26);padding:22px 13px;backdrop-filter:blur(10px)}
+.tab-content{display:none}.tab-content.active{display:block}
+.sec-hdr{text-align:center;margin-bottom:18px}
+.sec-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.95rem;color:var(--h2);letter-spacing:.14em}
+.sec-sub{font-size:.8rem;color:var(--dim);font-style:italic;margin-top:5px}
+.rc-mint{--rc:#d1fae5;--rcs:rgba(209,250,229,.16)}
+.rc-gem-mint{--rc:#a5f3fc;--rcs:rgba(165,243,252,.18)}
+.rc-common{--rc:#94a3b8;--rcs:rgba(148,163,184,.12)}
+.rc-uncommon{--rc:#4ade80;--rcs:rgba(74,222,128,.13)}
+.rc-rare{--rc:#60a5fa;--rcs:rgba(96,165,250,.13)}
+.rc-ultra-rare{--rc:#c084fc;--rcs:rgba(192,132,252,.15)}
+.rc-legendary{--rc:#fbbf24;--rcs:rgba(251,191,36,.17)}
+.rc-mythical{--rc:#f472b6;--rcs:rgba(244,114,182,.17)}
+.rc-celestial{--rc:#ff6b35;--rcs:rgba(255,107,53,.2)}
+.rc-godly{--rc:#fff;--rcs:rgba(255,255,255,.22)}
+.cg-gem{--cc:#b9f2ff;--cb:rgba(185,242,255,.18)}
+.cg-mint{--cc:#a5f3fc;--cb:rgba(165,243,252,.14)}
+.cg-nm{--cc:#86efac;--cb:rgba(134,239,172,.12)}
+.cg-ex{--cc:#fde68a;--cb:rgba(253,230,138,.12)}
+.cg-vg{--cc:#fca5a5;--cb:rgba(252,165,165,.1)}
+.cg-poor{--cc:#9ca3af;--cb:rgba(156,163,175,.1)}
+.cond-badge{font-family:Arial,sans-serif;font-size:.5rem;font-weight:700;letter-spacing:.1em;padding:2px 6px;border-radius:5px;border:1px solid var(--cc,#fff);background:var(--cb,transparent);color:var(--cc,#fff);text-transform:uppercase;white-space:nowrap}
+.foil-foil{border:1px solid #a78bfa!important;color:#c4b5fd!important}
+.foil-shiny{border:1px solid #f472b6!important;color:#f9a8d4!important;animation:fshin 1.2s ease-in-out infinite}
+.foil-prismatic{background:linear-gradient(135deg,rgba(255,107,53,.3),rgba(107,53,255,.3),rgba(53,180,255,.3))!important;color:#fff!important;border-color:transparent!important;box-shadow:0 0 7px rgba(255,200,100,.3)!important}
+@keyframes fshin{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+.pack-scene{position:fixed;inset:0;z-index:200;background:rgba(2,1,7,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .35s;backdrop-filter:blur(8px)}
+.pack-scene.open{opacity:1;pointer-events:all}
+.pack-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+.pack-body{width:210px;height:305px;border-radius:17px;position:relative;overflow:hidden;border:2px solid rgba(255,150,55,.38);box-shadow:0 0 50px rgba(255,107,53,.28),0 0 100px rgba(255,107,53,.1);animation:pfloat 3s ease-in-out infinite;cursor:pointer;transition:filter .2s}
+.pack-body:hover{filter:brightness(1.15)}
+.pack-body:active{transform:scale(.97)}
+@keyframes pfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+.pack-bg{position:absolute;inset:0;transition:background .4s}
+.pack-shine{position:absolute;inset:0;background:linear-gradient(135deg,transparent 0%,rgba(255,255,255,.06) 44%,rgba(255,255,255,.14) 50%,rgba(255,255,255,.06) 56%,transparent 100%);animation:pshine 2.8s ease-in-out infinite}
+@keyframes pshine{0%,100%{opacity:.5}50%{opacity:1}}
+.pack-hatch{position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(255,190,80,.025) 3px,rgba(255,190,80,.025) 6px)}
+.pack-tear{position:absolute;top:58px;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(255,195,80,.5) 0,rgba(255,195,80,.5) 7px,transparent 7px,transparent 13px);opacity:.7}
+.pack-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:88%;font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;color:rgba(255,215,110,.9);text-shadow:0 0 16px rgba(255,150,45,.8);pointer-events:none}
+.pack-logo-icon{font-size:3.8rem;display:block;margin-bottom:6px;filter:drop-shadow(0 0 16px rgba(255,135,45,.9));animation:icp 2s ease-in-out infinite}
+@keyframes icp{0%,100%{filter:drop-shadow(0 0 11px rgba(255,135,45,.7))}50%{filter:drop-shadow(0 0 28px rgba(255,135,45,1))}}
+.pack-logo-set{font-size:.56rem;letter-spacing:.19em;color:rgba(255,195,110,.65);margin-bottom:3px}
+.pack-logo-name{font-size:.62rem;letter-spacing:.13em;opacity:.88}
+.pack-logo-sub{font-family:Georgia,'Times New Roman',serif;font-size:.62rem;font-style:italic;color:rgba(255,195,140,.5);letter-spacing:.16em;margin-top:3px}
+.pack-footer{position:absolute;bottom:11px;left:0;right:0;text-align:center;font-family:Arial,sans-serif;font-size:.54rem;font-weight:600;letter-spacing:.22em;color:rgba(255,170,70,.35);text-transform:uppercase}
+.pack-hint{margin-top:26px;font-family:Arial,sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);animation:hblink 1.5s ease-in-out infinite}
+@keyframes hblink{0%,100%{opacity:.4}50%{opacity:1}}
+.pack-cost-lbl{margin-top:7px;font-family:Georgia,'Times New Roman',serif;font-size:.82rem;color:var(--dim)}
+.pack-body.rip{animation:prip .5s ease forwards}
+@keyframes prip{0%{transform:scale(1)}30%{transform:scale(1.05) rotate(-2deg)}70%{transform:scale(.95) rotate(1.5deg)}100%{transform:scale(1)}}
+.reveal-scene{position:fixed;inset:0;z-index:201;background:rgba(2,1,7,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;opacity:0;pointer-events:none;transition:opacity .35s;overflow-y:auto;padding:16px}
+.reveal-scene.open{opacity:1;pointer-events:all}
+.rev-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.82rem;color:var(--h2);letter-spacing:.15em;text-align:center}
+.rev-set-label{font-family:Arial,sans-serif;font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-align:center}
+.cards-spread{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;max-width:900px;width:100%}
+.rw-wrap{position:relative}
+.new-badge{position:absolute;top:-8px;right:-6px;background:var(--h1);color:#fff;font-family:Arial,sans-serif;font-size:.48rem;font-weight:700;padding:2px 5px;border-radius:6px;z-index:5;animation:nbp .3s ease}
+@keyframes nbp{from{transform:scale(0)}to{transform:scale(1)}}
+.rw-card{width:92px;height:132px;border-radius:9px;position:relative;cursor:pointer;flex-shrink:0;transform-style:preserve-3d;transition:transform .52s cubic-bezier(.4,0,.2,1)}
+.rw-card.flipped{transform:rotateY(180deg)}
+.rw-face{position:absolute;inset:0;border-radius:9px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1.5px solid;padding:6px 5px;text-align:center}
+.rw-back{background:linear-gradient(135deg,#0d0625,#28104a);border-color:rgba(124,58,237,.4)}
+.rw-back-icon{font-size:1.8rem;opacity:.28;animation:rspin 22s linear infinite}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.rw-front{transform:rotateY(180deg)}
+.rw-emoji{font-size:1.7rem;filter:drop-shadow(0 0 7px currentColor)}
+.rw-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.38rem;letter-spacing:.04em;line-height:1.3}
+.rw-rb{font-size:.36rem;letter-spacing:.09em;padding:1px 5px;border-radius:8px;border:1px solid currentColor;font-family:Arial,sans-serif;font-weight:600}
+.rw-meta{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:1px}
+.rw-sl{font-size:.34rem;color:var(--dim);font-family:Arial,sans-serif;margin-top:1px}
+.rw-glow{position:absolute;inset:-3px;border-radius:12px;opacity:0;transition:opacity .4s;pointer-events:none}
+.rw-card.flipped .rw-glow{opacity:1}
+.rev-btns{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+.rev-btn{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.66rem;letter-spacing:.09em;padding:9px 24px;border:1.5px solid var(--h1);background:rgba(255,107,53,.1);color:var(--h2);border-radius:7px;transition:all .2s}
+.rev-btn:hover{background:rgba(255,107,53,.26);box-shadow:var(--go)}
+.rev-btn.sec{border-color:var(--p2);background:rgba(124,58,237,.1);color:var(--p2)}
+.rev-btn.sec:hover{background:rgba(124,58,237,.22);box-shadow:var(--gp)}
+.flip-all-btn{font-family:Arial,sans-serif;font-size:.64rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;padding:6px 15px;border:1px solid rgba(255,150,55,.32);background:rgba(255,150,55,.07);color:var(--h2);border-radius:5px;transition:all .2s}
+.flip-all-btn:hover{background:rgba(255,150,55,.17)}
+.rev-hint{font-family:Arial,sans-serif;font-size:.64rem;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;animation:hblink 1.5s ease-in-out infinite}
+.rc-mint .rw-front,.rc-mint .h-card{border-color:#d1fae5;background:linear-gradient(150deg,#071510,#0f2820);color:#d1fae5}
+.rc-gem-mint .rw-front,.rc-gem-mint .h-card{border-color:#a5f3fc;background:linear-gradient(150deg,#050f14,#0a1e25);color:#a5f3fc}
+.rc-common .rw-front,.rc-common .h-card{border-color:#94a3b8;background:linear-gradient(150deg,#0d1422,#18202e);color:#94a3b8}
+.rc-uncommon .rw-front,.rc-uncommon .h-card{border-color:#4ade80;background:linear-gradient(150deg,#071a10,#0f2a1a);color:#4ade80}
+.rc-rare .rw-front,.rc-rare .h-card{border-color:#60a5fa;background:linear-gradient(150deg,#060d24,#0d1840);color:#60a5fa}
+.rc-ultra-rare .rw-front,.rc-ultra-rare .h-card{border-color:#c084fc;background:linear-gradient(150deg,#110828,#1e0a42);color:#c084fc}
+.rc-legendary .rw-front,.rc-legendary .h-card{border-color:#fbbf24;background:linear-gradient(150deg,#1a1000,#302000);color:#fbbf24}
+.rc-mythical .rw-front,.rc-mythical .h-card{border-color:#f472b6;background:linear-gradient(150deg,#1a0718,#2e0a28);color:#f472b6}
+.rc-celestial .rw-front,.rc-celestial .h-card{border-color:#ff6b35;background:linear-gradient(150deg,#1a0800,#2e1200);color:#ff6b35}
+.rc-godly .rw-front,.rc-godly .h-card{border-color:#fff;background:linear-gradient(150deg,#14102a,#1e1838);color:#fff;box-shadow:inset 0 0 20px rgba(255,255,255,.07)}
+.rc-legendary .rw-glow{box-shadow:0 0 26px #fbbf24,0 0 52px rgba(251,191,36,.28)}
+.rc-mythical .rw-glow{box-shadow:0 0 26px #f472b6,0 0 52px rgba(244,114,182,.28)}
+.rc-celestial .rw-glow{box-shadow:0 0 30px #ff6b35,0 0 65px rgba(255,107,53,.42)}
+.rc-godly .rw-glow{box-shadow:0 0 35px #fff,0 0 80px rgba(255,255,255,.35),0 0 120px rgba(200,180,255,.2)}
+.card-stage{width:100%;max-width:500px;display:flex;flex-direction:column;align-items:center;gap:17px}
+.card-3d{perspective:1000px;width:185px;height:265px}
+.card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .72s cubic-bezier(.4,0,.2,1)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px;border:2px solid}
+.card-back-face{background:linear-gradient(135deg,#0c0522,#1c0e48);border-color:rgba(124,58,237,.32)}
+.card-back-ico{font-size:3.6rem;opacity:.25;animation:rspin 24s linear infinite;filter:drop-shadow(0 0 12px rgba(124,58,237,.5))}
+.card-front-face{transform:rotateY(180deg);text-align:center}
+.cf-glow{position:absolute;inset:-4px;border-radius:17px;opacity:0;transition:opacity .55s;pointer-events:none}
+.card-inner.revealed .cf-glow{opacity:1}
+.cf-emoji{font-size:3.2rem;filter:drop-shadow(0 0 11px currentColor)}
+.cf-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.66rem;letter-spacing:.06em;line-height:1.3}
+.cf-rb{font-size:.52rem;letter-spacing:.18em;padding:3px 10px;border-radius:20px;border:1px solid currentColor;font-family:Arial,sans-serif;font-weight:600}
+.cf-desc{font-size:.7rem;color:var(--dim);font-style:italic;line-height:1.5}
+.cf-meta{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;align-items:center}
+.rc-mint .card-front-face{border-color:#d1fae5;background:linear-gradient(150deg,#071510,#0f2820);color:#d1fae5}
+.rc-gem-mint .card-front-face{border-color:#a5f3fc;background:linear-gradient(150deg,#050f14,#0a1e25);color:#a5f3fc}
+.rc-common .card-front-face{border-color:#94a3b8;background:linear-gradient(150deg,#0d1422,#18202e);color:#94a3b8}
+.rc-uncommon .card-front-face{border-color:#4ade80;background:linear-gradient(150deg,#071a10,#0f2a1a);color:#4ade80}
+.rc-rare .card-front-face{border-color:#60a5fa;background:linear-gradient(150deg,#060d24,#0d1840);color:#60a5fa}
+.rc-ultra-rare .card-front-face{border-color:#c084fc;background:linear-gradient(150deg,#110828,#1e0a42);color:#c084fc}
+.rc-legendary .card-front-face{border-color:#fbbf24;background:linear-gradient(150deg,#1a1000,#302000);color:#fbbf24}
+.rc-mythical .card-front-face{border-color:#f472b6;background:linear-gradient(150deg,#1a0718,#2e0a28);color:#f472b6}
+.rc-celestial .card-front-face{border-color:#ff6b35;background:linear-gradient(150deg,#1a0800,#2e1200);color:#ff6b35}
+.rc-godly .card-front-face{border-color:#fff;background:linear-gradient(150deg,#14102a,#1e1838);color:#fff}
+.rc-legendary .cf-glow{box-shadow:0 0 32px #fbbf24,0 0 65px rgba(251,191,36,.32)}
+.rc-mythical .cf-glow{box-shadow:0 0 32px #f472b6,0 0 65px rgba(244,114,182,.32)}
+.rc-celestial .cf-glow{box-shadow:0 0 38px #ff6b35,0 0 75px rgba(255,107,53,.45)}
+.rc-godly .cf-glow{box-shadow:0 0 40px #fff,0 0 90px rgba(255,255,255,.3),0 0 130px rgba(200,180,255,.2)}
+.roll-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.rbg{display:flex;flex-direction:column;align-items:center;gap:4px}
+.btn-primary{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.78rem;letter-spacing:.11em;padding:12px 34px;border:2px solid var(--h1);background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(255,195,80,.06));color:var(--h2);border-radius:7px;transition:all .22s;position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,107,53,.24),rgba(255,195,80,.14));opacity:0;transition:opacity .22s}
+.btn-primary:hover:not(:disabled)::before{opacity:1}
+.btn-primary:hover:not(:disabled){box-shadow:var(--go);transform:translateY(-2px)}
+.btn-primary:disabled{opacity:.32;cursor:not-allowed;border-color:var(--dim);color:var(--dim)}
+.btn-secondary{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.62rem;letter-spacing:.08em;padding:8px 14px;border:1px solid var(--p2);background:rgba(124,58,237,.09);color:var(--p2);border-radius:6px;transition:all .2s}
+.btn-secondary:hover:not(:disabled){background:rgba(124,58,237,.2);box-shadow:var(--gp);transform:translateY(-1px)}
+.btn-secondary:disabled{opacity:.32;cursor:not-allowed}
+.roll-cost{display:flex;align-items:center;gap:4px;font-size:.74rem;color:var(--dim)}
+.pity-wrap{width:100%;max-width:320px}
+.pity-lbl{display:flex;justify-content:space-between;font-size:.66rem;color:var(--dim);margin-bottom:4px;font-family:Arial,sans-serif}
+.pity-bar{height:4px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.pity-fill{height:100%;background:linear-gradient(90deg,var(--p2),var(--h2),var(--h1));border-radius:3px;transition:width .42s ease}
+.hist-section{width:100%;max-width:520px}
+.hist-label{font-family:Arial,sans-serif;font-size:.58rem;color:var(--dim);letter-spacing:.2em;margin-bottom:7px;text-transform:uppercase}
+.hist-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:7px;scrollbar-width:thin;scrollbar-color:rgba(255,107,53,.25) transparent}
+.h-card{flex-shrink:0;width:46px;height:65px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:1.2rem;border:1.5px solid;opacity:.88;transition:all .2s;animation:hcin .3s ease;cursor:default;position:relative}
+.h-card:hover{opacity:1;transform:translateY(-3px)}
+@keyframes hcin{from{transform:translateX(-14px);opacity:0}to{transform:translateX(0);opacity:.88}}
+.h-card-name{font-size:.38rem;text-align:center;line-height:1.2;padding:0 2px;font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif}
+.h-foil-dot{position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%}
+.stats-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:11px 13px;background:rgba(4,2,11,.65);border:1px solid var(--border);border-radius:9px;max-width:500px;width:100%}
+.stat-it{text-align:center}
+.stat-v{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.88rem;color:var(--h2)}
+.stat-l{font-family:Arial,sans-serif;font-size:.53rem;letter-spacing:.13em;color:var(--dim);text-transform:uppercase}
+.sets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;max-width:940px;margin:0 auto}
+.set-card{border-radius:14px;overflow:hidden;border:1px solid rgba(255,150,55,.18);background:rgba(9,5,20,.9);transition:all .22s}
+.set-card:hover{border-color:rgba(255,150,55,.36);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.set-header{padding:18px 16px 12px;position:relative}
+.set-icon{font-size:2.8rem;margin-bottom:6px;display:block;filter:drop-shadow(0 0 10px var(--sc,var(--h1)))}
+.set-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.78rem;color:var(--text);letter-spacing:.09em}
+.set-code{font-family:Arial,sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.18em;color:var(--sc,var(--h2));opacity:.78;margin-top:2px}
+.set-body{padding:12px 16px 16px}
+.set-desc{font-size:.77rem;color:var(--dim);font-style:italic;line-height:1.45;margin-bottom:10px}
+.set-stats{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.ss-v{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.8rem;color:var(--h2)}
+.ss-l{font-family:Arial,sans-serif;font-size:.54rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+.set-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.set-tag{font-family:Arial,sans-serif;font-size:.56rem;font-weight:600;letter-spacing:.08em;padding:2px 7px;border-radius:9px;border:1px solid rgba(255,150,55,.22);color:var(--dim);text-transform:uppercase}
+.set-pack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.set-pack-btn{font-family:Arial,sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:7px 4px;border:1px solid var(--sc,var(--h1));background:transparent;color:var(--sc,var(--h1));border-radius:6px;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:1px}
+.set-pack-btn:hover:not(:disabled){filter:brightness(1.3);background:rgba(255,150,55,.08)}
+.set-pack-btn:disabled{opacity:.28;cursor:not-allowed}
+.set-single-btn{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.56rem;letter-spacing:.06em;padding:6px;width:100%;border:1px solid var(--sc,var(--h1));background:transparent;color:var(--sc,var(--h1));border-radius:5px;transition:all .18s}
+.set-single-btn:hover:not(:disabled){filter:brightness(1.3);background:rgba(255,150,55,.06)}
+.set-single-btn:disabled{opacity:.28;cursor:not-allowed}
+.inv-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;max-width:940px;margin:0 auto 13px}
+.filter-row{display:flex;gap:5px;flex-wrap:wrap}
+.f-btn{font-family:Arial,sans-serif;font-size:.58rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;padding:4px 10px;border:1px solid rgba(255,150,55,.18);background:rgba(9,5,20,.72);color:var(--dim);border-radius:18px;transition:all .16s}
+.f-btn.active,.f-btn:hover{color:var(--text)}
+.f-btn.active{background:rgba(255,107,53,.18);border-color:var(--h1);color:var(--h2)}
+.f-btn[data-r="common"].active{background:rgba(148,163,184,.16);border-color:#94a3b8;color:#94a3b8}
+.f-btn[data-r="uncommon"].active{background:rgba(74,222,128,.16);border-color:#4ade80;color:#4ade80}
+.f-btn[data-r="rare"].active{background:rgba(96,165,250,.16);border-color:#60a5fa;color:#60a5fa}
+.f-btn[data-r="ultra-rare"].active{background:rgba(192,132,252,.16);border-color:#c084fc;color:#c084fc}
+.f-btn[data-r="legendary"].active{background:rgba(251,191,36,.16);border-color:#fbbf24;color:#fbbf24}
+.f-btn[data-r="mythical"].active{background:rgba(244,114,182,.16);border-color:#f472b6;color:#f472b6}
+.f-btn[data-r="celestial"].active{background:rgba(255,107,53,.2);border-color:#ff6b35;color:#ff6b35}
+.f-btn[data-r="godly"].active{background:rgba(255,255,255,.14);border-color:#fff;color:#fff}
+.sell-dupes-btn{font-family:Arial,sans-serif;font-size:.64rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;padding:7px 13px;border:1px solid rgba(255,107,53,.42);background:rgba(255,107,53,.07);color:var(--h2);border-radius:6px;transition:all .2s;display:flex;align-items:center;gap:6px}
+.sell-dupes-btn:hover:not(:disabled){background:rgba(255,107,53,.18);box-shadow:var(--go)}
+.sell-dupes-btn:disabled{opacity:.3;cursor:not-allowed}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:9px;max-width:940px;margin:0 auto}
+.inv-card{background:rgba(9,5,20,.9);border-radius:11px;padding:12px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;border:1px solid;position:relative;transition:transform .18s}
+.inv-card:hover{transform:translateY(-2px)}
+.inv-cnt{position:absolute;top:6px;right:6px;background:var(--h1);color:#fff;font-family:Arial,sans-serif;font-size:.56rem;font-weight:700;padding:2px 6px;border-radius:8px}
+.inv-emoji{font-size:2.4rem}
+.inv-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.58rem;color:var(--text)}
+.inv-rar{font-size:.55rem;letter-spacing:.12em;font-family:Arial,sans-serif;font-weight:600}
+.inv-badges{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.inv-set-code{font-size:.52rem;font-family:Arial,sans-serif;letter-spacing:.07em}
+.sal-btn{font-size:.56rem;padding:3px 7px;border:1px solid rgba(255,107,53,.26);background:rgba(255,107,53,.05);color:#ff9966;border-radius:4px;font-family:Arial,sans-serif;font-weight:600;letter-spacing:.06em;text-transform:uppercase;transition:all .16s}
+.sal-btn:hover{background:rgba(255,107,53,.18);border-color:rgba(255,107,53,.5)}
+.empty-state{grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--dim);font-style:italic;font-size:.92rem}
+.empty-ico{font-size:2.6rem;margin-bottom:10px;opacity:.32}
+.inv-card.rc-common{border-color:rgba(148,163,184,.22)}.inv-card.rc-uncommon{border-color:rgba(74,222,128,.25)}.inv-card.rc-rare{border-color:rgba(96,165,250,.25)}.inv-card.rc-ultra-rare{border-color:rgba(192,132,252,.28)}.inv-card.rc-legendary{border-color:rgba(251,191,36,.38);box-shadow:0 0 9px rgba(251,191,36,.09)}.inv-card.rc-mythical{border-color:rgba(244,114,182,.38);box-shadow:0 0 9px rgba(244,114,182,.09)}.inv-card.rc-celestial{border-color:rgba(255,107,53,.5);box-shadow:0 0 12px rgba(255,107,53,.12)}.inv-card.rc-godly{border-color:rgba(255,255,255,.45);box-shadow:0 0 16px rgba(255,255,255,.12)}.inv-card.rc-mint{border-color:rgba(209,250,229,.22)}.inv-card.rc-gem-mint{border-color:rgba(165,243,252,.22)}
+.inv-rar.rc-common{color:#94a3b8}.inv-rar.rc-uncommon{color:#4ade80}.inv-rar.rc-rare{color:#60a5fa}.inv-rar.rc-ultra-rare{color:#c084fc}.inv-rar.rc-legendary{color:#fbbf24}.inv-rar.rc-mythical{color:#f472b6}.inv-rar.rc-celestial{color:#ff6b35}.inv-rar.rc-godly{color:#fff}.inv-rar.rc-mint{color:#d1fae5}.inv-rar.rc-gem-mint{color:#a5f3fc}
+.factory-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px;margin:0 auto}
+@media(max-width:600px){.factory-layout{grid-template-columns:1fr}}
+.factory-panel{background:rgba(9,5,20,.88);border:1px solid rgba(255,150,55,.15);border-radius:14px;padding:18px 15px}
+.factory-panel-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.74rem;color:var(--h2);letter-spacing:.12em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,150,55,.12);display:flex;align-items:center;gap:8px}
+.recipe-list{display:flex;flex-direction:column;gap:8px}
+.recipe-item{background:rgba(4,2,11,.6);border:1px solid rgba(255,150,55,.12);border-radius:9px;padding:11px 12px;transition:all .2s}
+.recipe-item:hover{border-color:rgba(255,150,55,.28)}
+.recipe-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.recipe-label{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.62rem;color:var(--text);letter-spacing:.07em}
+.recipe-result{display:flex;align-items:center;gap:5px;font-size:.7rem}
+.recipe-arrow{color:var(--dim);font-size:.8rem}
+.recipe-cost{font-size:.65rem;color:var(--dim);font-family:Arial,sans-serif;letter-spacing:.06em;margin-top:4px}
+.craft-btn{font-family:Arial,sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border:1px solid var(--h2);background:rgba(255,150,55,.08);color:var(--h2);border-radius:5px;transition:all .18s;white-space:nowrap}
+.craft-btn:hover:not(:disabled){background:rgba(255,150,55,.2);box-shadow:var(--go)}
+.craft-btn:disabled{opacity:.28;cursor:not-allowed}
+.salvage-panel{background:rgba(9,5,20,.88);border:1px solid rgba(255,150,55,.15);border-radius:14px;padding:18px 15px;grid-column:1/-1}
+.salvage-select{width:100%;background:rgba(4,2,11,.8);border:1px solid rgba(255,150,55,.2);color:var(--text);padding:8px 10px;border-radius:7px;font-family:Arial,sans-serif;font-size:.72rem;margin-bottom:10px;appearance:none}
+.salvage-select option{background:#0d0720}
+.salvage-preview{display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(4,2,11,.5);border-radius:8px;margin-bottom:10px;min-height:52px}
+.sal-preview-emoji{font-size:2rem}
+.sal-preview-info{flex:1}
+.sal-preview-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.62rem;color:var(--text)}
+.sal-preview-val{font-size:.7rem;color:var(--gold);font-family:Arial,sans-serif}
+.sal-preview-gain{font-size:.65rem;color:var(--h2);font-family:Arial,sans-serif;font-weight:600}
+.market-layout{max-width:900px;margin:0 auto}
+.market-ticker{background:rgba(4,2,11,.85);border:1px solid rgba(255,150,55,.15);border-radius:9px;padding:10px 15px;margin-bottom:14px;overflow:hidden;position:relative}
+.ticker-inner{display:flex;gap:20px;animation:tickerScroll 30s linear infinite;width:max-content}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{display:flex;align-items:center;gap:6px;white-space:nowrap;font-family:Arial,sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.06em}
+.ticker-up{color:#4ade80}.ticker-down{color:#f87171}.ticker-flat{color:var(--dim)}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:14px}
+.mkt-card{background:rgba(9,5,20,.88);border:1px solid rgba(255,150,55,.14);border-radius:11px;padding:13px 11px;transition:all .2s}
+.mkt-card:hover{border-color:rgba(255,150,55,.3);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.mkt-emoji{font-size:1.8rem;margin-bottom:5px}
+.mkt-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.58rem;color:var(--text);margin-bottom:3px}
+.mkt-rar{font-family:Arial,sans-serif;font-size:.55rem;font-weight:600;letter-spacing:.1em;margin-bottom:6px}
+.mkt-price-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mkt-price{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.8rem;color:var(--gold)}
+.mkt-change{font-family:Arial,sans-serif;font-size:.62rem;font-weight:600}
+.mkt-chart{height:32px;margin-bottom:8px}
+.mkt-buy-btn,.mkt-sell-btn{font-family:Arial,sans-serif;font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:5px 0;border-radius:4px;transition:all .16s;width:48%}
+.mkt-buy-btn{border:1px solid #4ade80;background:rgba(74,222,128,.08);color:#4ade80}
+.mkt-buy-btn:hover:not(:disabled){background:rgba(74,222,128,.2)}
+.mkt-sell-btn{border:1px solid #f87171;background:rgba(248,113,113,.08);color:#f87171}
+.mkt-sell-btn:hover:not(:disabled){background:rgba(248,113,113,.2)}
+.mkt-buy-btn:disabled,.mkt-sell-btn:disabled{opacity:.28;cursor:not-allowed}
+.mkt-btns{display:flex;justify-content:space-between;gap:6px}
+.mkt-owned{font-family:Arial,sans-serif;font-size:.56rem;color:var(--dim);text-align:center;margin-bottom:4px}
+.market-news{background:rgba(9,5,20,.88);border:1px solid rgba(255,150,55,.14);border-radius:11px;padding:14px 15px}
+.market-news-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.72rem;color:var(--h2);letter-spacing:.12em;margin-bottom:10px}
+.news-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,150,55,.08)}
+.news-item:last-child{border-bottom:none}
+.news-ico{font-size:1rem;flex-shrink:0;margin-top:1px}
+.news-txt{font-size:.75rem;color:var(--dim);font-style:italic;line-height:1.4}
+.news-time{font-family:Arial,sans-serif;font-size:.56rem;color:var(--dim);opacity:.6;margin-top:2px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;max-width:940px;margin:0 auto}
+.shop-item{background:rgba(9,5,20,.88);border:1px solid rgba(255,150,55,.15);border-radius:13px;padding:17px 13px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:all .22s;position:relative;overflow:hidden}
+.shop-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--h1),var(--h3),transparent);opacity:0;transition:opacity .22s}
+.shop-item:hover::before{opacity:1}.shop-item:hover{border-color:rgba(255,150,55,.36);transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.5)}
+.shop-ico{font-size:2.2rem;filter:drop-shadow(0 0 7px rgba(255,215,0,.28))}
+.shop-name{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.64rem;color:var(--h2)}
+.shop-desc{font-size:.74rem;color:var(--dim);font-style:italic;line-height:1.38}
+.shop-price{display:flex;align-items:center;gap:5px;color:var(--gold);font-weight:600;font-size:.9rem}
+.shop-buy-btn{font-family:Arial,sans-serif;font-size:.64rem;font-weight:600;letter-spacing:.1em;padding:7px 18px;text-transform:uppercase;border:1px solid var(--gold2);background:rgba(255,215,0,.06);color:var(--gold);border-radius:5px;transition:all .18s;width:100%}
+.shop-buy-btn:hover:not(:disabled){background:rgba(255,215,0,.17);box-shadow:var(--gg)}
+.shop-buy-btn:disabled{opacity:.28;cursor:not-allowed}
+.shop-sec-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.75rem;color:var(--h2);letter-spacing:.14em;margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid rgba(255,150,55,.15);display:flex;align-items:center;gap:9px;max-width:940px;margin-left:auto;margin-right:auto}
+hr.sdiv{max-width:940px;margin:18px auto 16px;border:none;border-top:1px solid rgba(255,150,55,.1)}
+.toast-layer{position:fixed;top:17px;right:17px;z-index:2000;display:flex;flex-direction:column;gap:7px}
+.toast{background:rgba(9,5,20,.97);border-left:3px solid var(--h1);padding:10px 15px;border-radius:7px;font-size:.82rem;max-width:265px;animation:tin .28s ease,tout .28s ease 2.82s forwards;backdrop-filter:blur(12px);box-shadow:0 5px 24px rgba(0,0,0,.6)}
+@keyframes tin{from{transform:translateX(50px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes tout{to{transform:translateX(50px);opacity:0}}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .28s;backdrop-filter:blur(6px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:linear-gradient(135deg,#0c051e,#1a0c32);border:1px solid rgba(255,150,55,.32);border-radius:17px;padding:28px;max-width:360px;width:90%;text-align:center;box-shadow:0 22px 90px rgba(0,0,0,.9),var(--go);transform:scale(.88);transition:transform .28s}
+.modal-overlay.open .modal-box{transform:scale(1)}
+.modal-emoji{font-size:2.8rem;margin-bottom:7px}
+.modal-title{font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.9rem;color:var(--h2);margin-bottom:9px}
+.modal-body{color:var(--dim);font-size:.84rem;line-height:1.62;margin-bottom:16px}
+.modal-dismiss{font-family:Arial,sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;padding:9px 24px;border:1px solid var(--h1);background:rgba(255,107,53,.09);color:var(--h2);border-radius:6px;transition:all .18s}
+.modal-dismiss:hover{background:rgba(255,107,53,.23);box-shadow:var(--go)}
+.particle{position:fixed;pointer-events:none;border-radius:50%;z-index:900;animation:pfx var(--dur,.8s) ease-out forwards}
+@keyframes pfx{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}}
+.upgrade-select{width:100%;background:rgba(4,2,11,.8);border:1px solid rgba(255,150,55,.2);color:var(--text);padding:8px 10px;border-radius:7px;font-family:Arial,sans-serif;font-size:.72rem;margin-bottom:10px;appearance:none}
+.upgrade-select option{background:#0d0720}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,107,53,.28);border-radius:3px}
+</style>
+</head><body>
+<div class="sky" id="skyBg"></div>
+<div class="stars-layer" id="starsLayer"></div>
+<div class="horizon-glow"></div>
+<div class="nebula" style="width:360px;height:360px;top:4%;left:7%;background:rgba(124,58,237,.055);--nd:28s"></div>
+<div class="nebula" style="width:280px;height:280px;top:16%;right:7%;background:rgba(255,107,53,.045);--nd:22s;animation-delay:-9s"></div>
+<div class="w-overlay" id="wOverlay"></div>
+<div class="toast-layer" id="toastLayer"></div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-emoji" id="mEmoji"></div>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-body" id="mBody"></div>
+    <button class="modal-dismiss" onclick="closeModal()">Dismiss</button>
+  </div>
+</div>
+
+<div class="pack-scene" id="packScene">
+  <div class="pack-wrap">
+    <div class="pack-body" id="packBody" onclick="clickPack()">
+      <div class="pack-bg" id="packBg"></div>
+      <div class="pack-shine"></div>
+      <div class="pack-hatch"></div>
+      <div class="pack-tear"></div>
+      <div class="pack-logo">
+        <span class="pack-logo-icon" id="pIcon">🌅</span>
+        <div class="pack-logo-set" id="pSet">NIGHTFALL SERIES</div>
+        <div class="pack-logo-name" id="pName">BOOSTER PACK</div>
+        <div class="pack-logo-sub" id="pSub">10 cards within</div>
+      </div>
+      <div class="pack-footer" id="pFooter">nightfall rng</div>
+    </div>
+    <div class="pack-hint" id="pHint">✦ click to open ✦</div>
+    <div class="pack-cost-lbl">Cost paid: 🌅 <span id="pCost">450</span></div>
+  </div>
+</div>
+
+<div class="reveal-scene" id="revealScene">
+  <div class="rev-title" id="revTitle">✦ Pack Opened ✦</div>
+  <div class="rev-set-label" id="revSetLabel"></div>
+  <div class="cards-spread" id="cardsSpread"></div>
+  <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <div class="rev-hint" id="revHint">↑ tap any card to flip ↑</div>
+    <button class="flip-all-btn" onclick="flipAll()">Reveal All</button>
+  </div>
+  <div class="rev-btns">
+    <button class="rev-btn" onclick="anotherPack()">✦ Open Another ✦</button>
+    <button class="rev-btn sec" onclick="closeReveal()">Back to Game</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="header">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+      <div class="title-eyebrow">✦ An Endless Gacha Experience ✦</div>
+      <div class="game-title">NIGHTFALL RNG</div>
+      <div class="title-rule">
+        <div class="title-rule-line"></div>
+        <span style="color:var(--h2);font-size:.66rem;opacity:.68">◆</span>
+        <div class="title-rule-line r"></div>
+      </div>
+      <div class="game-subtitle">where the horizon holds secrets</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:4px 0">
+    <div class="w-pill" id="wPill">
+      <div class="w-dot" id="wDot"></div>
+      <span id="wLabel">Detecting weather…</span>
+    </div>
+  </div>
+
+  <div class="curr-bar">
+    <div class="curr-item"><span class="curr-icon">🌅</span><div><div class="curr-lbl">Balantix</div><div class="curr-val" id="balDisplay">250</div></div></div>
+    <div class="curr-item"><span class="curr-icon">🃏</span><div><div class="curr-lbl">Cards</div><div class="curr-val" id="cardDisplay">0</div></div></div>
+    <div class="curr-item"><span class="curr-icon">🔥</span><div><div class="curr-lbl">Streak</div><div class="curr-val" id="streakDisplay">0</div></div></div>
+    <div class="curr-item"><span class="curr-icon">📜</span><div><div class="curr-lbl">Draws</div><div class="curr-val" id="drawsDisplay">0</div></div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" id="tab-btn-sets" onclick="switchTab('sets')">Sets</button>
+    <button class="tab-btn" id="tab-btn-collection" onclick="switchTab('collection')">Collection</button>
+    <button class="tab-btn" id="tab-btn-factory" onclick="switchTab('factory')">Factory</button>
+    <button class="tab-btn" id="tab-btn-market" onclick="switchTab('market')">Market</button>
+    <button class="tab-btn" id="tab-btn-shop" onclick="switchTab('shop')">Shop</button>
+  </div>
+
+  <div class="main-panel">
+    <div class="tab-content active" id="tab-sets">
+      <div class="sec-hdr"><div class="sec-title">Card Sets</div><div class="sec-sub">Each set has its own exclusive card pool</div></div>
+    <div style="display:flex;justify-content:center;margin-bottom:18px">
+      <div style="background:rgba(9,5,20,.88);border:1px solid rgba(255,150,55,.28);border-radius:14px;padding:16px 22px;text-align:center;max-width:400px;width:100%">
+        <div style="font-family:'Palatino Linotype','Palatino','Book Antiqua',Palatino,serif;font-size:.78rem;color:var(--h2);letter-spacing:.12em;margin-bottom:6px">🌅 Daily Reward</div>
+        <div style="font-size:.76rem;color:var(--dim);font-style:italic;margin-bottom:10px">Every 24 hours: a free 5-card pack from a random set + 🌅100 Balantix</div>
+        <div style="font-family:Arial,sans-serif;font-size:.66rem;color:var(--dim);margin-bottom:10px" id="dailyCountdown">Checking...</div>
+        <button class="btn-primary" id="dailyRewardBtn" onclick="claimDailyReward()" disabled style="font-size:.66rem;padding:9px 22px">✦ Claim Daily Reward ✦</button>
+      </div>
+    </div>
+      <div class="sets-grid" id="setsGrid"></div>
+    <!-- Hidden elements referenced by JS -->
+    <div id="histSection" style="display:none">
+      <div class="hist-label">Recent Draws</div>
+      <div class="hist-strip" id="histStrip"></div>
+    </div>
+    <div style="display:none">
+      <span id="pityCount">0 / 60</span>
+      <div id="pityFill"></div>
+      <span id="sGodly">0</span><span id="sCel">0</span><span id="sMyt">0</span>
+      <span id="sLeg">0</span><span id="sFoil">0</span><span id="sGem">0</span><span id="sSal">0</span>
+    </div>
+
+    </div>
+
+    <div class="tab-content" id="tab-collection">
+      <div class="sec-hdr"><div class="sec-title">Your Collection</div><div class="sec-sub" id="invSub">The cards the night has gifted you</div></div>
+      <div class="inv-header">
+        <div class="filter-row">
+          <button class="f-btn active" data-r="all" onclick="setFilter('all')">All</button>
+          <button class="f-btn" data-r="godly" onclick="setFilter('godly')">Godly</button>
+          <button class="f-btn" data-r="celestial" onclick="setFilter('celestial')">Celestial</button>
+          <button class="f-btn" data-r="mythical" onclick="setFilter('mythical')">Mythical</button>
+          <button class="f-btn" data-r="legendary" onclick="setFilter('legendary')">Legendary</button>
+          <button class="f-btn" data-r="ultra-rare" onclick="setFilter('ultra-rare')">Ultra Rare</button>
+          <button class="f-btn" data-r="rare" onclick="setFilter('rare')">Rare</button>
+          <button class="f-btn" data-r="uncommon" onclick="setFilter('uncommon')">Uncommon</button>
+          <button class="f-btn" data-r="common" onclick="setFilter('common')">Common</button>
+        </div>
+        <button class="sell-dupes-btn" id="sellDupesBtn" onclick="sellAllDupes()">
+          ⚔️ Sell Dupes
+          <span style="background:rgba(255,107,53,.28);padding:2px 6px;border-radius:8px;font-size:.56rem;color:var(--h3)" id="dupeCnt">0</span>
+          <span style="color:var(--gold);font-size:.7rem" id="dupeVal"></span>
+        </button>
+      </div>
+      <div class="inv-grid" id="invGrid"></div>
+    </div>
+
+    <div class="tab-content" id="tab-factory">
+      <div class="sec-hdr"><div class="sec-title">The Card Factory</div><div class="sec-sub">Craft, upgrade, and refine your cards</div></div>
+      <div class="factory-layout">
+        <div class="factory-panel">
+          <div class="factory-panel-title">⚙️ Craft Recipes</div>
+          <div class="recipe-list" id="recipeList"></div>
+        </div>
+        <div class="factory-panel">
+          <div class="factory-panel-title">🔬 Condition Upgrade</div>
+          <p style="font-size:.76rem;color:var(--dim);font-style:italic;margin-bottom:10px">Upgrade a card's condition grade. Costs Balantix per step.</p>
+          <div id="upgradePanel"></div>
+        </div>
+        <div class="salvage-panel">
+          <div class="factory-panel-title">♻️ Salvage Station</div>
+          <p style="font-size:.76rem;color:var(--dim);font-style:italic;margin-bottom:10px">Convert any card into Balantix. Value based on rarity, condition, and foil type.</p>
+          <select class="salvage-select" id="salvageSelect" onchange="updateSalvagePreview()">
+            <option value="">— Select a card to salvage —</option>
+          </select>
+          <div class="salvage-preview" id="salvagePreview">
+            <div style="color:var(--dim);font-family:Arial,sans-serif;font-size:.72rem;letter-spacing:.1em;width:100%;text-align:center">Select a card above</div>
+          </div>
+          <button class="craft-btn" style="width:100%;padding:9px" id="salvageConfirmBtn" onclick="confirmSalvage()" disabled>Confirm Salvage</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-market">
+      <div class="sec-hdr"><div class="sec-title">The Dusk Market</div><div class="sec-sub">Card prices fluctuate with the wind — buy low, sell high</div></div>
+      <div class="market-ticker" id="marketTicker"><div class="ticker-inner" id="tickerInner"></div></div>
+      <div class="market-grid" id="marketGrid"></div>
+      <div class="market-news">
+        <div class="market-news-title">📰 Market News</div>
+        <div id="newsContainer"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-shop">
+      <div class="sec-hdr"><div class="sec-title">Balantix Shop</div><div class="sec-sub">Buy Balantix and boosts</div></div>
+      <div class="shop-sec-title">🌅 Balantix Packs</div>
+      <div class="shop-grid" id="shopGrid"></div>
+      <hr class="sdiv">
+      <div class="shop-sec-title">⚗️ Boosts</div>
+      <div class="shop-grid" id="boostGrid"></div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+var RARITIES = ['common','uncommon','rare','ultra-rare','legendary','mythical','celestial','godly'];
+var RARITY_WEIGHTS = {common:4200,uncommon:2800,rare:1500,'ultra-rare':900,legendary:380,mythical:140,celestial:65,godly:15};
+var TOTAL_WEIGHT = 10000;
+var RARITY_BASE_VALUE = {common:8,uncommon:20,rare:55,'ultra-rare':130,legendary:320,mythical:700,celestial:1400,godly:3500};
+var CONDITIONS = ['gem','mint','nm','ex','vg','poor'];
+var COND_LABELS = {gem:'Gem Mint',mint:'Mint',nm:'Near Mint',ex:'Excellent',vg:'Very Good',poor:'Poor'};
+var COND_WEIGHTS = [5,12,28,30,18,7];
+var COND_MULT = {gem:2.2,mint:1.6,nm:1.15,ex:0.85,vg:0.55,poor:0.3};
+var FOIL_MULT = {'null':1,foil:1.4,shiny:1.8,prismatic:2.5};
+
+var SETS = [
+  {id:'nightfall', name:'Nightfall Dusk', code:'NDF', icon:'\uD83C\uDF05', color:'#ff6b35',
+   desc:'The original set. Cards bathed in golden twilight, seekers of the horizon.',
+   tags:['Base Set','Sunlit','Horizon'], packSizes:[1,5], packCosts:[55,250],
+   cards:[
+    {id:'sunseeker',name:'Sun Seeker',emoji:'\uD83C\uDF04',rarity:'common',desc:'Chases every dawn with tireless hope.'},
+    {id:'duskwarden',name:'Dusk Warden',emoji:'\uD83D\uDEE1\uFE0F',rarity:'uncommon',desc:'Guards the boundary between light and dark.'},
+    {id:'horizon',name:'The Horizon',emoji:'\uD83C\uDF07',rarity:'rare',desc:'An ever-retreating promise on the edge of the world.'},
+    {id:'goldenveil',name:'Golden Veil',emoji:'\u2728',rarity:'ultra-rare',desc:'A shimmering curtain of light hiding ancient secrets.'},
+    {id:'solarchon',name:'Solar Archon',emoji:'\u2600\uFE0F',rarity:'legendary',desc:'The blazing ruler of the daytime sky.'},
+    {id:'twilightphoenix',name:'Twilight Phoenix',emoji:'\uD83E\uDD85',rarity:'mythical',desc:'Born again from every sunsets embers.'},
+    {id:'aurorasentinel',name:'Aurora Sentinel',emoji:'\uD83C\uDF0C',rarity:'celestial',desc:'Woven from the fabric of northern lights.'},
+    {id:'firstlight',name:'First Light',emoji:'\uD83D\uDCAB',rarity:'godly',desc:'The primordial spark before time began.'},
+    {id:'dawnrose',name:'Dawn Rose',emoji:'\uD83C\uDF39',rarity:'uncommon',desc:'Blooms only in the first rays of morning.'},
+    {id:'crepuscle',name:'Crepuscle',emoji:'\uD83C\uDF06',rarity:'rare',desc:'Exists only in the fraction between day and night.'}
+   ]},
+  {id:'abyssal', name:'Abyssal Deep', code:'ABY', icon:'\uD83C\uDF0A', color:'#60a5fa',
+   desc:'Cards from the ocean depths. Pressure-forged and tide-kissed.',
+   tags:['Ocean','Deep','Pressure'], packSizes:[1,5], packCosts:[55,250],
+   cards:[
+    {id:'tidecrawler',name:'Tide Crawler',emoji:'\uD83E\uDD80',rarity:'common',desc:'Scuttles along the seafloor in eternal darkness.'},
+    {id:'coralspirit',name:'Coral Spirit',emoji:'\uD83E\uDEB8',rarity:'uncommon',desc:'A ghost born from ancient reefs.'},
+    {id:'abysseye',name:'Abyss Eye',emoji:'\uD83D\uDC41\uFE0F',rarity:'rare',desc:'Watches from depths no light has ever touched.'},
+    {id:'depthsiren',name:'Depth Siren',emoji:'\uD83E\uDDDC',rarity:'ultra-rare',desc:'Her song warps space at 3000 fathoms.'},
+    {id:'leviathan',name:'Leviathan',emoji:'\uD83D\uDC09',rarity:'legendary',desc:'The sea-serpent older than the continents.'},
+    {id:'voidtide',name:'Void Tide',emoji:'\uD83C\uDF00',rarity:'mythical',desc:'A tide that flows between dimensions.'},
+    {id:'deepcrown',name:'Deep Crown',emoji:'\uD83D\uDC51',rarity:'celestial',desc:'Forged from black coral and starlight refraction.'},
+    {id:'primordialwave',name:'Primordial Wave',emoji:'\uD83C\uDF0A',rarity:'godly',desc:'The wave that shaped all coastlines at creation.'},
+    {id:'bubblefish',name:'Bubble Fish',emoji:'\uD83D\uDC20',rarity:'common',desc:'Leaves a trail of luminescent bubbles.'},
+    {id:'trenchguard',name:'Trench Guard',emoji:'\uD83E\uDD91',rarity:'uncommon',desc:'Patrols the deep with two-mile tentacles.'}
+   ]},
+  {id:'celestial', name:'Celestial Realm', code:'CLT', icon:'\u2B50', color:'#c084fc',
+   desc:'Cosmic cards pulled from star clusters and nebulae. Astronomy incarnate.',
+   tags:['Cosmic','Stars','Nebula'], packSizes:[1,5], packCosts:[60,275],
+   cards:[
+    {id:'stardust',name:'Stardust',emoji:'\u2728',rarity:'common',desc:'Remnants of a stellar nursery.'},
+    {id:'meteor',name:'Meteor Shard',emoji:'\u2604\uFE0F',rarity:'uncommon',desc:'Carries the memory of deep space travel.'},
+    {id:'pulsar',name:'Pulsar Beat',emoji:'\uD83D\uDCAB',rarity:'rare',desc:'Emits radio pulses with clockwork precision.'},
+    {id:'nebulaheart',name:'Nebula Heart',emoji:'\uD83C\uDF38',rarity:'ultra-rare',desc:'The glowing core of a stellar nursery.'},
+    {id:'quasarking',name:'Quasar King',emoji:'\uD83D\uDD06',rarity:'legendary',desc:'Outshines entire galaxies with casual ease.'},
+    {id:'galaxymind',name:'Galaxy Mind',emoji:'\uD83C\uDF0C',rarity:'mythical',desc:'Consciousness spanning 100,000 light-years.'},
+    {id:'stellarborn',name:'Stellar Born',emoji:'\u2B50',rarity:'celestial',desc:'Forged in a supernova, indestructible.'},
+    {id:'cosmicabsolute',name:'Cosmic Absolute',emoji:'\uD83C\uDF20',rarity:'godly',desc:'Predates the universe by thirteen seconds.'},
+    {id:'voidsprite',name:'Void Sprite',emoji:'\uD83C\uDF11',rarity:'common',desc:'Dances in the spaces between galaxies.'},
+    {id:'ringnebula',name:'Ring Nebula',emoji:'\uD83E\uDE90',rarity:'rare',desc:'A shell of gas from a dying star.'}
+   ]},
+  {id:'inferno', name:'Inferno Forge', code:'INF', icon:'\uD83D\uDD25', color:'#fbbf24',
+   desc:'Scorched cards born in magma chambers and volcanic crucibles.',
+   tags:['Fire','Forge','Volcanic'], packSizes:[1,5], packCosts:[55,250],
+   cards:[
+    {id:'embershard',name:'Ember Shard',emoji:'\uD83D\uDD25',rarity:'common',desc:'A fragment of cooled lava still holding heat.'},
+    {id:'ashwalker',name:'Ash Walker',emoji:'\uD83D\uDCA8',rarity:'uncommon',desc:'Wanders volcanic wastelands immune to heat.'},
+    {id:'magmaflow',name:'Magma Flow',emoji:'\uD83C\uDF0B',rarity:'rare',desc:'Slow but unstoppable, reshaping the earth.'},
+    {id:'pyroclast',name:'Pyroclast',emoji:'\uD83D\uDCA5',rarity:'ultra-rare',desc:'An explosive fragment from the deepest eruption.'},
+    {id:'forgegod',name:'Forge God',emoji:'\u2692\uFE0F',rarity:'legendary',desc:'Master of metal and flame since before civilization.'},
+    {id:'draconfire',name:'Dracon Fire',emoji:'\uD83D\uDC32',rarity:'mythical',desc:'Fire that burns the soul, not the flesh.'},
+    {id:'solarmaw',name:'Solar Maw',emoji:'\uD83C\uDF1E',rarity:'celestial',desc:'The mouth that consumes suns.'},
+    {id:'primordialflame',name:'Primordial Flame',emoji:'\u2668\uFE0F',rarity:'godly',desc:'The first fire ever kindled in creation.'},
+    {id:'cinders',name:'Cinders',emoji:'\uD83E\uDEB5',rarity:'common',desc:'The peaceful remnants of a raging bonfire.'},
+    {id:'lavalord',name:'Lava Lord',emoji:'\uD83E\uDD2C',rarity:'uncommon',desc:'Speaks only in eruptions.'}
+   ]}
+];
+
+var ALL_CARDS = [];
+SETS.forEach(function(s){ s.cards.forEach(function(c){ ALL_CARDS.push(Object.assign({},c,{setId:s.id,setCode:s.code})); }); });
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+var STATE = {
+  bal:250, draws:0, streak:0, pity:0,
+  inventory:[], stats:{godly:0,celestial:0,mythical:0,legendary:0,foils:0,gem:0,salvaged:0},
+  history:[], market:{}, boosts:{luckyCharm:false,shimmerPulse:0},
+  news:[], lastDailyReward:0,
+  currentPackSet:null, currentPackSize:5
+};
+
+function saveState(){
+  try{ localStorage.setItem('nrng_v3', JSON.stringify(STATE)); }catch(e){}
+}
+function loadState(){
+  try{
+    var d = localStorage.getItem('nrng_v3');
+    if(d){ var p = JSON.parse(d); Object.assign(STATE, p); }
+  }catch(e){}
+}
+
+// ═══════════════════════════════
+// RNG
+// ═══════════════════════════════
+function weightedRarity(pool){
+  var available = {};
+  pool.forEach(function(c){ available[c.rarity] = true; });
+  var entries = Object.entries(RARITY_WEIGHTS).filter(function(kv){ return available[kv[0]]; });
+  var total = entries.reduce(function(a,kv){ return a+kv[1]; },0);
+  var r = Math.random()*total;
+  for(var i=0;i<entries.length;i++){ r-=entries[i][1]; if(r<=0) return entries[i][0]; }
+  return entries[entries.length-1][0];
+}
+
+function rollCondition(){
+  var r = Math.random()*100, acc = 0;
+  for(var i=0;i<CONDITIONS.length;i++){ acc+=COND_WEIGHTS[i]; if(r<acc) return CONDITIONS[i]; }
+  return 'nm';
+}
+
+function rollFoil(rarity){
+  var chances = {common:.02,uncommon:.04,rare:.07,'ultra-rare':.11,legendary:.17,mythical:.24,celestial:.34,godly:.48};
+  if(Math.random() >= (chances[rarity]||.03)) return null;
+  var foils = ['foil','foil','shiny','prismatic'];
+  return foils[Math.floor(Math.random()*foils.length)];
+}
+
+function drawCard(pool, forceLegendaryPlus){
+  var pCards = pool || ALL_CARDS;
+  var rarity;
+  if(forceLegendaryPlus || STATE.pity>=60){
+    var highRarities = ['legendary','mythical','celestial','godly'];
+    var hw = {legendary:55,mythical:28,celestial:13,godly:4};
+    var ht = 100;
+    var rv = Math.random()*ht;
+    rarity = 'legendary';
+    var entries = Object.entries(hw);
+    for(var i=0;i<entries.length;i++){ rv-=entries[i][1]; if(rv<=0){ rarity=entries[i][0]; break; } }
+    STATE.pity = 0;
+  } else {
+    rarity = weightedRarity(pCards);
+    var isHigh = rarity==='legendary'||rarity==='mythical'||rarity==='celestial'||rarity==='godly';
+    if(!isHigh) STATE.pity++;
+    else STATE.pity = 0;
+  }
+  if(STATE.boosts.luckyCharm){
+    var idx = RARITIES.indexOf(rarity);
+    if(idx < RARITIES.length-1) rarity = RARITIES[idx+1];
+    STATE.boosts.luckyCharm = false;
+  }
+  var pool2 = pCards.filter(function(c){ return c.rarity===rarity; });
+  if(!pool2.length) pool2 = pCards;
+  var def = pool2[Math.floor(Math.random()*pool2.length)];
+  var condition = rollCondition();
+  var foil = rollFoil(rarity);
+  if(STATE.boosts.shimmerPulse>0){ foil = foil||'foil'; STATE.boosts.shimmerPulse--; }
+  return {uid:Date.now()+Math.random(),cardId:def.id,setId:def.setId,setCode:def.setCode,
+    rarity:rarity,condition:condition,foil:foil,count:1,def:def};
+}
+
+function cardSalvageValue(card){
+  var base = RARITY_BASE_VALUE[card.rarity]||10;
+  var cm = COND_MULT[card.condition]||1;
+  var fk = card.foil ? card.foil : 'null';
+  var fm = FOIL_MULT[fk]||1;
+  return Math.round(base*cm*fm);
+}
+
+function addToInventory(card){
+  var existing = null;
+  for(var i=0;i<STATE.inventory.length;i++){
+    if(STATE.inventory[i].cardId===card.cardId && STATE.inventory[i].condition===card.condition && STATE.inventory[i].foil===card.foil){
+      existing = STATE.inventory[i]; break;
+    }
+  }
+  if(existing){ existing.count++; }
+  else { STATE.inventory.push(Object.assign({},card,{count:1})); }
+  if(card.rarity==='godly') STATE.stats.godly++;
+  else if(card.rarity==='celestial') STATE.stats.celestial++;
+  else if(card.rarity==='mythical') STATE.stats.mythical++;
+  else if(card.rarity==='legendary') STATE.stats.legendary++;
+  if(card.foil) STATE.stats.foils++;
+  if(card.condition==='gem') STATE.stats.gem++;
+  STATE.history.unshift(card);
+  if(STATE.history.length>30) STATE.history.pop();
+}
+
+// ═══════════════════════════════
+// PACK ACTIONS
+// ═══════════════════════════════
+function openPack(setId, size){
+  var set = SETS.filter(function(s){ return s.id===setId; })[0];
+  if(!set) return;
+  var idx = set.packSizes.indexOf(size);
+  var cost = set.packCosts[idx];
+  if(STATE.bal<cost){ showToast('Not enough Balantix!','warning'); return; }
+  STATE.bal -= cost;
+  STATE.currentPackSet = setId;
+  STATE.currentPackSize = size;
+  document.getElementById('pIcon').textContent = set.icon;
+  document.getElementById('pSet').textContent = set.code+' SERIES';
+  document.getElementById('pName').textContent = size+' CARD PACK';
+  document.getElementById('pSub').textContent = size+' cards within';
+  document.getElementById('pCost').textContent = cost;
+  document.getElementById('packBg').style.background = 'radial-gradient(ellipse at 50% 30%, '+set.color+'22 0%, transparent 70%)';
+  document.getElementById('packScene').classList.add('open');
+  updateUI(); saveState();
+}
+
+function clickPack(){
+  var pb = document.getElementById('packBody');
+  pb.classList.add('rip');
+  setTimeout(function(){pb.classList.remove('rip');}, 550);
+  setTimeout(function(){
+    document.getElementById('packScene').classList.remove('open');
+    var set = SETS.filter(function(s){ return s.id===STATE.currentPackSet; })[0];
+    var pool = set ? set.cards.map(function(d){ return Object.assign({},d,{setId:set.id,setCode:set.code}); }) : null;
+    var cards = [];
+    for(var i=0;i<STATE.currentPackSize;i++){
+      var force = (i===STATE.currentPackSize-1) && !cards.some(function(c){
+        return c.rarity==='legendary'||c.rarity==='mythical'||c.rarity==='celestial'||c.rarity==='godly';
+      });
+      var c = drawCard(pool, force);
+      cards.push(c);
+      addToInventory(c);
+      STATE.draws++;
+      STATE.streak++;
+    }
+    showReveal(cards, set, STATE.currentPackSize);
+    updateUI(); saveState();
+  }, 600);
+}
+
+// ═══════════════════════════════
+// REVEAL
+// ═══════════════════════════════
+var _lastRevealSet = null;
+var _lastRevealSize = 5;
+
+function showReveal(cards, set, size){
+  _lastRevealSet = set;
+  _lastRevealSize = size;
+  var spread = document.getElementById('cardsSpread');
+  spread.innerHTML = '';
+  document.getElementById('revTitle').textContent = set ? ('\u2756 '+set.name+' Pack \u2756') : '\u2756 Pack Opened \u2756';
+  document.getElementById('revSetLabel').textContent = set ? (set.code+' \u00B7 '+size+' Cards') : ('Universal Pool \u00B7 '+size+' Cards');
+  cards.forEach(function(card, i){
+    var wrap = document.createElement('div');
+    wrap.className = 'rw-wrap';
+    var rw = document.createElement('div');
+    rw.className = 'rw-card rc-'+card.rarity;
+    var foilBadge = card.foil ? '<span class="cond-badge foil-'+card.foil+'">'+card.foil.toUpperCase()+'</span>' : '';
+    rw.innerHTML = '<div class="rw-face rw-back"><div class="rw-back-icon">\uD83C\uDF05</div></div>'
+      +'<div class="rw-face rw-front">'
+      +'<div class="rw-glow"></div>'
+      +'<div class="rw-emoji">'+card.def.emoji+'</div>'
+      +'<div class="rw-name">'+card.def.name+'</div>'
+      +'<div class="rw-rb">'+card.rarity.toUpperCase()+'</div>'
+      +'<div class="rw-meta"><span class="cond-badge cg-'+card.condition+'">'+COND_LABELS[card.condition]+'</span>'+foilBadge+'</div>'
+      +'<div class="rw-sl">'+card.setCode+'</div>'
+      +'</div>';
+    rw.addEventListener('click', function(){ rw.classList.toggle('flipped'); });
+    setTimeout(function(){ rw.classList.add('flipped'); }, 300+i*100);
+    wrap.appendChild(rw);
+    spread.appendChild(wrap);
+  });
+  document.getElementById('revealScene').classList.add('open');
+}
+
+function flipAll(){
+  document.querySelectorAll('.rw-card').forEach(function(c){ c.classList.add('flipped'); });
+}
+function closeReveal(){
+  document.getElementById('revealScene').classList.remove('open');
+}
+function anotherPack(){
+  closeReveal();
+  if(_lastRevealSet){ openPack(_lastRevealSet.id, _lastRevealSize); }
+}
+
+// ═══════════════════════════════
+// DAILY REWARD
+// ═══════════════════════════════
+function checkDailyReward(){
+  var now = Date.now();
+  var lastClaim = STATE.lastDailyReward || 0;
+  var dayMs = 86400000;
+  var available = (now - lastClaim) >= dayMs;
+  var btn = document.getElementById('dailyRewardBtn');
+  var countdown = document.getElementById('dailyCountdown');
+  if(!btn) return;
+  if(available){
+    btn.disabled = false;
+    btn.textContent = '\u2756 Claim Daily Reward \u2756';
+    if(countdown) countdown.textContent = 'Available now!';
+  } else {
+    btn.disabled = true;
+    var remaining = dayMs - (now - lastClaim);
+    var h = Math.floor(remaining/3600000);
+    var m = Math.floor((remaining%3600000)/60000);
+    if(countdown) countdown.textContent = 'Next reward in '+h+'h '+m+'m';
+    btn.textContent = '\u2756 Already Claimed \u2756';
+  }
+}
+
+function claimDailyReward(){
+  var now = Date.now();
+  var lastClaim = STATE.lastDailyReward || 0;
+  if((now - lastClaim) < 86400000){ showToast('Already claimed today!','warning'); return; }
+  STATE.lastDailyReward = now;
+  var randSet = SETS[Math.floor(Math.random()*SETS.length)];
+  var pool = randSet.cards.map(function(d){ return Object.assign({},d,{setId:randSet.id,setCode:randSet.code}); });
+  var cards = [];
+  for(var i=0;i<5;i++){
+    var force = (i===4) && !cards.some(function(c){
+      return c.rarity==='legendary'||c.rarity==='mythical'||c.rarity==='celestial'||c.rarity==='godly';
+    });
+    var c = drawCard(pool, force);
+    cards.push(c);
+    addToInventory(c);
+    STATE.draws++;
+  }
+  var bonusBal = 100;
+  STATE.bal += bonusBal;
+  showReveal(cards, randSet, 5);
+  showToast('+\uD83C\uDF05'+bonusBal+' Balantix bonus!', 'success');
+  updateUI(); saveState(); checkDailyReward();
+}
+
+// ═══════════════════════════════
+// UI UPDATE
+// ═══════════════════════════════
+function updateUI(){
+  var totalCards = STATE.inventory.reduce(function(a,c){ return a+c.count; },0);
+  setVal('balDisplay', STATE.bal.toLocaleString());
+  setVal('cardDisplay', totalCards);
+  setVal('streakDisplay', STATE.streak);
+  setVal('drawsDisplay', STATE.draws);
+  document.getElementById('pityCount').textContent = STATE.pity+' / 60';
+  document.getElementById('pityFill').style.width = Math.min(STATE.pity/60*100,100)+'%';
+  document.getElementById('sGodly').textContent = STATE.stats.godly;
+  document.getElementById('sCel').textContent = STATE.stats.celestial;
+  document.getElementById('sMyt').textContent = STATE.stats.mythical;
+  document.getElementById('sLeg').textContent = STATE.stats.legendary;
+  document.getElementById('sFoil').textContent = STATE.stats.foils;
+  document.getElementById('sGem').textContent = STATE.stats.gem;
+  document.getElementById('sSal').textContent = STATE.stats.salvaged;
+  updateHistStrip();
+  updateDupeCounter();
+  checkDailyReward();
+}
+
+function setVal(id, val){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = val;
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+}
+
+function updateHistStrip(){
+  var strip = document.getElementById('histStrip');
+  var sec = document.getElementById('histSection');
+  if(!STATE.history.length){ if(sec) sec.style.display='none'; return; }
+  if(sec) sec.style.display='';
+  strip.innerHTML = '';
+  STATE.history.slice(0,20).forEach(function(card){
+    var h = document.createElement('div');
+    h.className = 'h-card rc-'+card.rarity;
+    h.title = card.def.name+' \u00B7 '+card.rarity;
+    var dotColor = card.foil==='prismatic'?'#ff6b35':card.foil==='shiny'?'#f472b6':'#a78bfa';
+    var dot = card.foil ? '<div class="h-foil-dot" style="background:'+dotColor+'"></div>' : '';
+    h.innerHTML = card.def.emoji+'<div class="h-card-name">'+card.def.name+'</div>'+dot;
+    strip.appendChild(h);
+  });
+}
+
+function updateDupeCounter(){
+  var count=0, val=0;
+  STATE.inventory.forEach(function(inv){
+    if(inv.count>1){ count+=inv.count-1; val+=cardSalvageValue(inv)*(inv.count-1); }
+  });
+  var dc = document.getElementById('dupeCnt');
+  var dv = document.getElementById('dupeVal');
+  var db = document.getElementById('sellDupesBtn');
+  if(dc) dc.textContent = count;
+  if(dv) dv.textContent = count ? '+\uD83C\uDF05'+val : '';
+  if(db) db.disabled = count===0;
+}
+
+// ═══════════════════════════════
+// TABS
+// ═══════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  var tc = document.getElementById('tab-'+tab);
+  var tb = document.getElementById('tab-btn-'+tab);
+  if(tc) tc.classList.add('active');
+  if(tb) tb.classList.add('active');
+  if(tab==='sets') renderSets();
+  if(tab==='collection') renderInventory();
+  if(tab==='factory') renderFactory();
+  if(tab==='market') renderMarket();
+  if(tab==='shop') renderShop();
+}
+
+// ═══════════════════════════════
+// SETS TAB
+// ═══════════════════════════════
+function renderSets(){
+  var grid = document.getElementById('setsGrid');
+  grid.innerHTML = '';
+  SETS.forEach(function(set){
+    var card = document.createElement('div');
+    card.className = 'set-card';
+    card.style.setProperty('--sc', set.color);
+    var ownedIds = new Set(STATE.inventory.filter(function(i){ return i.setId===set.id; }).map(function(i){ return i.cardId; }));
+    var packBtns = set.packSizes.map(function(sz,i){
+      var cost = set.packCosts[i];
+      var disabled = STATE.bal<cost ? 'disabled' : '';
+      return '<button class="set-pack-btn" onclick="openPack(\''+set.id+'\','+sz+')" '+disabled+'>'
+        +'<span>'+sz+'x</span><span style="color:var(--gold);font-size:.54rem">\uD83C\uDF05'+cost+'</span></button>';
+    }).join('');
+    card.innerHTML = '<div class="set-header">'
+      +'<span class="set-icon">'+set.icon+'</span>'
+      +'<div class="set-name">'+set.name+'</div>'
+      +'<div class="set-code">'+set.code+'</div>'
+      +'</div>'
+      +'<div class="set-body">'
+      +'<div class="set-desc">'+set.desc+'</div>'
+      +'<div class="set-stats">'
+      +'<div><div class="ss-v">'+set.cards.length+'</div><div class="ss-l">Cards</div></div>'
+      +'<div><div class="ss-v">'+ownedIds.size+'/'+set.cards.length+'</div><div class="ss-l">Owned</div></div>'
+      +'</div>'
+      +'<div class="set-tags">'+set.tags.map(function(t){ return '<span class="set-tag">'+t+'</span>'; }).join('')+'</div>'
+      +'<div class="set-pack-grid">'+packBtns+'</div>'
+      +'</div>';
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════
+// COLLECTION TAB
+// ═══════════════════════════════
+var activeFilter = 'all';
+function setFilter(r){
+  activeFilter = r;
+  document.querySelectorAll('.f-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.r===r); });
+  renderInventory();
+}
+
+function renderInventory(){
+  var grid = document.getElementById('invGrid');
+  grid.innerHTML = '';
+  var items = activeFilter==='all' ? STATE.inventory : STATE.inventory.filter(function(i){ return i.rarity===activeFilter; });
+  var sorted = items.slice().sort(function(a,b){
+    var ri = RARITIES.indexOf(b.rarity)-RARITIES.indexOf(a.rarity);
+    return ri!==0 ? ri : b.count-a.count;
+  });
+  var total = STATE.inventory.reduce(function(a,c){ return a+c.count; },0);
+  var sub = document.getElementById('invSub');
+  if(sub) sub.textContent = total+' cards in your collection';
+  if(!sorted.length){
+    grid.innerHTML = '<div class="empty-state"><div class="empty-ico">\uD83C\uDF0C</div>No cards yet. Open a pack from the Sets tab!</div>';
+    return;
+  }
+  sorted.forEach(function(inv){
+    if(!inv.def) inv.def = ALL_CARDS.filter(function(c){ return c.id===inv.cardId; })[0] || {name:inv.cardId,emoji:'?',desc:'Unknown'};
+    var card = document.createElement('div');
+    card.className = 'inv-card rc-'+inv.rarity;
+    var sv = cardSalvageValue(inv);
+    var foilBadge = inv.foil ? '<span class="cond-badge foil-'+inv.foil+'">'+inv.foil.toUpperCase()+'</span>' : '';
+    var cntBadge = inv.count>1 ? '<div class="inv-cnt">\u00D7'+inv.count+'</div>' : '';
+    card.innerHTML = cntBadge
+      +'<div class="inv-emoji">'+inv.def.emoji+'</div>'
+      +'<div class="inv-name">'+inv.def.name+'</div>'
+      +'<div class="inv-rar rc-'+inv.rarity+'">'+inv.rarity.toUpperCase()+'</div>'
+      +'<div class="inv-badges"><span class="cond-badge cg-'+inv.condition+'">'+COND_LABELS[inv.condition]+'</span>'+foilBadge+'</div>'
+      +'<span class="inv-set-code" style="color:var(--dim)">'+( inv.setCode||'')+'</span>'
+      +'<button class="sal-btn" onclick="quickSalvage(\''+inv.cardId+'\',\''+inv.condition+'\',\''+( inv.foil||'none')+'\')">Salvage \uD83C\uDF05'+sv+'</button>';
+    grid.appendChild(card);
+  });
+}
+
+function quickSalvage(cardId, cond, foilStr){
+  var foil = foilStr==='none' ? null : foilStr;
+  var idx = -1;
+  for(var i=0;i<STATE.inventory.length;i++){
+    if(STATE.inventory[i].cardId===cardId && STATE.inventory[i].condition===cond && STATE.inventory[i].foil===foil){ idx=i; break; }
+  }
+  if(idx===-1) return;
+  var inv = STATE.inventory[idx];
+  var val = cardSalvageValue(inv);
+  inv.count--;
+  if(inv.count<=0) STATE.inventory.splice(idx,1);
+  STATE.bal += val;
+  STATE.stats.salvaged += val;
+  showToast('Salvaged for \uD83C\uDF05'+val+'!','success');
+  renderInventory(); updateUI(); saveState();
+}
+
+function sellAllDupes(){
+  var total = 0;
+  STATE.inventory.forEach(function(inv){
+    if(inv.count>1){
+      var dupes = inv.count-1;
+      total += cardSalvageValue(inv)*dupes;
+      STATE.stats.salvaged += cardSalvageValue(inv)*dupes;
+      inv.count = 1;
+    }
+  });
+  STATE.bal += total;
+  showToast('Sold all dupes for \uD83C\uDF05'+total+'!','success');
+  renderInventory(); updateUI(); saveState();
+}
+
+// ═══════════════════════════════
+// FACTORY TAB
+// ═══════════════════════════════
+var RECIPES = [
+  {id:'r1',label:'Common \u2192 Uncommon',cost:150,fromRar:'common',toRar:'uncommon',emoji:'\u2B06\uFE0F',needed:3},
+  {id:'r2',label:'Uncommon \u2192 Rare',cost:280,fromRar:'uncommon',toRar:'rare',emoji:'\u2B06\uFE0F',needed:2},
+  {id:'r3',label:'Rare \u2192 Ultra-Rare',cost:550,fromRar:'rare',toRar:'ultra-rare',emoji:'\u2B06\uFE0F',needed:2},
+  {id:'r4',label:'Ultra-Rare \u2192 Legendary',cost:1200,fromRar:'ultra-rare',toRar:'legendary',emoji:'\u2728',needed:2},
+  {id:'r5',label:'Add Foil Treatment',cost:400,special:'addFoil',emoji:'\u2728',needed:1}
+];
+var COND_ORDER = ['poor','vg','ex','nm','mint','gem'];
+var COND_UPGRADE_COST = {poor:80,vg:140,ex:200,nm:320,mint:500};
+
+function renderFactory(){
+  renderRecipes(); renderUpgradePanel(); renderSalvageSelect();
+}
+
+function renderRecipes(){
+  var list = document.getElementById('recipeList');
+  list.innerHTML = '';
+  RECIPES.forEach(function(r){
+    var canAfford = STATE.bal>=r.cost;
+    var canCraft;
+    if(r.special==='addFoil'){
+      canCraft = canAfford && STATE.inventory.some(function(i){ return !i.foil && i.count>=1; });
+    } else {
+      var total = STATE.inventory.filter(function(i){ return i.rarity===r.fromRar; }).reduce(function(a,c){ return a+c.count; },0);
+      canCraft = canAfford && total>=r.needed;
+    }
+    var costDesc = r.special==='addFoil' ? '1 non-foil card + \uD83C\uDF05'+r.cost : r.needed+'x '+r.fromRar+' + \uD83C\uDF05'+r.cost;
+    var item = document.createElement('div');
+    item.className = 'recipe-item';
+    item.innerHTML = '<div class="recipe-top">'
+      +'<div><div class="recipe-label">'+r.emoji+' '+r.label+'</div>'
+      +'<div class="recipe-cost">'+costDesc+'</div></div>'
+      +'<button class="craft-btn" onclick="doCraft(\''+r.id+'\')" '+(canCraft?'':'disabled')+'>Craft</button>'
+      +'</div>';
+    list.appendChild(item);
+  });
+}
+
+function doCraft(recipeId){
+  var r = RECIPES.filter(function(x){ return x.id===recipeId; })[0];
+  if(!r||STATE.bal<r.cost){ showToast('Cannot craft!','warning'); return; }
+  if(r.special==='addFoil'){
+    var target = STATE.inventory.filter(function(i){ return !i.foil && i.count>=1; })[0];
+    if(!target){ showToast('No non-foil cards!','warning'); return; }
+    target.foil = 'foil';
+    STATE.bal -= r.cost;
+    showToast('Applied Foil to '+(target.def?target.def.name:target.cardId)+'!','success');
+  } else {
+    var needed = r.needed;
+    var removed = 0;
+    for(var i=0;i<STATE.inventory.length&&removed<needed;i++){
+      if(STATE.inventory[i].rarity===r.fromRar){
+        var take = Math.min(STATE.inventory[i].count, needed-removed);
+        STATE.inventory[i].count -= take; removed += take;
+      }
+    }
+    STATE.inventory = STATE.inventory.filter(function(i){ return i.count>0; });
+    if(removed<needed){ showToast('Not enough cards!','warning'); return; }
+    STATE.bal -= r.cost;
+    var pool3 = ALL_CARDS.filter(function(c){ return c.rarity===r.toRar; });
+    var def2 = pool3[Math.floor(Math.random()*pool3.length)];
+    var nc = {uid:Date.now()+Math.random(),cardId:def2.id,setId:def2.setId,setCode:def2.setCode,
+      rarity:r.toRar,condition:'nm',foil:null,count:1,def:def2};
+    addToInventory(nc);
+    showToast('Crafted '+def2.name+'!','success');
+  }
+  updateUI(); saveState(); renderFactory();
+}
+
+function renderUpgradePanel(){
+  var panel = document.getElementById('upgradePanel');
+  var eligible = STATE.inventory.filter(function(i){ return COND_ORDER.indexOf(i.condition)<COND_ORDER.length-1; });
+  if(!eligible.length){
+    panel.innerHTML = '<div style="color:var(--dim);font-size:.76rem;font-style:italic">No upgradeable cards yet.</div>';
+    return;
+  }
+  var options = eligible.map(function(inv,i){
+    var nm = inv.def ? inv.def.name : inv.cardId;
+    return '<option value="'+i+'">'+nm+' ['+COND_LABELS[inv.condition]+']</option>';
+  }).join('');
+  panel.innerHTML = '<select class="upgrade-select" id="upgradeCardSelect" onchange="updateUpgradePreview()">'
+    +'<option value="">-- Pick a card --</option>'+options+'</select>'
+    +'<div id="upgradePreviewDiv" style="font-size:.72rem;color:var(--dim);margin-bottom:10px;font-family:Arial,sans-serif;min-height:24px"></div>'
+    +'<button class="craft-btn" style="width:100%" id="upgradeConfirmBtn" onclick="confirmUpgrade()" disabled>Upgrade Condition</button>';
+}
+
+function updateUpgradePreview(){
+  var eligible = STATE.inventory.filter(function(i){ return COND_ORDER.indexOf(i.condition)<COND_ORDER.length-1; });
+  var sel = document.getElementById('upgradeCardSelect');
+  var btn = document.getElementById('upgradeConfirmBtn');
+  var div = document.getElementById('upgradePreviewDiv');
+  if(!sel||!sel.value){ if(btn) btn.disabled=true; return; }
+  var inv = eligible[parseInt(sel.value)];
+  if(!inv){ if(btn) btn.disabled=true; return; }
+  var curIdx = COND_ORDER.indexOf(inv.condition);
+  var nextCond = COND_ORDER[curIdx+1];
+  var cost = COND_UPGRADE_COST[inv.condition]||200;
+  if(div) div.textContent = COND_LABELS[inv.condition]+' \u2192 '+COND_LABELS[nextCond]+' -- Cost: \uD83C\uDF05'+cost;
+  if(btn) btn.disabled = STATE.bal<cost;
+}
+
+function confirmUpgrade(){
+  var eligible = STATE.inventory.filter(function(i){ return COND_ORDER.indexOf(i.condition)<COND_ORDER.length-1; });
+  var sel = document.getElementById('upgradeCardSelect');
+  if(!sel||!sel.value) return;
+  var inv = eligible[parseInt(sel.value)];
+  if(!inv) return;
+  var cost = COND_UPGRADE_COST[inv.condition]||200;
+  if(STATE.bal<cost){ showToast('Not enough Balantix!','warning'); return; }
+  var curIdx = COND_ORDER.indexOf(inv.condition);
+  inv.condition = COND_ORDER[curIdx+1];
+  STATE.bal -= cost;
+  showToast('Upgraded to '+COND_LABELS[inv.condition]+'!','success');
+  updateUI(); saveState(); renderFactory();
+}
+
+function renderSalvageSelect(){
+  var sel = document.getElementById('salvageSelect');
+  sel.innerHTML = '<option value="">-- Select a card to salvage --</option>';
+  var sorted = STATE.inventory.slice().sort(function(a,b){ return RARITIES.indexOf(a.rarity)-RARITIES.indexOf(b.rarity); });
+  sorted.forEach(function(inv,i){
+    var opt = document.createElement('option');
+    opt.value = i;
+    var nm = inv.def ? (inv.def.emoji+' '+inv.def.name) : inv.cardId;
+    opt.textContent = nm+' ['+inv.rarity+'/'+COND_LABELS[inv.condition]+(inv.foil?' '+inv.foil:'')+'] x'+inv.count;
+    sel.appendChild(opt);
+  });
+}
+
+function updateSalvagePreview(){
+  var sel = document.getElementById('salvageSelect');
+  var preview = document.getElementById('salvagePreview');
+  var btn = document.getElementById('salvageConfirmBtn');
+  var sorted = STATE.inventory.slice().sort(function(a,b){ return RARITIES.indexOf(a.rarity)-RARITIES.indexOf(b.rarity); });
+  if(!sel.value){
+    preview.innerHTML = '<div style="color:var(--dim);font-family:Arial,sans-serif;font-size:.72rem;text-align:center;width:100%">Select a card above</div>';
+    btn.disabled = true; return;
+  }
+  var inv = sorted[parseInt(sel.value)];
+  if(!inv){ btn.disabled=true; return; }
+  var val = cardSalvageValue(inv);
+  preview.innerHTML = '<div class="sal-preview-emoji">'+(inv.def?inv.def.emoji:'?')+'</div>'
+    +'<div class="sal-preview-info">'
+    +'<div class="sal-preview-name">'+(inv.def?inv.def.name:inv.cardId)+'</div>'
+    +'<div class="sal-preview-val">'+inv.rarity.toUpperCase()+' \u00B7 '+COND_LABELS[inv.condition]+(inv.foil?' \u00B7 '+inv.foil.toUpperCase():'')+'</div>'
+    +'<div class="sal-preview-gain">You receive: \uD83C\uDF05'+val+'</div>'
+    +'</div>';
+  btn.disabled = false;
+  btn.dataset.salvageIdx = sel.value;
+}
+
+function confirmSalvage(){
+  var sel = document.getElementById('salvageSelect');
+  if(!sel.value) return;
+  var sorted = STATE.inventory.slice().sort(function(a,b){ return RARITIES.indexOf(a.rarity)-RARITIES.indexOf(b.rarity); });
+  var inv = sorted[parseInt(sel.value)];
+  if(!inv) return;
+  var val = cardSalvageValue(inv);
+  var realIdx = STATE.inventory.indexOf(inv);
+  inv.count--;
+  if(inv.count<=0 && realIdx!==-1) STATE.inventory.splice(realIdx,1);
+  STATE.bal += val;
+  STATE.stats.salvaged += val;
+  showToast('Salvaged for \uD83C\uDF05'+val+'!','success');
+  updateUI(); saveState(); renderFactory();
+}
+
+// ═══════════════════════════════
+// MARKET
+// ═══════════════════════════════
+var MARKET_CARDS = [
+  {cardId:'solarchon',setId:'nightfall',rarity:'legendary'},
+  {cardId:'twilightphoenix',setId:'nightfall',rarity:'mythical'},
+  {cardId:'leviathan',setId:'abyssal',rarity:'legendary'},
+  {cardId:'quasarking',setId:'celestial',rarity:'legendary'},
+  {cardId:'forgegod',setId:'inferno',rarity:'legendary'},
+  {cardId:'voidtide',setId:'abyssal',rarity:'mythical'},
+  {cardId:'goldenveil',setId:'nightfall',rarity:'ultra-rare'},
+  {cardId:'depthsiren',setId:'abyssal',rarity:'ultra-rare'},
+  {cardId:'nebulaheart',setId:'celestial',rarity:'ultra-rare'},
+  {cardId:'pyroclast',setId:'inferno',rarity:'ultra-rare'}
+];
+
+var NEWS_ITEMS = [
+  '\uD83D\uDCC8 {name} surges after rare pack pulls reported across the Dusk Market.',
+  '\uD83D\uDCC9 {name} dips as supply floods in from celestial realm drops.',
+  '\uD83D\uDD25 Collectors scrambling for {name} ahead of the next set release.',
+  '\uD83D\uDC8E {name} achieves Gem Mint certification -- prices spike.',
+  '\uD83C\uDF0A Unusual foil variants of {name} spotted in the deep packs.',
+  '\u26A1 {name} declared the most coveted card this lunar cycle.',
+  '\uD83C\uDF05 Sunrise trading sees {name} hit record highs.'
+];
+
+function initMarket(){
+  MARKET_CARDS.forEach(function(mc){
+    if(!STATE.market[mc.cardId]){
+      var base = RARITY_BASE_VALUE[mc.rarity]||100;
+      var price = Math.round(base*(0.8+Math.random()*0.4));
+      STATE.market[mc.cardId] = {price:price, history:[price]};
+    }
+  });
+  generateNews();
+}
+
+function generateNews(){
+  if(STATE.news.length>=5) return;
+  var mc = MARKET_CARDS[Math.floor(Math.random()*MARKET_CARDS.length)];
+  var def3 = ALL_CARDS.filter(function(c){ return c.id===mc.cardId; })[0];
+  if(!def3) return;
+  var tmpl = NEWS_ITEMS[Math.floor(Math.random()*NEWS_ITEMS.length)];
+  STATE.news.unshift({text:tmpl.replace('{name}',def3.name),time:'Just now',ico:def3.emoji});
+  if(STATE.news.length>5) STATE.news.pop();
+}
+
+function fluctuateMarket(){
+  MARKET_CARDS.forEach(function(mc){
+    var m = STATE.market[mc.cardId];
+    if(!m) return;
+    var base = RARITY_BASE_VALUE[mc.rarity]||100;
+    var delta = Math.round((Math.random()-.45)*base*.12);
+    m.price = Math.max(Math.round(base*.3), m.price+delta);
+    m.history.push(m.price);
+    if(m.history.length>12) m.history.shift();
+  });
+}
+
+function buildSparkline(hist){
+  if(hist.length<2) return '';
+  var min=Math.min.apply(null,hist), max=Math.max.apply(null,hist);
+  var range = max-min||1;
+  var w=160, h=30;
+  var pts = hist.map(function(v,i){
+    return Math.round(i/(hist.length-1)*(w-4)+2)+','+Math.round(h-4-((v-min)/range)*(h-8));
+  }).join(' ');
+  var trend = hist[hist.length-1]>=hist[0];
+  return '<svg width="100%" height="32" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'
+    +'<polyline points="'+pts+'" fill="none" stroke="'+(trend?'#4ade80':'#f87171')+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'</svg>';
+}
+
+function renderMarket(){
+  fluctuateMarket(); generateNews();
+  var grid = document.getElementById('marketGrid');
+  grid.innerHTML = '';
+  MARKET_CARDS.forEach(function(mc){
+    var def4 = ALL_CARDS.filter(function(c){ return c.id===mc.cardId; })[0];
+    if(!def4) return;
+    var m = STATE.market[mc.cardId];
+    var prev = m.history.length>1 ? m.history[m.history.length-2] : m.price;
+    var change = m.price-prev;
+    var pct = prev ? Math.round(change/prev*100) : 0;
+    var owned = STATE.inventory.filter(function(i){ return i.cardId===mc.cardId; }).reduce(function(a,c){ return a+c.count; },0);
+    var card4 = document.createElement('div');
+    card4.className = 'mkt-card';
+    var changeCls = change>0?'ticker-up':change<0?'ticker-down':'ticker-flat';
+    var pctStr = (change>=0?'+':'')+pct+'%';
+    card4.innerHTML = '<div class="mkt-emoji">'+def4.emoji+'</div>'
+      +'<div class="mkt-name">'+def4.name+'</div>'
+      +'<div class="mkt-rar inv-rar rc-'+mc.rarity+'">'+mc.rarity.toUpperCase()+'</div>'
+      +'<div class="mkt-price-row"><div class="mkt-price">\uD83C\uDF05'+m.price+'</div>'
+      +'<div class="mkt-change '+changeCls+'">'+pctStr+'</div></div>'
+      +'<div class="mkt-chart">'+buildSparkline(m.history)+'</div>'
+      +'<div class="mkt-owned">Owned: '+owned+'</div>'
+      +'<div class="mkt-btns">'
+      +'<button class="mkt-buy-btn" onclick="marketBuy(\''+mc.cardId+'\')" '+(STATE.bal<m.price?'disabled':'')+'>Buy</button>'
+      +'<button class="mkt-sell-btn" onclick="marketSell(\''+mc.cardId+'\')" '+(!owned?'disabled':'')+'>Sell</button>'
+      +'</div>';
+    grid.appendChild(card4);
+  });
+  // ticker
+  var ticker = document.getElementById('tickerInner');
+  var items = MARKET_CARDS.map(function(mc){
+    var m = STATE.market[mc.cardId];
+    var def5 = ALL_CARDS.filter(function(c){ return c.id===mc.cardId; })[0];
+    var prev = m.history.length>1?m.history[m.history.length-2]:m.price;
+    var chg = m.price-prev;
+    var cls = chg>0?'ticker-up':chg<0?'ticker-down':'ticker-flat';
+    return '<span class="ticker-item '+cls+'">'+(def5?def5.emoji:'')+' '+(def5?def5.name:mc.cardId)+' \uD83C\uDF05'+m.price+' '+(chg>=0?'\u25B2':'\u25BC')+Math.abs(chg)+'</span>';
+  }).join('');
+  ticker.innerHTML = items+items;
+  // news
+  var nc = document.getElementById('newsContainer');
+  nc.innerHTML = STATE.news.map(function(n){
+    return '<div class="news-item"><div class="news-ico">'+n.ico+'</div>'
+      +'<div><div class="news-txt">'+n.text+'</div><div class="news-time">'+n.time+'</div></div></div>';
+  }).join('');
+}
+
+function marketBuy(cardId){
+  var mc = MARKET_CARDS.filter(function(c){ return c.cardId===cardId; })[0];
+  var m = STATE.market[cardId];
+  if(!mc||!m||STATE.bal<m.price){ showToast('Cannot buy!','warning'); return; }
+  STATE.bal -= m.price;
+  var def6 = ALL_CARDS.filter(function(c){ return c.id===cardId; })[0];
+  var setCode = (SETS.filter(function(s){ return s.id===mc.setId; })[0]||{}).code||'???';
+  var nc2 = {uid:Date.now()+Math.random(),cardId:cardId,setId:mc.setId,setCode:setCode,
+    rarity:mc.rarity,condition:'nm',foil:null,count:1,def:def6};
+  addToInventory(nc2);
+  showToast('Bought '+(def6?def6.name:cardId)+' for \uD83C\uDF05'+m.price+'!','success');
+  updateUI(); saveState(); renderMarket();
+}
+
+function marketSell(cardId){
+  var inv2 = STATE.inventory.filter(function(i){ return i.cardId===cardId; })[0];
+  if(!inv2){ showToast('You do not own that card!','warning'); return; }
+  var m = STATE.market[cardId];
+  var sellPrice = Math.round(m.price*0.9);
+  inv2.count--;
+  if(inv2.count<=0) STATE.inventory = STATE.inventory.filter(function(i){ return i!==inv2; });
+  STATE.bal += sellPrice;
+  STATE.stats.salvaged += sellPrice;
+  showToast('Sold for \uD83C\uDF05'+sellPrice+'!','success');
+  updateUI(); saveState(); renderMarket();
+}
+
+// ═══════════════════════════════
+// SHOP
+// ═══════════════════════════════
+var SHOP_ITEMS = [
+  {id:'bal250',name:'Dusk Pouch',ico:'\uD83D\uDCB0',desc:'A small pouch of 250 Balantix.',price:'(Demo: Free)',bal:250},
+  {id:'bal1000',name:'Twilight Chest',ico:'\uD83D\uDCE6',desc:'1,000 Balantix in a golden chest.',price:'(Demo: Free)',bal:1000},
+  {id:'bal3000',name:'Horizon Vault',ico:'\uD83C\uDFE6',desc:'3,000 Balantix -- a horizon fortune.',price:'(Demo: Free)',bal:3000},
+  {id:'bal10000',name:'Celestial Treasury',ico:'\uD83D\uDC8E',desc:'10,000 Balantix, a celestial hoard.',price:'(Demo: Free)',bal:10000}
+];
+var BOOST_ITEMS = [
+  {id:'luckycharm',name:'Lucky Charm',ico:'\uD83C\uDF40',desc:'Next draw is guaranteed one tier higher.',price:200},
+  {id:'shimmerpulse',name:'Shimmer Pulse',ico:'\uD83C\uDF1F',desc:'Next 3 draws each have guaranteed foil.',price:350},
+  {id:'pityflush',name:'Pity Flush',ico:'\u26A1',desc:'Max out pity instantly -- guaranteed Legendary+.',price:300},
+  {id:'freepull',name:'5-Card Boost Pack',ico:'\uD83C\uDF04',desc:'Open a free 5-card pack from a random set.',price:150}
+];
+
+function renderShop(){
+  var sg = document.getElementById('shopGrid');
+  sg.innerHTML = '';
+  SHOP_ITEMS.forEach(function(item){
+    var el = document.createElement('div');
+    el.className = 'shop-item';
+    el.innerHTML = '<div class="shop-ico">'+item.ico+'</div>'
+      +'<div class="shop-name">'+item.name+'</div>'
+      +'<div class="shop-desc">'+item.desc+'</div>'
+      +'<div class="shop-price">\uD83C\uDF05 '+item.bal.toLocaleString()+'</div>'
+      +'<button class="shop-buy-btn" onclick="buyBal('+item.bal+',\''+item.name+'\')">'+item.price+'</button>';
+    sg.appendChild(el);
+  });
+  var bg = document.getElementById('boostGrid');
+  bg.innerHTML = '';
+  BOOST_ITEMS.forEach(function(item){
+    var el = document.createElement('div');
+    el.className = 'shop-item';
+    el.innerHTML = '<div class="shop-ico">'+item.ico+'</div>'
+      +'<div class="shop-name">'+item.name+'</div>'
+      +'<div class="shop-desc">'+item.desc+'</div>'
+      +'<div class="shop-price">\uD83C\uDF05 '+item.price+'</div>'
+      +'<button class="shop-buy-btn" onclick="buyBoost(\''+item.id+'\')" '+(STATE.bal<item.price?'disabled':'')+'>Purchase</button>';
+    bg.appendChild(el);
+  });
+}
+
+function buyBal(amount){
+  STATE.bal += amount;
+  showToast('+\uD83C\uDF05'+amount.toLocaleString()+' Balantix added!','success');
+  updateUI(); saveState(); renderShop();
+}
+
+function buyBoost(id){
+  var item = BOOST_ITEMS.filter(function(b){ return b.id===id; })[0];
+  if(!item||STATE.bal<item.price){ showToast('Not enough Balantix!','warning'); return; }
+  STATE.bal -= item.price;
+  if(id==='luckycharm'){ STATE.boosts.luckyCharm=true; showToast('Lucky Charm active!','\uD83C\uDF40'); }
+  else if(id==='shimmerpulse'){ STATE.boosts.shimmerPulse=3; showToast('Shimmer Pulse: next 3 draws have foil!','\uD83C\uDF1F'); }
+  else if(id==='pityflush'){ STATE.pity=60; showToast('Pity maxed! Legendary+ guaranteed.','\u26A1'); }
+  else if(id==='freepull'){
+    var rs = SETS[Math.floor(Math.random()*SETS.length)];
+    var pool4 = rs.cards.map(function(d){ return Object.assign({},d,{setId:rs.id,setCode:rs.code}); });
+    var freeCards = [];
+    for(var i2=0;i2<5;i2++){
+      var c2 = drawCard(pool4, i2===4 && !freeCards.some(function(x){ return x.rarity==='legendary'||x.rarity==='mythical'||x.rarity==='celestial'||x.rarity==='godly'; }));
+      freeCards.push(c2); addToInventory(c2); STATE.draws++;
+    }
+    showReveal(freeCards, rs, 5);
+  }
+  updateUI(); saveState(); renderShop();
+}
+
+// ═══════════════════════════════
+// WEATHER
+// ═══════════════════════════════
+function initWeather(){
+  var conditions = [
+    {label:'Clear Twilight',dot:'#ff9a3c',bonus:'Slightly increased Celestial chance'},
+    {label:'Starlit Night',dot:'#c084fc',bonus:'Increased Godly aura'},
+    {label:'Storm Front',dot:'#60a5fa',bonus:'Extra Balantix on rare+ pulls'},
+    {label:'Golden Hour',dot:'#fbbf24',bonus:'Legendary pity fills faster'},
+    {label:'Moonless Dark',dot:'#94a3b8',bonus:'Standard conditions'}
+  ];
+  var c = conditions[Math.floor(Math.random()*conditions.length)];
+  document.getElementById('wDot').style.background = c.dot;
+  document.getElementById('wLabel').textContent = c.label+' -- '+c.bonus;
+}
+
+// ═══════════════════════════════
+// TOAST
+// ═══════════════════════════════
+function showToast(msg, type){
+  var tl = document.getElementById('toastLayer');
+  var t = document.createElement('div');
+  t.className = 'toast';
+  if(type==='warning') t.style.borderLeftColor='#f87171';
+  t.textContent = msg;
+  tl.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3200);
+}
+
+function showModal(emoji,title,body){
+  document.getElementById('mEmoji').textContent = emoji;
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mBody').innerHTML = body;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ═══════════════════════════════
+// STARS
+// ═══════════════════════════════
+function buildStars(){
+  var layer = document.getElementById('starsLayer');
+  for(var s=0;s<120;s++){
+    var star = document.createElement('div');
+    star.className = 'star';
+    var sz = Math.random()*2.5+0.5;
+    star.style.cssText = 'width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*60)+'%;left:'+(Math.random()*100)+'%;'
+      +'--dur:'+(2+Math.random()*4)+'s;--mo:'+(0.1+Math.random()*0.3)+';animation-delay:'+(Math.random()*5)+'s';
+    layer.appendChild(star);
+  }
+}
+
+// ═══════════════════════════════
+// HYDRATE + INIT
+// ═══════════════════════════════
+function hydrateInventory(){
+  STATE.inventory.forEach(function(inv){
+    if(!inv.def){
+      inv.def = ALL_CARDS.filter(function(c){ return c.id===inv.cardId; })[0]
+        || {name:inv.cardId,emoji:'?',desc:'Unknown',rarity:inv.rarity};
+    }
+  });
+}
+
+loadState();
+hydrateInventory();
+initMarket();
+buildStars();
+initWeather();
+updateUI();
+renderSets();
+
+// Market auto-fluctuate
+setInterval(function(){
+  if(document.getElementById('tab-market').classList.contains('active')){
+    renderMarket();
+  }
+}, 15000);
+
+// Daily reward countdown tick
+setInterval(function(){ checkDailyReward(); }, 60000);
+
+console.log('\u2756 Nightfall RNG Loaded \u2756');
+
+</script>
+</body>
+</html>
